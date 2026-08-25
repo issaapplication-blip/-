@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>رعاية منزلية متألقة | بثقة وإنسانية وأمانة</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Tahoma, sans-serif;
+      background: #f4f8f6;
+      color: #17372d;
+      line-height: 1.7;
+    }
+
+    header {
+      background: white;
+      padding: 30px 20px;
+      text-align: center;
+      border-bottom: 1px solid #dce8e2;
+    }
+
+    header h1 {
+      margin: 0;
+      color: #087f58;
+      font-size: 32px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #555;
+      font-size: 18px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 25px;
+      margin: 18px 0;
+      border-radius: 18px;
+      box-shadow: 0 5px 25px rgba(0,0,0,.06);
+    }
+
+    h2 {
+      color: #087f58;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+    }
+
+    button,
+    .button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      background: #087f58;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    button:hover,
+    .button:hover {
+      opacity: .9;
+    }
+
+    .price {
+      border: 1px solid #dce8e2;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 10px 0;
+      background: #f8fbf9;
+    }
+
+    .price strong {
+      color: #087f58;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #ccd9d3;
+      border-radius: 9px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    textarea {
+      min-height: 100px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .notice {
+      background: #eef8f3;
+      border-right: 5px solid #087f58;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .important {
+      background: #fff8e8;
+      border-right: 5px solid #d49b22;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #666;
+    }
+
+    #result {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>رعاية منزلية متألقة</h1>
+  <p>بثقة وإنسانية وأمانة</p>
+</header>
+
+<main>
+
+  <!-- الترحيب -->
+  <section class="card">
+    <h2>مرحبًا بكم</h2>
+
+    <p>
+      منصة متخصصة في خدمات الرعاية المنزلية للمسنين والمرضى،
+      واستقبال طلبات مقدمي ومقدمات الرعاية والممرضين والممرضات،
+      بالإضافة إلى إعداد السير الذاتية الاحترافية بنظام ATS.
+    </p>
+
+    <div class="notice">
+      يتم التعامل مع الطلبات باهتمام واحترام وسرية،
+      وتتم مراجعة الطلبات من قبل المسؤول قبل اعتمادها.
+    </div>
+  </section>
+
+  <!-- الخدمات -->
+  <section class="card">
+
+    <h2>ماذا تريد؟</h2>
+
+    <div class="buttons">
+
+      <button onclick="showSection('cv')">
+        📄 إعداد CV احترافي
+      </button>
+
+      <button onclick="showSection('caregiver')">
+        👤 التقديم كمقدم/ة رعاية
+      </button>
+
+      <button onclick="showSection('nurse')">
+        👩‍⚕️ التقديم كممرض/ة
+      </button>
+
+      <button onclick="showSection('patient')">
+        🏠 طلب رعاية لمسن أو مريض
+      </button>
+
+    </div>
+
+  </section>
+
+  <!-- خدمات CV -->
+  <section class="card">
+
+    <h2>📄 خدمة إعداد CV</h2>
+
+    <div class="price">
+      <strong>CV فقط — 20$</strong>
+      <br>
+      CV احترافي بنظام ATS.
+    </div>
+
+    <div class="price">
+      <strong>CV + Cover Letter — 40$</strong>
+      <br>
+      CV احترافي + رسالة Cover Letter.
+    </div>
+
+    <div class="price">
+      <strong>عرض المتقدمين للعمل عبر المنصة — 30$</strong>
+      <br>
+      CV + Cover Letter بمعايير احترافية.
+    </div>
+
+    <p>
+      يمكن إعداد الملف باللغة العربية والإنكليزية،
+      وبصيغة PDF وWord.
+    </p>
+
+    <p>
+      يبدأ العمل بعد تأكيد الدفع، ويتم إرسال الملف خلال مدة
+      لا تتجاوز 24 ساعة، مع مراجعة المسؤول قبل التسليم النهائي.
+    </p>
+
+    <div class="important">
+      <strong>الدفع عبر Whish Money</strong><br>
+      رقم المنصة:
+      <strong>0096170600157</strong>
+    </div>
+
+  </section>
+
+  <!-- نموذج CV -->
+  <section id="cv" class="card hidden">
+
+    <h2>طلب إعداد CV</h2>
+
+    <form onsubmit="submitForm(event, 'CV')">
+
+      <label>
+        الاسم
+        <input name="firstName" required>
+      </label>
+
+      <label>
+        اسم العائلة
+        <input name="lastName" required>
+      </label>
+
+      <label>
+        اسم الأب
+        <input name="fatherName">
+      </label>
+
+      <label>
+        تاريخ الميلاد
+        <input type="date" name="birthDate">
+      </label>
+
+      <label>
+        عنوان السكن
+        <input name="address">
+      </label>
+
+      <label>
+        رقم الهاتف الخلوي
+        <input name="mobile" required>
+      </label>
+
+      <label>
+        رقم الهاتف الأرضي
+        <input name="landline">
+      </label>
+
+      <label>
+        البريد الإلكتروني
+        <input type="email" name="email">
+      </label>
+
+      <label>
+        أرفق CV الحالي
+        <input type="file" name="cv">
+      </label>
+
+      <label>
+        نوع الخدمة
+        <select name="service">
+          <option>CV فقط — 20$</option>
+          <option>CV + Cover Letter — 40$</option>
+          <option>عرض المتقدم للعمل عبر المنصة — 30$</option>
+        </select>
+      </label>
+
+      <label>
+        إيصال الدفع
+        <input type="file" name="payment">
+      </label>
+
+      <button type="submit">
+        إرسال طلب CV
+      </button>
+
+    </form>
+
+    <p id="cvResult"></p>
+
+  </section>
+
+  <!-- مقدم الرعاية -->
+  <section id="caregiver" class="card hidden">
+
+    <h2>👤 التقديم كمقدم/ة رعاية</h2>
+
+    <form onsubmit="submitForm(event, 'مقدم/ة رعاية')">
+
+      <label>
+        الاسم
+        <input name="firstName" required>
+      </label>
+
+      <label>
+        اسم العائلة
+        <input name="lastName" required>
+      </label>
+
+      <label>
+        اسم الأب
+        <input name="fatherName">
+      </label>
+
+      <label>
+        تاريخ الميلاد
+        <input type="date" name="birthDate">
+      </label>
+
+      <label>
+        عنوان السكن
+        <input name="address">
+      </label>
+
+      <label>
+        رقم الهاتف الخلوي
+        <input name="mobile" required>
+      </label>
+
+      <label>
+        رقم الهاتف الأرضي
+        <input name="landline">
+      </label>
+
+      <label>
+        CV
+        <input type="file" name="cv">
+      </label>
+
+      <label>
+        صورة الهوية — الوجه
+        <input type="file" name="idFront" required>
+      </label>
+
+      <label>
+        صورة الهوية — الخلفية
+        <input type="file" name="idBack" required>
+      </label>
+
+      <label>
+        الصورة الشخصية
+        <input type="file" name="portrait" required>
+      </label>
+
+      <label>
+        شهادات أخرى إن وجدت
+        <input type="file" name="certificates" multiple>
+      </label>
+
+      <label>
+        اللغات
+        <input name="languages">
+      </label>
+
+      <label>
+        الخبرة
+        <textarea name="experience"></textarea>
+      </label>
+
+      <label>
+        الخدمات التي تستطيع تقديمها
+        <textarea name="services"></textarea>
+      </label>
+
+      <label>
+        هل تملك سيارة؟
+        <select name="car">
+          <option>لا</option>
+          <option>نعم</option>
+        </select>
+      </label>
+
+      <label>
+        نوع السيارة
+        <input name="carType">
+      </label>
+
+      <label>
+        سنة صنع السيارة
+        <input name="carYear">
+      </label>
+
+      <button type="submit">
+        إرسال طلب العمل
+      </button>
+
+    </form>
+
+    <p id="caregiverResult"></p>
+
+  </section>
+
+  <!-- ممرض -->
+  <section id="nurse" class="card hidden">
+
+    <h2>👩‍⚕️ التقديم كممرض/ة</h2>
+
+    <form onsubmit="submitForm(event, 'ممرض/ة')">
+
+      <label>
+        الاسم
+        <input name="firstName" required>
+      </label>
+
+      <label>
+        اسم العائلة
+        <input name="lastName" required>
+      </label>
+
+      <label>
+        اسم الأب
+        <input name="fatherName">
+      </label>
+
+      <label>
+        تاريخ الميلاد
+        <input type="date" name="birthDate">
+      </label>
+
+      <label>
+        عنوان السكن
+        <input name="address">
+      </label>
+
+      <label>
+        رقم الهاتف الخلوي
+        <input name="mobile" required>
+      </label>
+
+      <label>
+        CV
+        <input type="file" name="cv">
+      </label>
+
+      <label>
+        صورة الهوية — الوجه
+        <input type="file" name="idFront" required>
+      </label>
+
+      <label>
+        صورة الهوية — الخلفية
+        <input type="file" name="idBack" required>
+      </label>
+
+      <label>
+        الصورة الشخصية
+        <input type="file" name="portrait" required>
+      </label>
+
+      <label>
+        بطاقة مزاولة المهنة — إلزامي
+        <input type="file" name="professionalLicense" required>
+      </label>
+
+      <label>
+        الشهادة التمريضية
+        <input type="file" name="nursingCertificate" required>
+      </label>
+
+      <label>
+        شهادات أخرى
+        <input type="file" name="otherCertificates" multiple>
+      </label>
+
+      <label>
+        التخصص والخبرات
+        <textarea name="experience"></textarea>
+      </label>
+
+      <label>
+        الخدمات التمريضية
+        <textarea name="services"></textarea>
+      </label>
+
+      <button type="submit">
+        إرسال طلب التقديم
+      </button>
+
+    </form>
+
+    <p id="nurseResult"></p>
+
+  </section>
+
+  <!-- طلب رعاية -->
+  <section id="patient" class="card hidden">
+
+    <h2>🏠 طلب رعاية لمسن أو مريض</h2>
+
+    <form onsubmit="submitForm(event, 'طلب رعاية')">
+
+      <label>
+        اسم الحالة
+        <input name="patientName" required>
+      </label>
+
+      <label>
+        عمر الحالة
+        <input type="number" name="age">
+      </label>
+
+      <label>
+        نوع الحالة
+        <select name="caseType">
+          <option>مسن</option>
+          <option>مريض</option>
+        </select>
+      </label>
+
+      <label>
+        عنوان مكان الرعاية
+        <input name="location">
+      </label>
+
+      <label>
+        رقم هاتف العائلة
+        <input name="familyPhone" required>
+      </label>
+
+      <label>
+        اسم الطبيب المختص والمتابع
+        <input name="doctorName">
+      </label>
+
+      <label>
+        رقم هاتف الطبيب
+        <input name="doctorPhone">
+      </label>
+
+      <label>
+        تفاصيل الحالة والاحتياجات
+        <textarea name="details"></textarea>
+      </label>
+
+      <button type="submit">
+        إرسال طلب الرعاية
+      </button>
+
+    </form>
+
+    <p id="patientResult"></p>
+
+  </section>
+
+  <!-- التواصل -->
+  <section class="card">
+
+    <h2>📞 التواصل</h2>
+
+    <div class="buttons">
+
+      <a class="button"
+         href="https://wa.me/message/OWOHGPAYJJBQB1"
+         target="_blank">
+        WhatsApp
+      </a>
+
+      <a class="button"
+         href="https://www.instagram.com/issaapplication?igsi=M2ttcjc3N2Mzbmpu"
+         target="_blank">
+        Instagram
+      </a>
+
+      <a class="button"
+         href="https://www.facebook.com/share/1DZ4CG7hbn/"
+         target="_blank">
+        Facebook
+      </a>
+
+    </div>
+
+  </section>
+
+  <section class="card">
+    <h3>🔒 الخصوصية</h3>
+
+    <p>
+      هذه النسخة هي MVP أولية. لا يتم اعتماد أي طلب أو إرسال
+      مستند نهائي قبل مراجعة المسؤول.
+    </p>
+
+    <p>
+      قبل الاستخدام الإنتاجي لاستقبال صور الهوية والمستندات الحساسة،
+      يجب إضافة خادم آمن وتخزين محمي وقاعدة بيانات وسياسة خصوصية
+      مناسبة.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  رعاية منزلية متألقة © 2026
+</footer>
+
+<script>
+
+function showSection(id) {
+
+  document.querySelectorAll(".card[id]").forEach(function(section) {
+    section.classList.add("hidden");
+  });
+
+  const target = document.getElementById(id);
+
+  if (target) {
+    target.classList.remove("hidden");
+
+    target.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+}
+
+function submitForm(event, type) {
+
+  event.preventDefault();
+
+  const form = event.target;
+
+  let result = form.parentElement.querySelector("#cvResult");
+
+  if (!result) {
+    result = document.createElement("p");
+    result.id = "result";
+    form.after(result);
+  }
+
+  result.style.color = "#087f58";
+
+  result.innerHTML =
+    "تم استلام طلبك مبدئيًا.<br>" +
+    "رقم الطلب سيتم إنشاؤه عند تشغيل الخادم.<br>" +
+    "سيتم التواصل معك بعد مراجعة المسؤول.";
+
+  form.reset();
+
+  window.scrollTo({
+    top: result.offsetTop - 100,
+    behavior: "smooth"
+  });
+}
+
+</script>
+
+</body>
+</html>
