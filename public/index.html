@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087f58"><meta name="description" content="وِصال — منصة آمنة لإدارة الرعاية المنزلية">
+<title>وِصال | WISAL</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;color:#17372d;background:#f5f9f7}*{box-sizing:border-box}body{margin:0}header{background:#fff;border-bottom:1px solid #dce8e2;padding:20px;text-align:center;position:sticky;top:0;z-index:2}main{max-width:1050px;margin:auto;padding:22px}.brand{font-size:34px;font-weight:800;color:#087f58}.tag{margin:4px 0;color:#53645d}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.card{background:#fff;border:1px solid #dce8e2;border-radius:18px;padding:22px;box-shadow:0 8px 30px #17372d0d}.action{display:block;text-decoration:none;color:inherit;transition:.15s}.action:hover{transform:translateY(-2px)}h1,h2{margin-top:0}.icon{font-size:30px}.notice{border-right:5px solid #087f58;background:#eef8f3;padding:14px;border-radius:10px}.warning{border-right:5px solid #d49b22;background:#fff8e8;padding:14px;border-radius:10px}button{border:0;border-radius:12px;padding:13px 18px;background:#087f58;color:#fff;font-weight:700;cursor:pointer}#status{margin-top:12px;font-size:14px;color:#53645d}.small{font-size:13px;color:#68766f}footer{text-align:center;padding:30px;color:#68766f}
+</style>
+</head>
+<body>
+<header><div class="brand">وِصال | WISAL</div><div class="tag">نصل بالحب والأمان لرعاية العائلة</div></header>
+<main>
+<section class="card"><h1>منصة الرعاية المنزلية</h1><p>إدارة آمنة لطلبات الرعاية، مقدمي الرعاية، الممرضين، الأخصائيين، والمطابقة — مع مراجعة بشرية قبل القرارات الحساسة.</p><div class="notice"><strong>الحماية أولًا:</strong> المستندات والبيانات الحساسة لا تُعرض للعامة، والوكيل الذكي لا يرسل رسائل ولا يقبل أو يرفض طلبات من تلقاء نفسه.</div></section>
+<section class="grid">
+<a class="card action" href="#request"><div class="icon">🏠</div><h2>طلب رعاية</h2><p>ابدأ طلبًا جديدًا لعائلة أو حالة.</p></a>
+<a class="card action" href="#provider"><div class="icon">👤</div><h2>مقدم رعاية</h2><p>ملف مهني، خبرات، توافر ومستندات.</p></a>
+<a class="card action" href="#professional"><div class="icon">🩺</div><h2>تمريض / علاج طبيعي</h2><p>تحقق من المؤهلات ونطاق الخدمة.</p></a>
+<a class="card action" href="#admin"><div class="icon">🛡️</div><h2>لوحة المسؤول</h2><p>مراجعة الطلبات، المطابقات، الموافقات والتدقيق.</p></a>
+</section>
+<section id="request" class="card"><h2>مسار الطلب</h2><p>استقبال → تحليل منظم → مطابقة → توصية → موافقة المسؤول → إعداد رسالة → موافقة بشرية → إرسال.</p><button type="button" onclick="checkStatus()">فحص حالة النظام</button><div id="status"></div></section>
+<section id="admin" class="card"><h2>بوابة المسؤول</h2><div class="warning">هذه نسخة الأساس الآمنة. لا توجد صلاحية إرسال WhatsApp تلقائيًا، ولا تنفيذ قرار تعاقدي أو مالي دون موافقة بشرية.</div></section>
+<p class="small">الإصدار: V1 Foundation · العربية هي اللغة الافتراضية، مع تجهيز البنية للتعدد اللغوي.</p>
+</main><footer>وِصال | WISAL — الخصوصية، الأمان، والإنسان أولًا</footer>
+<script>async function checkStatus(){const e=document.getElementById('status');e.textContent='جارٍ الفحص…';try{const r=await fetch('/api/status',{headers:{accept:'application/json'}});const d=await r.json();e.textContent=d.ok?'النظام يعمل · الإرسال الخارجي متوقف · الموافقة البشرية مطلوبة.':'تعذر التحقق.'}catch{e.textContent='الخادم غير متاح حاليًا.'}}</script>
+</body></html>
