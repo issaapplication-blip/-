@@ -1,2 +1,12 @@
 node_modules/
 .DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets/
+private/
+coverage/
+*.log
