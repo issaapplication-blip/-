@@ -19,14 +19,8 @@ const app = new Elysia()
     }
   })
   .get("/health", () => ({ ok: true, service: "wisal", startedAt }))
-  .get("/api/status", () => ({
-    ok: true,
-    platform: "WISAL | وِصال",
-    mode: "v1-foundation",
-    whatsappSending: false,
-    humanApprovalRequired: true,
-  }))
-  .get("/", () => new Response(Bun.file("index.html")))
+  .get("/api/status", () => ({ ok: true, platform: "WISAL | وِصال", mode: "v1-foundation", whatsappSending: false, humanApprovalRequired: true }))
+  .get("/", () => new Response(Bun.file("public/index.html")))
   .listen(port);
 
 console.log(`WISAL server listening on ${app.server?.hostname}:${app.server?.port}`);
