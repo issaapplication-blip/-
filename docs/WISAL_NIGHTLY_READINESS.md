@@ -1,4 +1,4 @@
-# WISAL | وِصال — Pre-Launch Readiness
+# RAFIQ | رفيق — Pre-Launch Readiness
 
 ## Security
 - [ ] Supabase RLS reviewed table-by-table with positive and negative tests.
@@ -41,4 +41,4 @@
 - [ ] Assignment/service-order template approved.
 
 ## Launch decision
-Only after all mandatory checks pass may WISAL move from preparation/testing to controlled production operation.
+Only after all mandatory checks pass may RAFIQ move from preparation/testing to controlled production operation.
