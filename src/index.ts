@@ -184,6 +184,9 @@ const app = new Elysia()
     }
   })
   .get("/", () => new Response(Bun.file("public/index.html")))
+  .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-logo.svg"), { headers: { "Content-Type": "image/svg+xml" } }))
+  .get("/manifest.webmanifest", () => new Response(Bun.file("public/manifest.webmanifest"), { headers: { "Content-Type": "application/manifest+json" } }))
+  .get("/sw.js", () => new Response(Bun.file("public/sw.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
   .listen(port);
 
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
