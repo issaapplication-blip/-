@@ -1,1 +1,37 @@
-<!doctype html><html><body>RAFIQ</body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087f58">
+<meta name="description" content="RAFIQ | رفيق — نصل بالحب والأمان لرعاية العائلة">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>رفيق | RAFIQ</title>
+<style>
+:root{--green:#087f58;--dark:#17372d;--muted:#66756e;--line:#dce8e2;--soft:#eef8f3}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f7faf8;color:var(--dark);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}body{direction:rtl}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.header-inner{max-width:1100px;margin:auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand-wrap{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:14px;background:var(--soft);border:1px solid #d8eee4;display:grid;place-items:center;color:var(--green);font-weight:900;font-size:17px}.brand{font-size:24px;font-weight:900;color:var(--green)}.tag{font-size:12px;color:var(--muted)}
+main{max-width:1100px;margin:auto;padding:28px 20px 50px}.hero{background:linear-gradient(135deg,#fff,#eef8f3);border:1px solid var(--line);border-radius:24px;padding:28px;margin-bottom:20px}.hero h1{margin:0 0 8px;font-size:30px}.hero p{margin:0;color:var(--muted);line-height:1.9}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px}.card h2{margin:0 0 8px;font-size:19px}.card p{margin:0;color:var(--muted);line-height:1.8}.icon{font-size:25px;margin-bottom:8px}.status{margin-top:20px;background:var(--soft);border-right:5px solid var(--green);border-radius:12px;padding:14px}.status button{margin-top:10px;border:0;border-radius:10px;background:var(--green);color:#fff;padding:10px 16px;font-weight:700;cursor:pointer}.status-text{font-size:14px;color:var(--muted)}footer{text-align:center;padding:28px 20px;color:var(--muted);font-size:13px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.header-inner{padding:12px 14px}.brand{font-size:21px}.hero h1{font-size:25px}}
+</style>
+</head>
+<body>
+<header><div class="header-inner"><div class="brand-wrap"><div class="logo" aria-label="رفيق">رفيق</div><div><div class="brand">رفيق | RAFIQ</div><div class="tag">نصل بالحب والأمان لرعاية العائلة</div></div></div><div class="tag">RAFIQ V1</div></div></header>
+<main>
+<section class="hero"><h1>أهلًا بكم في منصة رفيق</h1><p>منصة آمنة لإدارة خدمات الرعاية المنزلية، طلبات العائلات، مقدمي الرعاية، والربط بين الاحتياج والخدمة المناسبة.</p><div class="status"><strong>حالة النظام:</strong> <span class="status-text" id="status">جاهز للعمل</span><br><button id="status-button" type="button">فحص النظام</button></div></section>
+<section class="grid">
+<article class="card"><div class="icon">👨‍👩‍👧‍👦</div><h2>العائلات والمرضى</h2><p>تجهيز طلبات الرعاية ومتابعتها بطريقة واضحة وآمنة.</p></article>
+<article class="card"><div class="icon">🤝</div><h2>مقدمو الرعاية</h2><p>إدارة ملفات مقدمي الرعاية والمطابقة حسب متطلبات الخدمة.</p></article>
+<article class="card"><div class="icon">🩺</div><h2>التمريض والأخصائيون</h2><p>دعم مسارات الممرضين والأخصائيين مع إبقاء القرارات الحساسة تحت المراجعة البشرية.</p></article>
+<article class="card"><div class="icon">🤖</div><h2>وكيل RAFIQ الذكي</h2><p>تحليل الرسائل، تلخيص الطلبات، واقتراح الردود والمطابقات. الإرسال الخارجي والقرارات الحساسة تتطلب موافقة بشرية.</p></article>
+</section>
+</main>
+<footer>رفيق | RAFIQ — الخصوصية، الأمان، والإنسان أولًا</footer>
+<script>
+const button=document.getElementById('status-button');const status=document.getElementById('status');
+button.addEventListener('click',async()=>{button.disabled=true;status.textContent='جارٍ الفحص…';try{const r=await fetch('/api/status',{headers:{accept:'application/json'},credentials:'same-origin'});if(!r.ok)throw new Error();const d=await r.json();status.textContent=d.ok?'النظام يعمل والاتصال بالخادم سليم.':'تعذر التحقق من حالة النظام.'}catch{status.textContent='الخادم غير متاح حاليًا.'}finally{button.disabled=false}});
+</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js?v=2').catch(()=>{});</script>
+</body>
+</html>
