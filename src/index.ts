@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { draftAgentReply } from "./agent";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
@@ -25,14 +26,7 @@ const hex = (bytes: ArrayBuffer) =>
 const verifyMetaSignature = async (body: string, signature: string | null) => {
   const secret = process.env.META_APP_SECRET;
   if (!secret || !signature?.startsWith("sha256=")) return false;
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const expected = `sha256=${hex(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body)))}`;
   return timingSafeEqual(new TextEncoder().encode(expected), new TextEncoder().encode(signature));
 };
@@ -55,43 +49,30 @@ const extractIncomingMessages = (payload: any) => {
   return messages;
 };
 
+const requireAdminToken = (request: Request) => {
+  const adminToken = process.env.RAFIQ_ADMIN_ACTION_TOKEN;
+  return Boolean(adminToken && request.headers.get("x-rafig-admin-token") === adminToken);
+};
+
 const sendWhatsAppText = async (to: string, body: string) => {
   const accessToken = process.env.META_ACCESS_TOKEN;
   const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
   const apiVersion = process.env.META_GRAPH_API_VERSION ?? "v23.0";
-
-  if (!accessToken || !phoneNumberId) {
-    throw new Error("WhatsApp Cloud API server configuration is incomplete");
-  }
+  if (!accessToken || !phoneNumberId) throw new Error("WhatsApp Cloud API server configuration is incomplete");
 
   const response = await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to,
-      type: "text",
-      text: { preview_url: false, body },
-    }),
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to, type: "text", text: { preview_url: false, body } }),
   });
-
   const result = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(`Meta WhatsApp API error (${response.status})`);
-  }
-
+  if (!response.ok) throw new Error(`Meta WhatsApp API error (${response.status})`);
   return result;
 };
 
 const app = new Elysia()
   .onAfterHandle(({ response }) => {
-    if (response instanceof Response) {
-      for (const [key, value] of Object.entries(securityHeaders)) response.headers.set(key, value);
-    }
+    if (response instanceof Response) for (const [key, value] of Object.entries(securityHeaders)) response.headers.set(key, value);
   })
   .get("/health", () => ({ ok: true, service: "rafig-whatsapp-gateway", startedAt }))
   .get("/api/status", () => ({
@@ -102,6 +83,7 @@ const app = new Elysia()
     whatsappWebhookConfigured: Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
     whatsappOutboundConfigured: Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
     openAIConfigured: Boolean(process.env.OPENAI_API_KEY),
+    agentModel: process.env.RAFIQ_AGENT_MODEL ?? "gpt-5.6-luna",
     humanApprovalRequired: true,
   }))
   .get("/api/whatsapp/webhook", ({ query, set }) => {
@@ -109,65 +91,79 @@ const app = new Elysia()
     const token = query["hub.verify_token"];
     const challenge = query["hub.challenge"];
     const verifyToken = process.env.META_VERIFY_TOKEN;
-
-    if (mode === "subscribe" && verifyToken && token === verifyToken && challenge) {
-      set.status = 200;
-      return challenge;
-    }
-
+    if (mode === "subscribe" && verifyToken && token === verifyToken && challenge) return challenge;
     set.status = 403;
     return { ok: false, error: "webhook verification failed" };
   })
   .post("/api/whatsapp/webhook", async ({ request, set }) => {
     const body = await request.text();
     const signature = request.headers.get("x-hub-signature-256");
-
     if (!(await verifyMetaSignature(body, signature))) {
       set.status = 401;
       return { ok: false, error: "invalid webhook signature" };
     }
 
     let payload: any;
-    try {
-      payload = JSON.parse(body);
-    } catch {
-      set.status = 400;
-      return { ok: false, error: "invalid json" };
-    }
+    try { payload = JSON.parse(body); }
+    catch { set.status = 400; return { ok: false, error: "invalid json" }; }
 
     const messages = extractIncomingMessages(payload);
-    console.info(JSON.stringify({
-      event: "whatsapp.inbound",
-      count: messages.length,
-      messages: messages.map((message) => ({ id: message.id, type: message.type })),
-    }));
+    const drafts: Array<{ id: string; draft?: string; status: string }> = [];
+    for (const message of messages) {
+      if (!message.text) {
+        drafts.push({ id: message.id, status: "ignored_non_text" });
+        continue;
+      }
+      try {
+        const result = await draftAgentReply(message.text);
+        console.info(JSON.stringify({ event: "rafig.agent.draft", messageId: message.id, model: result.model, draft: result.reply }));
+        drafts.push({ id: message.id, draft: result.reply, status: "draft_ready" });
+      } catch (error) {
+        console.error(JSON.stringify({ event: "rafig.agent.draft", messageId: message.id, status: "failed", error: error instanceof Error ? error.message : "unknown" }));
+        drafts.push({ id: message.id, status: "draft_failed" });
+      }
+    }
 
-    return { ok: true, received: messages.length };
+    console.info(JSON.stringify({ event: "whatsapp.inbound", count: messages.length, messages: messages.map((message) => ({ id: message.id, type: message.type })) }));
+    return { ok: true, received: messages.length, drafts: drafts.map(({ id, status }) => ({ id, status })) };
+  })
+  .post("/api/agent/draft", async ({ request, set }) => {
+    if (!requireAdminToken(request)) {
+      set.status = 401;
+      return { ok: false, error: "unauthorized" };
+    }
+    let input: any;
+    try { input = await request.json(); }
+    catch { set.status = 400; return { ok: false, error: "invalid json" }; }
+    const message = typeof input?.message === "string" ? input.message.trim() : "";
+    if (!message || message.length > 8000) {
+      set.status = 400;
+      return { ok: false, error: "invalid message" };
+    }
+    try {
+      const result = await draftAgentReply(message, typeof input?.language === "string" ? input.language : undefined);
+      return { ok: true, draft: result.reply, model: result.model, humanApprovalRequired: true };
+    } catch {
+      set.status = 502;
+      return { ok: false, error: "agent provider request failed" };
+    }
   })
   .post("/api/whatsapp/send-text", async ({ request, set }) => {
     if (process.env.WHATSAPP_SENDING_ENABLED !== "true") {
       set.status = 503;
       return { ok: false, error: "WhatsApp sending is disabled" };
     }
-
-    const adminToken = process.env.RAFIQ_ADMIN_ACTION_TOKEN;
-    if (!adminToken || request.headers.get("x-rafig-admin-token") !== adminToken) {
+    if (!requireAdminToken(request)) {
       set.status = 401;
       return { ok: false, error: "unauthorized" };
     }
-
     let input: any;
-    try {
-      input = await request.json();
-    } catch {
-      set.status = 400;
-      return { ok: false, error: "invalid json" };
-    }
+    try { input = await request.json(); }
+    catch { set.status = 400; return { ok: false, error: "invalid json" }; }
 
     const to = typeof input?.to === "string" ? input.to.trim() : "";
     const body = typeof input?.body === "string" ? input.body.trim() : "";
     const approved = input?.humanApproved === true;
-
     if (!to || !/^\d{8,15}$/.test(to) || !body || body.length > 4096) {
       set.status = 400;
       return { ok: false, error: "invalid recipient or message" };
