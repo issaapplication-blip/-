@@ -1,11 +1,11 @@
-# WISAL | وِصال — Contract Pack V1 (Draft for Legal Review)
+# RAFIQ | رفيق — Contract Pack V1 (Draft for Legal Review)
 
 > These templates are operational drafts, not legal advice. They must be reviewed and adapted to applicable Lebanese law and the exact business model before signature.
 
 ## 1. Caregiver Service Agreement — core terms
 
 ### Parties
-WISAL | وِصال (the platform/operator), the caregiver/service provider, and where applicable the family/client.
+RAFIQ | رفيق (the platform/operator), the caregiver/service provider, and where applicable the family/client.
 
 ### Scope
 The caregiver provides the agreed non-clinical home-care services described in the accepted service order. Any nursing or regulated professional service must be provided only by an appropriately licensed professional and within the applicable professional scope.
@@ -14,7 +14,7 @@ The caregiver provides the agreed non-clinical home-care services described in t
 The caregiver shall follow the agreed schedule, protect the assisted person's dignity and privacy, promptly report incidents or material changes, maintain professional conduct, and not misuse documents, keys, money, medication, devices, or personal property.
 
 ### Platform process
-Requests, matching, assignments, communications, documents, approvals, and status changes should be recorded through WISAL where the platform workflow requires it. The parties must not circumvent an active platform assignment in order to avoid agreed platform fees or safeguards, subject to applicable law.
+Requests, matching, assignments, communications, documents, approvals, and status changes should be recorded through RAFIQ where the platform workflow requires it. The parties must not circumvent an active platform assignment in order to avoid agreed platform fees or safeguards, subject to applicable law.
 
 ### Fees
 Any platform fee, caregiver compensation, payment schedule, deductions, refunds, or taxes must be stated clearly in the service order. No deduction should occur unless authorized by the applicable agreement and law.
@@ -50,7 +50,7 @@ Use a separate, clear consent covering collection, storage, verification, contro
 
 ## 5. WhatsApp Communication Consent
 
-Obtain permission for operational WhatsApp communications. Marketing/other categories should be separately consented where required. External messages remain subject to the WISAL human-approval workflow.
+Obtain permission for operational WhatsApp communications. Marketing/other categories should be separately consented where required. External messages remain subject to the RAFIQ human-approval workflow.
 
 ## 6. Assignment / Service Order
 
@@ -61,4 +61,4 @@ Every assignment should contain: request ID, parties, service type, location, sc
 Draft → Legal Review → Approved Template → Generated for Parties → Human Review → Signed/Accepted → Active → Completed/Terminated → Archived according to retention policy.
 
 ## Important legal safeguard
-Do not automatically generate a legally binding contract merely from an AI recommendation. A human authorized by WISAL must review the final contract and applicable jurisdiction-specific terms before acceptance/signature.
+Do not automatically generate a legally binding contract merely from an AI recommendation. A human authorized by RAFIQ must review the final contract and applicable jurisdiction-specific terms before acceptance/signature.
