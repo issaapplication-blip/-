@@ -55,6 +55,38 @@ const extractIncomingMessages = (payload: any) => {
   return messages;
 };
 
+const sendWhatsAppText = async (to: string, body: string) => {
+  const accessToken = process.env.META_ACCESS_TOKEN;
+  const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
+  const apiVersion = process.env.META_GRAPH_API_VERSION ?? "v23.0";
+
+  if (!accessToken || !phoneNumberId) {
+    throw new Error("WhatsApp Cloud API server configuration is incomplete");
+  }
+
+  const response = await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "text",
+      text: { preview_url: false, body },
+    }),
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`Meta WhatsApp API error (${response.status})`);
+  }
+
+  return result;
+};
+
 const app = new Elysia()
   .onAfterHandle(({ response }) => {
     if (response instanceof Response) {
@@ -68,6 +100,8 @@ const app = new Elysia()
     mode: "meta-cloud-api-ready",
     whatsappSending: process.env.WHATSAPP_SENDING_ENABLED === "true",
     whatsappWebhookConfigured: Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
+    whatsappOutboundConfigured: Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
+    openAIConfigured: Boolean(process.env.OPENAI_API_KEY),
     humanApprovalRequired: true,
   }))
   .get("/api/whatsapp/webhook", ({ query, set }) => {
@@ -109,6 +143,49 @@ const app = new Elysia()
     }));
 
     return { ok: true, received: messages.length };
+  })
+  .post("/api/whatsapp/send-text", async ({ request, set }) => {
+    if (process.env.WHATSAPP_SENDING_ENABLED !== "true") {
+      set.status = 503;
+      return { ok: false, error: "WhatsApp sending is disabled" };
+    }
+
+    const adminToken = process.env.RAFIQ_ADMIN_ACTION_TOKEN;
+    if (!adminToken || request.headers.get("x-rafig-admin-token") !== adminToken) {
+      set.status = 401;
+      return { ok: false, error: "unauthorized" };
+    }
+
+    let input: any;
+    try {
+      input = await request.json();
+    } catch {
+      set.status = 400;
+      return { ok: false, error: "invalid json" };
+    }
+
+    const to = typeof input?.to === "string" ? input.to.trim() : "";
+    const body = typeof input?.body === "string" ? input.body.trim() : "";
+    const approved = input?.humanApproved === true;
+
+    if (!to || !/^\d{8,15}$/.test(to) || !body || body.length > 4096) {
+      set.status = 400;
+      return { ok: false, error: "invalid recipient or message" };
+    }
+    if (!approved) {
+      set.status = 409;
+      return { ok: false, error: "human approval required" };
+    }
+
+    try {
+      const result = await sendWhatsAppText(to, body);
+      console.info(JSON.stringify({ event: "whatsapp.outbound", status: "sent", recipient: "redacted" }));
+      return { ok: true, messageId: result?.messages?.[0]?.id ?? null };
+    } catch (error) {
+      console.error(JSON.stringify({ event: "whatsapp.outbound", status: "failed", error: error instanceof Error ? error.message : "unknown" }));
+      set.status = 502;
+      return { ok: false, error: "WhatsApp provider request failed" };
+    }
   })
   .get("/", () => new Response(Bun.file("public/index.html")))
   .listen(port);
