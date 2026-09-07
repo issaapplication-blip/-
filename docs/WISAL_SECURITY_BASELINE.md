@@ -1,4 +1,4 @@
-# WISAL | وِصال — Security Baseline
+# RAFIQ | رفيق — Security Baseline
 
 ## Security objective
 Treat identity documents, caregiver records, patient data, contracts, payment evidence, and WhatsApp metadata as sensitive data. Apply least privilege, deny-by-default access, server-side secrets, auditability, and human approval for consequential actions.
