@@ -1,10 +1,10 @@
 (() => {
   const messages = [
-    "أهلًا بكم في وِصال… حيث تبدأ الرعاية بالإنسان.",
-    "في وِصال، الأمان أول خطوة نحو رعاية مطمئنة.",
+    "أهلًا بكم في رفيق… حيث تبدأ الرعاية بالإنسان.",
+    "في رفيق، الأمان أول خطوة نحو رعاية مطمئنة.",
     "نصل بالحب والأمان لرعاية العائلة.",
     "كل يوم جديد هو فرصة لرعاية أفضل وأكثر إنسانية.",
-    "وِصال يجمع العائلة بالرعاية المناسبة بثقة واهتمام.",
+    "رفيق يجمع العائلة بالرعاية المناسبة بثقة واهتمام.",
     "لأن راحة من نحب تستحق عناية تليق بهم."
   ];
 
@@ -14,8 +14,8 @@
   if (el) el.textContent = message;
 
   window.setTimeout(() => {
-    const splash = document.getElementById("wisal-splash");
-    const app = document.getElementById("wisal-app");
+    const splash = document.getElementById("rafig-splash");
+    const app = document.getElementById("rafig-app");
     if (!splash || !app) return;
     splash.classList.add("is-hidden");
     app.removeAttribute("aria-hidden");
