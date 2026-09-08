@@ -1,4 +1,4 @@
-const CACHE = "rafig-v9-clean-logo";
+const CACHE = "rafig-v10-clean-logo";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/rafig-logo.svg"];
 self.addEventListener("install", (event) => { event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL).catch(() => {}))); self.skipWaiting(); });
 self.addEventListener("activate", (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))); self.clients.claim(); });
