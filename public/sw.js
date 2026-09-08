@@ -1,4 +1,4 @@
-const CACHE = "rafig-v5";
+const CACHE = "rafig-v6-approved-logo";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/rafig-logo.svg"];
 
 self.addEventListener("install", (event) => {
