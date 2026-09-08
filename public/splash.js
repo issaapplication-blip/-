@@ -10,15 +10,21 @@
 
   const dayNumber = Math.floor(Date.now() / 86400000);
   const message = messages[((dayNumber % messages.length) + messages.length) % messages.length];
-  const el = document.getElementById("daily-welcome");
-  if (el) el.textContent = message;
+  const daily = document.getElementById("daily-welcome");
+  const splashDaily = document.getElementById("splash-daily-welcome");
+  if (daily) daily.textContent = message;
+  if (splashDaily) splashDaily.textContent = message;
 
-  window.setTimeout(() => {
+  const hideSplash = () => {
     const splash = document.getElementById("rafig-splash");
-    const app = document.getElementById("rafig-app");
-    if (!splash || !app) return;
+    if (!splash) return;
     splash.classList.add("is-hidden");
-    app.removeAttribute("aria-hidden");
     window.setTimeout(() => splash.remove(), 650);
-  }, 1800);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => window.setTimeout(hideSplash, 1200), { once: true });
+  } else {
+    window.setTimeout(hideSplash, 1200);
+  }
 })();
