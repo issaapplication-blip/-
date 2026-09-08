@@ -128,6 +128,8 @@ const app = new Elysia()
     catch (error) { console.error(JSON.stringify({ event: "whatsapp.outbound", status: "failed", error: error instanceof Error ? error.message : "unknown" })); set.status = 502; return { ok: false, error: "WhatsApp provider request failed" }; }
   })
   .get("/", () => new Response(Bun.file("public/index.html")))
+  .get("/rafig-approved-logo.jpg", () => new Response(Bun.file("public/rafig-approved-logo.jpg"), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } }))
+  .get("/rafig-approved-logo-192.jpg", () => new Response(Bun.file("public/rafig-approved-logo-192.jpg"), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } }))
   .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-approved-logo.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
   .get("/rafig-final-logo-20260908.svg", () => new Response(Bun.file("public/rafig-approved-logo.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
   .get("/manifest.webmanifest", () => new Response(Bun.file("public/manifest.webmanifest"), { headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-store" } }))
