@@ -230,7 +230,7 @@ const app = new Elysia()
     }
   })
   .get("/", () => new Response(Bun.file("public/index.html")))
-  .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-final-logo-20260908.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
+  .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-logo-clean.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
   .get("/rafig-final-logo-20260908.svg", () => new Response(Bun.file("public/rafig-final-logo-20260908.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
   .get("/manifest.webmanifest", () => new Response(Bun.file("public/manifest.webmanifest"), { headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-store" } }))
   .get("/sw.js", () => new Response(Bun.file("public/sw.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
