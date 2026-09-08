@@ -80,11 +80,12 @@ const app = new Elysia()
     platform: "RAFIQ | رفيق",
     mode: "meta-cloud-api-ready",
     whatsappSending: process.env.WHATSAPP_SENDING_ENABLED === "true",
+    whatsappAutoReply: process.env.RAFIQ_WHATSAPP_AUTO_REPLY === "true",
     whatsappWebhookConfigured: Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
     whatsappOutboundConfigured: Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
     openAIConfigured: Boolean(process.env.OPENAI_API_KEY),
     agentModel: process.env.RAFIQ_AGENT_MODEL ?? "gpt-5.6-luna",
-    humanApprovalRequired: true,
+    proactiveMessagesRequireApproval: true,
   }))
   .get("/api/whatsapp/webhook", ({ query, set }) => {
     const mode = query["hub.mode"];
@@ -108,24 +109,36 @@ const app = new Elysia()
     catch { set.status = 400; return { ok: false, error: "invalid json" }; }
 
     const messages = extractIncomingMessages(payload);
-    const drafts: Array<{ id: string; draft?: string; status: string }> = [];
+    const results: Array<{ id: string; status: string }> = [];
     for (const message of messages) {
       if (!message.text) {
-        drafts.push({ id: message.id, status: "ignored_non_text" });
+        results.push({ id: message.id, status: "ignored_non_text" });
         continue;
       }
       try {
         const result = await draftAgentReply(message.text);
-        console.info(JSON.stringify({ event: "rafig.agent.draft", messageId: message.id, model: result.model, draft: result.reply }));
-        drafts.push({ id: message.id, draft: result.reply, status: "draft_ready" });
+        console.info(JSON.stringify({ event: "rafig.agent.draft", messageId: message.id, model: result.model }));
+
+        if (process.env.RAFIQ_WHATSAPP_AUTO_REPLY === "true" && process.env.WHATSAPP_SENDING_ENABLED === "true") {
+          try {
+            const outbound = await sendWhatsAppText(message.from, result.reply);
+            console.info(JSON.stringify({ event: "whatsapp.auto_reply", status: "sent", messageId: message.id, recipient: "redacted", providerMessageId: outbound?.messages?.[0]?.id ?? null }));
+            results.push({ id: message.id, status: "auto_replied" });
+          } catch (error) {
+            console.error(JSON.stringify({ event: "whatsapp.auto_reply", status: "failed", messageId: message.id, error: error instanceof Error ? error.message : "unknown" }));
+            results.push({ id: message.id, status: "draft_ready_send_failed" });
+          }
+        } else {
+          results.push({ id: message.id, status: "draft_ready" });
+        }
       } catch (error) {
         console.error(JSON.stringify({ event: "rafig.agent.draft", messageId: message.id, status: "failed", error: error instanceof Error ? error.message : "unknown" }));
-        drafts.push({ id: message.id, status: "draft_failed" });
+        results.push({ id: message.id, status: "draft_failed" });
       }
     }
 
     console.info(JSON.stringify({ event: "whatsapp.inbound", count: messages.length, messages: messages.map((message) => ({ id: message.id, type: message.type })) }));
-    return { ok: true, received: messages.length, drafts: drafts.map(({ id, status }) => ({ id, status })) };
+    return { ok: true, received: messages.length, results };
   })
   .post("/api/agent/draft", async ({ request, set }) => {
     if (!requireAdminToken(request)) {
@@ -217,8 +230,9 @@ const app = new Elysia()
     }
   })
   .get("/", () => new Response(Bun.file("public/index.html")))
-  .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-approved-logo.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
-  .get("/manifest.webmanifest", () => new Response(Bun.file("public/manifest.webmanifest"), { headers: { "Content-Type": "application/manifest+json" } }))
+  .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-final-logo-20260908.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
+  .get("/rafig-final-logo-20260908.svg", () => new Response(Bun.file("public/rafig-final-logo-20260908.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
+  .get("/manifest.webmanifest", () => new Response(Bun.file("public/manifest.webmanifest"), { headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-store" } }))
   .get("/sw.js", () => new Response(Bun.file("public/sw.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
   .listen(port);
 
