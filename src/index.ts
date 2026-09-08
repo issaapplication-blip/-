@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { draftAgentReply } from "./agent";
+import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
@@ -143,6 +143,39 @@ const app = new Elysia()
     try {
       const result = await draftAgentReply(message, typeof input?.language === "string" ? input.language : undefined);
       return { ok: true, draft: result.reply, model: result.model, humanApprovalRequired: true };
+    } catch {
+      set.status = 502;
+      return { ok: false, error: "agent provider request failed" };
+    }
+  })
+  .post("/api/agent/outreach-draft", async ({ request, set }) => {
+    if (!requireAdminToken(request)) {
+      set.status = 401;
+      return { ok: false, error: "unauthorized" };
+    }
+    let input: any;
+    try { input = await request.json(); }
+    catch { set.status = 400; return { ok: false, error: "invalid json" }; }
+
+    const target = input?.target;
+    if (target !== "laboratory" && target !== "medical_equipment_supplier" && target !== "radiology_center") {
+      set.status = 400;
+      return { ok: false, error: "invalid outreach target" };
+    }
+    const institutionName = typeof input?.institutionName === "string" ? input.institutionName.trim() : "";
+    if (institutionName.length > 200) {
+      set.status = 400;
+      return { ok: false, error: "invalid institution name" };
+    }
+    const language = typeof input?.language === "string" ? input.language.trim() : "";
+    if (language.length > 40) {
+      set.status = 400;
+      return { ok: false, error: "invalid language" };
+    }
+
+    try {
+      const result = await draftInstitutionOutreach(target, institutionName, language || undefined);
+      return { ok: true, target, institutionName: institutionName || null, draft: result.reply, model: result.model, humanApprovalRequired: true, sendingPerformed: false };
     } catch {
       set.status = 502;
       return { ok: false, error: "agent provider request failed" };
