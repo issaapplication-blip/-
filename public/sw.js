@@ -1,4 +1,4 @@
-const CACHE = "rafig-v7-final-logo-20260908";
+const CACHE = "rafig-v8-approved-logo";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
