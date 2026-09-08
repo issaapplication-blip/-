@@ -103,7 +103,6 @@ const app = new Elysia()
       set.status = 401;
       return { ok: false, error: "invalid webhook signature" };
     }
-
     let payload: any;
     try { payload = JSON.parse(body); }
     catch { set.status = 400; return { ok: false, error: "invalid json" }; }
@@ -118,7 +117,6 @@ const app = new Elysia()
       try {
         const result = await draftAgentReply(message.text);
         console.info(JSON.stringify({ event: "rafig.agent.draft", messageId: message.id, model: result.model }));
-
         if (process.env.RAFIQ_WHATSAPP_AUTO_REPLY === "true" && process.env.WHATSAPP_SENDING_ENABLED === "true") {
           try {
             const outbound = await sendWhatsAppText(message.from, result.reply);
@@ -128,97 +126,51 @@ const app = new Elysia()
             console.error(JSON.stringify({ event: "whatsapp.auto_reply", status: "failed", messageId: message.id, error: error instanceof Error ? error.message : "unknown" }));
             results.push({ id: message.id, status: "draft_ready_send_failed" });
           }
-        } else {
-          results.push({ id: message.id, status: "draft_ready" });
-        }
+        } else results.push({ id: message.id, status: "draft_ready" });
       } catch (error) {
         console.error(JSON.stringify({ event: "rafig.agent.draft", messageId: message.id, status: "failed", error: error instanceof Error ? error.message : "unknown" }));
         results.push({ id: message.id, status: "draft_failed" });
       }
     }
-
     console.info(JSON.stringify({ event: "whatsapp.inbound", count: messages.length, messages: messages.map((message) => ({ id: message.id, type: message.type })) }));
     return { ok: true, received: messages.length, results };
   })
   .post("/api/agent/draft", async ({ request, set }) => {
-    if (!requireAdminToken(request)) {
-      set.status = 401;
-      return { ok: false, error: "unauthorized" };
-    }
+    if (!requireAdminToken(request)) { set.status = 401; return { ok: false, error: "unauthorized" }; }
     let input: any;
-    try { input = await request.json(); }
-    catch { set.status = 400; return { ok: false, error: "invalid json" }; }
+    try { input = await request.json(); } catch { set.status = 400; return { ok: false, error: "invalid json" }; }
     const message = typeof input?.message === "string" ? input.message.trim() : "";
-    if (!message || message.length > 8000) {
-      set.status = 400;
-      return { ok: false, error: "invalid message" };
-    }
+    if (!message || message.length > 8000) { set.status = 400; return { ok: false, error: "invalid message" }; }
     try {
       const result = await draftAgentReply(message, typeof input?.language === "string" ? input.language : undefined);
       return { ok: true, draft: result.reply, model: result.model, humanApprovalRequired: true };
-    } catch {
-      set.status = 502;
-      return { ok: false, error: "agent provider request failed" };
-    }
+    } catch { set.status = 502; return { ok: false, error: "agent provider request failed" }; }
   })
   .post("/api/agent/outreach-draft", async ({ request, set }) => {
-    if (!requireAdminToken(request)) {
-      set.status = 401;
-      return { ok: false, error: "unauthorized" };
-    }
+    if (!requireAdminToken(request)) { set.status = 401; return { ok: false, error: "unauthorized" }; }
     let input: any;
-    try { input = await request.json(); }
-    catch { set.status = 400; return { ok: false, error: "invalid json" }; }
-
+    try { input = await request.json(); } catch { set.status = 400; return { ok: false, error: "invalid json" }; }
     const target = input?.target;
-    if (target !== "laboratory" && target !== "medical_equipment_supplier" && target !== "radiology_center") {
-      set.status = 400;
-      return { ok: false, error: "invalid outreach target" };
-    }
+    if (target !== "laboratory" && target !== "medical_equipment_supplier" && target !== "radiology_center") { set.status = 400; return { ok: false, error: "invalid outreach target" }; }
     const institutionName = typeof input?.institutionName === "string" ? input.institutionName.trim() : "";
-    if (institutionName.length > 200) {
-      set.status = 400;
-      return { ok: false, error: "invalid institution name" };
-    }
+    if (institutionName.length > 200) { set.status = 400; return { ok: false, error: "invalid institution name" }; }
     const language = typeof input?.language === "string" ? input.language.trim() : "";
-    if (language.length > 40) {
-      set.status = 400;
-      return { ok: false, error: "invalid language" };
-    }
-
+    if (language.length > 40) { set.status = 400; return { ok: false, error: "invalid language" }; }
     try {
       const result = await draftInstitutionOutreach(target, institutionName, language || undefined);
       return { ok: true, target, institutionName: institutionName || null, draft: result.reply, model: result.model, humanApprovalRequired: true, sendingPerformed: false };
-    } catch {
-      set.status = 502;
-      return { ok: false, error: "agent provider request failed" };
-    }
+    } catch { set.status = 502; return { ok: false, error: "agent provider request failed" }; }
   })
   .post("/api/whatsapp/send-text", async ({ request, set }) => {
-    if (process.env.WHATSAPP_SENDING_ENABLED !== "true") {
-      set.status = 503;
-      return { ok: false, error: "WhatsApp sending is disabled" };
-    }
-    if (!requireAdminToken(request)) {
-      set.status = 401;
-      return { ok: false, error: "unauthorized" };
-    }
+    if (process.env.WHATSAPP_SENDING_ENABLED !== "true") { set.status = 503; return { ok: false, error: "WhatsApp sending is disabled" }; }
+    if (!requireAdminToken(request)) { set.status = 401; return { ok: false, error: "unauthorized" }; }
     let input: any;
-    try { input = await request.json(); }
-    catch { set.status = 400; return { ok: false, error: "invalid json" }; }
-
+    try { input = await request.json(); } catch { set.status = 400; return { ok: false, error: "invalid json" }; }
     const to = typeof input?.to === "string" ? input.to.trim() : "";
     const body = typeof input?.body === "string" ? input.body.trim() : "";
     const approved = input?.humanApproved === true;
-    if (!to || !/^\d{8,15}$/.test(to) || !body || body.length > 4096) {
-      set.status = 400;
-      return { ok: false, error: "invalid recipient or message" };
-    }
-    if (!approved) {
-      set.status = 409;
-      return { ok: false, error: "human approval required" };
-    }
-
+    if (!to || !/^\d{8,15}$/.test(to) || !body || body.length > 4096) { set.status = 400; return { ok: false, error: "invalid recipient or message" }; }
+    if (!approved) { set.status = 409; return { ok: false, error: "human approval required" }; }
     try {
       const result = await sendWhatsAppText(to, body);
       console.info(JSON.stringify({ event: "whatsapp.outbound", status: "sent", recipient: "redacted" }));
@@ -230,8 +182,8 @@ const app = new Elysia()
     }
   })
   .get("/", () => new Response(Bun.file("public/index.html")))
-  .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-final-logo-20260908.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
-  .get("/rafig-final-logo-20260908.svg", () => new Response(Bun.file("public/rafig-final-logo-20260908.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
+  .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-logo-clean.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
+  .get("/rafig-final-logo-20260908.svg", () => new Response(Bun.file("public/rafig-logo-clean.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
   .get("/manifest.webmanifest", () => new Response(Bun.file("public/manifest.webmanifest"), { headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-store" } }))
   .get("/sw.js", () => new Response(Bun.file("public/sw.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
   .listen(port);
