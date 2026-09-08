@@ -66,7 +66,7 @@ const app = new Elysia()
     if (response instanceof Response) for (const [key, value] of Object.entries(securityHeaders)) response.headers.set(key, value);
   })
   .get("/health", () => ({ ok: true, service: "rafig-whatsapp-gateway", startedAt }))
-  .get("/api/status", () => ({ ok: true, platform: "RAFIQ | رفيق", mode: "meta-cloud-api-ready", whatsappSending: process.env.WHATSAPP_SENDING_ENABLED === "true", whatsappAutoReply: process.env.RAFIQ_WHATSAPP_AUTO_REPLY === "true", whatsappWebhookConfigured: Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET), whatsappOutboundConfigured: Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID), openAIConfigured: Boolean(process.env.OPENAI_API_KEY), agentModel: process.env.RAFIQ_AGENT_MODEL ?? "gpt-5.6-luna", proactiveMessagesRequireApproval: true }))
+  .get("/api/status", () => ({ ok: true, platform: "RAFIQ | رفيق", mode: "meta-cloud-api-ready", whatsappSending: process.env.WHATSAPP_SENDING_ENABLED === "true", whatsappAutoReply: process.env.RAFIQ_WHATSAPP_AUTO_REPLY === "true", whatsappWebhookConfigured: Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET), whatsappOutboundConfigured: Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID), openAIConfigured: Boolean(process.env.OPENAI_API_KEY), agentModel: process.env.RAFIQ_AGENT_MODEL ?? "gpt-5.6-luna", channelMode: "agent-draft-admin-publish", proactiveMessagesRequireApproval: true }))
   .get("/api/whatsapp/webhook", ({ query, set }) => {
     const mode = query["hub.mode"], token = query["hub.verify_token"], challenge = query["hub.challenge"], verifyToken = process.env.META_VERIFY_TOKEN;
     if (mode === "subscribe" && verifyToken && token === verifyToken && challenge) return challenge;
@@ -115,6 +115,17 @@ const app = new Elysia()
     if (institutionName.length > 200 || language.length > 40) { set.status = 400; return { ok: false, error: "invalid input" }; }
     try { const result = await draftInstitutionOutreach(target, institutionName, language || undefined); return { ok: true, target, institutionName: institutionName || null, draft: result.reply, model: result.model, humanApprovalRequired: true, sendingPerformed: false }; }
     catch { set.status = 502; return { ok: false, error: "agent provider request failed" }; }
+  })
+  .post("/api/channel/draft", async ({ request, set }) => {
+    if (!requireAdminToken(request)) { set.status = 401; return { ok: false, error: "unauthorized" }; }
+    let input: any; try { input = await request.json(); } catch { set.status = 400; return { ok: false, error: "invalid json" }; }
+    const topic = typeof input?.topic === "string" ? input.topic.trim() : "";
+    const language = typeof input?.language === "string" ? input.language.trim() : "ar";
+    if (!topic || topic.length > 4000 || language.length > 40) { set.status = 400; return { ok: false, error: "invalid topic or language" }; }
+    try {
+      const result = await draftAgentReply(`Prepare a public WhatsApp Channel post for the official RAFIQ | رفيق channel.\nLanguage: ${language}\nTopic: ${topic}\nAudience: families, caregivers, nurses, healthcare institutions, laboratories, medical equipment suppliers, and radiology centers.\nThe post must be informative, professional, concise, and suitable for a public one-way channel. Do not claim that a partnership, booking, payment, referral, approval, or service has already happened unless explicitly stated in the topic. Do not expose private information. Return only the ready-to-review channel post.`);
+      return { ok: true, draft: result.reply, model: result.model, channel: "RAFIQ official WhatsApp Channel", publishMode: "manual-admin", humanApprovalRequired: true, sendingPerformed: false };
+    } catch { set.status = 502; return { ok: false, error: "agent provider request failed" }; }
   })
   .post("/api/whatsapp/send-text", async ({ request, set }) => {
     if (process.env.WHATSAPP_SENDING_ENABLED !== "true") { set.status = 503; return { ok: false, error: "WhatsApp sending is disabled" }; }
