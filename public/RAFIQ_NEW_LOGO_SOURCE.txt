@@ -1,0 +1,1 @@
+Official RAFIQ logo source is the latest approved uploaded image. The repository's serving asset is public/rafig-approved-logo.jpg; the original uploaded file is JPEG data despite its .png upload name. Do not replace the approved logo with an approximation.
