@@ -1,4 +1,4 @@
-const CACHE="rafig-v14-official-logo";
+const CACHE="rafig-v15-official-logo";
 const APP_SHELL=["/","/manifest.webmanifest","/rafig-approved-logo.jpg","/rafig-approved-logo-192.jpg","/rafig-approved-logo-512.jpg"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(APP_SHELL).catch(()=>{})));self.skipWaiting();});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))));self.clients.claim();});
