@@ -1,5 +1,9 @@
 # RAFIQ | رفيق — Contract Pack V1 (Draft for Legal Review)
 
+![RAFIQ | رفيق — official platform logo](../public/rafig-approved-logo.jpg)
+
+> **Official branding rule:** The approved RAFIQ | رفيق logo is the platform identity and must appear on the header or cover of every generated contract, service order, provider agreement, family/client agreement, consent form, and other official contract document. Do not substitute another logo. Use the approved RAFIQ asset from the repository for document generation.
+
 > These templates are operational drafts, not legal advice. They must be reviewed and adapted to applicable Lebanese law and the exact business model before signature.
 
 ## 1. Caregiver Service Agreement — core terms
