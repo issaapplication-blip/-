@@ -1,12 +1,7 @@
 (() => {
   const run = () => {
     const remove = (el) => el?.remove();
-
-    // Keep only the intended primary actions; WhatsApp remains the official work channel.
-    document.querySelectorAll('.cta a[href="#join"], .cta a[href="#care"]').forEach(remove);
     document.querySelectorAll('.cta a[href*="wa.me"]').forEach(remove);
-
-    // Move system status to the footer so the hero stays focused on customer actions.
     const statusBox = document.querySelector('.hero .status');
     const footer = document.querySelector('footer');
     if (statusBox && footer && !footer.querySelector('.rafig-system-status')) {
@@ -28,24 +23,20 @@
           targetStatus.textContent = data.ok ? 'النظام يعمل · الإرسال الخارجي متوقف · الموافقة البشرية مطلوبة.' : 'تعذر التحقق.';
         } catch {
           targetStatus.textContent = 'الخادم غير متاح حاليًا.';
-        } finally {
-          targetButton.disabled = false;
-        }
+        } finally { targetButton.disabled = false; }
       });
       if (sourceStatus) sourceStatus.closest('.status')?.remove();
     }
-
-    // Enforce the approved RAFIQ vector logo everywhere, including fallback image elements.
+    // Approved RAFIQ vector logo.
     document.querySelectorAll('img').forEach(img => {
       const alt = (img.getAttribute('alt') || '').toLowerCase();
       const src = img.getAttribute('src') || '';
       if (alt.includes('rafiq') || src.includes('rafig-approved-logo')) {
-        img.src = '/rafig-approved-logo.svg?v=25';
+        img.src = '/rafig-approved-logo.svg?v=26';
         img.removeAttribute('srcset');
       }
     });
-
-    // The Whish number is financial-only: never expose it as a WhatsApp action.
+    // Whish number is financial-only.
     document.querySelectorAll('a[href*="wa.me/96170600157"], a[href*="wa.me/96170600157?"]').forEach(link => {
       const replacement = document.createElement('span');
       replacement.className = link.className || 'phone';
@@ -53,44 +44,37 @@
       replacement.textContent = '+961 70 600 157';
       link.replaceWith(replacement);
     });
-
     document.querySelectorAll('.contact.finance').forEach(card => {
       const blocks = [...card.querySelectorAll('div')].filter(x => !x.classList.contains('phone'));
-      const text = blocks[0];
-      if (text) text.textContent = 'هذا الرقم مخصص للتحويلات والأمور المالية عبر Whish Money فقط، وليس للمراسلات أو تشغيل وكيل RAFIQ.';
+      if (blocks[0]) blocks[0].textContent = 'هذا الرقم مخصص للتحويلات والأمور المالية عبر Whish Money فقط، وليس للمراسلات أو تشغيل وكيل RAFIQ.';
     });
-
-    // Ensure the CV price is visible before the user starts the CV request.
+    // Separate, complete CV price list.
     const formsSection = document.querySelector('.forms');
     if (formsSection && !document.getElementById('rafig-cv-pricing')) {
       const section = document.createElement('section');
       section.id = 'rafig-cv-pricing';
-      section.style.cssText = 'margin:18px 0 0;padding:20px;border:1px solid var(--line);border-radius:20px;background:#fffaf0';
-      section.innerHTML = `
-        <div class="section-title" style="margin-top:0"><h2>قائمة أسعار خدمة CV الاحترافي</h2><p>السعر واضح قبل بدء تعبئة الطلب.</p></div>
-        <div class="card" style="max-width:760px;margin:auto;text-align:right">
-          <h3 style="color:var(--green);margin-top:0">CV احترافي — 20$</h3>
-          <ul class="benefit-list">
-            <li>إعداد CV احترافي باللغة العربية والإنجليزية.</li>
-            <li>التسليم بصيغة PDF + Word.</li>
-            <li>التسليم خلال مدة أقصاها 24 ساعة بعد تأكيد الدفع والمراجعة الإدارية.</li>
-            <li>الدفع عبر Whish Money.</li>
-            <li>إثبات الدفع مطلوب عند تقديم طلب الـCV.</li>
-          </ul>
-        </div>`;
+      section.style.cssText = 'margin:18px 0;padding:20px;border:1px solid var(--line);border-radius:20px;background:#fffaf0';
+      section.innerHTML = '<div class="section-title" style="margin-top:0"><h2>قائمة أسعار خدمة CV الاحترافي</h2><p>السعر واضح قبل بدء تعبئة الطلب.</p></div><div class="card" style="max-width:760px;margin:auto;text-align:right"><h3 style="color:var(--green);margin-top:0">CV احترافي — 20$</h3><ul class="benefit-list"><li>إعداد CV احترافي باللغة العربية والإنجليزية.</li><li>التسليم بصيغة PDF + Word.</li><li>التسليم خلال مدة أقصاها 24 ساعة بعد تأكيد الدفع والمراجعة الإدارية.</li><li>الدفع عبر Whish Money.</li><li>إثبات الدفع مطلوب عند تقديم طلب الـCV.</li></ul></div>';
       formsSection.parentNode.insertBefore(section, formsSection.nextSibling);
     }
-
-    // Partner goodwill commitment: free platform advertising while the agreement remains active.
+    // Separate, complete care/nursing price list.
+    const careAnchor = document.querySelector('#care');
+    if (careAnchor && !document.getElementById('rafig-care-pricing')) {
+      const section = document.createElement('section');
+      section.id = 'rafig-care-pricing';
+      section.style.cssText = 'margin:18px 0;padding:20px;border:1px solid var(--line);border-radius:20px;background:#effaf5';
+      section.innerHTML = '<div class="section-title" style="margin-top:0"><h2>قائمة أسعار خدمات الرعاية والتمريض</h2><p>الأسعار الأساسية المتفق عليها، وتُحدد القيمة النهائية حسب الحالة والخدمات والاتفاق.</p></div><div class="cards" style="grid-template-columns:repeat(3,minmax(0,1fr))"><article class="card"><h3>رعاية مسن — 11 ساعة</h3><p><strong>30$–35$ يوميًا</strong><br>دوام نهاري أو ليلي.</p></article><article class="card"><h3>رعاية مسن — 24 ساعة</h3><p><strong>50$–55$ يوميًا</strong><br>أو <strong>45$ يوميًا</strong> للترتيب الأسبوعي المستمر.</p></article><article class="card"><h3>تمريض / رعاية طبية — 11 ساعة</h3><p><strong>40$–50$</strong><br>بحسب الحالة والخدمات الطبية المطلوبة.</p></article></div>';
+      careAnchor.parentNode.insertBefore(section, careAnchor.nextSibling);
+    }
+    // Partner goodwill commitment.
     const main = document.querySelector('main');
     if (main && !document.getElementById('rafig-partner-goodwill')) {
       const notice = document.createElement('section');
       notice.id = 'rafig-partner-goodwill';
       notice.style.cssText = 'margin:20px 0;padding:18px 20px;border:1px solid #b9e4d1;border-radius:18px;background:#effaf5;line-height:1.9;text-align:center';
-      notice.innerHTML = '<h2 style="margin:0 0 8px;color:var(--green);font-size:22px">مبادرة RAFIQ للشركاء</h2><p style="margin:0;color:var(--dark)">بعد الاتفاق مع المختبرات ومؤسسات بيع المعدات الطبية ومراكز التصوير الطبي وعيادات العلاج الفيزيائي، تلتزم منصة RAFIQ بوضع إعلان تعريفي لكل مؤسسة أو مركز أو عيادة على المنصة <strong>دون أي مقابل مالي</strong>، وذلك كبادرة حسن نية وطيلة فترة الالتزام بالاتفاقات المبرمة مع المنصة، وفق شروط الاتفاق ومراجعة الإدارة. لا يُعد هذا الإعلان اعتمادًا أو ضمانًا للخدمة أو حصريةً ما لم ينص اتفاق مكتوب على ذلك.</p>';
+      notice.innerHTML = '<h2 style="margin:0 0 8px;color:var(--green);font-size:22px">مبادرة RAFIQ للشركاء</h2><p style="margin:0;color:var(--dark)">بعد إبرام اتفاق مع المختبرات ومؤسسات بيع المعدات الطبية ومراكز التصوير الطبي وعيادات العلاج الفيزيائي، تلتزم منصة RAFIQ بوضع إعلان تعريفي لكل مؤسسة أو مركز أو عيادة على المنصة <strong>دون أي مقابل مالي</strong>، كبادرة حسن نية وطيلة فترة الالتزام بالاتفاقات المبرمة مع المنصة، وفق شروط الاتفاق ومراجعة الإدارة. لا يُعد هذا الإعلان اعتمادًا أو ضمانًا للخدمة أو حصريةً ما لم ينص اتفاق مكتوب على ذلك.</p>';
       main.appendChild(notice);
     }
-
     const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
     const title = document.querySelector('.hero h1');
     if (title) {
@@ -99,6 +83,5 @@
       title.innerHTML = `${greeting.replace('RAFIQ', '<span>RAFIQ</span>')}`;
     }
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true });
-  else run();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
 })();
