@@ -1,10 +1,12 @@
 (() => {
   const run = () => {
-    document.querySelectorAll('.cta a[href="#join"], .cta a[href="#care"]').forEach(el => el.remove());
-    document.querySelectorAll('.cta a[href*="wa.me"]').forEach(el => remove(el));
+    const remove = (el) => el?.remove();
 
-    const remove = (el) => el.remove();
+    // Keep only the intended primary actions; WhatsApp remains the official work channel.
+    document.querySelectorAll('.cta a[href="#join"], .cta a[href="#care"]').forEach(remove);
+    document.querySelectorAll('.cta a[href*="wa.me"]').forEach(remove);
 
+    // Move system status to the footer so the hero stays focused on customer actions.
     const statusBox = document.querySelector('.hero .status');
     const footer = document.querySelector('footer');
     if (statusBox && footer && !footer.querySelector('.rafig-system-status')) {
@@ -33,15 +35,17 @@
       if (sourceStatus) sourceStatus.closest('.status')?.remove();
     }
 
+    // Enforce the approved RAFIQ vector logo everywhere, including fallback image elements.
     document.querySelectorAll('img').forEach(img => {
       const alt = (img.getAttribute('alt') || '').toLowerCase();
       const src = img.getAttribute('src') || '';
       if (alt.includes('rafiq') || src.includes('rafig-approved-logo')) {
-        img.src = '/rafig-approved-logo.svg?v=24';
+        img.src = '/rafig-approved-logo.svg?v=25';
         img.removeAttribute('srcset');
       }
     });
 
+    // The Whish number is financial-only: never expose it as a WhatsApp action.
     document.querySelectorAll('a[href*="wa.me/96170600157"], a[href*="wa.me/96170600157?"]').forEach(link => {
       const replacement = document.createElement('span');
       replacement.className = link.className || 'phone';
@@ -56,6 +60,7 @@
       if (text) text.textContent = 'هذا الرقم مخصص للتحويلات والأمور المالية عبر Whish Money فقط، وليس للمراسلات أو تشغيل وكيل RAFIQ.';
     });
 
+    // Ensure the CV price is visible before the user starts the CV request.
     const formsSection = document.querySelector('.forms');
     if (formsSection && !document.getElementById('rafig-cv-pricing')) {
       const section = document.createElement('section');
@@ -70,18 +75,19 @@
             <li>التسليم بصيغة PDF + Word.</li>
             <li>التسليم خلال مدة أقصاها 24 ساعة بعد تأكيد الدفع والمراجعة الإدارية.</li>
             <li>الدفع عبر Whish Money.</li>
-            <li>يُطلب إثبات الدفع عند تقديم طلب الـCV.</li>
+            <li>إثبات الدفع مطلوب عند تقديم طلب الـCV.</li>
           </ul>
         </div>`;
       formsSection.parentNode.insertBefore(section, formsSection.nextSibling);
     }
 
+    // Partner goodwill commitment: free platform advertising while the agreement remains active.
     const main = document.querySelector('main');
     if (main && !document.getElementById('rafig-partner-goodwill')) {
       const notice = document.createElement('section');
       notice.id = 'rafig-partner-goodwill';
       notice.style.cssText = 'margin:20px 0;padding:18px 20px;border:1px solid #b9e4d1;border-radius:18px;background:#effaf5;line-height:1.9;text-align:center';
-      notice.innerHTML = '<h2 style="margin:0 0 8px;color:var(--green);font-size:22px">مبادرة RAFIQ للشركاء</h2><p style="margin:0;color:var(--dark)">بعد الاتفاق مع المختبرات ومؤسسات بيع المعدات الطبية ومراكز التصوير الطبي وعيادات العلاج الفيزيائي، تلتزم منصة RAFIQ بوضع إعلان تعريفي لكل مؤسسة أو مركز أو عيادة على المنصة <strong>دون أي مقابل مالي</strong>، وذلك كبادرة حسن نية وطيلة فترة الالتزام بالاتفاقات المبرمة مع المنصة، وفق شروط الاتفاق ومراجعته من الإدارة.</p>';
+      notice.innerHTML = '<h2 style="margin:0 0 8px;color:var(--green);font-size:22px">مبادرة RAFIQ للشركاء</h2><p style="margin:0;color:var(--dark)">بعد الاتفاق مع المختبرات ومؤسسات بيع المعدات الطبية ومراكز التصوير الطبي وعيادات العلاج الفيزيائي، تلتزم منصة RAFIQ بوضع إعلان تعريفي لكل مؤسسة أو مركز أو عيادة على المنصة <strong>دون أي مقابل مالي</strong>، وذلك كبادرة حسن نية وطيلة فترة الالتزام بالاتفاقات المبرمة مع المنصة، وفق شروط الاتفاق ومراجعة الإدارة. لا يُعد هذا الإعلان اعتمادًا أو ضمانًا للخدمة أو حصريةً ما لم ينص اتفاق مكتوب على ذلك.</p>';
       main.appendChild(notice);
     }
 
