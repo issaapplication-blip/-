@@ -1,27 +1,19 @@
 (() => {
   const run = () => {
-    // Final RAFIQ layout: remove duplicate hero controls; keep the bottom application buttons.
-    document.querySelectorAll('.hero .hero-logo, .hero .cta, .hero .status').forEach(el => el.remove());
+    // Final RAFIQ home layout: keep the approved large center logo; remove only duplicate hero controls.
+    document.querySelectorAll('.hero .cta, .hero .status').forEach(el => el.remove());
     document.querySelectorAll('.rafig-system-status, #rafig-cv-pricing, #rafig-care-pricing').forEach(el => el.remove());
 
+    // Header: small approved logo at the far right, language selector at the far left.
+    // Do not replace logo assets after page load: the approved JPG in index.html is authoritative.
     const headerInner = document.querySelector('.header-inner');
     const brand = document.querySelector('.brand');
     const lang = document.querySelector('.lang');
     if (headerInner && brand && lang) {
       headerInner.style.cssText = 'max-width:none;width:100%;padding:7px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;direction:rtl';
-      brand.style.cssText = 'order:2;display:flex;align-items:center;gap:9px;margin-left:0;margin-right:auto';
-      lang.style.cssText = 'order:1;display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:0';
+      brand.style.cssText = 'order:1;display:flex;align-items:center;gap:9px;margin:0';
+      lang.style.cssText = 'order:2;display:flex;align-items:center;gap:6px;margin:0';
     }
-
-    // IMPORTANT: use the approved uploaded RAFIQ image asset, not the older SVG substitute.
-    document.querySelectorAll('img[alt*="RAFIQ" i], img[alt*="رفيق"], img[src*="rafig-approved-logo"], .brand img').forEach(img => {
-      img.src = '/rafig-approved-logo.jpg?v=40';
-      img.removeAttribute('srcset');
-      img.removeAttribute('width');
-      img.removeAttribute('height');
-      img.style.objectFit = 'contain';
-      img.style.imageRendering = 'auto';
-    });
 
     // One greeting per Beirut calendar day (24-hour rotation).
     const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
@@ -33,11 +25,10 @@
       title.innerHTML = greetings[index].replace('RAFIQ', '<span>RAFIQ</span>');
     }
 
-    // CV offer must be visible inside the CV request panel before the form is used.
+    // CV offer remains inside the CV request panel before the form.
     const cvPanel = document.getElementById('panel-cv');
     if (cvPanel) {
-      const old = cvPanel.querySelectorAll('.rafig-inline-cv-price');
-      old.forEach(el => el.remove());
+      cvPanel.querySelectorAll('.rafig-inline-cv-price').forEach(el => el.remove());
       const box = document.createElement('div');
       box.className = 'notice rafig-inline-cv-price';
       box.innerHTML = '<strong>عرض CV الاحترافي — 20$</strong><br>إعداد CV احترافي <strong>بالعربية + English</strong> وتسليمه بصيغتي <strong>PDF + Word</strong>.<br>التسليم خلال <strong>24 ساعة كحد أقصى</strong> بعد تأكيد الدفع والمراجعة الإدارية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع (صورة الإيصال أو رقم التحويل) مطلوب قبل إرسال الطلب.';
@@ -66,12 +57,13 @@
     const style = document.createElement('style');
     style.id = 'rafig-final-ui-fixes';
     style.textContent = `
-      .hero .hero-logo,.hero .cta,.hero .status{display:none!important}
+      .hero .cta,.hero .status{display:none!important}
       .header-inner{min-height:62px}
+      .brand img{width:58px!important;height:58px!important;object-fit:contain!important}
       .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
       .panel .btn{min-height:48px}
       .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
-      @media(max-width:700px){.header-inner{padding:6px 9px}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero h1{font-size:27px}}
+      @media(max-width:700px){.header-inner{padding:6px 9px}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(330px,82vw)!important}.hero h1{font-size:27px}}
     `;
     document.head.appendChild(style);
   };
