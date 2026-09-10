@@ -28,9 +28,9 @@
       if (sourceStatus) sourceStatus.closest('.status')?.remove();
     }
 
-    // Use the approved vector logo everywhere: sharper on every screen and density.
+    // Approved RAFIQ vector logo. The server exposes it as /rafig-logo.svg.
     document.querySelectorAll('img[alt*="RAFIQ" i], img[alt*="رفيق"], img[src*="rafig-approved-logo"], .hero-logo, .brand img').forEach(img => {
-      img.src = '/rafig-approved-logo.svg?v=27';
+      img.src = '/rafig-logo.svg?v=28';
       img.removeAttribute('srcset');
       img.removeAttribute('width');
       img.removeAttribute('height');
