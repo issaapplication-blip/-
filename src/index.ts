@@ -143,9 +143,11 @@ The post must be informative, professional, concise, and suitable for a public o
     catch (error) { console.error(JSON.stringify({ event: "whatsapp.outbound", status: "failed", error: error instanceof Error ? error.message : "unknown" })); set.status = 502; return { ok: false, error: "WhatsApp provider request failed" }; }
   })
   .get("/", async () => new Response(await Bun.file("public/index.html").text(), { headers: { "Content-Type": "text/html; charset=utf-8" } }))
+  .get("/ui-cleanup.js", () => new Response(Bun.file("public/ui-cleanup.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
   .get("/rafig-approved-logo.jpg", () => new Response(Bun.file("public/rafig-approved-logo.jpg"), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } }))
   .get("/rafig-approved-logo-192.jpg", () => new Response(Bun.file("public/rafig-approved-logo-192.jpg"), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } }))
   .get("/rafig-logo.svg", () => new Response(Bun.file("public/rafig-approved-logo.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
+  .get("/rafig-approved-logo.svg", () => new Response(Bun.file("public/rafig-approved-logo.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
   .get("/rafig-final-logo-20260908.svg", () => new Response(Bun.file("public/rafig-approved-logo.svg"), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" } }))
   .get("/manifest.webmanifest", () => new Response(Bun.file("public/manifest.webmanifest"), { headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-store" } }))
   .get("/sw.js", () => new Response(Bun.file("public/sw.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
