@@ -60,7 +60,11 @@ Obtain permission for operational WhatsApp communications. Marketing/other categ
 
 Every assignment should contain: request ID, parties, service type, location, schedule, start/end dates, compensation, platform fee if applicable, cancellation terms, emergency/escalation contact, provider verification status, and approval timestamps.
 
-## 7. Contract status workflow
+## 7. Partner Goodwill Advertising Clause
+
+Following the conclusion and activation of an agreement with a participating laboratory, medical-equipment sales institution, medical imaging center, or physiotherapy clinic, RAFIQ shall provide one promotional listing/advertisement for that institution, center, or clinic on the RAFIQ platform **at no financial charge** as a goodwill initiative. The complimentary listing remains available throughout the period in which the partner remains committed to and compliant with the agreement concluded with RAFIQ. The exact content, placement, duration, and platform presentation are subject to RAFIQ's administrative and technical standards and the applicable agreement. The listing does not constitute an endorsement, certification, exclusivity arrangement, or guarantee of services unless expressly stated in a separately signed agreement.
+
+## 8. Contract status workflow
 
 Draft → Legal Review → Approved Template → Generated for Parties → Human Review → Signed/Accepted → Active → Completed/Terminated → Archived according to retention policy.
 
