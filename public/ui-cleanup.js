@@ -1,93 +1,75 @@
 (() => {
   const run = () => {
-    // Remove duplicate hero WhatsApp links only; keep the primary action buttons.
-    document.querySelectorAll('.cta a[href*="wa.me"]').forEach(el => el.remove());
+    // Final RAFIQ layout: no duplicate hero controls; bottom application buttons remain.
+    document.querySelectorAll('.hero .hero-logo, .hero .cta, .hero .status').forEach(el => el.remove());
+    document.querySelectorAll('.rafig-system-status, #rafig-cv-pricing, #rafig-care-pricing').forEach(el => el.remove());
 
-    // Use the approved vector logo everywhere for crisp rendering.
-    document.querySelectorAll('img[alt*="RAFIQ" i], img[alt*="رفيق"], img[src*="rafig-approved-logo"], .hero-logo, .brand img').forEach(img => {
-      img.src = '/rafig-logo.svg?v=29';
+    const headerInner = document.querySelector('.header-inner');
+    const brand = document.querySelector('.brand');
+    const lang = document.querySelector('.lang');
+    if (headerInner && brand && lang) {
+      headerInner.style.cssText = 'max-width:none;width:100%;padding:7px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;direction:rtl';
+      brand.style.cssText = 'order:2;display:flex;align-items:center;gap:9px;margin-left:0;margin-right:auto';
+      lang.style.cssText = 'order:1;display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:0';
+    }
+
+    // Restore the approved RAFIQ logo asset supplied for the project; never substitute a new design.
+    document.querySelectorAll('img[alt*="RAFIQ" i], img[alt*="رفيق"], img[src*="rafig-approved-logo"], .brand img').forEach(img => {
+      img.src = '/rafig-approved-logo.svg?v=32';
       img.removeAttribute('srcset');
+      img.removeAttribute('width');
+      img.removeAttribute('height');
       img.style.objectFit = 'contain';
       img.style.imageRendering = 'auto';
     });
 
-    // One status button only: remove any injected duplicate from older builds.
-    document.querySelectorAll('.rafig-system-status').forEach(el => el.remove());
-
-    const style = document.createElement('style');
-    style.id = 'rafig-ui-final-fixes';
-    style.textContent = `
-      header .header-inner{display:flex;align-items:center;justify-content:space-between}
-      header .brand{order:2;margin-left:0;margin-right:auto}
-      header .lang{order:1;margin-right:0;margin-left:auto}
-      header .brand img{width:58px;height:58px}
-      .cta,.forms,.cards{align-items:stretch}
-      .cta .btn,.form-card .btn,.panel .btn{min-height:48px;line-height:1.25;white-space:normal}
-      .cta .btn{flex:1 1 210px;max-width:280px}
-      .forms .form-card{min-width:0}
-      .forms .form-card .btn{margin-top:auto}
-      @media(max-width:700px){
-        .header-inner{padding:7px 10px}
-        header .lang{order:1;margin-left:0;margin-right:0}
-        header .brand{order:2;margin-left:0;margin-right:0}
-        .lang select{max-width:125px}
-        header .brand img{width:52px;height:52px}
-        .cta{gap:9px}.cta .btn{max-width:none;width:100%}
-        .forms{gap:12px}.form-card{padding:16px}.panel{padding:16px}
-        .hero-logo{width:min(330px,84vw);max-height:330px}
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Financial-only Whish number: never expose it as a customer WhatsApp action.
-    document.querySelectorAll('a[href*="wa.me/96170600157"], a[href*="wa.me/96170600157?"]').forEach(link => {
-      const replacement = document.createElement('span');
-      replacement.className = link.className || 'phone';
-      replacement.dir = 'ltr';
-      replacement.textContent = '+961 70 600 157';
-      link.replaceWith(replacement);
-    });
-
-    // CV pricing.
-    const formsSection = document.querySelector('.forms');
-    if (formsSection && !document.getElementById('rafig-cv-pricing')) {
-      const section = document.createElement('section');
-      section.id = 'rafig-cv-pricing';
-      section.style.cssText = 'margin:18px 0;padding:20px;border:1px solid var(--line);border-radius:20px;background:#fffaf0';
-      section.innerHTML = '<div class="section-title" style="margin-top:0"><h2>قائمة أسعار خدمة CV الاحترافي</h2><p>السعر واضح قبل بدء تعبئة الطلب.</p></div><div class="card" style="max-width:760px;margin:auto;text-align:right"><h3 style="color:var(--green);margin-top:0">CV احترافي — 20$</h3><ul class="benefit-list"><li>إعداد CV احترافي باللغة العربية والإنجليزية.</li><li>التسليم بصيغة PDF + Word.</li><li>التسليم خلال مدة أقصاها 24 ساعة بعد تأكيد الدفع والمراجعة الإدارية.</li><li>الدفع عبر Whish Money.</li><li>إثبات الدفع مطلوب عند تقديم طلب الـCV.</li></ul></div>';
-      formsSection.parentNode.insertBefore(section, formsSection.nextSibling);
-    }
-
-    // Care and nursing pricing.
-    const careAnchor = document.querySelector('#care');
-    if (careAnchor && !document.getElementById('rafig-care-pricing')) {
-      const section = document.createElement('section');
-      section.id = 'rafig-care-pricing';
-      section.style.cssText = 'margin:18px 0;padding:20px;border:1px solid var(--line);border-radius:20px;background:#effaf5';
-      section.innerHTML = '<div class="section-title" style="margin-top:0"><h2>قائمة أسعار خدمات الرعاية والتمريض</h2><p>الأسعار الأساسية المتفق عليها، وتُحدد القيمة النهائية حسب الحالة والخدمات والاتفاق.</p></div><div class="cards" style="grid-template-columns:repeat(3,minmax(0,1fr))"><article class="card"><h3>رعاية مسن — 11 ساعة</h3><p><strong>30$–35$ يوميًا</strong><br>دوام نهاري أو ليلي.</p></article><article class="card"><h3>رعاية مسن — 24 ساعة</h3><p><strong>50$–55$ يوميًا</strong><br>أو <strong>45$ يوميًا</strong> للترتيب الأسبوعي المستمر.</p></article><article class="card"><h3>تمريض / رعاية طبية — 11 ساعة</h3><p><strong>40$–50$</strong><br>بحسب الحالة والخدمات الطبية المطلوبة.</p></article></div>';
-      careAnchor.parentNode.insertBefore(section, careAnchor.nextSibling);
-    }
-
-    // Partner goodwill commitment.
-    const main = document.querySelector('main');
-    if (main && !document.getElementById('rafig-partner-goodwill')) {
-      const notice = document.createElement('section');
-      notice.id = 'rafig-partner-goodwill';
-      notice.style.cssText = 'margin:20px 0;padding:18px 20px;border:1px solid #b9e4d1;border-radius:18px;background:#effaf5;line-height:1.9;text-align:center';
-      notice.innerHTML = '<h2 style="margin:0 0 8px;color:var(--green);font-size:22px">مبادرة RAFIQ للشركاء</h2><p style="margin:0;color:var(--dark)">بعد إبرام اتفاق مع المختبرات ومؤسسات بيع المعدات الطبية ومراكز التصوير الطبي وعيادات العلاج الفيزيائي، تلتزم منصة RAFIQ بوضع إعلان تعريفي لكل مؤسسة أو مركز أو عيادة على المنصة <strong>دون أي مقابل مالي</strong>، كبادرة حسن نية وطيلة فترة الالتزام بالاتفاقات المبرمة مع المنصة، وفق شروط الاتفاق ومراجعة الإدارة. لا يُعد هذا الإعلان اعتمادًا أو ضمانًا للخدمة أو حصريةً ما لم ينص اتفاق مكتوب على ذلك.</p>';
-      main.appendChild(notice);
-    }
-
-    // Change greeting once per 24-hour calendar day; it does not rotate on every page refresh.
+    // One greeting per 24 hours, determined by Beirut calendar day.
     const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
     const title = document.querySelector('.hero h1');
     if (title) {
       const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Beirut', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
       let index = 0;
       for (let i = 0; i < dayKey.length; i++) index = (index * 31 + dayKey.charCodeAt(i)) % greetings.length;
-      const greeting = greetings[index];
-      title.innerHTML = greeting.replace('RAFIQ', '<span>RAFIQ</span>');
+      title.innerHTML = greetings[index].replace('RAFIQ', '<span>RAFIQ</span>');
     }
+
+    // Prices live in their designated service/request panels, not as standalone blocks.
+    const cvPanel = document.getElementById('panel-cv');
+    if (cvPanel && !cvPanel.querySelector('.rafig-inline-cv-price')) {
+      const box = document.createElement('div');
+      box.className = 'notice rafig-inline-cv-price';
+      box.innerHTML = '<strong>سعر CV الاحترافي: 20$</strong><br>عربي + English · PDF + Word · التسليم خلال 24 ساعة كحد أقصى بعد تأكيد الدفع والمراجعة الإدارية · الدفع عبر Whish Money · إثبات الدفع مطلوب قبل إرسال الطلب.';
+      cvPanel.prepend(box);
+    }
+    const careSection = document.querySelector('#care');
+    if (careSection && !careSection.querySelector('.rafig-inline-care-price')) {
+      const box = document.createElement('div');
+      box.className = 'notice rafig-inline-care-price';
+      box.style.cssText = 'grid-column:1/-1;margin-top:4px;text-align:center;border-right-color:var(--green)';
+      box.innerHTML = '<strong>الأسعار الأساسية:</strong> رعاية مسن 11 ساعة <strong>30$–35$</strong> يوميًا · رعاية مسن 24 ساعة <strong>50$–55$</strong> يوميًا أو <strong>45$</strong> للترتيب الأسبوعي المستمر · تمريض/رعاية طبية 11 ساعة <strong>40$–50$</strong> حسب الحالة والخدمات.';
+      careSection.appendChild(box);
+    }
+
+    // Financial-only Whish number is text, never a WhatsApp CTA.
+    document.querySelectorAll('a[href*="wa.me/96170600157"],a[href*="wa.me/96170600157?"]').forEach(link => {
+      const span = document.createElement('span');
+      span.className = link.className || 'phone';
+      span.dir = 'ltr';
+      span.textContent = '+961 70 600 157';
+      link.replaceWith(span);
+    });
+
+    const style = document.createElement('style');
+    style.id = 'rafig-final-ui-fixes';
+    style.textContent = `
+      .hero .hero-logo,.hero .cta,.hero .status{display:none!important}
+      .header-inner{min-height:62px}
+      .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
+      .panel .btn{min-height:48px}
+      .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.8}
+      @media(max-width:700px){.header-inner{padding:6px 9px}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero h1{font-size:27px}}
+    `;
+    document.head.appendChild(style);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
 })();
