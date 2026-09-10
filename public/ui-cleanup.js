@@ -1,59 +1,45 @@
 (() => {
   const run = () => {
-    const remove = (el) => el?.remove();
-    document.querySelectorAll('.cta a[href*="wa.me"]').forEach(remove);
-    const statusBox = document.querySelector('.hero .status');
-    const footer = document.querySelector('footer');
-    if (statusBox && footer && !footer.querySelector('.rafig-system-status')) {
-      const wrap = document.createElement('div');
-      wrap.className = 'rafig-system-status';
-      wrap.style.cssText = 'max-width:760px;margin:16px auto 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;text-align:center';
-      wrap.innerHTML = '<strong>حالة النظام</strong> <span id="rafig-footer-status">جاهزة</span> <button id="rafig-footer-status-button" class="btn outline" type="button">فحص النظام</button>';
-      footer.appendChild(wrap);
-      const sourceStatus = document.getElementById('status');
-      const targetStatus = document.getElementById('rafig-footer-status');
-      const targetButton = document.getElementById('rafig-footer-status-button');
-      targetButton.addEventListener('click', async () => {
-        targetStatus.textContent = 'جارٍ الفحص…';
-        targetButton.disabled = true;
-        try {
-          const response = await fetch('/api/status', { headers: { accept: 'application/json' }, credentials: 'same-origin' });
-          if (!response.ok) throw new Error('status request failed');
-          const data = await response.json();
-          targetStatus.textContent = data.ok ? 'النظام يعمل · الإرسال الخارجي متوقف · الموافقة البشرية مطلوبة.' : 'تعذر التحقق.';
-        } catch {
-          targetStatus.textContent = 'الخادم غير متاح حاليًا.';
-        } finally { targetButton.disabled = false; }
-      });
-      if (sourceStatus) sourceStatus.closest('.status')?.remove();
-    }
+    // Remove duplicate hero WhatsApp links only; keep the primary action buttons.
+    document.querySelectorAll('.cta a[href*="wa.me"]').forEach(el => el.remove());
 
-    // Approved RAFIQ vector logo. The server exposes it as /rafig-logo.svg.
+    // Use the approved vector logo everywhere for crisp rendering.
     document.querySelectorAll('img[alt*="RAFIQ" i], img[alt*="رفيق"], img[src*="rafig-approved-logo"], .hero-logo, .brand img').forEach(img => {
-      img.src = '/rafig-logo.svg?v=28';
+      img.src = '/rafig-logo.svg?v=29';
       img.removeAttribute('srcset');
-      img.removeAttribute('width');
-      img.removeAttribute('height');
       img.style.objectFit = 'contain';
       img.style.imageRendering = 'auto';
     });
 
-    // Stable, touch-friendly button layout inside the app.
+    // One status button only: remove any injected duplicate from older builds.
+    document.querySelectorAll('.rafig-system-status').forEach(el => el.remove());
+
     const style = document.createElement('style');
     style.id = 'rafig-ui-final-fixes';
     style.textContent = `
+      header .header-inner{display:flex;align-items:center;justify-content:space-between}
+      header .brand{order:2;margin-left:0;margin-right:auto}
+      header .lang{order:1;margin-right:0;margin-left:auto}
+      header .brand img{width:58px;height:58px}
       .cta,.forms,.cards{align-items:stretch}
       .cta .btn,.form-card .btn,.panel .btn{min-height:48px;line-height:1.25;white-space:normal}
       .cta .btn{flex:1 1 210px;max-width:280px}
       .forms .form-card{min-width:0}
       .forms .form-card .btn{margin-top:auto}
-      button:disabled{opacity:.6;cursor:wait}
-      @media(max-width:700px){.cta{gap:9px}.cta .btn{max-width:none;width:100%}.forms{gap:12px}.form-card{padding:16px}.panel{padding:16px}.brand img{width:54px;height:54px}.hero-logo{width:min(330px,84vw);max-height:330px}}
-      @media(min-width:701px) and (max-width:980px){.forms .form-card:last-child{grid-column:1/-1;max-width:50%;margin-inline:auto;width:100%}}
+      @media(max-width:700px){
+        .header-inner{padding:7px 10px}
+        header .lang{order:1;margin-left:0;margin-right:0}
+        header .brand{order:2;margin-left:0;margin-right:0}
+        .lang select{max-width:125px}
+        header .brand img{width:52px;height:52px}
+        .cta{gap:9px}.cta .btn{max-width:none;width:100%}
+        .forms{gap:12px}.form-card{padding:16px}.panel{padding:16px}
+        .hero-logo{width:min(330px,84vw);max-height:330px}
+      }
     `;
     document.head.appendChild(style);
 
-    // Whish number is financial-only.
+    // Financial-only Whish number: never expose it as a customer WhatsApp action.
     document.querySelectorAll('a[href*="wa.me/96170600157"], a[href*="wa.me/96170600157?"]').forEach(link => {
       const replacement = document.createElement('span');
       replacement.className = link.className || 'phone';
@@ -61,12 +47,8 @@
       replacement.textContent = '+961 70 600 157';
       link.replaceWith(replacement);
     });
-    document.querySelectorAll('.contact.finance').forEach(card => {
-      const blocks = [...card.querySelectorAll('div')].filter(x => !x.classList.contains('phone'));
-      if (blocks[0]) blocks[0].textContent = 'هذا الرقم مخصص للتحويلات والأمور المالية عبر Whish Money فقط، وليس للمراسلات أو تشغيل وكيل RAFIQ.';
-    });
 
-    // Separate, complete CV price list.
+    // CV pricing.
     const formsSection = document.querySelector('.forms');
     if (formsSection && !document.getElementById('rafig-cv-pricing')) {
       const section = document.createElement('section');
@@ -76,7 +58,7 @@
       formsSection.parentNode.insertBefore(section, formsSection.nextSibling);
     }
 
-    // Separate, complete care/nursing price list.
+    // Care and nursing pricing.
     const careAnchor = document.querySelector('#care');
     if (careAnchor && !document.getElementById('rafig-care-pricing')) {
       const section = document.createElement('section');
@@ -96,12 +78,15 @@
       main.appendChild(notice);
     }
 
+    // Change greeting once per 24-hour calendar day; it does not rotate on every page refresh.
     const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
     const title = document.querySelector('.hero h1');
     if (title) {
-      const day = Math.floor(Date.now() / 86400000);
-      const greeting = greetings[((day % greetings.length) + greetings.length) % greetings.length];
-      title.innerHTML = `${greeting.replace('RAFIQ', '<span>RAFIQ</span>')}`;
+      const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Beirut', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      let index = 0;
+      for (let i = 0; i < dayKey.length; i++) index = (index * 31 + dayKey.charCodeAt(i)) % greetings.length;
+      const greeting = greetings[index];
+      title.innerHTML = greeting.replace('RAFIQ', '<span>RAFIQ</span>');
     }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
