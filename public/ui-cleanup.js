@@ -1,6 +1,6 @@
 (() => {
   const run = () => {
-    // Final RAFIQ layout: no duplicate hero controls; bottom application buttons remain.
+    // Final RAFIQ layout: remove duplicate hero controls; keep the bottom application buttons.
     document.querySelectorAll('.hero .hero-logo, .hero .cta, .hero .status').forEach(el => el.remove());
     document.querySelectorAll('.rafig-system-status, #rafig-cv-pricing, #rafig-care-pricing').forEach(el => el.remove());
 
@@ -13,9 +13,9 @@
       lang.style.cssText = 'order:1;display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:0';
     }
 
-    // Restore the approved RAFIQ logo asset supplied for the project; never substitute a new design.
+    // IMPORTANT: use the approved uploaded RAFIQ image asset, not the older SVG substitute.
     document.querySelectorAll('img[alt*="RAFIQ" i], img[alt*="رفيق"], img[src*="rafig-approved-logo"], .brand img').forEach(img => {
-      img.src = '/rafig-approved-logo.svg?v=32';
+      img.src = '/rafig-approved-logo.jpg?v=40';
       img.removeAttribute('srcset');
       img.removeAttribute('width');
       img.removeAttribute('height');
@@ -23,7 +23,7 @@
       img.style.imageRendering = 'auto';
     });
 
-    // One greeting per 24 hours, determined by Beirut calendar day.
+    // One greeting per Beirut calendar day (24-hour rotation).
     const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
     const title = document.querySelector('.hero h1');
     if (title) {
@@ -33,14 +33,18 @@
       title.innerHTML = greetings[index].replace('RAFIQ', '<span>RAFIQ</span>');
     }
 
-    // Prices live in their designated service/request panels, not as standalone blocks.
+    // CV offer must be visible inside the CV request panel before the form is used.
     const cvPanel = document.getElementById('panel-cv');
-    if (cvPanel && !cvPanel.querySelector('.rafig-inline-cv-price')) {
+    if (cvPanel) {
+      const old = cvPanel.querySelectorAll('.rafig-inline-cv-price');
+      old.forEach(el => el.remove());
       const box = document.createElement('div');
       box.className = 'notice rafig-inline-cv-price';
-      box.innerHTML = '<strong>سعر CV الاحترافي: 20$</strong><br>عربي + English · PDF + Word · التسليم خلال 24 ساعة كحد أقصى بعد تأكيد الدفع والمراجعة الإدارية · الدفع عبر Whish Money · إثبات الدفع مطلوب قبل إرسال الطلب.';
-      cvPanel.prepend(box);
+      box.innerHTML = '<strong>عرض CV الاحترافي — 20$</strong><br>إعداد CV احترافي <strong>بالعربية + English</strong> وتسليمه بصيغتي <strong>PDF + Word</strong>.<br>التسليم خلال <strong>24 ساعة كحد أقصى</strong> بعد تأكيد الدفع والمراجعة الإدارية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع (صورة الإيصال أو رقم التحويل) مطلوب قبل إرسال الطلب.';
+      const heading = cvPanel.querySelector('h3');
+      if (heading) heading.insertAdjacentElement('afterend', box); else cvPanel.prepend(box);
     }
+
     const careSection = document.querySelector('#care');
     if (careSection && !careSection.querySelector('.rafig-inline-care-price')) {
       const box = document.createElement('div');
@@ -66,7 +70,7 @@
       .header-inner{min-height:62px}
       .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
       .panel .btn{min-height:48px}
-      .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.8}
+      .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
       @media(max-width:700px){.header-inner{padding:6px 9px}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero h1{font-size:27px}}
     `;
     document.head.appendChild(style);
