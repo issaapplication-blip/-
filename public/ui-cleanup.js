@@ -1,11 +1,8 @@
 (() => {
   const run = () => {
-    // Final RAFIQ home layout: keep the approved large center logo; remove only duplicate hero controls.
     document.querySelectorAll('.hero .cta, .hero .status').forEach(el => el.remove());
     document.querySelectorAll('.rafig-system-status, #rafig-cv-pricing, #rafig-care-pricing').forEach(el => el.remove());
 
-    // Header: small approved logo at the far right, language selector at the far left.
-    // Do not replace logo assets after page load: the approved JPG in index.html is authoritative.
     const headerInner = document.querySelector('.header-inner');
     const brand = document.querySelector('.brand');
     const lang = document.querySelector('.lang');
@@ -15,7 +12,17 @@
       lang.style.cssText = 'order:2;display:flex;align-items:center;gap:6px;margin:0';
     }
 
-    // One greeting per Beirut calendar day (24-hour rotation).
+    const logoUrl = '/rafig-approved-logo-2048.png?v=17';
+    document.querySelectorAll('.brand img, .hero-logo').forEach(img => {
+      img.src = logoUrl;
+      img.removeAttribute('srcset');
+      img.loading = 'eager';
+      img.decoding = 'async';
+    });
+    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
+      link.href = '/rafig-approved-logo-512.png?v=17';
+    });
+
     const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
     const title = document.querySelector('.hero h1');
     if (title) {
@@ -25,13 +32,12 @@
       title.innerHTML = greetings[index].replace('RAFIQ', '<span>RAFIQ</span>');
     }
 
-    // CV offer remains inside the CV request panel before the form.
     const cvPanel = document.getElementById('panel-cv');
     if (cvPanel) {
       cvPanel.querySelectorAll('.rafig-inline-cv-price').forEach(el => el.remove());
       const box = document.createElement('div');
       box.className = 'notice rafig-inline-cv-price';
-      box.innerHTML = '<strong>عرض CV الاحترافي — 20$</strong><br>إعداد CV احترافي <strong>بالعربية + English</strong> وتسليمه بصيغتي <strong>PDF + Word</strong>.<br>التسليم خلال <strong>24 ساعة كحد أقصى</strong> بعد تأكيد الدفع والمراجعة الإدارية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع (صورة الإيصال أو رقم التحويل) مطلوب قبل إرسال الطلب.';
+      box.innerHTML = '<strong>أسعار CV + Cover Letter الاحترافية</strong><br>لغتان: <strong>60$</strong> · 3 لغات: <strong>90$</strong> · 4 لغات: <strong>120$</strong> · كل لغة إضافية: <strong>30$</strong>.<br>التسليم خلال <strong>24 ساعة كحد أقصى</strong> بعد تأكيد الدفع والمراجعة الإدارية، بصيغتي <strong>PDF + Word</strong>.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع مطلوب قبل اعتماد الطلب.';
       const heading = cvPanel.querySelector('h3');
       if (heading) heading.insertAdjacentElement('afterend', box); else cvPanel.prepend(box);
     }
@@ -40,12 +46,11 @@
     if (careSection && !careSection.querySelector('.rafig-inline-care-price')) {
       const box = document.createElement('div');
       box.className = 'notice rafig-inline-care-price';
-      box.style.cssText = 'grid-column:1/-1;margin-top:4px;text-align:center;border-right-color:var(--green)';
+      box.style.cssText = 'grid-column:1/-1;margin-top:4px;text-align:center;border-right-color:var(--g)';
       box.innerHTML = '<strong>الأسعار الأساسية:</strong> رعاية مسن 11 ساعة <strong>30$–35$</strong> يوميًا · رعاية مسن 24 ساعة <strong>50$–55$</strong> يوميًا أو <strong>45$</strong> للترتيب الأسبوعي المستمر · تمريض/رعاية طبية 11 ساعة <strong>40$–50$</strong> حسب الحالة والخدمات.';
       careSection.appendChild(box);
     }
 
-    // Financial-only Whish number is text, never a WhatsApp CTA.
     document.querySelectorAll('a[href*="wa.me/96170600157"],a[href*="wa.me/96170600157?"]').forEach(link => {
       const span = document.createElement('span');
       span.className = link.className || 'phone';
@@ -60,10 +65,12 @@
       .hero .cta,.hero .status{display:none!important}
       .header-inner{min-height:62px}
       .brand img{width:58px!important;height:58px!important;object-fit:contain!important}
+      .hero-logo{width:min(420px,88vw)!important;max-height:none!important}
       .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
       .panel .btn{min-height:48px}
       .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
-      @media(max-width:700px){.header-inner{padding:6px 9px}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(330px,82vw)!important}.hero h1{font-size:27px}}
+      .rafig-install-app{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:8px 12px;border:1px solid var(--g);border-radius:12px;background:var(--g);color:#fff;font:800 13px system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(8,127,88,.16)}
+      @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)!important}.hero h1{font-size:27px}.rafig-install-app{font-size:12px;min-height:40px;padding:7px 10px}}
     `;
     document.head.appendChild(style);
   };
