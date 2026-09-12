@@ -12,7 +12,7 @@
       lang.style.cssText = 'order:2;display:flex;align-items:center;gap:6px;margin:0';
     }
 
-    const logoUrl = '/rafig-approved-logo-2048.png?v=17';
+    const logoUrl = '/rafig-approved-logo.jpg?v=17';
     document.querySelectorAll('.brand img, .hero-logo').forEach(img => {
       img.src = logoUrl;
       img.removeAttribute('srcset');
@@ -20,7 +20,7 @@
       img.decoding = 'async';
     });
     document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = '/rafig-approved-logo-512.png?v=17';
+      link.href = '/rafig-approved-logo-512.jpg?v=17';
     });
 
     const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
