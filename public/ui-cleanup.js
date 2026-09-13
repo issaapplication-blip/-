@@ -35,7 +35,7 @@
         cvPanel.querySelectorAll('.rafig-inline-cv-price').forEach(el => el.remove());
         const box = document.createElement('div');
         box.className = 'notice rafig-inline-cv-price';
-        box.innerHTML = '<strong>خدمة CV + Cover Letter — عرض الإطلاق الأول لمدة 15 يومًا</strong><br><strong>لغتان: 60$</strong> · <strong>3 لغات: 90$</strong> · <strong>4 لغات: 120$</strong>.<br>كل لغة إضافية بعد اللغتين الأساسيتين: <strong>+30$</strong> وتشمل CV + Cover Letter معًا.<br>الخدمة تشمل: صياغة احترافية ومتوافقة مع ATS، PDF وWord، العربية والإنكليزية، والفرنسية والإيطالية عند الطلب، مع عدم اختلاق أي خبرة أو شهادة أو تاريخ أو مهارة ومراجعة الترجمة والمعنى قبل اعتماد النسخة النهائية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع مطلوب قبل اعتماد الطلب.';
+        box.innerHTML = '<strong>CV + Cover Letter — عرض الإطلاق الأول لمدة 15 يومًا</strong><br><strong>الباقة الأساسية: العربية + الإنكليزية — 60$</strong><br>تشمل الباقة: <strong>CV باللغة العربية + CV باللغة الإنكليزية + Cover Letter باللغة العربية + Cover Letter باللغة الإنكليزية</strong>، مع تسليم الملفات بصيغتي <strong>PDF وWord</strong>.<br><strong>كل لغة إضافية: +30$</strong> وتشمل <strong>CV + Cover Letter باللغة الإضافية</strong> مع تسليم النسخ بصيغتي <strong>PDF وWord</strong>، بالإضافة إلى الباقة الأساسية العربية + الإنكليزية.<br><strong>3 لغات: 90$ · 4 لغات: 120$</strong>.<br>الخدمة تشمل صياغة احترافية ومتوافقة مع ATS، وعدم اختلاق أي خبرة أو شهادة أو تاريخ أو مهارة، مع مراجعة الترجمة والمعنى قبل اعتماد النسخة النهائية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع مطلوب قبل اعتماد الطلب.';
         const heading = cvPanel.querySelector('h3');
         if (heading) heading.insertAdjacentElement('afterend', box); else cvPanel.prepend(box);
       }
