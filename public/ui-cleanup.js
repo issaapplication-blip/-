@@ -1,9 +1,6 @@
 (() => {
   const run = () => {
     try {
-      document.querySelectorAll('.hero .cta, .hero .status').forEach(el => el.remove());
-      document.querySelectorAll('.rafig-system-status, #rafig-cv-pricing, #rafig-care-pricing').forEach(el => el.remove());
-
       const headerInner = document.querySelector('.header-inner');
       const brand = document.querySelector('.brand');
       const lang = document.querySelector('.lang');
@@ -63,14 +60,15 @@
       const style = document.createElement('style');
       style.id = 'rafig-final-ui-fixes';
       style.textContent = `
-        .hero .cta,.hero .status{display:none!important}
         .header-inner{min-height:62px}
         .brand img{width:58px!important;height:58px!important;object-fit:contain!important}
         .hero-logo{width:min(420px,88vw)!important;max-height:none!important}
+        .hero .cta{display:flex!important;visibility:visible!important;opacity:1!important}
+        .hero .status{display:block!important;visibility:visible!important;opacity:1!important}
         .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
         .panel .btn{min-height:48px}
         .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
-        @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)}.hero h1{font-size:27px}}
+        @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)}.hero h1{font-size:27px}.hero .cta{flex-direction:column}.hero .cta .btn{width:100%}}
       `;
       document.head.appendChild(style);
     } catch (error) {
