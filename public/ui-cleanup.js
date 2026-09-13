@@ -13,7 +13,7 @@
         lang.style.cssText = 'order:2;display:flex;align-items:center;gap:6px;margin:0';
       }
 
-      const logoUrl = '/rafig-approved-logo.jpg?v=18';
+      const logoUrl = '/rafig-approved-logo.jpg?v=19';
       document.querySelectorAll('.brand img, .hero-logo').forEach(img => {
         img.src = logoUrl;
         img.removeAttribute('srcset');
@@ -21,7 +21,7 @@
         img.decoding = 'async';
       });
       document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
-        link.href = '/rafig-approved-logo-512.jpg?v=18';
+        link.href = '/rafig-approved-logo-512.jpg?v=19';
       });
 
       const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
@@ -38,11 +38,9 @@
         cvPanel.querySelectorAll('.rafig-inline-cv-price').forEach(el => el.remove());
         const box = document.createElement('div');
         box.className = 'notice rafig-inline-cv-price';
-        box.innerHTML = '<strong>خدمة CV + Cover Letter الاحترافية: 20$</strong><br>العربية + English، بصيغتي <strong>PDF + Word</strong>.<br>التسليم المستهدف خلال <strong>24 ساعة</strong> بعد تأكيد الدفع واستكمال البيانات والمراجعة الإدارية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع مطلوب قبل اعتماد الطلب.';
+        box.innerHTML = '<strong>خدمة CV + Cover Letter — عرض الإطلاق الأول لمدة 15 يومًا</strong><br><strong>لغتان: 60$</strong> · <strong>3 لغات: 90$</strong> · <strong>4 لغات: 120$</strong>.<br>كل لغة إضافية بعد اللغتين الأساسيتين: <strong>+30$</strong> وتشمل CV + Cover Letter معًا.<br>الخدمة تشمل: صياغة احترافية ومتوافقة مع ATS، PDF وWord، العربية والإنكليزية، والفرنسية والإيطالية عند الطلب، مع عدم اختلاق أي خبرة أو شهادة أو تاريخ أو مهارة ومراجعة الترجمة والمعنى قبل اعتماد النسخة النهائية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع مطلوب قبل اعتماد الطلب.';
         const heading = cvPanel.querySelector('h3');
         if (heading) heading.insertAdjacentElement('afterend', box); else cvPanel.prepend(box);
-
-        cvPanel.querySelectorAll('.pricing').forEach(el => el.remove());
       }
 
       const careSection = document.querySelector('#care');
@@ -72,7 +70,7 @@
         .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
         .panel .btn{min-height:48px}
         .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
-        @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)!important}.hero h1{font-size:27px}}
+        @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)}.hero h1{font-size:27px}}
       `;
       document.head.appendChild(style);
     } catch (error) {
