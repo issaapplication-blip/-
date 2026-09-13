@@ -17,13 +17,13 @@
 
   const mount = () => {
     if (document.getElementById('rafig-install-app') || isStandalone) return;
-    const headerInner = document.querySelector('.header-inner') || document.querySelector('header');
-    if (!headerInner) return;
+    const target = document.querySelector('.hero .cta') || document.querySelector('.header-inner') || document.querySelector('header');
+    if (!target) return;
 
     const button = document.createElement('button');
     button.id = 'rafig-install-app';
     button.type = 'button';
-    button.className = 'rafig-install-app';
+    button.className = 'btn gold rafig-install-app';
     button.textContent = '📲 تثبيت التطبيق';
     button.setAttribute('aria-label', 'تثبيت تطبيق RAFIQ على الجهاز');
     button.addEventListener('click', async () => {
@@ -35,14 +35,13 @@
       }
       alert(instructions());
     });
-    headerInner.appendChild(button);
+    target.appendChild(button);
 
     const style = document.createElement('style');
     style.id = 'rafig-install-style';
     style.textContent = `
-      .rafig-install-app{min-height:42px;padding:9px 14px;border:1px solid #087f58;border-radius:12px;background:#087f58;color:#fff;font:700 14px/1.2 system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-      .rafig-install-app:hover{opacity:.92}
-      @media(max-width:700px){.rafig-install-app{font-size:13px;padding:8px 10px;min-height:40px}}
+      .rafig-install-app{min-height:46px!important}
+      @media(max-width:700px){.rafig-install-app{width:100%!important}}
     `;
     document.head.appendChild(style);
   };
