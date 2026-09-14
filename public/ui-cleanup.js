@@ -10,18 +10,25 @@
         lang.style.cssText = 'order:2;display:flex;align-items:center;gap:6px;margin:0';
       }
 
-      // Use the approved SVG for crisp, resolution-independent rendering.
-      // Do not replace it with the old JPG or remove responsive image sources.
-      const logoUrl = '/rafig-approved-logo.svg?v=20';
+      const logoUrl = '/rafig-approved-logo.svg?v=21';
       document.querySelectorAll('.brand img, .hero-logo').forEach(img => {
         img.src = logoUrl;
         img.removeAttribute('srcset');
         img.loading = 'eager';
         img.decoding = 'async';
       });
-      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
-        link.href = logoUrl;
-      });
+      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => { link.href = logoUrl; });
+
+      // Keep one copy of each hero action. This prevents duplicate controls after reload/cache restores.
+      const cta = document.querySelector('.hero .cta');
+      if (cta) {
+        const seen = new Set();
+        cta.querySelectorAll('a,button').forEach(el => {
+          const key = `${el.tagName}|${el.getAttribute('href') || ''}|${(el.textContent || '').trim()}`;
+          if (seen.has(key)) el.remove(); else seen.add(key);
+        });
+      }
+      document.querySelectorAll('#rafig-install-app').forEach((el, i) => { if (i > 0) el.remove(); });
 
       const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
       const title = document.querySelector('.hero h1');
@@ -72,6 +79,7 @@
         .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
         @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)}.hero h1{font-size:27px}.hero .cta{flex-direction:column}.hero .cta .btn{width:100%}}
       `;
+      document.getElementById('rafig-final-ui-fixes')?.remove();
       document.head.appendChild(style);
     } catch (error) {
       console.warn('RAFIQ UI enhancement skipped:', error);
