@@ -1,4 +1,7 @@
 (() => {
+  if (window.__RAFIQ_UI_CLEANUP_V1__) return;
+  window.__RAFIQ_UI_CLEANUP_V1__ = true;
+
   const run = () => {
     try {
       const headerInner = document.querySelector('.header-inner');
@@ -10,25 +13,33 @@
         lang.style.cssText = 'order:2;display:flex;align-items:center;gap:6px;margin:0';
       }
 
-      const logoUrl = '/rafig-approved-logo.svg?v=21';
+      // The approved RAFIQ artwork is the uploaded high-resolution 512px asset.
+      // Do not substitute the generated SVG approximation.
+      const logoUrl = '/rafig-approved-logo-512.jpg?v=22';
       document.querySelectorAll('.brand img, .hero-logo').forEach(img => {
         img.src = logoUrl;
         img.removeAttribute('srcset');
         img.loading = 'eager';
         img.decoding = 'async';
       });
-      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => { link.href = logoUrl; });
+      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
+        link.href = logoUrl;
+        link.type = 'image/jpeg';
+      });
 
-      // Keep one copy of each hero action. This prevents duplicate controls after reload/cache restores.
+      // Remove duplicate hero actions by semantic action, not by raw text only.
       const cta = document.querySelector('.hero .cta');
       if (cta) {
         const seen = new Set();
-        cta.querySelectorAll('a,button').forEach(el => {
-          const key = `${el.tagName}|${el.getAttribute('href') || ''}|${(el.textContent || '').trim()}`;
-          if (seen.has(key)) el.remove(); else seen.add(key);
+        cta.querySelectorAll(':scope > a, :scope > button').forEach(el => {
+          const href = el.getAttribute('href') || '';
+          const action = href || el.id || (el.textContent || '').trim();
+          if (seen.has(action)) el.remove(); else seen.add(action);
         });
       }
-      document.querySelectorAll('#rafig-install-app').forEach((el, i) => { if (i > 0) el.remove(); });
+      const installButtons = document.querySelectorAll('#rafig-install-app');
+      installButtons.forEach((el, i) => { if (i > 0) el.remove(); });
+      document.querySelectorAll('.rafig-install-slot').forEach((slot, i) => { if (i > 0) slot.remove(); });
 
       const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
       const title = document.querySelector('.hero h1');
@@ -40,8 +51,7 @@
       }
 
       const cvPanel = document.getElementById('panel-cv');
-      if (cvPanel) {
-        cvPanel.querySelectorAll('.rafig-inline-cv-price').forEach(el => el.remove());
+      if (cvPanel && !cvPanel.querySelector('.rafig-inline-cv-price')) {
         const box = document.createElement('div');
         box.className = 'notice rafig-inline-cv-price';
         box.innerHTML = '<strong>CV + Cover Letter — عرض الإطلاق الأول لمدة 15 يومًا</strong><br><strong>داخل العرض:</strong> CV احترافي 25$ · Cover Letter 10$ · <strong>CV + Cover Letter 35$</strong> · لغة إضافية +20$.<br><strong>خارج العرض:</strong> CV احترافي 35$ · Cover Letter 16$ · <strong>CV + Cover Letter 51$</strong> · لغة إضافية +28$.<br>الخدمة الأساسية تشمل العربية والإنكليزية مع التسليم بصيغتي <strong>PDF وWord</strong>. كل لغة إضافية تشمل <strong>CV + Cover Letter</strong> باللغة الإضافية مع PDF وWord، حسب الطلب.<br>الصياغة احترافية ومتوافقة مع ATS وقابلة للقراءة الآلية، مع تخصيص المحتوى حسب الوظيفة، ومنع اختلاق أي خبرة أو شهادة أو تاريخ أو مهارة، ومراجعة الترجمة والمعنى قبل اعتماد النسخة النهائية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع مطلوب قبل اعتماد الطلب.';
@@ -66,21 +76,22 @@
         link.replaceWith(span);
       });
 
-      const style = document.createElement('style');
-      style.id = 'rafig-final-ui-fixes';
-      style.textContent = `
-        .header-inner{min-height:62px}
-        .brand img{width:58px!important;height:58px!important;object-fit:contain!important}
-        .hero-logo{width:min(420px,88vw)!important;max-height:none!important}
-        .hero .cta{display:flex!important;visibility:visible!important;opacity:1!important}
-        .hero .status{display:block!important;visibility:visible!important;opacity:1!important}
-        .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
-        .panel .btn{min-height:48px}
-        .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
-        @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)}.hero h1{font-size:27px}.hero .cta{flex-direction:column}.hero .cta .btn{width:100%}}
-      `;
-      document.getElementById('rafig-final-ui-fixes')?.remove();
-      document.head.appendChild(style);
+      if (!document.getElementById('rafig-final-ui-fixes')) {
+        const style = document.createElement('style');
+        style.id = 'rafig-final-ui-fixes';
+        style.textContent = `
+          .header-inner{min-height:62px}
+          .brand img{width:58px!important;height:58px!important;object-fit:contain!important}
+          .hero-logo{width:min(420px,88vw)!important;max-height:none!important}
+          .hero .cta{display:flex!important;visibility:visible!important;opacity:1!important}
+          .hero .status{display:block!important;visibility:visible!important;opacity:1!important}
+          .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
+          .panel .btn{min-height:48px}
+          .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
+          @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)}.hero h1{font-size:27px}.hero .cta{flex-direction:column}.hero .cta .btn{width:100%}}
+        `;
+        document.head.appendChild(style);
+      }
     } catch (error) {
       console.warn('RAFIQ UI enhancement skipped:', error);
     }
