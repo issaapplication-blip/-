@@ -1,9 +1,8 @@
-const CACHE = "rafig-v30-safe-shell";
+const CACHE = "rafig-v31-safe-shell";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
   "/cv-payment-gate.js",
-  "/ui-cleanup.js",
   "/install-pwa.js",
   "/rafig-approved-logo.svg",
   "/rafig-approved-logo.jpg",
@@ -34,8 +33,6 @@ self.addEventListener("fetch", event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigation must always prefer the live server. This prevents a stale HTML shell
-  // from producing the previous black-screen behavior after a deployment.
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request, { cache: "no-store" })
@@ -48,7 +45,6 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Static assets: network first, then cache fallback.
   event.respondWith(
     fetch(request, { cache: "no-store" })
       .then(response => {
