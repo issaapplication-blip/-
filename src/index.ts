@@ -144,11 +144,10 @@ The post must be informative, professional, concise, and suitable for a public o
   })
   .get("/", async () => {
     const html = await Bun.file("public/index.html").text();
-    const launchScripts = `<style id="rafig-launch-fallback">.rafig-install-app{min-height:46px!important}.rafig-install-slot{display:flex;justify-content:center;margin:12px 0 2px}.rafig-install-slot .rafig-install-app{box-shadow:0 8px 24px rgba(23,55,45,.12)}@media(max-width:700px){.rafig-install-slot .rafig-install-app{width:100%}}</style><script src="/ui-cleanup.js?v=21" defer></script><script src="/install-pwa.js?v=2" defer></script>`;
+    const launchScripts = `<style id="rafig-launch-fallback">.rafig-install-app{min-height:46px!important}.rafig-install-slot{display:flex;justify-content:center;margin:12px 0 2px}.rafig-install-slot .rafig-install-app{box-shadow:0 8px 24px rgba(23,55,45,.12)}@media(max-width:700px){.rafig-install-slot .rafig-install-app{width:100%}}</style><script src="/install-pwa.js?v=3" defer></script>`;
     const injected = html.includes("</body>") ? html.replace("</body>", `${launchScripts}</body>`) : `${html}${launchScripts}`;
     return new Response(injected, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   })
-  .get("/ui-cleanup.js", () => new Response(Bun.file("public/ui-cleanup.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
   .get("/install-pwa.js", () => new Response(Bun.file("public/install-pwa.js"), { headers: { "Content-Type": "application/javascript", "Cache-Control": "no-cache" } }))
   .get("/rafig-approved-logo.jpg", () => new Response(Bun.file("public/rafig-approved-logo.jpg"), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } }))
   .get("/rafig-approved-logo-192.jpg", () => new Response(Bun.file("public/rafig-approved-logo-192.jpg"), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } }))
