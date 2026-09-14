@@ -16,16 +16,27 @@
   };
 
   const mount = () => {
-    if (document.getElementById('rafig-install-app') || isStandalone) return;
-    const target = document.querySelector('.hero .cta') || document.querySelector('.header-inner') || document.querySelector('header');
-    if (!target) return;
+    if (isStandalone) return;
+    document.querySelectorAll('#rafig-install-app').forEach((el, i) => { if (i > 0) el.remove(); });
+    if (document.getElementById('rafig-install-app')) return;
+
+    const hero = document.querySelector('.hero-card');
+    if (!hero) return;
+    let slot = document.querySelector('.rafig-install-slot');
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.className = 'rafig-install-slot';
+      const cta = hero.querySelector('.cta');
+      if (cta) cta.insertAdjacentElement('afterend', slot);
+      else hero.appendChild(slot);
+    }
 
     const button = document.createElement('button');
     button.id = 'rafig-install-app';
     button.type = 'button';
     button.className = 'btn gold rafig-install-app';
-    button.textContent = '📲 تثبيت التطبيق';
-    button.setAttribute('aria-label', 'تثبيت تطبيق RAFIQ على الجهاز');
+    button.textContent = '📲 تثبيت منصة RAFIQ';
+    button.setAttribute('aria-label', 'تثبيت منصة RAFIQ على الجهاز');
     button.addEventListener('click', async () => {
       if (deferredPrompt) {
         deferredPrompt.prompt();
@@ -35,13 +46,14 @@
       }
       alert(instructions());
     });
-    target.appendChild(button);
+    slot.appendChild(button);
 
     const style = document.createElement('style');
     style.id = 'rafig-install-style';
     style.textContent = `
-      .rafig-install-app{min-height:46px!important}
-      @media(max-width:700px){.rafig-install-app{width:100%!important}}
+      .rafig-install-slot{display:flex;justify-content:center;align-items:center;margin:12px 0 2px}
+      .rafig-install-app{min-height:48px!important;padding-inline:24px!important;font-size:15px!important;box-shadow:0 8px 24px rgba(23,55,45,.12)}
+      @media(max-width:700px){.rafig-install-slot{margin:12px 0 4px}.rafig-install-app{width:100%!important}}
     `;
     document.head.appendChild(style);
   };
@@ -54,6 +66,7 @@
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     document.getElementById('rafig-install-app')?.remove();
+    document.querySelector('.rafig-install-slot')?.remove();
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
