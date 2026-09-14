@@ -1,119 +1,72 @@
 (() => {
-  if (window.__RAFIQ_PWA_INSTALL_V2__) return;
-  window.__RAFIQ_PWA_INSTALL_V2__ = true;
+  if (window.__RAFIQ_UI_GUARD_V4__) return;
+  window.__RAFIQ_UI_GUARD_V4__ = true;
 
-  // The old PWA worker can keep a stale DOM shell alive on mobile browsers.
-  // Remove it and its caches so the next navigation always starts from Render.
+  // The PWA worker is currently retired from the initial page experience.
+  // Remove any worker/cache left by older releases so stale UI cannot return.
   try {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(reg => reg.unregister())).catch(() => {});
+      navigator.serviceWorker.getRegistrations()
+        .then(regs => Promise.all(regs.map(reg => reg.unregister())))
+        .catch(() => {});
     }
     if ('caches' in window) {
-      caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
+      caches.keys()
+        .then(keys => Promise.all(keys.filter(k => /^rafig-v/i.test(k)).map(k => caches.delete(k))))
+        .catch(() => {});
     }
   } catch (_) {}
 
-  const ua = navigator.userAgent || '';
-  const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isAndroid = /android/i.test(ua);
-  const isWindows = /windows/i.test(ua);
-  const isMac = /macintosh|mac os x/i.test(ua) && !isIOS;
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  let deferredPrompt = null;
+  const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language'];
+  const uniqueLabels = new Set([
+    'الانتساب إلى المنصة',
+    'طلب رعاية منزلية',
+    'WhatsApp — 81',
+    'تقديم طلب رعاية',
+    'الانتساب كمقدم رعاية',
+    'الانتساب كممرض/ة',
+    'الانتساب كمعالج فيزيائي',
+    'بدء الطلب',
+    'فحص النظام'
+  ]);
 
-  const instructions = () => {
-    if (isIOS) return 'على iPhone/iPad: افتح الصفحة في Safari، اضغط «مشاركة»، ثم اختر «إضافة إلى الشاشة الرئيسية». ';
-    if (isAndroid) return 'على Android: استخدم Chrome أو Edge، ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية» من قائمة المتصفح.';
-    if (isWindows) return 'على Windows: استخدم Chrome أو Edge ثم اختر «تثبيت التطبيق» من شريط العنوان أو قائمة المتصفح.';
-    if (isMac) return 'على Mac: استخدم Safari أو Chrome أو Edge، ثم اختر «Add to Dock / Install» من قائمة المتصفح حسب المتصفح.';
-    return 'إذا لم يظهر التثبيت التلقائي، افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». ';
-  };
+  function cleanDuplicates() {
+    // Fixed IDs: keep the first real control only.
+    for (const id of fixedIds) {
+      const nodes = document.querySelectorAll('#' + id.replace(/([:.])/g, '\\$1'));
+      for (let i = 1; i < nodes.length; i++) nodes[i].remove();
+    }
 
-  const removeDuplicates = () => {
-    // Fixed IDs: only one element is ever allowed for each control.
-    ['joinBtn', 'careBtn', 'status-button', 'language'].forEach(id => {
-      const nodes = document.querySelectorAll(`#${CSS.escape(id)}`);
-      nodes.forEach((el, i) => { if (i > 0) el.remove(); });
-    });
-
-    // Repeated semantic CTA labels from an old/stale DOM injection.
-    const labels = new Set([
-      'الانتساب إلى المنصة', 'طلب رعاية منزلية', 'WhatsApp — 81',
-      'تقديم طلب رعاية', 'الانتساب كمقدم رعاية', 'الانتساب كممرض/ة',
-      'الانتساب كمعالج فيزيائي', 'بدء الطلب', 'فحص النظام'
-    ]);
-    const seen = new Map();
-    document.querySelectorAll('button, a').forEach(el => {
+    // Exact semantic duplicates: keep the first control with the same label.
+    const seen = new Set();
+    document.querySelectorAll('button, a.btn').forEach(el => {
+      if (!el.isConnected) return;
       const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
-      if (!labels.has(text)) return;
-      const key = `${el.tagName}:${text}`;
-      const count = seen.get(key) || 0;
-      if (count > 0) el.remove();
-      seen.set(key, count + 1);
+      if (!uniqueLabels.has(text)) return;
+      const key = el.tagName + '|' + text;
+      if (seen.has(key)) el.remove();
+      else seen.add(key);
     });
 
-    const slots = document.querySelectorAll('.rafig-install-slot');
-    slots.forEach((slot, i) => { if (i > 0) slot.remove(); });
-    const buttons = document.querySelectorAll('#rafig-install-app');
-    buttons.forEach((el, i) => { if (i > 0) el.remove(); });
+    // Remove every legacy PWA install control. It is intentionally disabled
+    // until the main UI is completely stable.
+    document.querySelectorAll('#rafig-install-app, .rafig-install-slot').forEach(el => el.remove());
+  }
+
+  const start = () => {
+    cleanDuplicates();
+    // Catch late DOM reinsertion from an older cached runtime without using a MutationObserver.
+    let runs = 0;
+    const timer = setInterval(() => {
+      cleanDuplicates();
+      runs++;
+      if (runs >= 20) clearInterval(timer);
+    }, 250);
   };
 
-  const mount = () => {
-    removeDuplicates();
-    if (isStandalone || document.getElementById('rafig-install-app')) return;
-
-    const hero = document.querySelector('.hero-card');
-    if (!hero) return;
-    let slot = document.querySelector('.rafig-install-slot');
-    if (!slot) {
-      slot = document.createElement('div');
-      slot.className = 'rafig-install-slot';
-      const cta = hero.querySelector('.cta');
-      if (cta) cta.insertAdjacentElement('afterend', slot);
-      else hero.appendChild(slot);
-    }
-
-    const button = document.createElement('button');
-    button.id = 'rafig-install-app';
-    button.type = 'button';
-    button.className = 'btn gold rafig-install-app';
-    button.textContent = '📲 تثبيت منصة RAFIQ';
-    button.setAttribute('aria-label', 'تثبيت منصة RAFIQ على الجهاز');
-    button.addEventListener('click', async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        try { await deferredPrompt.userChoice; } catch (_) {}
-        deferredPrompt = null;
-        return;
-      }
-      alert(instructions());
-    });
-    slot.appendChild(button);
-
-    if (!document.getElementById('rafig-install-style')) {
-      const style = document.createElement('style');
-      style.id = 'rafig-install-style';
-      style.textContent = `
-        .rafig-install-slot{display:flex;justify-content:center;align-items:center;margin:12px 0 2px}
-        .rafig-install-app{min-height:48px!important;padding-inline:24px!important;font-size:15px!important;box-shadow:0 8px 24px rgba(23,55,45,.12)}
-        @media(max-width:700px){.rafig-install-slot{margin:12px 0 4px}.rafig-install-app{width:100%!important}}
-      `;
-      document.head.appendChild(style);
-    }
-    removeDuplicates();
-  };
-
-  window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault();
-    deferredPrompt = event;
-    mount();
-  });
-  window.addEventListener('appinstalled', () => {
-    deferredPrompt = null;
-    document.getElementById('rafig-install-app')?.remove();
-    document.querySelector('.rafig-install-slot')?.remove();
-  });
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
-  else mount();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
 })();
