@@ -1,8 +1,39 @@
 (() => {
-  if (window.__RAFIQ_UI_CLEANUP_V1__) return;
-  window.__RAFIQ_UI_CLEANUP_V1__ = true;
+  if (window.__RAFIQ_UI_CLEANUP_V2__) return;
+  window.__RAFIQ_UI_CLEANUP_V2__ = true;
 
-  const run = () => {
+  const logoUrl = '/rafig-approved-logo-512.jpg?v=23';
+  const normalize = value => (value || '').replace(/\s+/g, ' ').trim();
+
+  const removeRepeatedButtons = root => {
+    const scope = root || document;
+    const parents = new Set();
+    scope.querySelectorAll?.('button, a.btn, [role="button"]').forEach(el => {
+      if (el.parentElement) parents.add(el.parentElement);
+    });
+    parents.forEach(parent => {
+      const seen = new Set();
+      Array.from(parent.children).forEach(el => {
+        if (!(el.matches?.('button, a.btn, [role="button"]'))) return;
+        const key = [
+          el.tagName,
+          el.getAttribute('id') || '',
+          el.getAttribute('data-open') || '',
+          el.getAttribute('href') || '',
+          normalize(el.textContent)
+        ].join('|');
+        if (!key || key.endsWith('||||')) return;
+        if (seen.has(key)) el.remove(); else seen.add(key);
+      });
+    });
+  };
+
+  const removeRepeatedInstall = () => {
+    document.querySelectorAll('#rafig-install-app').forEach((el, i) => { if (i > 0) el.remove(); });
+    document.querySelectorAll('.rafig-install-slot').forEach((el, i) => { if (i > 0) el.remove(); });
+  };
+
+  const apply = () => {
     try {
       const headerInner = document.querySelector('.header-inner');
       const brand = document.querySelector('.brand');
@@ -13,11 +44,8 @@
         lang.style.cssText = 'order:2;display:flex;align-items:center;gap:6px;margin:0';
       }
 
-      // The approved RAFIQ artwork is the uploaded high-resolution 512px asset.
-      // Do not substitute the generated SVG approximation.
-      const logoUrl = '/rafig-approved-logo-512.jpg?v=22';
       document.querySelectorAll('.brand img, .hero-logo').forEach(img => {
-        img.src = logoUrl;
+        if (img.src !== new URL(logoUrl, location.href).href) img.src = logoUrl;
         img.removeAttribute('srcset');
         img.loading = 'eager';
         img.decoding = 'async';
@@ -27,54 +55,18 @@
         link.type = 'image/jpeg';
       });
 
-      // Remove duplicate hero actions by semantic action, not by raw text only.
       const cta = document.querySelector('.hero .cta');
       if (cta) {
         const seen = new Set();
-        cta.querySelectorAll(':scope > a, :scope > button').forEach(el => {
-          const href = el.getAttribute('href') || '';
-          const action = href || el.id || (el.textContent || '').trim();
-          if (seen.has(action)) el.remove(); else seen.add(action);
+        Array.from(cta.children).forEach(el => {
+          if (!el.matches('a,button')) return;
+          const key = [el.tagName, el.id || '', el.getAttribute('href') || '', normalize(el.textContent)].join('|');
+          if (seen.has(key)) el.remove(); else seen.add(key);
         });
       }
-      const installButtons = document.querySelectorAll('#rafig-install-app');
-      installButtons.forEach((el, i) => { if (i > 0) el.remove(); });
-      document.querySelectorAll('.rafig-install-slot').forEach((slot, i) => { if (i > 0) slot.remove(); });
 
-      const greetings = ['أهلًا بكم في RAFIQ','مرحبًا بكم في RAFIQ','يسعدنا استقبالكم في RAFIQ','أهلًا وسهلًا بكم في RAFIQ','RAFIQ يرحّب بكم اليوم','مع RAFIQ تبدأ الرعاية بثقة وأمان','نرحّب بكم اليوم في RAFIQ'];
-      const title = document.querySelector('.hero h1');
-      if (title) {
-        const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Beirut', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-        let index = 0;
-        for (let i = 0; i < dayKey.length; i++) index = (index * 31 + dayKey.charCodeAt(i)) % greetings.length;
-        title.innerHTML = greetings[index].replace('RAFIQ', '<span>RAFIQ</span>');
-      }
-
-      const cvPanel = document.getElementById('panel-cv');
-      if (cvPanel && !cvPanel.querySelector('.rafig-inline-cv-price')) {
-        const box = document.createElement('div');
-        box.className = 'notice rafig-inline-cv-price';
-        box.innerHTML = '<strong>CV + Cover Letter — عرض الإطلاق الأول لمدة 15 يومًا</strong><br><strong>داخل العرض:</strong> CV احترافي 25$ · Cover Letter 10$ · <strong>CV + Cover Letter 35$</strong> · لغة إضافية +20$.<br><strong>خارج العرض:</strong> CV احترافي 35$ · Cover Letter 16$ · <strong>CV + Cover Letter 51$</strong> · لغة إضافية +28$.<br>الخدمة الأساسية تشمل العربية والإنكليزية مع التسليم بصيغتي <strong>PDF وWord</strong>. كل لغة إضافية تشمل <strong>CV + Cover Letter</strong> باللغة الإضافية مع PDF وWord، حسب الطلب.<br>الصياغة احترافية ومتوافقة مع ATS وقابلة للقراءة الآلية، مع تخصيص المحتوى حسب الوظيفة، ومنع اختلاق أي خبرة أو شهادة أو تاريخ أو مهارة، ومراجعة الترجمة والمعنى قبل اعتماد النسخة النهائية.<br><strong>الدفع عبر Whish Money</strong>، وإثبات الدفع مطلوب قبل اعتماد الطلب.';
-        const heading = cvPanel.querySelector('h3');
-        if (heading) heading.insertAdjacentElement('afterend', box); else cvPanel.prepend(box);
-      }
-
-      const careSection = document.querySelector('#care');
-      if (careSection && !careSection.querySelector('.rafig-inline-care-price')) {
-        const box = document.createElement('div');
-        box.className = 'notice rafig-inline-care-price';
-        box.style.cssText = 'grid-column:1/-1;margin-top:4px;text-align:center;border-right-color:var(--g)';
-        box.innerHTML = '<strong>الأسعار الأساسية:</strong> رعاية مسن 11 ساعة <strong>30$–35$</strong> يوميًا · رعاية مسن 24 ساعة <strong>50$–55$</strong> يوميًا أو <strong>45$</strong> للترتيب الأسبوعي المستمر · تمريض/رعاية طبية 11 ساعة <strong>40$–50$</strong> حسب الحالة والخدمات.';
-        careSection.appendChild(box);
-      }
-
-      document.querySelectorAll('a[href*="wa.me/96170600157"],a[href*="wa.me/96170600157?"]').forEach(link => {
-        const span = document.createElement('span');
-        span.className = link.className || 'phone';
-        span.dir = 'ltr';
-        span.textContent = '+961 70 600 157';
-        link.replaceWith(span);
-      });
+      removeRepeatedButtons(document);
+      removeRepeatedInstall();
 
       if (!document.getElementById('rafig-final-ui-fixes')) {
         const style = document.createElement('style');
@@ -87,7 +79,8 @@
           .hero .status{display:block!important;visibility:visible!important;opacity:1!important}
           .forms .btn{min-height:48px;width:100%;white-space:normal;line-height:1.3}
           .panel .btn{min-height:48px}
-          .rafig-inline-cv-price,.rafig-inline-care-price{line-height:1.85}
+          .rafig-install-slot{display:flex;justify-content:center;align-items:center;margin:12px 0 2px}
+          .rafig-install-app{min-height:48px!important;padding-inline:24px!important;font-size:15px!important}
           @media(max-width:700px){.header-inner{padding:6px 9px;flex-wrap:wrap}.brand img{width:50px!important;height:50px!important}.brand strong{font-size:18px}.brand small{font-size:10px}.lang select{max-width:120px}.hero-card{padding:20px 14px}.hero-logo{width:min(380px,90vw)}.hero h1{font-size:27px}.hero .cta{flex-direction:column}.hero .cta .btn{width:100%}}
         `;
         document.head.appendChild(style);
@@ -96,5 +89,14 @@
       console.warn('RAFIQ UI enhancement skipped:', error);
     }
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, { once: true }); else apply();
+
+  let queued = false;
+  const observer = new MutationObserver(() => {
+    if (queued) return;
+    queued = true;
+    queueMicrotask(() => { queued = false; apply(); });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 })();
