@@ -1,6 +1,17 @@
 (() => {
-  if (window.__RAFIQ_PWA_INSTALL_V1__) return;
-  window.__RAFIQ_PWA_INSTALL_V1__ = true;
+  if (window.__RAFIQ_PWA_INSTALL_V2__) return;
+  window.__RAFIQ_PWA_INSTALL_V2__ = true;
+
+  // The old PWA worker can keep a stale DOM shell alive on mobile browsers.
+  // Remove it and its caches so the next navigation always starts from Render.
+  try {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(reg => reg.unregister())).catch(() => {});
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
+    }
+  } catch (_) {}
 
   const ua = navigator.userAgent || '';
   const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -19,16 +30,37 @@
   };
 
   const removeDuplicates = () => {
-    const buttons = document.querySelectorAll('#rafig-install-app');
-    buttons.forEach((el, i) => { if (i > 0) el.remove(); });
+    // Fixed IDs: only one element is ever allowed for each control.
+    ['joinBtn', 'careBtn', 'status-button', 'language'].forEach(id => {
+      const nodes = document.querySelectorAll(`#${CSS.escape(id)}`);
+      nodes.forEach((el, i) => { if (i > 0) el.remove(); });
+    });
+
+    // Repeated semantic CTA labels from an old/stale DOM injection.
+    const labels = new Set([
+      'الانتساب إلى المنصة', 'طلب رعاية منزلية', 'WhatsApp — 81',
+      'تقديم طلب رعاية', 'الانتساب كمقدم رعاية', 'الانتساب كممرض/ة',
+      'الانتساب كمعالج فيزيائي', 'بدء الطلب', 'فحص النظام'
+    ]);
+    const seen = new Map();
+    document.querySelectorAll('button, a').forEach(el => {
+      const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!labels.has(text)) return;
+      const key = `${el.tagName}:${text}`;
+      const count = seen.get(key) || 0;
+      if (count > 0) el.remove();
+      seen.set(key, count + 1);
+    });
+
     const slots = document.querySelectorAll('.rafig-install-slot');
     slots.forEach((slot, i) => { if (i > 0) slot.remove(); });
+    const buttons = document.querySelectorAll('#rafig-install-app');
+    buttons.forEach((el, i) => { if (i > 0) el.remove(); });
   };
 
   const mount = () => {
-    if (isStandalone) return;
     removeDuplicates();
-    if (document.getElementById('rafig-install-app')) return;
+    if (isStandalone || document.getElementById('rafig-install-app')) return;
 
     const hero = document.querySelector('.hero-card');
     if (!hero) return;
@@ -68,6 +100,7 @@
       `;
       document.head.appendChild(style);
     }
+    removeDuplicates();
   };
 
   window.addEventListener('beforeinstallprompt', event => {
