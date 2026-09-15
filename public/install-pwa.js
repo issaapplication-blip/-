@@ -1,18 +1,13 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V5__) return;
-  window.__RAFIQ_UI_GUARD_V5__ = true;
+  if (window.__RAFIQ_UI_GUARD_V6__) return;
+  window.__RAFIQ_UI_GUARD_V6__ = true;
 
-  // Remove legacy service workers/caches without blocking the page from rendering.
   try {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations()
-        .then(regs => Promise.all(regs.map(reg => reg.unregister())))
-        .catch(() => {});
+      navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(reg => reg.unregister()))).catch(() => {});
     }
     if ('caches' in window) {
-      caches.keys()
-        .then(keys => Promise.all(keys.filter(k => /^rafig-v/i.test(k)).map(k => caches.delete(k))))
-        .catch(() => {});
+      caches.keys().then(keys => Promise.all(keys.filter(k => /^rafig-v/i.test(k)).map(k => caches.delete(k)))).catch(() => {});
     }
   } catch (_) {}
 
@@ -26,7 +21,6 @@
     'الانتساب كممرض/ة',
     'الانتساب كمعالج فيزيائي',
     'بدء الطلب',
-    'فحص النظام',
     'تثبيت تطبيق رفيق'
   ]);
 
@@ -35,6 +29,9 @@
       const nodes = document.querySelectorAll('#' + id.replace(/([:.])/g, '\\$1'));
       for (let i = 1; i < nodes.length; i++) nodes[i].remove();
     }
+
+    // Internal diagnostic control is not a public CTA; remove the redundant status card.
+    document.querySelectorAll('.status').forEach(el => el.remove());
 
     const seen = new Set();
     document.querySelectorAll('button, a.btn').forEach(el => {
@@ -50,7 +47,6 @@
   function ensureInstallButton() {
     if (!window.__RAFIQ_DEFERRED_INSTALL_PROMPT__) return;
     if (document.getElementById('rafig-install-app')) return;
-
     const cta = document.querySelector('.cta');
     if (!cta) return;
 
@@ -80,7 +76,7 @@
     cta.insertAdjacentElement('afterend', slot);
   }
 
-  window.addEventListener('beforeinstallprompt', (event) => {
+  window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
     window.__RAFIQ_DEFERRED_INSTALL_PROMPT__ = event;
     ensureInstallButton();
@@ -103,9 +99,6 @@
     }, 250);
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start, { once: true });
-  } else {
-    start();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
 })();
