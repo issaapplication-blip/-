@@ -1,6 +1,6 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V9__) return;
-  window.__RAFIQ_UI_GUARD_V9__ = true;
+  if (window.__RAFIQ_UI_GUARD_V10__) return;
+  window.__RAFIQ_UI_GUARD_V10__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
   const UPLOAD_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-upload';
@@ -44,27 +44,46 @@
     const grid=form.querySelector('.form-grid');if(grid)grid.appendChild(wrap);else form.insertBefore(wrap,form.firstChild);
   }
 
+  function ensureCvPayment(form){
+    if(form.dataset.type!=='طلب CV وCover Letter'||form.querySelector('.rafig-cv-payment'))return;
+    const wrap=document.createElement('div');wrap.className='field full rafig-cv-payment';
+    wrap.innerHTML=`<div style="padding:14px;border:1px solid #ead7a8;background:#fffaf0;border-radius:14px;display:grid;gap:8px">
+      <strong>💳 تأكيد طلب الدفع — Whish Money</strong>
+      <span>رسوم خدمة CV + Cover Letter: <b>20 USD</b>. يتم إعداد الملف بعد تسجيل طلب الدفع ومراجعته من الإدارة.</span>
+      <div>رقم Whish Money المالي: <b dir="ltr">+961 70 600 157</b></div>
+      <label style="font-weight:700">رقم هاتف المُرسل <input name="whish_sender_phone" inputmode="tel" placeholder="مثال: 70xxxxxx"></label>
+      <label style="font-weight:700">مرجع/رقم عملية Whish <input name="whish_reference" placeholder="رقم العملية أو المرجع"></label>
+      <label style="font-weight:700"><input name="whish_payment_confirmation" type="checkbox" value="yes"> أؤكد أنني أرسلت/سأرسل الدفع عبر Whish Money وأطلب مراجعة الدفع من الإدارة.</label>
+      <small style="color:#64756e">لا يعتبر الدفع مؤكداً نهائياً إلا بعد مراجعة الإدارة. الوكيل لا يوافق على الدفع ولا يصدر قراراً مالياً نهائياً.</small>
+    </div>`;
+    const grid=form.querySelector('.form-grid');if(grid)grid.appendChild(wrap);else form.appendChild(wrap);
+  }
+
   function showIntakeResult(form,ok,application,message){
     let box=form.parentElement?.querySelector('.success');if(!box){box=document.createElement('div');box.className='success';form.insertAdjacentElement('afterend',box)}box.classList.add('show');
-    if(ok){box.innerHTML=`<strong>تم استلام طلبك بنجاح.</strong><br>رقم طلبك: <strong>${application.application_number}</strong><br>الحالة: قيد المراجعة.<br><small>${message||'تم حفظ معلوماتك بأمان. احتفظ برقم الطلب.'}</small>`;form.reset()}
+    if(ok){const agent=application.agent_reply?`<hr style="border:0;border-top:1px solid #b9e4d1;margin:10px 0"><strong>رد رفيق:</strong><br>${String(application.agent_reply).replace(/\n/g,'<br>')}`:'';box.innerHTML=`<strong>تم استلام طلبك بنجاح.</strong><br>رقم طلبك: <strong>${application.application_number}</strong><br>الحالة: قيد المراجعة.<br><small>${message||'تم حفظ معلوماتك بأمان. احتفظ برقم الطلب.'}</small>${agent}`;form.reset()}
     else box.innerHTML='<strong>تعذر حفظ الطلب حالياً.</strong><br>'+String(message||'يرجى المحاولة مرة أخرى بعد لحظات.');
   }
 
   function installApplicationPersistence(){
     document.querySelectorAll('.app-form').forEach(form=>{
-      ensureDocumentInputs(form);
+      ensureDocumentInputs(form); ensureCvPayment(form);
       if(form.dataset.rafigIntakeBound==='1')return;
-      const cleanForm=form.cloneNode(true);form.replaceWith(cleanForm);cleanForm.dataset.rafigIntakeBound='1';ensureDocumentInputs(cleanForm);
+      const cleanForm=form.cloneNode(true);form.replaceWith(cleanForm);cleanForm.dataset.rafigIntakeBound='1';ensureDocumentInputs(cleanForm);ensureCvPayment(cleanForm);
       cleanForm.addEventListener('submit',async event=>{
         event.preventDefault();
         const submit=cleanForm.querySelector('button[type="submit"]');
         if(submit){submit.disabled=true;submit.textContent='جارٍ حفظ الطلب والمستندات…'}
-        const fd=new FormData(cleanForm),payload={};const files=[];
+        const fd=new FormData(cleanForm),payload={},files=[];
         for(const [key,value] of fd.entries()){
           if(value instanceof File){if(value.size)files.push({file:value,category:key});}
           else if(typeof value==='string'&&value.trim())payload[key]=value.trim();
         }
         try{
+          if(cleanForm.dataset.type==='طلب CV وCover Letter'){
+            if(payload.whish_payment_confirmation!=='yes'||!payload.whish_reference)throw new Error('payment_confirmation_required');
+            payload.payment_method='Whish Money'; payload.payment_status='submitted_for_admin_confirmation'; payload.service_fee_usd='20';
+          }
           if(files.length>MAX_FILES)throw new Error('too_many_files');
           for(const item of files)if(item.file.size>MAX_SIZE)throw new Error('file_too_large');
           const response=await fetch(INTAKE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({application_type:cleanForm.dataset.type,payload,website:''})});
@@ -74,12 +93,11 @@
             const uploadFd=new FormData();uploadFd.append('intake_id',result.application.id);
             files.forEach(item=>{uploadFd.append('files',item.file,item.file.name);uploadFd.append('document_category',item.category)});
             const ur=await fetch(UPLOAD_URL,{method:'POST',body:uploadFd});const uj=await ur.json();
-            if(!ur.ok||!uj.ok)throw new Error(uj.error||'upload_failed');
-            uploadNote=`تم حفظ ${uj.files.length} مستنداً بأمان.`;
+            if(!ur.ok||!uj.ok)throw new Error(uj.error||'upload_failed'); uploadNote=`تم حفظ ${uj.files.length} مستنداً بأمان.`;
           }
           showIntakeResult(cleanForm,true,result.application,uploadNote+' سيقوم فريق رفيق بمراجعة الطلب والتواصل عند الحاجة.');
         }catch(err){
-          const msg=err?.message==='too_many_files'?'الحد الأقصى هو 8 ملفات إجمالاً.':err?.message==='file_too_large'?'يوجد ملف أكبر من 10MB.':err?.message==='unsupported_file_type'?'نوع ملف غير مدعوم.':'حدث خطأ أثناء الحفظ، ولم نعتبر الطلب مسجلاً بعد.';
+          const msg=err?.message==='too_many_files'?'الحد الأقصى هو 8 ملفات إجمالاً.':err?.message==='file_too_large'?'يوجد ملف أكبر من 10MB.':err?.message==='payment_confirmation_required'?'لإرسال طلب CV، يجب إدخال مرجع عملية Whish وتأكيد إرسال الدفع.':'حدث خطأ أثناء الحفظ، ولم نعتبر الطلب مسجلاً بعد.';
           showIntakeResult(cleanForm,false,{},msg);
         }finally{if(submit){submit.disabled=false;submit.textContent='إرسال الطلب إلى RAFIQ'}}
       });
