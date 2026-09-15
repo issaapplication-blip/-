@@ -1,9 +1,8 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V4__) return;
-  window.__RAFIQ_UI_GUARD_V4__ = true;
+  if (window.__RAFIQ_UI_GUARD_V5__) return;
+  window.__RAFIQ_UI_GUARD_V5__ = true;
 
-  // The PWA worker is currently retired from the initial page experience.
-  // Remove any worker/cache left by older releases so stale UI cannot return.
+  // Remove legacy service workers/caches without blocking the page from rendering.
   try {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations()
@@ -17,7 +16,7 @@
     }
   } catch (_) {}
 
-  const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language'];
+  const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language', 'rafig-install-app'];
   const uniqueLabels = new Set([
     'الانتساب إلى المنصة',
     'طلب رعاية منزلية',
@@ -27,17 +26,16 @@
     'الانتساب كممرض/ة',
     'الانتساب كمعالج فيزيائي',
     'بدء الطلب',
-    'فحص النظام'
+    'فحص النظام',
+    'تثبيت تطبيق رفيق'
   ]);
 
   function cleanDuplicates() {
-    // Fixed IDs: keep the first real control only.
     for (const id of fixedIds) {
       const nodes = document.querySelectorAll('#' + id.replace(/([:.])/g, '\\$1'));
       for (let i = 1; i < nodes.length; i++) nodes[i].remove();
     }
 
-    // Exact semantic duplicates: keep the first control with the same label.
     const seen = new Set();
     document.querySelectorAll('button, a.btn').forEach(el => {
       if (!el.isConnected) return;
@@ -47,20 +45,61 @@
       if (seen.has(key)) el.remove();
       else seen.add(key);
     });
-
-    // Remove every legacy PWA install control. It is intentionally disabled
-    // until the main UI is completely stable.
-    document.querySelectorAll('#rafig-install-app, .rafig-install-slot').forEach(el => el.remove());
   }
+
+  function ensureInstallButton() {
+    if (!window.__RAFIQ_DEFERRED_INSTALL_PROMPT__) return;
+    if (document.getElementById('rafig-install-app')) return;
+
+    const cta = document.querySelector('.cta');
+    if (!cta) return;
+
+    const slot = document.createElement('div');
+    slot.className = 'rafig-install-slot';
+    slot.style.cssText = 'display:flex;justify-content:center;margin:12px 0 2px;width:100%';
+
+    const button = document.createElement('button');
+    button.id = 'rafig-install-app';
+    button.type = 'button';
+    button.className = 'btn outline rafig-install-app';
+    button.textContent = 'تثبيت تطبيق رفيق';
+    button.style.cssText = 'min-height:46px;padding:11px 17px;border-radius:13px;font-weight:900;cursor:pointer';
+
+    button.addEventListener('click', async () => {
+      const prompt = window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
+      if (!prompt) return;
+      try {
+        await prompt.prompt();
+        await prompt.userChoice;
+      } catch (_) {}
+      window.__RAFIQ_DEFERRED_INSTALL_PROMPT__ = null;
+      slot.remove();
+    });
+
+    slot.appendChild(button);
+    cta.insertAdjacentElement('afterend', slot);
+  }
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    window.__RAFIQ_DEFERRED_INSTALL_PROMPT__ = event;
+    ensureInstallButton();
+  }, { once: true });
+
+  window.addEventListener('appinstalled', () => {
+    window.__RAFIQ_DEFERRED_INSTALL_PROMPT__ = null;
+    document.querySelectorAll('#rafig-install-app, .rafig-install-slot').forEach(el => el.remove());
+  });
 
   const start = () => {
     cleanDuplicates();
-    // Catch late DOM reinsertion from an older cached runtime without using a MutationObserver.
+    ensureInstallButton();
     let runs = 0;
     const timer = setInterval(() => {
       cleanDuplicates();
+      ensureInstallButton();
       runs++;
-      if (runs >= 20) clearInterval(timer);
+      if (runs >= 12) clearInterval(timer);
     }, 250);
   };
 
