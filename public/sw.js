@@ -1,13 +1,10 @@
-const CACHE = "rafig-v31-safe-shell";
+const CACHE = "rafig-v32-logo-refresh";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
   "/cv-payment-gate.js",
   "/install-pwa.js",
-  "/rafig-approved-logo.svg",
-  "/rafig-approved-logo.jpg",
-  "/rafig-approved-logo-192.jpg",
-  "/rafig-approved-logo-512.jpg"
+  "/rafig-approved-logo.svg"
 ];
 
 self.addEventListener("install", event => {
