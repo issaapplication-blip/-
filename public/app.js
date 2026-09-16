@@ -1,5 +1,5 @@
 (() => {
-  const RAFIQ_LOGO = "/favicon.svg?v=18";
+  const RAFIQ_LOGO = "/rafig-approved-logo.svg?v=18";
 
   function fixLogoAssets() {
     document.querySelectorAll('img[src*="rafig-approved-logo"], img[src="/favicon.svg"]').forEach((img) => {
