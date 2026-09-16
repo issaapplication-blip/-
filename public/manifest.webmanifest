@@ -12,6 +12,6 @@
   "theme_color":"#087f58",
   "prefer_related_applications":false,
   "icons":[
-    {"src":"/favicon.svg?v=18","sizes":"any","type":"image/svg+xml","purpose":"any"}
+    {"src":"/rafig-approved-logo.svg?v=18","sizes":"any","type":"image/svg+xml","purpose":"any"}
   ]
 }
