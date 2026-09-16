@@ -1,20 +1,4 @@
 (() => {
-  const RAFIQ_LOGO = "/rafig-approved-logo.svg?v=18";
-
-  function fixLogoAssets() {
-    document.querySelectorAll('img[src*="rafig-approved-logo"], img[src="/favicon.svg"]').forEach((img) => {
-      img.src = RAFIQ_LOGO;
-      img.removeAttribute("srcset");
-      img.style.imageRendering = "auto";
-    });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", fixLogoAssets, { once: true });
-  } else {
-    fixLogoAssets();
-  }
-
   const button = document.getElementById("status-button");
   const status = document.getElementById("status");
   if (!button || !status) return;
