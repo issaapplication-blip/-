@@ -1,4 +1,4 @@
-const CACHE = "rafig-v36-install-fix-20260922";
+const CACHE = "rafig-v37-final-ui-20260918";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
