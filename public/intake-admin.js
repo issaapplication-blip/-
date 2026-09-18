@@ -37,14 +37,21 @@
       const {data:files}=await sb2.from('application_intake_files').select('*').eq('intake_id',x.id).order('created_at',{ascending:false});
       const docs=(files||[]).map(f=>`<div class="doc"><b>${esc(f.file_name)}</b><br><small>${esc(f.document_category||'')} · ${esc(f.mime_type||'')} · ${Math.round((f.file_size||0)/1024)} KB</small><button class="btn ghost" data-file="${esc(f.storage_path)}">فتح المستند</button></div>`).join('')||'لا توجد مستندات مرفوعة.';
       const isGeneral=x.application_type==='انتساب عام';
+      const isCv=x.application_type==='CV + Cover Letter';
+      const paymentVerified=x.payload?.payment_status==='verified';
       document.getElementById('modalTitle').textContent='طلب '+x.application_type+' رقم '+x.application_number;
-      document.getElementById('modalBody').innerHTML=`<div class="grid2"><div class="detail"><b>المتقدم</b>${esc(x.applicant_name)}</div><div class="detail"><b>الهاتف</b>${esc(x.phone)}</div><div class="detail"><b>النوع</b>${esc(x.application_type)}</div><div class="detail"><b>المنطقة</b>${esc(x.area)}</div><div class="detail"><b>الحالة</b>${esc(x.status)}</div><div class="detail"><b>التاريخ</b>${new Date(x.created_at).toLocaleString('ar-LB')}</div></div><h3>بيانات الطلب</h3><div class="grid2">${payload}</div><h3>المستندات</h3><div class="docs">${docs}</div><div class="actions" style="margin-top:15px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn primary" data-review="approved">${isGeneral?'قبول وإنشاء العضوية والباركود':'قبول'}</button><button class="btn danger" data-review="rejected">رفض</button></div>`;
+      document.getElementById('modalBody').innerHTML=`<div class="grid2"><div class="detail"><b>المتقدم</b>${esc(x.applicant_name)}</div><div class="detail"><b>الهاتف</b>${esc(x.phone)}</div><div class="detail"><b>النوع</b>${esc(x.application_type)}</div><div class="detail"><b>المنطقة</b>${esc(x.area)}</div><div class="detail"><b>الحالة</b>${esc(x.status)}</div><div class="detail"><b>التاريخ</b>${new Date(x.created_at).toLocaleString('ar-LB')}</div></div><h3>بيانات الطلب</h3><div class="grid2">${payload}</div><h3>المستندات</h3><div class="docs">${docs}</div><div class="actions" style="margin-top:15px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn primary" data-review="approved">${isGeneral?'قبول وإنشاء العضوية والباركود':isCv?(paymentVerified?'تأكيد/بدء المعالجة':'تأكيد الدفع والبدء'):'قبول'}</button><button class="btn danger" data-review="rejected">رفض</button></div>`;
       document.getElementById('modal').classList.remove('hidden');
       document.getElementById('modalBody').querySelectorAll('[data-file]').forEach(b=>b.addEventListener('click',async()=>{const r=await sb2.storage.from('private_documents').createSignedUrl(b.dataset.file,600);if(r.error)alert(r.error.message);else window.open(r.data.signedUrl,'_blank','noopener')}));
       document.getElementById('modalBody').querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',async()=>{
         let result,error;
         if(isGeneral){({data:result,error}=await sb2.rpc('admin_approve_public_member',{p_intake_id:x.id,p_status:b.dataset.review,p_notes:null}));}
-        else {({data:result,error}=await sb2.from('application_intakes').update({status:b.dataset.review,updated_at:new Date().toISOString()}).eq('id',x.id).select().single());}
+        else if(isCv&&b.dataset.review==='approved'){
+          const hasProof=(files||[]).some(f=>f.document_category==='payment_proof');
+          if(!hasProof){alert('لا يمكن تأكيد دفع CV قبل وجود صورة إثبات الدفع.');return;}
+          const nextPayload={...(x.payload||{}),payment_status:'verified',payment_confirmed_at:new Date().toISOString()};
+          ({data:result,error}=await sb2.from('application_intakes').update({status:'approved',payload:nextPayload,updated_at:new Date().toISOString()}).eq('id',x.id).select().single());
+        } else {({data:result,error}=await sb2.from('application_intakes').update({status:b.dataset.review,updated_at:new Date().toISOString()}).eq('id',x.id).select().single());}
         if(error){alert(error.message);return}
         if(b.dataset.review==='approved'&&isGeneral){alert('تم قبول العضوية وإنشاء الباركود. احفظ رمز الباركود من سجل العملية الإداري.');}
         document.getElementById('modal').classList.add('hidden');loadAdminExtras();loadPublicIntakes();
