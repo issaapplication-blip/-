@@ -1,6 +1,6 @@
 (() => {
   if (window.__RAFIQ_UI_GUARD_V12__) return;
-  window.__RAFIQ_UI_GUARD_V11__ = true;
+  window.__RAFIQ_UI_GUARD_V12__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
   const UPLOAD_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-upload';
