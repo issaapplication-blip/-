@@ -1,10 +1,10 @@
-const CACHE = "rafig-v35-final-ui-20260919";
+const CACHE = "rafig-v36-install-fix-20260922";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
   "/cv-payment-gate.js",
   "/install-pwa.js",
-  "/rafig-approved-logo.jpg?v=20260919"
+  "/rafig-approved-logo.jpg?v=20260922"
 ];
 
 self.addEventListener("install", event => {
