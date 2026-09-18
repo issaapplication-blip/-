@@ -34,17 +34,17 @@ footer{text-align:center;padding:25px 18px;border-top:1px solid var(--line);colo
 </head>
 <body>
 <header><div class="header-inner">
-<div class="brand"><img src="/rafig-approved-logo.jpg?v=20260918" alt="RAFIQ | رفيق"><div><strong>RAFIQ | رفيق</strong><small id="brandTag">نصل بالحب والأمان لرعاية العائلة</small></div></div>
+<div class="brand"><img src="/rafig-approved-logo.jpg?v=20260919" alt="RAFIQ | رفيق"><div><strong>RAFIQ | رفيق</strong><small id="brandTag">نصل بالحب والأمان لرعاية العائلة</small></div></div>
 <div class="lang"><span>🌐</span><select id="language" aria-label="اختيار اللغة"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option></select></div>
 </div></header>
 
 <section class="hero"><div class="hero-card">
-<img class="hero-logo" src="/rafig-approved-logo.jpg?v=20260918" alt="الشعار الرسمي RAFIQ">
+<img class="hero-logo" src="/rafig-approved-logo.jpg?v=20260919" alt="الشعار الرسمي RAFIQ">
 <h1 id="heroTitle">أهلًا بكم في RAFIQ</h1>
 <div class="tagline" id="tagline">نصل بالحب والأمان لرعاية العائلة</div>
 <p id="heroText">منصة متخصصة لتنظيم طلبات الرعاية المنزلية للمسنين والمرضى، واستقبال طلبات مقدمي الرعاية والممرضين والمعالجين الفيزيائيين، وتجهيز CV وCover Letter بشكل مهني ودقيق.</p>
 <div class="cta"><a class="btn primary" href="#join" id="joinBtn">الانتساب إلى المنصة</a><a class="btn gold" href="#care" id="careBtn">طلب رعاية منزلية</a><a class="btn outline" href="https://wa.me/96181506299" target="_blank" rel="noopener">WhatsApp — 81</a></div>
-<div class="status"><strong id="statusLabel">حالة المنصة:</strong> <span id="status">جاهزة</span></div>
+
 </div></section>
 
 <main>
@@ -141,6 +141,6 @@ if(form.dataset.intakeType==='CV + Cover Letter')s.innerHTML='<b>تم استلا
 
 const t={ar:{tag:'نصل بالحب والأمان لرعاية العائلة',title:'أهلًا بكم في RAFIQ',hero:'منصة متخصصة لتنظيم طلبات الرعاية المنزلية للمسنين والمرضى، واستقبال طلبات مقدمي الرعاية والممرضين والمعالجين الفيزيائيين، وتجهيز CV وCover Letter بشكل مهني ودقيق.',join:'الانتساب إلى المنصة',care:'طلب رعاية منزلية',services:'خدمات RAFIQ',servicesText:'اختر الخدمة المناسبة وابدأ الطلب.'},en:{tag:'Reaching families with care, trust and safety',title:'Welcome to RAFIQ',hero:'A home-care platform for elderly and patient care requests, caregiver and healthcare applications, and professional CV and Cover Letter preparation.',join:'Join RAFIQ',care:'Request Home Care',services:'RAFIQ Services',servicesText:'Choose a service and start your request.'},fr:{tag:'Prendre soin des familles avec confiance et sécurité',title:'Bienvenue chez RAFIQ',hero:'Une plateforme de soins à domicile pour les personnes âgées et les patients, les candidatures professionnelles et la préparation de CV et de lettres de motivation.',join:'Rejoindre RAFIQ',care:'Demander des soins',services:'Services RAFIQ',servicesText:'Choisissez un service et commencez votre demande.'},it:{tag:'Cura della famiglia con fiducia e sicurezza',title:'Benvenuti in RAFIQ',hero:'Una piattaforma per l’assistenza domiciliare, le candidature professionali e la preparazione di CV e lettere di presentazione.',join:'Unisciti a RAFIQ',care:'Richiedi assistenza',services:'Servizi RAFIQ',servicesText:'Scegli un servizio e inizia la richiesta.'}};
 document.getElementById('language').addEventListener('change',e=>{const v=e.target.value;const x=t[v];document.documentElement.lang=v;document.documentElement.dir=v==='ar'?'rtl':'ltr';document.getElementById('brandTag').textContent=x.tag;document.getElementById('heroTitle').textContent=x.title;document.getElementById('tagline').textContent=x.tag;document.getElementById('heroText').textContent=x.hero;document.getElementById('joinBtn').textContent=x.join;document.getElementById('careBtn').textContent=x.care;document.getElementById('servicesTitle').textContent=x.services;document.getElementById('servicesText').textContent=x.servicesText});
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=17').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=18').catch(()=>{}));
 </script>
 </body></html>
