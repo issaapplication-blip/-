@@ -1,5 +1,5 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V11__) return;
+  if (window.__RAFIQ_UI_GUARD_V12__) return;
   window.__RAFIQ_UI_GUARD_V11__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
@@ -17,19 +17,23 @@
   }
 
   function ensureInstallButton(){
-    if(document.getElementById('rafig-install-app'))return;
-    const cta=document.querySelector('.cta');if(!cta)return;
-    const slot=document.createElement('div');slot.className='rafig-install-slot';
-    const button=document.createElement('button');button.id='rafig-install-app';button.type='button';button.className='btn outline rafig-install-app';button.textContent='تثبيت تطبيق رفيق';
+    let button=document.getElementById('rafig-install-app');
+    if(!button){
+      const cta=document.querySelector('.cta');if(!cta)return;
+      const slot=document.createElement('div');slot.className='rafig-install-slot';
+      button=document.createElement('button');button.id='rafig-install-app';button.type='button';button.className='btn outline rafig-install-app';button.textContent='تثبيت تطبيق رفيق';
+      slot.appendChild(button);cta.insertAdjacentElement('afterend',slot);
+    }
+    if(button.dataset.rafigInstallBound==='1')return;
+    button.dataset.rafigInstallBound='1';
     button.addEventListener('click',async()=>{
       const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
       if(prompt){
         try{await prompt.prompt();await prompt.userChoice}catch(_){}
-        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;slot.remove();return;
+        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;button.remove();document.querySelectorAll('.rafig-install-slot').forEach(el=>el.remove());return;
       }
       alert('للتثبيت الآن: افتح قائمة المتصفح ⋮ ثم اختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».');
     });
-    slot.appendChild(button);cta.insertAdjacentElement('afterend',slot);
   }
 
   function ensurePublicMembershipUi(){
