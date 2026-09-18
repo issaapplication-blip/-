@@ -7,11 +7,6 @@
   const MAX_FILES = 8;
   const MAX_SIZE = 10 * 1024 * 1024;
 
-  try {
-    if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(reg => reg.unregister()))).catch(() => {});
-    if ('caches' in window) caches.keys().then(keys => Promise.all(keys.filter(k => /^rafig-v/i.test(k)).map(k => caches.delete(k)))).catch(() => {});
-  } catch (_) {}
-
   const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language', 'rafig-install-app'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
 
@@ -22,10 +17,19 @@
   }
 
   function ensureInstallButton(){
-    if(!window.__RAFIQ_DEFERRED_INSTALL_PROMPT__||document.getElementById('rafig-install-app'))return;const cta=document.querySelector('.cta');if(!cta)return;
-    const slot=document.createElement('div');slot.className='rafig-install-slot';slot.style.cssText='display:flex;justify-content:center;margin:12px 0 2px;width:100%';
+    if(document.getElementById('rafig-install-app'))return;
+    const cta=document.querySelector('.cta');if(!cta)return;
+    const slot=document.createElement('div');slot.className='rafig-install-slot';
     const button=document.createElement('button');button.id='rafig-install-app';button.type='button';button.className='btn outline rafig-install-app';button.textContent='تثبيت تطبيق رفيق';
-    button.addEventListener('click',async()=>{const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;if(!prompt)return;try{await prompt.prompt();await prompt.userChoice}catch(_){}window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;slot.remove()});slot.appendChild(button);cta.insertAdjacentElement('afterend',slot);
+    button.addEventListener('click',async()=>{
+      const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
+      if(prompt){
+        try{await prompt.prompt();await prompt.userChoice}catch(_){}
+        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;slot.remove();return;
+      }
+      alert('للتثبيت الآن: افتح قائمة المتصفح ⋮ ثم اختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».');
+    });
+    slot.appendChild(button);cta.insertAdjacentElement('afterend',slot);
   }
 
   function ensurePublicMembershipUi(){
