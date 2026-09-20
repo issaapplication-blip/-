@@ -29,10 +29,20 @@
     button.addEventListener('click',async()=>{
       const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
       if(prompt){
-        try{await prompt.prompt();await prompt.userChoice}catch(_){}
-        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;button.remove();document.querySelectorAll('.rafig-install-slot').forEach(el=>el.remove());return;
+        try{
+          await prompt.prompt();
+          const choice=await prompt.userChoice;
+          if(choice?.outcome==='accepted'){
+            window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
+            button.remove();
+            document.querySelectorAll('.rafig-install-slot').forEach(el=>el.remove());
+          }
+        }catch(_){}
+        return;
       }
-      alert('للتثبيت الآن: افتح قائمة المتصفح ⋮ ثم اختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».');
+      let msg=document.getElementById('rafig-install-status');
+      if(!msg){msg=document.createElement('div');msg.id='rafig-install-status';msg.className='notice';msg.style.margin='10px auto 0';msg.style.maxWidth='720px';button.insertAdjacentElement('afterend',msg)}
+      msg.textContent='التثبيت المباشر غير متاح من المتصفح الحالي في هذه اللحظة. افتح RAFIQ في Google Chrome على Android ثم اضغط «تثبيت تطبيق رفيق» مرة أخرى. لا يمكن للموقع فرض نافذة تثبيت النظام إذا لم يرسل المتصفح beforeinstallprompt.';
     });
   }
 
@@ -110,8 +120,10 @@
     document.querySelectorAll('.app-form').forEach(form=>{ensureDocumentInputs(form);ensureCvPayment(form);if(form.dataset.rafigIntakeBound==='1')return;const cleanForm=form.cloneNode(true);form.replaceWith(cleanForm);cleanForm.dataset.rafigIntakeBound='1';ensureDocumentInputs(cleanForm);ensureCvPayment(cleanForm);cleanForm.addEventListener('submit',async event=>{event.preventDefault();const submit=cleanForm.querySelector('button[type="submit"]');if(submit){submit.disabled=true;submit.textContent='جارٍ حفظ الطلب والمستندات…'}const fd=new FormData(cleanForm),payload={},files=[];for(const [key,value] of fd.entries()){if(value instanceof File){if(value.size)files.push({file:value,category:key})}else if(typeof value==='string'&&value.trim())payload[key]=value.trim()}try{if(cleanForm.dataset.type==='طلب CV وCover Letter'){if(payload.whish_payment_confirmation!=='yes'||!payload.whish_reference)throw new Error('payment_confirmation_required');payload.payment_method='Whish Money';payload.payment_status='submitted_for_admin_confirmation';payload.service_fee_usd='35'}if(files.length>MAX_FILES)throw new Error('too_many_files');for(const item of files)if(item.file.size>MAX_SIZE)throw new Error('file_too_large');const response=await fetch(INTAKE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({application_type:cleanForm.dataset.type,payload,website:''})});const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'intake_failed');let uploadNote='';if(files.length){const uploadFd=new FormData();uploadFd.append('intake_id',result.application.id);files.forEach(item=>{uploadFd.append('files',item.file,item.file.name);uploadFd.append('document_category',item.category)});const ur=await fetch(UPLOAD_URL,{method:'POST',body:uploadFd});const uj=await ur.json();if(!ur.ok||!uj.ok)throw new Error(uj.error||'upload_failed');uploadNote=`تم حفظ ${uj.files.length} مستنداً بأمان.`}showIntakeResult(cleanForm,true,result.application,uploadNote+' سيقوم فريق رفيق بمراجعة الطلب والتواصل عند الحاجة.')}catch(err){const msg=err?.message==='too_many_files'?'الحد الأقصى هو 8 ملفات إجمالاً.':err?.message==='file_too_large'?'يوجد ملف أكبر من 10MB.':err?.message==='payment_confirmation_required'?'لإرسال طلب CV، يجب إدخال مرجع عملية Whish وتأكيد إرسال الدفع.':'حدث خطأ أثناء الحفظ، ولم نعتبر الطلب مسجلاً بعد.';showIntakeResult(cleanForm,false,{},msg)}finally{if(submit){submit.disabled=false;submit.textContent='إرسال الطلب إلى RAFIQ'}}})})
   }
 
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;ensureInstallButton()},{once:true});
-  window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;document.querySelectorAll('#rafig-install-app,.rafig-install-slot').forEach(el=>el.remove())});
+  const isStandalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(isStandalone())document.querySelectorAll('#rafig-install-app,.rafig-install-slot').forEach(el=>el.remove());
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;ensureInstallButton();const s=document.getElementById('rafig-install-status');if(s)s.remove()});
+  window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;document.querySelectorAll('#rafig-install-app,.rafig-install-slot,#rafig-install-status').forEach(el=>el.remove())});
   const start=()=>{cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();let runs=0;const timer=setInterval(()=>{cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();runs++;if(runs>=20)clearInterval(timer)},250)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
