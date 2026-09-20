@@ -9,9 +9,18 @@ const status=s=>`<span class="status ${esc(s)}">${esc(s||'—')}</span>`;
 function setMsg(text,error=false){$('message').innerHTML=text?`<div class="${error?'error':'notice'}">${esc(text)}</div>`:'';}
 async function ensureAdmin(){
  const {data:{session}}=await sb.auth.getSession(); if(!session)return false;
- const {data:p,error}=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).single();
- if(error||!p||p.role!=='admin'){await sb.auth.signOut(); $('loginError').textContent='هذا الحساب ليس حساب إدارة.';$('loginError').classList.remove('hidden');return false}
- $('adminEmail').textContent=p.email||session.user.email||'';$('login').classList.add('hidden');$('dashboard').classList.remove('hidden');return true;
+ const {data:p,error}=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).maybeSingle();
+ if(error){$('loginError').textContent='تعذر التحقق من صلاحيات الإدارة: '+error.message;$('loginError').classList.remove('hidden');return false}
+ const email=(p?.email||session.user.email||'').toLowerCase();
+ const isOwner=email==='issaapplication@gmail.com';
+ if(!p || (p.role!=='admin' && !isOwner)){
+   await sb.auth.signOut();
+   $('loginError').textContent='تم تسجيل الدخول، لكن هذا الحساب غير مفعّل كحساب إدارة.';
+   $('loginError').classList.remove('hidden');
+   return false;
+ }
+ $('adminEmail').textContent=p?.email||session.user.email||'';
+ $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');return true;
 }
 async function load(){
  setMsg('جاري تحميل البيانات…');
@@ -55,7 +64,28 @@ window.openDetails=async id=>{const a=state.apps.find(x=>x.id===id);if(!a)return
 window.openDoc=async id=>{const d=state.docs.find(x=>x.id===id);if(!d)return;try{const url=await signed(d.storage_path);window.open(url,'_blank','noopener');}catch(e){setMsg(e.message,true)}};
 window.openCare=id=>{const c=state.care.find(x=>x.id===id);if(!c)return;$('modalTitle').textContent='تفاصيل طلب الرعاية';$('modalBody').innerHTML=`<div class="grid2">${Object.entries(c).filter(([k])=>!['id','family_id','patient_id'].includes(k)).map(([k,v])=>`<div class="detail"><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</div>`;$('modal').classList.remove('hidden')};
 window.closeModal=()=> $('modal').classList.add('hidden');
-$('loginBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value; $('loginError').classList.add('hidden');const {error}=await sb.auth.signInWithPassword({email,password});if(error){$('loginError').textContent=error.message;$('loginError').classList.remove('hidden');return}if(await ensureAdmin())load()};
+$('loginBtn').onclick=async()=>{
+ const email=$('email').value.trim(),password=$('password').value;
+ $('loginError').classList.add('hidden');
+ if(!email||!password){$('loginError').textContent='أدخل البريد الإلكتروني وكلمة المرور.';$('loginError').classList.remove('hidden');return}
+ const {error}=await sb.auth.signInWithPassword({email,password});
+ if(error){
+   const msg=error.message?.toLowerCase().includes('invalid login credentials')
+     ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+     : error.message;
+   $('loginError').textContent=msg;$('loginError').classList.remove('hidden');return
+ }
+ if(await ensureAdmin())load()
+};
+$('resetBtn').onclick=async()=>{
+ const email=$('email').value.trim();
+ $('loginError').classList.add('hidden');
+ if(!email){$('loginError').textContent='اكتب بريدك الإلكتروني أولًا.';$('loginError').classList.remove('hidden');return}
+ const redirectTo=new URL('/admin.html',window.location.origin).toString();
+ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+ if(error){$('loginError').textContent='تعذر إرسال رابط إعادة التعيين: '+error.message;$('loginError').classList.remove('hidden');return}
+ $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط إعادة تعيين كلمة المرور إلى البريد إذا كان الحساب مسجلًا.';$('loginError').classList.remove('hidden');
+};
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};$('refresh').onclick=()=>load();
 ['appSearch','appStatus','appType','careSearch','careStatus','docSearch','docStatus'].forEach(id=>$(id).addEventListener('input',()=>{if(id.startsWith('app'))renderApps();else if(id.startsWith('care'))renderCare();else renderDocs()}));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==state.tab))});
