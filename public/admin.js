@@ -24,7 +24,7 @@ async function ensureAdmin(){
 }
 async function load(){
  setMsg('جاري تحميل البيانات…');
- const [a,p,d,c,cg,nr,ph]=await Promise.all([
+ const [a,p,d,c,ap,cg,nr,ph]=await Promise.all([
   sb.from('applications').select('*').order('created_at',{ascending:false}),
   sb.from('profiles').select('id,first_name,last_name,phone,email,address,role,status,created_at').order('created_at',{ascending:false}),
   sb.from('documents').select('*').order('created_at',{ascending:false}),
