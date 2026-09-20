@@ -131,7 +131,7 @@ const requireIdentity=()=>{const f=form.querySelector('[data-category="id_front"
 const files=[...form.querySelectorAll('input[type="file"][data-category]')].filter(i=>i.files&&i.files[0]);
 if(['انتساب مقدم رعاية','انتساب ممرض/ة','انتساب معالج فيزيائي'].includes(form.dataset.intakeType)&&!requireIdentity())throw new Error('يرجى رفع الهوية الأمامية والخلفية أو جواز السفر.');
 if(form.dataset.intakeType==='CV + Cover Letter'&&!form.querySelector('[name="payment_reference"]').value.trim())throw new Error('يرجى إدخال رقم عملية Whish Money.');
-const data=new FormData(form),payload={};for(const[k,v]of data.entries())if(!String(k).startsWith('file_')&&String(v).trim())payload[k]=String(v).trim();
+const data=new FormData(form),payload={};for(const[k,v]of data.entries())if(!String(k).startsWith('file_')&&String(v).trim()){if(k==='languages')payload[k]=[...(payload[k]||[]),String(v).trim()];else payload[k]=String(v).trim();}
 if(form.dataset.intakeType==='CV + Cover Letter'){payload.payment_status='pending_verification';payload.payment_required=true;}
 const r=await fetch(API+'public-application-intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({application_type:form.dataset.intakeType,payload})});const j=await r.json().catch(()=>({}));if(!r.ok||!j.ok)throw new Error(j.error||'تعذر حفظ الطلب');
 for(const input of files){const fd=new FormData();fd.append('intake_id',j.application.id);fd.append('upload_token',j.upload_token);fd.append('files',input.files[0]);fd.append('document_category',input.dataset.category);const ur=await fetch(API+'public-application-upload',{method:'POST',body:fd});const uj=await ur.json().catch(()=>({}));if(!ur.ok||!uj.ok)throw new Error(uj.error||'تعذر رفع أحد المستندات');}
