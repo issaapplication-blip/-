@@ -24,17 +24,24 @@ async function ensureAdmin(){
 }
 async function load(){
  setMsg('جاري تحميل البيانات…');
+ const optional=async(q,label)=>{const r=await q;if(r.error)return {data:[],error:{message:r.error.message,label}};return r};
  const [a,p,d,c,ap,cg,nr,ph]=await Promise.all([
   sb.from('applications').select('*').order('created_at',{ascending:false}),
   sb.from('profiles').select('id,first_name,last_name,phone,email,address,role,status,created_at').order('created_at',{ascending:false}),
-  sb.from('documents').select('*').order('created_at',{ascending:false}),
+  optional(sb.from('documents').select('*').order('created_at',{ascending:false),'documents'),
   sb.from('care_requests').select('*').order('created_at',{ascending:false}),
-  sb.from('application_approvals').select('*'),
-  sb.from('caregivers').select('*'),sb.from('nurses').select('*'),sb.from('physiotherapists').select('*')
+  optional(sb.from('application_approvals').select('*'),'application_approvals'),
+  optional(sb.from('caregivers').select('*'),'caregivers'),
+  optional(sb.from('nurses').select('*'),'nurses'),
+  optional(sb.from('physiotherapists').select('*'),'physiotherapists')
  ]);
- const err=[a,p,d,c,ap,cg,nr,ph].find(x=>x.error); if(err){setMsg(err.error.message,true);return}
- state.apps=a.data||[];state.profiles=p.data||[];state.docs=d.data||[];state.care=c.data||[];state.approvals=ap.data||[];state.providers={caregiver:cg.data||[],nurse:nr.data||[],physiotherapist:ph.data||[]};
- render();setMsg('');
+ const essential=[a,p,c].find(x=>x.error);
+ if(essential){setMsg(essential.error.message,true);return}
+ state.apps=a.data||[];state.profiles=p.data||[];state.docs=d.data||[];state.care=c.data||[];state.approvals=ap.data||[];
+ state.providers={caregiver:cg.data||[],nurse:nr.data||[],physiotherapist:ph.data||[]};
+ render();
+ const warnings=[d,ap,cg,nr,ph].filter(x=>x.error).map(x=>x.error.label+': '+x.error.message);
+ setMsg(warnings.length?'تم تحميل الطلبات الأساسية. توجد مكونات اختيارية تحتاج مزامنة قاعدة البيانات: '+warnings.join(' | '):'');
 }
 function profile(uid){return state.profiles.find(x=>x.id===uid)||{}};
 function provider(uid,type){return (state.providers[type]||[]).find(x=>x.user_id===uid)||{};}
