@@ -41,8 +41,22 @@
         return;
       }
       let msg=document.getElementById('rafig-install-status');
-      if(!msg){msg=document.createElement('div');msg.id='rafig-install-status';msg.className='notice';msg.style.margin='10px auto 0';msg.style.maxWidth='720px';button.insertAdjacentElement('afterend',msg)}
-      msg.textContent='التثبيت المباشر غير متاح من المتصفح الحالي في هذه اللحظة. افتح RAFIQ في Google Chrome على Android ثم اضغط «تثبيت تطبيق رفيق» مرة أخرى. لا يمكن للموقع فرض نافذة تثبيت النظام إذا لم يرسل المتصفح beforeinstallprompt.';
+      if(!msg){
+        msg=document.createElement('div');msg.id='rafig-install-status';msg.className='notice';
+        msg.style.cssText='margin:10px auto 0;max-width:720px;line-height:1.9;text-align:right';
+        button.insertAdjacentElement('afterend',msg);
+      }
+      const standalone=isStandalone();
+      const swReady=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
+      const isAndroid=/Android/i.test(navigator.userAgent);
+      const isChrome=/Chrome\//i.test(navigator.userAgent)&&!/Edg\//i.test(navigator.userAgent);
+      msg.innerHTML='<strong>طريقة التثبيت على هذا الجهاز:</strong><br>'+
+        '1) افتح RAFIQ في Google Chrome على Android عبر الرابط الرسمي.<br>'+
+        '2) اضغط ⋮ ثم اختر <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>.<br>'+
+        '3) إذا ظهر زر <b>تثبيت تطبيق رفيق</b> داخل RAFIQ بعد التحديث، استخدمه أيضاً.<br>'+
+        '<small style="opacity:.82">الحالة: '+(standalone?'التطبيق مثبت بالفعل.':(isAndroid&&isChrome?'Chrome Android — يمكن استخدام التثبيت من قائمة ⋮.':'يفضل فتح RAFIQ في Chrome Android.'))+
+        ' '+(swReady?'خدمة التطبيق جاهزة.':'سيتم تجهيز خدمة التطبيق بعد تحميل الصفحة.')+'</small>';
+      msg.scrollIntoView({behavior:'smooth',block:'nearest'});
     });
   }
 
