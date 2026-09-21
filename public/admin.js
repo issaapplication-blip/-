@@ -91,6 +91,15 @@ $('resetBtn').onclick=async()=>{
  if(error){$('loginError').textContent='تعذر إرسال رابط إعادة التعيين: '+error.message;$('loginError').classList.remove('hidden');return}
  $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط إعادة تعيين كلمة المرور إلى البريد إذا كان الحساب مسجلًا.';$('loginError').classList.remove('hidden');
 };
+function showRecoveryForm(){
+ const login=$('login');
+ if(!login||document.getElementById('recoveryBox'))return;
+ const box=document.createElement('div');box.id='recoveryBox';box.className='notice';box.innerHTML='<b>تعيين كلمة مرور المدير الجديدة</b><div class="field" style="margin-top:10px"><label>كلمة المرور الجديدة</label><input id="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="8 أحرف على الأقل"></div><div class="field"><label>تأكيد كلمة المرور</label><input id="newPassword2" type="password" minlength="8" autocomplete="new-password"></div><button id="saveNewPassword" class="btn primary" style="width:100%">حفظ كلمة المرور الجديدة</button><div id="recoveryMsg"></div>';
+ login.appendChild(box);
+ $('saveNewPassword').onclick=async()=>{const p=$('newPassword').value,p2=$('newPassword2').value;const m=$('recoveryMsg');if(p.length<8){m.textContent='كلمة المرور يجب أن تكون 8 أحرف على الأقل.';return}if(p!==p2){m.textContent='كلمتا المرور غير متطابقتين.';return}const {error}=await sb.auth.updateUser({password:p});if(error){m.textContent='تعذر حفظ كلمة المرور: '+error.message;return}m.innerHTML='<span class="notice">تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بها.</span>';setTimeout(()=>location.reload(),1200)};
+}
+async function checkRecovery(){const {data:{session}}=await sb.auth.getSession();if(session){const url=new URL(location.href);if(url.hash.includes('type=recovery')||url.searchParams.get('type')==='recovery')showRecoveryForm();}}
+sb.auth.onAuthStateChange(async(event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();if(event!=='PASSWORD_RECOVERY'&&await ensureAdmin())load()});
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};$('refresh').onclick=()=>load();
 ['appSearch','appStatus','appType','careSearch','careStatus','docSearch','docStatus'].forEach(id=>$(id).addEventListener('input',()=>{if(id.startsWith('app'))renderApps();else if(id.startsWith('care'))renderCare();else renderDocs()}));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==state.tab))});
