@@ -34,9 +34,9 @@ const app=new Elysia()
 .get("/intake-admin.js",()=>fileResponse("public/intake-admin.js","application/javascript","no-cache"))
 .get("/rafig-approved-logo.jpg",()=>fileResponse("public/rafig-approved-logo.jpg","image/jpeg","no-cache"))
 .get("/rafig-approved-logo-192.jpg",()=>fileResponse("public/rafig-approved-logo-192.jpg","image/jpeg","no-cache"))
-.get("/rafig-approved-logo-512.jpg",()=>fileResponse("public/rafig-approved-logo-512.jpg","image/jpeg","no-cache")).get("/rafig-approved-logo-512.svg",()=>fileResponse("public/rafig-approved-logo-512.jpg","image/jpeg","no-cache"))
+.get("/rafig-approved-logo-512.jpg",()=>fileResponse("public/rafig-approved-logo-512.jpg","image/jpeg","no-cache"))
 .get("/manifest.webmanifest",()=>fileResponse("public/manifest.webmanifest","application/manifest+json"))
 .get("/robots.txt",()=>new Response("User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /admin.js\nDisallow: /intake-admin.js\nSitemap: https://rafiq-o6qd.onrender.com/sitemap.xml",{headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
-.get("/sw.js",()=>fileResponse("public/sw.js","application/javascript","no-cache")).get("/favicon.svg",()=>fileResponse("public/rafig-approved-logo.jpg","image/jpeg","no-cache"))
+.get("/sw.js",()=>fileResponse("public/sw.js","application/javascript","no-cache")).get("/favicon.ico",()=>fileResponse("public/rafig-approved-logo.jpg","image/jpeg","no-cache"))
 .listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
