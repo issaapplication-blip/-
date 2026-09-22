@@ -1,11 +1,12 @@
-const CACHE = "rafig-v46-pwa-install-fix-20260922";
+self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});
+const CACHE = "rafig-v47-forced-update-20260922";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
   "/install-pwa.js",
-  "/rafig-approved-logo.jpg?v=20260922-2",
-  "/rafig-approved-logo-192.jpg?v=20260922-2",
-  "/rafig-approved-logo-512.jpg?v=20260922-2"
+  "/rafig-approved-logo.jpg?v=20260922-3",
+  "/rafig-approved-logo-192.jpg?v=20260922-3",
+  "/rafig-approved-logo-512.jpg?v=20260922-3"
 ];
 
 self.addEventListener("install",e=>e.waitUntil(
