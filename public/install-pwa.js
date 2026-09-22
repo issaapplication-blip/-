@@ -1,6 +1,6 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V13__) return;
-  window.__RAFIQ_UI_GUARD_V13__ = true;
+  if (window.__RAFIQ_UI_GUARD_V14__) return;
+  window.__RAFIQ_UI_GUARD_V14__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
   const UPLOAD_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-upload';
@@ -141,7 +141,7 @@
   const start=()=>{
     cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=49',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=50',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20260922_V2')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20260922_V2','1');
           location.reload();
