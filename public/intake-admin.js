@@ -66,5 +66,6 @@
     }));
   }
   const start=()=>{loadAdminExtras();loadPublicIntakes();setInterval(()=>{loadAdminExtras();loadPublicIntakes()},30000)};
+  window.addEventListener('rafig-admin-ready',start);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
