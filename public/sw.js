@@ -1,12 +1,13 @@
 self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});
-const CACHE = "rafig-v48-forced-update-20260922";
+const CACHE = "rafig-v49-approved-svg-20260922";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
   "/install-pwa.js",
-  "/rafig-approved-logo.jpg?v=20260922-3",
-  "/rafig-approved-logo-192.jpg?v=20260922-3",
-  "/rafig-approved-logo-512.jpg?v=20260922-3"
+  "/rafig-approved-logo.svg?v=1",
+  "/rafig-approved-logo-192.svg?v=1",
+  "/rafig-approved-logo-512.svg?v=1",
+  "/manifest.webmanifest?v=27"
 ];
 
 self.addEventListener("install",e=>e.waitUntil(
