@@ -1,5 +1,5 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V12__) return;
+  if (window.__RAFIQ_UI_GUARD_V13__) return;
   window.__RAFIQ_UI_GUARD_V12__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
@@ -49,13 +49,13 @@
       const standalone=isStandalone();
       const swReady=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
       const isAndroid=/Android/i.test(navigator.userAgent);
-      const isChrome=/Chrome\//i.test(navigator.userAgent)&&!/Edg\//i.test(navigator.userAgent);
-      msg.innerHTML='<strong>طريقة التثبيت على هذا الجهاز:</strong><br>'+
-        '1) افتح RAFIQ في Google Chrome على Android عبر الرابط الرسمي.<br>'+
-        '2) اضغط ⋮ ثم اختر <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>.<br>'+
-        '3) إذا ظهر زر <b>تثبيت تطبيق رفيق</b> داخل RAFIQ بعد التحديث، استخدمه أيضاً.<br>'+
-        '<small style="opacity:.82">الحالة: '+(standalone?'التطبيق مثبت بالفعل.':(isAndroid&&isChrome?'Chrome Android — يمكن استخدام التثبيت من قائمة ⋮.':'يفضل فتح RAFIQ في Chrome Android.'))+
-        ' '+(swReady?'خدمة التطبيق جاهزة.':'سيتم تجهيز خدمة التطبيق بعد تحميل الصفحة.')+'</small>';
+      const isChrome=/Chrome\\//i.test(navigator.userAgent)&&!/Edg\\//i.test(navigator.userAgent);
+      msg.innerHTML='<strong>تثبيت RAFIQ</strong><br>'+
+        (standalone?'التطبيق مثبت بالفعل على هذا الجهاز.':(isAndroid&&isChrome?
+          (swReady?'RAFIQ جاهز للتثبيت. إذا لم يظهر طلب التثبيت داخل الزر بعد، افتح قائمة ⋮ في Chrome ثم اختر <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>.':
+           'يجري تجهيز خدمة التثبيت الآن. بعد اكتمالها أعد تحميل الصفحة مرة واحدة ثم استخدم زر <b>تثبيت تطبيق رفيق</b>.'):
+          'للتثبيت استخدم Google Chrome على Android.'))+
+        '<br><small style="opacity:.82">سيظهر زر التثبيت المباشر داخل RAFIQ عندما يرسل Chrome حدث التثبيت. هذا الحدث يعتمد على شروط Chrome، ومنها تفاعل المستخدم مع الصفحة.</small>';
       msg.scrollIntoView({behavior:'smooth',block:'nearest'});
     });
   }
@@ -138,6 +138,17 @@
   if(isStandalone())document.querySelectorAll('#rafig-install-app,.rafig-install-slot').forEach(el=>el.remove());
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;ensureInstallButton();const s=document.getElementById('rafig-install-status');if(s)s.remove()});
   window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;document.querySelectorAll('#rafig-install-app,.rafig-install-slot,#rafig-install-status').forEach(el=>el.remove())});
-  const start=()=>{cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();let runs=0;const timer=setInterval(()=>{cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();runs++;if(runs>=20)clearInterval(timer)},250)};
+  const start=()=>{
+    cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();
+    if(navigator.serviceWorker){
+      navigator.serviceWorker.ready.then(()=>{
+        if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20260922')){
+          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20260922','1');
+          location.reload();
+        }
+      }).catch(()=>{});
+    }
+    let runs=0;const timer=setInterval(()=>{cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();runs++;if(runs>=40)clearInterval(timer)},250);
+  };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
