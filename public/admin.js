@@ -1,5 +1,6 @@
 const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co';
 const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
+const ADMIN_EMAIL='issaapplication@gmail.com';
 const {createClient}=window.supabase;
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
 let state={apps:[],docs:[],care:[],profiles:[],approvals:[],providers:{caregiver:[],nurse:[],physiotherapist:[]},tab:'applications'};
@@ -9,22 +10,24 @@ const status=s=>`<span class="status ${esc(s)}">${esc(s||'—')}</span>`;
 function setMsg(text,error=false){$('message').innerHTML=text?`<div class="${error?'error':'notice'}">${esc(text)}</div>`:'';}
 async function ensureAdmin(){
  const {data:{session}}=await sb.auth.getSession(); if(!session)return false;
- const email=(session.user.email||'').toLowerCase();
- const isOwner=email==='issaapplication@gmail.com';
- let p=null,error=null;
- if(!isOwner){
-   const r=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).maybeSingle();
-   p=r.data; error=r.error;
-   if(error && error.code!=='PGRST116'){$('loginError').textContent='تعذر التحقق من حساب الإدارة: '+error.message;$('loginError').classList.remove('hidden');return false}
- }
- const isAdmin=isOwner || p?.role==='admin';
+ const email=(session.user.email||'').trim().toLowerCase();
+ let p=null;
+ const profileResult=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).maybeSingle();
+ if(profileResult.data)p=profileResult.data;
+ const ownerByEmail=email==='issaapplication@gmail.com';
+ let dbAdmin=false;
+ try{
+   const r=await sb.rpc('is_admin');
+   dbAdmin=r.data===true;
+ }catch(_){}
+ const isAdmin=ownerByEmail||dbAdmin||p?.role==='admin';
  if(!isAdmin){
    await sb.auth.signOut();
    $('loginError').textContent='تم تسجيل الدخول، لكن هذا الحساب غير مفعّل كحساب إدارة.';
    $('loginError').classList.remove('hidden');
    return false;
  }
- $('adminEmail').textContent=session.user.email||p?.email||'';
+ $('adminEmail').textContent=session.user.email||p?.email||'issaapplication@gmail.com';
  $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminActions').classList.remove('hidden');return true;
 }
 async function load(){
@@ -82,7 +85,7 @@ window.openDoc=async id=>{const d=state.docs.find(x=>x.id===id);if(!d)return;try
 window.openCare=id=>{const c=state.care.find(x=>x.id===id);if(!c)return;$('modalTitle').textContent='تفاصيل طلب الرعاية';$('modalBody').innerHTML=`<div class="grid2">${Object.entries(c).filter(([k])=>!['id','family_id','patient_id'].includes(k)).map(([k,v])=>`<div class="detail"><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</div>`;$('modal').classList.remove('hidden')};
 window.closeModal=()=> $('modal').classList.add('hidden');
 $('loginBtn').onclick=async()=>{
- const email=$('email').value.trim(),password=$('password').value;
+ const email=$('email').value.trim().toLowerCase(),password=$('password').value;
  $('loginError').classList.add('hidden');
  if(!email||!password){$('loginError').textContent='أدخل البريد الإلكتروني وكلمة المرور.';$('loginError').classList.remove('hidden');return}
  const {error}=await sb.auth.signInWithPassword({email,password});
