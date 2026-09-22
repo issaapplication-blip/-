@@ -1,4 +1,4 @@
-const CACHE = "rafig-v44-logo-install-fix-20260922";
+const CACHE = "rafig-v45-pwa-install-fix-20260922";
 const APP_SHELL = ["/","/manifest.webmanifest","/cv-payment-gate.js","/install-pwa.js","/rafig-approved-logo.jpg?v=20260922-2","/rafig-approved-logo-192.jpg?v=20260922-2","/rafig-approved-logo-512.jpg?v=20260922-2"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(APP_SHELL).catch(()=>undefined)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
