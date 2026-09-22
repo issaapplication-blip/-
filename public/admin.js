@@ -90,6 +90,15 @@ $('loginBtn').onclick=async()=>{
  }
  if(await ensureAdmin())load()
 };
+$('magicBtn').onclick=async()=>{
+ const email=$('email').value.trim();
+ $('loginError').className='error hidden';
+ if(!email){$('loginError').textContent='اكتب بريد المدير أولًا.';$('loginError').className='error';$('loginError').classList.remove('hidden');return}
+ const redirectTo=new URL('/admin.html',window.location.origin).toString();
+ const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo,shouldCreateUser:false}});
+ if(error){$('loginError').textContent='تعذر إرسال رابط الدخول: '+error.message;$('loginError').className='error';$('loginError').classList.remove('hidden');return}
+ $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط دخول آمن إلى البريد. افتحه من نفس الجهاز للعودة مباشرة إلى لوحة الإدارة.';$('loginError').classList.remove('hidden');
+};
 $('resetBtn').onclick=async()=>{
  const email=$('email').value.trim();
  $('loginError').classList.add('hidden');
@@ -107,9 +116,8 @@ function showRecoveryForm(){
  $('saveNewPassword').onclick=async()=>{const p=$('newPassword').value,p2=$('newPassword2').value;const m=$('recoveryMsg');if(p.length<8){m.textContent='كلمة المرور يجب أن تكون 8 أحرف على الأقل.';return}if(p!==p2){m.textContent='كلمتا المرور غير متطابقتين.';return}const {error}=await sb.auth.updateUser({password:p});if(error){m.textContent='تعذر حفظ كلمة المرور: '+error.message;return}m.innerHTML='<span class="notice">تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بها.</span>';setTimeout(()=>location.reload(),1200)};
 }
 async function checkRecovery(){const {data:{session}}=await sb.auth.getSession();if(session){const url=new URL(location.href);if(url.hash.includes('type=recovery')||url.searchParams.get('type')==='recovery')showRecoveryForm();}}
-sb.auth.onAuthStateChange(async(event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();if(event!=='PASSWORD_RECOVERY'&&await ensureAdmin())load()});
+sb.auth.onAuthStateChange(async(event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();else if(event==='SIGNED_IN'){if(await ensureAdmin())load()}});
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};$('refresh').onclick=()=>load();
 ['appSearch','appStatus','appType','careSearch','careStatus','docSearch','docStatus'].forEach(id=>$(id).addEventListener('input',()=>{if(id.startsWith('app'))renderApps();else if(id.startsWith('care'))renderCare();else renderDocs()}));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==state.tab))});
-sb.auth.onAuthStateChange(async(_e)=>{if(await ensureAdmin())load()});
 ensureAdmin().then(ok=>{if(ok)load()});
