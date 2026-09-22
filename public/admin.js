@@ -9,10 +9,14 @@ const status=s=>`<span class="status ${esc(s)}">${esc(s||'—')}</span>`;
 function setMsg(text,error=false){$('message').innerHTML=text?`<div class="${error?'error':'notice'}">${esc(text)}</div>`:'';}
 async function ensureAdmin(){
  const {data:{session}}=await sb.auth.getSession(); if(!session)return false;
- const {data:p,error}=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).maybeSingle();
- if(error && error.code!=='PGRST116'){$('loginError').textContent='تعذر التحقق من حساب الإدارة: '+error.message;$('loginError').classList.remove('hidden');return false}
- const email=(session.user.email||p?.email||'').toLowerCase();
+ const email=(session.user.email||'').toLowerCase();
  const isOwner=email==='issaapplication@gmail.com';
+ let p=null,error=null;
+ if(!isOwner){
+   const r=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).maybeSingle();
+   p=r.data; error=r.error;
+   if(error && error.code!=='PGRST116'){$('loginError').textContent='تعذر التحقق من حساب الإدارة: '+error.message;$('loginError').classList.remove('hidden');return false}
+ }
  const isAdmin=isOwner || p?.role==='admin';
  if(!isAdmin){
    await sb.auth.signOut();
@@ -21,7 +25,7 @@ async function ensureAdmin(){
    return false;
  }
  $('adminEmail').textContent=session.user.email||p?.email||'';
- $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');return true;
+ $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminActions').classList.remove('hidden');return true;
 }
 async function load(){
  setMsg('جاري تحميل البيانات…');
@@ -115,9 +119,16 @@ function showRecoveryForm(){
  login.appendChild(box);
  $('saveNewPassword').onclick=async()=>{const p=$('newPassword').value,p2=$('newPassword2').value;const m=$('recoveryMsg');if(p.length<8){m.textContent='كلمة المرور يجب أن تكون 8 أحرف على الأقل.';return}if(p!==p2){m.textContent='كلمتا المرور غير متطابقتين.';return}const {error}=await sb.auth.updateUser({password:p});if(error){m.textContent='تعذر حفظ كلمة المرور: '+error.message;return}m.innerHTML='<span class="notice">تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بها.</span>';setTimeout(()=>location.reload(),1200)};
 }
-async function checkRecovery(){const {data:{session}}=await sb.auth.getSession();if(session){const url=new URL(location.href);if(url.hash.includes('type=recovery')||url.searchParams.get('type')==='recovery')showRecoveryForm();}}
+async function checkRecovery(){
+ const {data:{session}}=await sb.auth.getSession();
+ const url=new URL(location.href);
+ if(session&&(url.hash.includes('type=recovery')||url.searchParams.get('type')==='recovery'))showRecoveryForm();
+}
+
 sb.auth.onAuthStateChange(async(event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();else if(event==='SIGNED_IN'){if(await ensureAdmin())load()}});
-$('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};$('refresh').onclick=()=>load();
+$('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
+$('refresh').onclick=()=>load();
+checkRecovery();
 ['appSearch','appStatus','appType','careSearch','careStatus','docSearch','docStatus'].forEach(id=>$(id).addEventListener('input',()=>{if(id.startsWith('app'))renderApps();else if(id.startsWith('care'))renderCare();else renderDocs()}));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==state.tab))});
 ensureAdmin().then(ok=>{if(ok)load()});
