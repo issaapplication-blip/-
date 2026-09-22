@@ -10,7 +10,7 @@
 </style>
 </head>
 <body>
-<header><div class="head"><div class="brand"><img src="/rafig-approved-logo.svg?v=1" alt="RAFIQ | رفيق" width="1000" height="1000" decoding="async"><div><strong>RAFIQ | رفيق</strong><small>لوحة الإدارة والمراجعة</small></div></div><div id="adminActions" class="hidden"><button id="refresh" class="btn ghost">↻ تحديث</button> <button id="logout" class="btn danger">تسجيل الخروج</button></div></div></header>
+<header><div class="head"><div class="brand"><img src="/rafig-approved-logo.jpg?v=20260922-4" alt="RAFIQ | رفيق" width="1000" height="1000" decoding="async"><div><strong>RAFIQ | رفيق</strong><small>لوحة الإدارة والمراجعة</small></div></div><div id="adminActions" class="hidden"><button id="refresh" class="btn ghost">↻ تحديث</button> <button id="logout" class="btn danger">تسجيل الخروج</button></div></div></header>
 <main>
 <section id="login" class="login"><h1>دخول الإدارة</h1><p class="notice">هذه الصفحة للإدارة فقط. الدخول يتم عبر Supabase Auth، ولا يوجد مفتاح خدمة أو كلمة مرور داخل الواجهة.</p><div class="field"><label>البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required></div><div class="field"><label>كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required></div><button id="loginBtn" class="btn primary" style="width:100%">دخول آمن</button><button id="magicBtn" class="btn gold" style="width:100%;margin-top:8px">إرسال رابط دخول آمن إلى البريد</button><button id="resetBtn" class="btn ghost" style="width:100%;margin-top:8px">إرسال رابط تعيين كلمة المرور إلى البريد</button><div id="loginError" class="error hidden"></div></section>
 <section id="dashboard" class="dashboard hidden">
@@ -23,5 +23,5 @@
 </section>
 </main>
 <div id="modal" class="modal hidden"><div class="modal-card"><div class="topbar"><h2 id="modalTitle" style="margin:0">التفاصيل</h2><button class="btn ghost" onclick="closeModal()">إغلاق</button></div><div id="modalBody"></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="/admin.js?v=8"></script><script src="/intake-admin.js?v=6"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="/admin.js?v=9"></script><script src="/intake-admin.js?v=7"></script>
 </body></html>
