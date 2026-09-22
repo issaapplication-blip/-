@@ -10,16 +10,17 @@ function setMsg(text,error=false){$('message').innerHTML=text?`<div class="${err
 async function ensureAdmin(){
  const {data:{session}}=await sb.auth.getSession(); if(!session)return false;
  const {data:p,error}=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).maybeSingle();
- if(error){$('loginError').textContent='تعذر التحقق من صلاحيات الإدارة: '+error.message;$('loginError').classList.remove('hidden');return false}
- const email=(p?.email||session.user.email||'').toLowerCase();
+ if(error && error.code!=='PGRST116'){$('loginError').textContent='تعذر التحقق من حساب الإدارة: '+error.message;$('loginError').classList.remove('hidden');return false}
+ const email=(session.user.email||p?.email||'').toLowerCase();
  const isOwner=email==='issaapplication@gmail.com';
- if(!p || (p.role!=='admin' && !isOwner)){
+ const isAdmin=isOwner || p?.role==='admin';
+ if(!isAdmin){
    await sb.auth.signOut();
    $('loginError').textContent='تم تسجيل الدخول، لكن هذا الحساب غير مفعّل كحساب إدارة.';
    $('loginError').classList.remove('hidden');
    return false;
  }
- $('adminEmail').textContent=p?.email||session.user.email||'';
+ $('adminEmail').textContent=session.user.email||p?.email||'';
  $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');return true;
 }
 async function load(){
