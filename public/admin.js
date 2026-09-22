@@ -28,7 +28,7 @@ async function ensureAdmin(){
    return false;
  }
  $('adminEmail').textContent=session.user.email||p?.email||'issaapplication@gmail.com';
- $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminActions').classList.remove('hidden');return true;
+ $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminActions').classList.remove('hidden');window.dispatchEvent(new CustomEvent('rafig-admin-ready'));return true;
 }
 async function load(){
  setMsg('جاري تحميل البيانات…');
@@ -131,6 +131,7 @@ async function checkRecovery(){
 sb.auth.onAuthStateChange(async(event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();else if(event==='SIGNED_IN'){if(await ensureAdmin())load()}});
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
 $('refresh').onclick=()=>load();
+if(!window.supabase){$('loginError').textContent='تعذر تحميل مكوّن الدخول الآمن. أعد تحميل الصفحة مرة واحدة.';$('loginError').classList.remove('hidden');}
 checkRecovery();
 ['appSearch','appStatus','appType','careSearch','careStatus','docSearch','docStatus'].forEach(id=>$(id).addEventListener('input',()=>{if(id.startsWith('app'))renderApps();else if(id.startsWith('care'))renderCare();else renderDocs()}));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==state.tab))});
