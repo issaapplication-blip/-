@@ -49,7 +49,7 @@ async function load(){
  state.providers={caregiver:cg.data||[],nurse:nr.data||[],physiotherapist:ph.data||[]};
  render();
  const warnings=[d,ap,cg,nr,ph].filter(x=>x.error).map(x=>x.error.label+': '+x.error.message);
- setMsg(warnings.length?'تم تحميل الطلبات الأساسية. توجد مكونات اختيارية تحتاج مزامنة قاعدة البيانات: '+warnings.join(' | '):'');
+ setMsg(warnings.length?'تم تحميل الطلبات الأساسية. توجد مكونات اختيارية تحتاج مزامنة قاعدة البيانات: '+warnings.join(' | '):'تم تحميل الطلبات. لطلبات الانتساب المرسلة من نماذج المنصة افتح تبويب «طلبات الانتساب الجديدة».');
 }
 function profile(uid){return state.profiles.find(x=>x.id===uid)||{}};
 function provider(uid,type){return (state.providers[type]||[]).find(x=>x.user_id===uid)||{};}
