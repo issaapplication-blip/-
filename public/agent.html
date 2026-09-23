@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<title>RAFIQ | مساعد رفيق</title>
+<link rel="icon" href="/rafig-approved-logo-512.jpg?v=20260923-3" type="image/jpeg">
+<style>
+body{margin:0;background:#f5faf7;color:#17372d;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:18px}.card{background:#fff;border:1px solid #dce9e3;border-radius:22px;padding:18px;box-shadow:0 10px 30px #17372d0d}
+header{display:flex;align-items:center;gap:12px;margin-bottom:15px}header img{width:58px;height:58px;object-fit:contain;border-radius:10px}h1{margin:0;color:#087f58;font-size:24px}.muted{color:#64756e;line-height:1.8}
+#chat{min-height:360px;max-height:55vh;overflow:auto;border:1px solid #dce9e3;border-radius:15px;padding:12px;background:#fbfffd;margin:14px 0}
+.msg{padding:10px 12px;border-radius:13px;margin:8px 0;line-height:1.7;white-space:pre-wrap}.user{background:#eef8f3}.agent{background:#fffaf0;border-right:4px solid #d5a23a}
+form{display:flex;gap:8px}.input{flex:1;padding:12px;border:1px solid #cbdad3;border-radius:12px;font:inherit}.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;cursor:pointer}.primary{background:#087f58;color:#fff}.gold{background:#d5a23a;color:#17372d}.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.hidden{display:none!important}.error{color:#8d1d24;background:#fff0f0;padding:9px;border-radius:10px;margin-top:8px}
+</style></head>
+<body><div class="wrap"><div class="card">
+<header><img src="/rafig-approved-logo-512.jpg?v=20260923-3" alt="RAFIQ"><div><h1>🤖 مساعد رفيق</h1><div class="muted">مساعد معلوماتي لخدمات الرعاية المنزلية.</div></div></header>
+<section id="login"><p class="muted">للدخول إلى المساعد، سجّل بحساب RAFIQ. المساعد لا يقرر القبول أو التوظيف ولا يقدم تشخيصًا طبيًا.</p>
+<input id="email" class="input" type="email" placeholder="البريد الإلكتروني" autocomplete="username"><br><br>
+<input id="password" class="input" type="password" placeholder="كلمة المرور" autocomplete="current-password"><br><br>
+<button id="loginBtn" class="btn primary">دخول المساعد</button><div id="err" class="error hidden"></div></section>
+<section id="chatBox" class="hidden"><div id="chat"></div><form id="form"><input id="message" class="input" maxlength="1500" placeholder="اكتب سؤالك هنا…" required><button class="btn primary">إرسال</button></form>
+<div class="links"><a class="btn gold" href="/app.html">طلبات RAFIQ</a><a class="btn gold" href="https://wa.me/96181506299" target="_blank" rel="noopener">WhatsApp 81</a><button id="logout" class="btn">خروج</button></div></section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const sb=supabase.createClient('https://qmuxaehrahfsnabyjens.supabase.co','sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD');
+const $=id=>document.getElementById(id), chat=$('chat');
+function add(role,text){const d=document.createElement('div');d.className='msg '+role;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+async function login(){const email=$('email').value.trim(),password=$('password').value;const r=await sb.auth.signInWithPassword({email,password});if(r.error){$('err').textContent='تعذر الدخول: '+r.error.message;$('err').classList.remove('hidden');return}$('login').classList.add('hidden');$('chatBox').classList.remove('hidden');add('agent','مرحبًا بك في مساعد رفيق. كيف يمكنني مساعدتك؟')}
+$('loginBtn').onclick=login;
+$('form').onsubmit=async e=>{e.preventDefault();const m=$('message').value.trim();if(!m)return;add('user',m);$('message').value='';const {data:{session}}=await sb.auth.getSession();if(!session){$('login').classList.remove('hidden');$('chatBox').classList.add('hidden');return}const r=await fetch('https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/rafiq-agent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({message:m,locale:'ar'})});const j=await r.json().catch(()=>({}));add('agent',r.ok?(j.reply||j.message||'لم يصل رد من المساعد.'):'تعذر الوصول إلى المساعد الآن. يمكنك متابعة الطلب عبر المنصة أو WhatsApp.');};
+$('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
+</script></body></html>
