@@ -141,9 +141,9 @@
   const start=()=>{
     cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=53',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
-        if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20260923_V1')){
-          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20260923_V1','1');
+      navigator.serviceWorker.register('/sw.js?v=54',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+        if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20260923_V2')){
+          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20260923_V2','1');
           location.reload();
         }
       }).catch(()=>{});
