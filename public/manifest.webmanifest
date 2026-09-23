@@ -8,13 +8,13 @@
   "start_url":"/",
   "scope":"/",
   "display":"standalone",
-  "display_override":["window-controls-overlay","standalone"],
+  "display_override":["standalone","minimal-ui"],
   "orientation":"portrait-primary",
   "background_color":"#ffffff",
   "theme_color":"#087f58",
   "prefer_related_applications":false,
   "icons":[
-    {"src":"/rafig-approved-logo-192.jpg?v=20260922-4","sizes":"1000x1000","type":"image/jpeg","purpose":"any"},
-    {"src":"/rafig-approved-logo-512.jpg?v=20260922-4","sizes":"1000x1000","type":"image/jpeg","purpose":"any"}
+    {"src":"/rafig-approved-logo.jpg?v=20260923-1","sizes":"1000x1000","type":"image/jpeg","purpose":"any"},
+    {"src":"/rafig-approved-logo.jpg?v=20260923-1","sizes":"1000x1000","type":"image/jpeg","purpose":"maskable"}
   ]
 }
