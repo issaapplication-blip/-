@@ -5,6 +5,7 @@ const {createClient}=window.supabase;
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
 let state={apps:[],docs:[],care:[],profiles:[],approvals:[],providers:{caregiver:[],nurse:[],physiotherapist:[]},tab:'applications'};
 const $=id=>document.getElementById(id);
+document.body.classList.remove('rafig-admin-authorized');
 const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const status=s=>`<span class="status ${esc(s)}">${esc(s||'—')}</span>`;
 function setMsg(text,error=false){$('message').innerHTML=text?`<div class="${error?'error':'notice'}">${esc(text)}</div>`:'';}
@@ -27,7 +28,7 @@ async function ensureAdmin(){
    $('loginError').classList.remove('hidden');
    return false;
  }
- $('adminEmail').textContent=session.user.email||p?.email||'issaapplication@gmail.com';
+ $('adminEmail').textContent=session.user.email||p?.email||'issaapplication@gmail.com';document.body.classList.add('rafig-admin-authorized');
  $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminActions').classList.remove('hidden');window.dispatchEvent(new CustomEvent('rafig-admin-ready'));return true;
 }
 async function load(){
@@ -131,7 +132,7 @@ async function checkRecovery(){
 }
 
 sb.auth.onAuthStateChange(async(event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();else if(event==='SIGNED_IN'){if(await ensureAdmin())load()}});
-$('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
+$('logout').onclick=async()=>{document.body.classList.remove('rafig-admin-authorized');document.getElementById('adminRafiqCounters')?.remove();await sb.auth.signOut();location.reload()};
 $('refresh').onclick=()=>load();
 if(!window.supabase){$('loginError').textContent='تعذر تحميل مكوّن الدخول الآمن. أعد تحميل الصفحة مرة واحدة.';$('loginError').classList.remove('hidden');}
 checkRecovery();
