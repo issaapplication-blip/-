@@ -19,21 +19,15 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/rafig-approved-logo-192.jpg",
-      "sizes": "192x192",
-      "type": "image/jpeg",
+      "src": "/rafig-approved-logo.svg?v=20260923-4",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/rafig-approved-logo-512.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/rafig-approved-logo-512.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
+      "src": "/rafig-approved-logo.svg?v=20260923-4",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ]
