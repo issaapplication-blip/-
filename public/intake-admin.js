@@ -1,4 +1,6 @@
 (() => {
+  if (window.__RAFIQ_INTAKE_ADMIN_V3__) return;
+  window.__RAFIQ_INTAKE_ADMIN_V3__=true;
   const URL='https://qmuxaehrahfsnabyjens.supabase.co';
   const KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
   const sb2=window.supabase.createClient(URL,KEY);
@@ -35,17 +37,19 @@
       const x=data.find(v=>v.id===btn.dataset.intake);if(!x)return;
       const payload=Object.entries(x.payload||{}).map(([k,v])=>`<div class="detail"><b>${esc(k)}</b>${esc(typeof v==='object'?JSON.stringify(v):v)}</div>`).join('');
       const {data:files}=await sb2.from('application_intake_files').select('*').eq('intake_id',x.id).order('created_at',{ascending:false});
-      const docs=(files||[]).map(f=>`<div class="doc"><b>${esc(f.file_name)}</b><br><small>${esc(f.document_category||'')} · ${esc(f.mime_type||'')} · ${Math.round((f.file_size||0)/1024)} KB · الحالة: ${esc(f.verification_status||'pending')}</small><div class="actions"><button class="btn ghost" data-file="${esc(f.storage_path)}">فتح المستند</button><button class="btn primary" data-doc-status="approved" data-doc-id="${esc(f.id)}">اعتماد الملف</button><button class="btn danger" data-doc-status="rejected" data-doc-id="${esc(f.id)}">رفض الملف</button></div></div>`).join('')||'لا توجد مستندات مرفوعة.';
+      const docs=(files||[]).map(f=>`<div class="doc"><b>${esc(f.file_name)}</b><br><small>${esc(f.document_category||'')} · ${esc(f.mime_type||'')} · ${Math.round((f.file_size||0)/1024)} KB · الحالة: ${esc(f.verification_status||'pending')}</small><div class="actions"><button class="btn ghost" data-file="${esc(f.storage_path)}">فتح المستند</button><button class="btn ghost" data-download="${esc(f.storage_path)}" data-name="${esc(f.file_name)}">تحميل</button><button class="btn primary" data-doc-status="approved" data-doc-id="${esc(f.id)}">اعتماد الملف</button><button class="btn danger" data-doc-status="rejected" data-doc-id="${esc(f.id)}">رفض الملف</button></div></div>`).join('')||'لا توجد مستندات مرفوعة.';
       const isGeneral=x.application_type==='انتساب عام';
       const isCv=x.application_type==='CV + Cover Letter';
       const paymentVerified=x.payload?.payment_status==='verified';
       document.getElementById('modalTitle').textContent='طلب '+x.application_type+' رقم '+x.application_number;
       document.getElementById('modalBody').innerHTML=`<div class="grid2"><div class="detail"><b>المتقدم</b>${esc(x.applicant_name)}</div><div class="detail"><b>الهاتف</b>${esc(x.phone)}</div><div class="detail"><b>النوع</b>${esc(x.application_type)}</div><div class="detail"><b>المنطقة</b>${esc(x.area)}</div><div class="detail"><b>الحالة</b>${esc(x.status)}</div><div class="detail"><b>التاريخ</b>${new Date(x.created_at).toLocaleString('ar-LB')}</div></div><h3>بيانات الطلب</h3><div class="grid2">${payload}</div><h3>المستندات</h3><div class="docs">${docs}</div><div class="actions" style="margin-top:15px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn primary" data-review="approved">${isGeneral?'قبول وإنشاء العضوية والباركود':isCv?(paymentVerified?'تأكيد/بدء المعالجة':'تأكيد الدفع والبدء'):'قبول'}</button><button class="btn danger" data-review="rejected">رفض</button></div>`;
       document.getElementById('modal').classList.remove('hidden');
-      document.getElementById('modalBody').querySelectorAll('[data-file]').forEach(b=>b.addEventListener('click',async()=>{const r=await sb2.storage.from('private_documents').createSignedUrl(b.dataset.file,600);if(r.error)alert(r.error.message);else window.open(r.data.signedUrl,'_blank','noopener')}));
+      document.getElementById('modalBody').querySelectorAll('[data-file]').forEach(b=>b.addEventListener('click',async()=>{try{const r=await sb2.storage.from('private_documents').createSignedUrl(b.dataset.file,600);if(r.error)throw r.error;window.open(r.data.signedUrl,'_blank','noopener,noreferrer')}catch(err){alert('تعذر فتح المستند: '+(err?.message||'خطأ غير معروف'))}}));
+      document.getElementById('modalBody').querySelectorAll('[data-download]').forEach(b=>b.addEventListener('click',async()=>{try{const r=await sb2.storage.from('private_documents').createSignedUrl(b.dataset.download,600,{download:b.dataset.name});if(r.error)throw r.error;window.location.href=r.data.signedUrl}catch(err){alert('تعذر تحميل المستند: '+(err?.message||'خطأ غير معروف'))}}));
       document.getElementById('modalBody').querySelectorAll('[data-doc-status]').forEach(b=>b.addEventListener('click',async()=>{
-        const {error}=await sb2.from('application_intake_files').update({verification_status:b.dataset.docStatus}).eq('id',b.dataset.docId);
+        const {error}=await sb2.from('application_intake_files').update({verification_status:b.dataset.docStatus}).eq('id',b.dataset.docId).select('id,verification_status').single();
         if(error){alert('تعذر تحديث حالة الملف: '+error.message);return}
+        await sb2.from('audit_logs').insert({action:'intake_file_status_'+b.dataset.docStatus,table_name:'application_intake_files',record_id:b.dataset.docId,user_id:(await sb2.auth.getUser()).data.user.id});
         const f=(files||[]).find(v=>v.id===b.dataset.docId); if(f)f.verification_status=b.dataset.docStatus;
         b.parentElement?.parentElement?.querySelector('small')?.replaceChildren(document.createTextNode((b.parentElement.parentElement.querySelector('small')?.textContent||'').replace(/الحالة: [^ ]+$/,'الحالة: '+b.dataset.docStatus)));
       }));
@@ -65,7 +69,8 @@
       }));
     }));
   }
-  const start=()=>{loadAdminExtras();loadPublicIntakes();setInterval(()=>{loadAdminExtras();loadPublicIntakes()},30000)};
+  let started=false;
+  const start=()=>{if(started)return;started=true;loadAdminExtras();loadPublicIntakes();setInterval(()=>{loadAdminExtras();loadPublicIntakes()},30000)};
   window.addEventListener('rafig-admin-ready',start);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
