@@ -19,13 +19,13 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/rafig-approved-logo.svg?v=20260923-4",
+      "src": "/rafig-approved-logo-512.jpg?v=20260923-6",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/rafig-approved-logo.svg?v=20260923-4",
+      "src": "/rafig-approved-logo-512.jpg?v=20260923-6",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
