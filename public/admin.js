@@ -1,6 +1,11 @@
 const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co';
 const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
 const ADMIN_EMAIL='issaapplication@gmail.com';
+if(!window.supabase){
+  const box=document.getElementById('loginError');
+  if(box){box.className='error';box.textContent='تعذر تحميل نظام الدخول الآمن. أعد تحميل الصفحة مرة واحدة.';box.classList.remove('hidden');}
+  throw new Error('Supabase client library unavailable');
+}
 const {createClient}=window.supabase;
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
 let state={apps:[],docs:[],care:[],profiles:[],approvals:[],providers:{caregiver:[],nurse:[],physiotherapist:[]},tab:'applications'};
@@ -88,7 +93,7 @@ window.openDoc=async id=>{const d=state.docs.find(x=>x.id===id);if(!d)return;try
 window.openCare=id=>{const c=state.care.find(x=>x.id===id);if(!c)return;$('modalTitle').textContent='تفاصيل طلب الرعاية';$('modalBody').innerHTML=`<div class="grid2">${Object.entries(c).filter(([k])=>!['id','family_id','patient_id'].includes(k)).map(([k,v])=>`<div class="detail"><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</div>`;$('modal').classList.remove('hidden')};
 window.closeModal=()=> $('modal').classList.add('hidden');
 $('loginBtn').onclick=async()=>{
- const email=$('email').value.trim().toLowerCase(),password=$('password').value;
+ const email=$('email').value.trim().toLowerCase()||ADMIN_EMAIL,password=$('password').value;
  $('loginError').classList.add('hidden');
  if(!email||!password){$('loginError').textContent='أدخل البريد الإلكتروني وكلمة المرور.';$('loginError').classList.remove('hidden');return}
  const {error}=await sb.auth.signInWithPassword({email,password});
@@ -101,7 +106,7 @@ $('loginBtn').onclick=async()=>{
  if(await ensureAdmin())load()
 };
 $('magicBtn').onclick=async()=>{
- const email=$('email').value.trim();
+ const email=$('email').value.trim().toLowerCase()||ADMIN_EMAIL;
  $('loginError').className='error hidden';
  if(!email){$('loginError').textContent='اكتب بريد المدير أولًا.';$('loginError').className='error';$('loginError').classList.remove('hidden');return}
  const redirectTo=new URL('/admin.html',window.location.origin).toString();
@@ -110,7 +115,7 @@ $('magicBtn').onclick=async()=>{
  $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط دخول آمن إلى البريد. افتحه من نفس الجهاز للعودة مباشرة إلى لوحة الإدارة.';$('loginError').classList.remove('hidden');
 };
 $('resetBtn').onclick=async()=>{
- const email=$('email').value.trim();
+ const email=$('email').value.trim().toLowerCase()||ADMIN_EMAIL;
  $('loginError').classList.add('hidden');
  if(!email){$('loginError').textContent='اكتب بريدك الإلكتروني أولًا.';$('loginError').classList.remove('hidden');return}
  const redirectTo=new URL('/admin.html',window.location.origin).toString();
@@ -138,4 +143,4 @@ if(!window.supabase){$('loginError').textContent='تعذر تحميل مكوّن
 checkRecovery();
 ['appSearch','appStatus','appType','careSearch','careStatus','docSearch','docStatus'].forEach(id=>$(id).addEventListener('input',()=>{if(id.startsWith('app'))renderApps();else if(id.startsWith('care'))renderCare();else renderDocs()}));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==state.tab))});
-ensureAdmin().then(ok=>{if(ok)load()});
+ensureAdmin().then(ok=>{if(ok)load()}).catch(err=>{const box=$('loginError');box.textContent='تعذر تهيئة جلسة الإدارة: '+(err?.message||'خطأ غير معروف');box.className='error';box.classList.remove('hidden');});
