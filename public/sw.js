@@ -4,7 +4,7 @@ const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
   "/install-pwa.js",
-  "/rafig-approved-logo.svg?v=20260923-4",
+  "/rafig-approved-logo-512.jpg?v=20260923-6",
   "/manifest.webmanifest?v=20260923-4"
 ];
 
