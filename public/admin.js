@@ -7,13 +7,14 @@ if(!window.supabase){
   throw new Error('Supabase client library unavailable');
 }
 const {createClient}=window.supabase;
-const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 let state={apps:[],docs:[],care:[],profiles:[],approvals:[],providers:{caregiver:[],nurse:[],physiotherapist:[]},tab:'applications'};
 const $=id=>document.getElementById(id);
 document.body.classList.remove('rafig-admin-authorized');
 const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const status=s=>`<span class="status ${esc(s)}">${esc(s||'—')}</span>`;
 function setMsg(text,error=false){$('message').innerHTML=text?`<div class="${error?'error':'notice'}">${esc(text)}</div>`:'';}
+let adminInitInFlight=null;
 async function ensureAdmin(){
  const {data:{session}}=await sb.auth.getSession(); if(!session)return false;
  const email=(session.user.email||'').trim().toLowerCase();
@@ -136,11 +137,12 @@ async function checkRecovery(){
  if(session&&(url.hash.includes('type=recovery')||url.searchParams.get('type')==='recovery'))showRecoveryForm();
 }
 
-sb.auth.onAuthStateChange(async(event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();else if(event==='SIGNED_IN'){if(await ensureAdmin())load()}});
+sb.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY')showRecoveryForm();else if(event==='SIGNED_OUT'){document.body.classList.remove('rafig-admin-authorized');$('dashboard').classList.add('hidden');$('login').classList.remove('hidden');}});
 $('logout').onclick=async()=>{document.body.classList.remove('rafig-admin-authorized');document.getElementById('adminRafiqCounters')?.remove();await sb.auth.signOut();location.reload()};
 $('refresh').onclick=()=>load();
 if(!window.supabase){$('loginError').textContent='تعذر تحميل مكوّن الدخول الآمن. أعد تحميل الصفحة مرة واحدة.';$('loginError').classList.remove('hidden');}
 checkRecovery();
+(async()=>{try{const ok=await ensureAdmin();if(ok)await load();}catch(e){$('loginError').textContent='تعذر تهيئة جلسة الإدارة: '+(e?.message||'خطأ غير معروف');$('loginError').classList.remove('hidden');}})();
 ['appSearch','appStatus','appType','careSearch','careStatus','docSearch','docStatus'].forEach(id=>$(id).addEventListener('input',()=>{if(id.startsWith('app'))renderApps();else if(id.startsWith('care'))renderCare();else renderDocs()}));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==state.tab))});
 ensureAdmin().then(ok=>{if(ok)load()}).catch(err=>{const box=$('loginError');box.textContent='تعذر تهيئة جلسة الإدارة: '+(err?.message||'خطأ غير معروف');box.className='error';box.classList.remove('hidden');});
