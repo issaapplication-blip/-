@@ -14,7 +14,6 @@ document.body.classList.remove('rafig-admin-authorized');
 const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const status=s=>`<span class="status ${esc(s)}">${esc(s||'—')}</span>`;
 function setMsg(text,error=false){$('message').innerHTML=text?`<div class="${error?'error':'notice'}">${esc(text)}</div>`:'';}
-let adminInitInFlight=null;
 async function ensureAdmin(){
  const {data:{session}}=await sb.auth.getSession(); if(!session)return false;
  const email=(session.user.email||'').trim().toLowerCase();
@@ -110,7 +109,7 @@ $('magicBtn').onclick=async()=>{
  const email=$('email').value.trim().toLowerCase()||ADMIN_EMAIL;
  $('loginError').className='error hidden';
  if(!email){$('loginError').textContent='اكتب بريد المدير أولًا.';$('loginError').className='error';$('loginError').classList.remove('hidden');return}
- const redirectTo=new URL('/admin.html',window.location.origin).toString();
+ const redirectTo='https://rafiq-o6qd.onrender.com/admin.html';
  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo,shouldCreateUser:false}});
  if(error){$('loginError').textContent='تعذر إرسال رابط الدخول: '+error.message;$('loginError').className='error';$('loginError').classList.remove('hidden');return}
  $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط دخول آمن إلى البريد. افتحه من نفس الجهاز للعودة مباشرة إلى لوحة الإدارة.';$('loginError').classList.remove('hidden');
@@ -119,7 +118,7 @@ $('resetBtn').onclick=async()=>{
  const email=$('email').value.trim().toLowerCase()||ADMIN_EMAIL;
  $('loginError').classList.add('hidden');
  if(!email){$('loginError').textContent='اكتب بريدك الإلكتروني أولًا.';$('loginError').classList.remove('hidden');return}
- const redirectTo=new URL('/admin.html',window.location.origin).toString();
+ const redirectTo='https://rafiq-o6qd.onrender.com/admin.html';
  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
  if(error){$('loginError').textContent='تعذر إرسال رابط إعادة التعيين: '+error.message;$('loginError').classList.remove('hidden');return}
  $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط إعادة تعيين كلمة المرور إلى البريد إذا كان الحساب مسجلًا.';$('loginError').classList.remove('hidden');
