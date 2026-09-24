@@ -37,10 +37,18 @@
     if(box){box.className='error';box.textContent=msg;box.classList.remove('hidden');}
   };
   const loadApp=()=>{
-    const a=document.createElement('script'); a.src='/admin.js?v=20260923-6'; a.defer=true;
+    const a=document.createElement('script');
+    a.src='/admin.js?v=20260924-3';
+    a.async=false;
+    a.onload=()=>{
+      const i=document.createElement('script');
+      i.src='/intake-admin.js?v=20260924-3';
+      i.async=false;
+      i.onerror=()=>bootMessage('تم تحميل لوحة الإدارة، لكن تعذر تحميل وحدة مراجعة الطلبات. أعد تحميل الصفحة مرة واحدة.');
+      document.body.appendChild(i);
+    };
     a.onerror=()=>bootMessage('تعذر تحميل نظام إدارة RAFIQ. أعد تحميل الصفحة مرة واحدة، وإذا استمر العطل أخبرنا بنص الرسالة الظاهرة هنا.');
     document.body.appendChild(a);
-    const i=document.createElement('script'); i.src='/intake-admin.js?v=20260923-6'; i.defer=true; document.body.appendChild(i);
   };
   const load=(n)=>{
     if(window.supabase){loadApp();return;}
