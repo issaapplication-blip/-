@@ -1,11 +1,9 @@
 self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});
-const CACHE = "rafig-v55-approved-jpg-logo-20260924";
+const CACHE = "rafig-v56-no-legacy-logo";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
   "/install-pwa.js",
-  "/rafig-approved-logo-512.jpg?v=20260924-1",
-  "/rafig-approved-logo.jpg?v=20260924-1"
 ];
 
 self.addEventListener("install",e=>e.waitUntil(
