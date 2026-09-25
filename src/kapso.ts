@@ -88,7 +88,7 @@ export async function ensureKapsoWebhook() {
         event: "rafig_kapso_webhook_autoconfig_ready",
         active: true,
         existing: true,
-        event: "whatsapp.message.received",
+        webhookEvent: "whatsapp.message.received",
       }));
       return { configured: true, existing: true };
     }
@@ -117,7 +117,7 @@ export async function ensureKapsoWebhook() {
       event: "rafig_kapso_webhook_autoconfig_created",
       active: true,
       existing: false,
-      event: "whatsapp.message.received",
+      webhookEvent: "whatsapp.message.received",
     }));
     return { configured: true, existing: false };
   } catch (error) {
