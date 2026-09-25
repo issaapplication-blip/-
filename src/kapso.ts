@@ -1,4 +1,4 @@
-const KAPSO_BASE_URL = process.env.KAPSO_BASE_URL ?? "https://api.kapso.ai/meta/whatsapp";
+const KAPSO_BASE_URL = process.env.KAPSO_BASE_URL ?? "https://api.kapso.ai/meta/whatsapp/v24.0";
 
 export const kapsoConfigured = () =>
   Boolean(process.env.KAPSO_API_KEY && process.env.KAPSO_PHONE_NUMBER_ID);
@@ -8,6 +8,7 @@ export async function kapsoSendText(to: string, body: string) {
   const response = await fetch(`${KAPSO_BASE_URL}/${process.env.KAPSO_PHONE_NUMBER_ID}/messages`, {
     method: "POST",
     headers: {
+      "X-API-Key": process.env.KAPSO_API_KEY,
       Authorization: `Bearer ${process.env.KAPSO_API_KEY}`,
       "Content-Type": "application/json",
     },
