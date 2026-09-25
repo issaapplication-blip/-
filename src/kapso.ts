@@ -7,6 +7,7 @@ export async function kapsoSendText({to:destination: {to?: string; recipient?: s
   if (!kapsoConfigured()) throw new Error("Kapso configuration is incomplete");
   const phoneNumberId = process.env.KAPSO_PHONE_NUMBER_ID ?? "1324609540731383";
   if (!destination.to && !destination.recipient) throw new Error("Kapso recipient is missing");
+  if (!destination.to && !destination.recipient) throw new Error("Kapso recipient is missing");
   const response = await fetch(`${KAPSO_BASE_URL}/${phoneNumberId}/messages`, {
     method: "POST",
     headers: {
