@@ -9,16 +9,17 @@ const kapsoHeaders = () => ({
   "Content-Type": "application/json",
 });
 
-export async function kapsoSendText(to: string, body: string) {
+export async function kapsoSendText(destination: string | { to?: string; recipient?: string }, body: string) {
   if (!kapsoConfigured()) throw new Error("Kapso configuration is incomplete");
   const phoneNumberId = process.env.KAPSO_PHONE_NUMBER_ID ?? "1324609540731383";
+  const target = typeof destination === "string" ? { to: destination } : destination;
+  if (!target.to && !target.recipient) throw new Error("Kapso recipient is missing");
   const response = await fetch(KAPSO_BASE_URL + "/" + phoneNumberId + "/messages", {
     method: "POST",
     headers: kapsoHeaders(),
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to,
+      ...(target.to ? { recipient_type: "individual", to: target.to } : { recipient: target.recipient }),
       type: "text",
       text: { preview_url: false, body },
     }),
