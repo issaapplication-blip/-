@@ -19,9 +19,9 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/rafig-approved-logo.jpg?v=20260926-1",
-      "sizes": "256x256",
-      "type": "image/jpeg",
+      "src": "https://github.com/user-attachments/assets/2ff717bd-e6df-4e94-9ddb-092dede2ca97",
+      "sizes": "2048x2048",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
