@@ -1,5 +1,5 @@
 self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});
-const CACHE = "rafig-v62-exact-logo-20260926";
+const CACHE = "rafig-v63-local-approved-logo-20260926";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
