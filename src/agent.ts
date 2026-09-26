@@ -77,9 +77,27 @@ const callAgent = async (input: string) => {
   return { reply, model };
 };
 
+const CARE_TRIGGER_RE = /(?:رعاية|مسن|رعاية منزلية|تمريض|kareh|nurse)/i;
+
+const RAFIQ_CARE_INTAKE_REPLY =
+  "أهلاً بك في منصة رفيق 🌿\n\n" +
+  "ما الخدمة التي تحتاجها؟\n\n" +
+  "لخدمة الطلب، أرسل لنا المعلومات التالية:\n" +
+  "1) الاسم\n" +
+  "2) رقم الهاتف\n" +
+  "3) المدينة\n" +
+  "4) نوع الخدمة المطلوبة\n\n" +
+  "وسيتم تحويل طلبك إلى فريق رفيق على الرقم +961 81 506 299.";
+
+const RAFIQ_DEFAULT_INBOUND_REPLY =
+  "مرحباً! أنا وكيل منصة RAFIQ. كيف أستطيع مساعدتك؟";
+
 export const draftAgentReply = async (message: string, languageHint?: string) => {
-  const context = languageHint ? `Preferred language hint: ${languageHint}` : "Infer the customer's language from the message.";
-  return callAgent(`${context}\n\nCustomer message:\n${message}`);
+  const normalized = message.trim();
+  if (CARE_TRIGGER_RE.test(normalized)) {
+    return { reply: RAFIQ_CARE_INTAKE_REPLY, model: "rafig-rule-router" };
+  }
+  return { reply: RAFIQ_DEFAULT_INBOUND_REPLY, model: "rafig-rule-router" };
 };
 
 export const draftInstitutionOutreach = async (
