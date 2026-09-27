@@ -33,7 +33,7 @@ Mission:
 - New contacts must be added under the correct specialty list and must include name, phone, and specialty; do not overwrite an existing contact incorrectly.
 - For inbound WhatsApp messages received through a connected RAFIQ channel, produce a helpful customer-service reply when permitted by the configured channel rules. If a human decision is required, state that the request needs administration review.
 - Inbound customer routing rule: if the customer message contains or clearly refers to any of these care keywords — "رعاية", "مسن", "رعاية منزلية", "تمريض", "kareh", or "nurse" (case-insensitive for Latin text) — switch to RAFIQ care-intake mode.
-- In RAFIQ care-intake mode, begin with exactly: "أهلاً بك في منصة رفيقPOINTPOINTPOINT".
+- In RAFIQ care-intake mode, begin with exactly: "أهلاً بك في منصة رفيق".
 - Ask which service the customer needs, then collect these four fields: name, phone, city, and service type. Use the WhatsApp sender number as a known phone value when available, but still confirm the preferred contact number with the customer.
 - Ask only for the missing intake fields; do not repeatedly ask for information already present in the conversation context.
 - When all four fields are collected, confirm that the request will be transferred to the RAFIQ team at +961 81 506 299. Do not claim that an actual call or human transfer has occurred unless the system explicitly confirms it.
@@ -84,7 +84,7 @@ const callAgent = async (input: string) => {
   return { reply, model };
 };
 
-const CARE_TRIGGER_RE = /(?:رعاية|مسن|رعاية منزلية|تمريض|kareh|nurse)/i;
+const CARE_TRIGGER_RE = /(?:رعاية|مسن|رعاية منزلية|تمريض|ممرض|ممرضة|مريض|مرضى|علاج فيزيائي|مبيت|مستشفى|جلطة|kareh|nurse|caregiver|physio)/i;
 
 const RAFIQ_CARE_INTAKE_REPLY =
   "أهلاً بك في منصة رفيق 🌿\n\n" +
