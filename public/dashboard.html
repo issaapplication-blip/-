@@ -548,10 +548,36 @@ function renderApps(){
           (x.status!=='approved' ? '<button class="btn" onclick="reviewApp(\''+x.id+'\',\'approved\')">✓ قبول</button>':'')+
           (x.status!=='rejected' ? '<button class="btn danger" onclick="reviewApp(\''+x.id+'\',\'rejected\')">✕ رفض</button>':'')+
           (x.status!=='under_review'? '<button class="btn alt" onclick="reviewApp(\''+x.id+'\',\'under_review\')">مراجعة</button>':'')+
-          (x.status==='approved'? '<button class="btn gold" onclick="issueCode(\''+x.user_id+'\')">🎫 إصدار باركود</button>':'')+
+          (x.status==='approved'? '<button class="btn gold" onclick="sendApprovedWelcome(\''+x.id+'\')">📲 إرسال الترحيب + الباركود</button>':'')+
         '</div></td></tr>';
     }).join('')+'</tbody></table></div>';
 }
+
+window.sendApprovedWelcome=async applicationId=>{
+  const {data:{session}}=await db.auth.getSession();
+  if(!session?.access_token){msg('انتهت جلسة المدير. سجّل الدخول مجددًا.');return;}
+  msg('جارٍ إرسال رسالة الترحيب والباركود عبر واتساب…',true);
+  try{
+    const response=await fetch('/api/admin/send-approved-welcome',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({applicationId})
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok){
+      msg(result.error==='no pending approval message'
+        ? 'تمت الموافقة، لكن لا توجد رسالة معلّقة للإرسال. راجع سجل الطلب.'
+        : 'تمت الموافقة وحُفظ الباركود، لكن تعذر إرسال واتساب الآن. يمكن إعادة المحاولة من زر الإرسال.',false);
+      return;
+    }
+    msg(result.status==='already_sent'
+      ? 'رسالة الترحيب والباركود أُرسلت سابقًا.'
+      : 'تمت الموافقة وإرسال رسالة الترحيب والباركود عبر واتساب بنجاح.',true);
+    load();
+  }catch(e){
+    msg('تمت الموافقة وحُفظ الباركود، لكن تعذر الاتصال بخدمة الإرسال. أعد المحاولة لاحقًا.',false);
+  }
+};
 
 window.reviewApp=async(id,status)=>{
   let note=null;
@@ -563,22 +589,13 @@ window.reviewApp=async(id,status)=>{
     p_application_id:id, p_status:status, p_notes:note||null
   });
   if(error){ msg('تعذر التحديث: '+error.message); return; }
-  msg('تم التحديث إلى: '+st(status),true);
-  load();
-};
-
-window.issueCode=async userId=>{
-  const type=prompt('نوع العضوية:\nfamily / caregiver / nurse / physiotherapist / dentist / nutritionist / speech_therapist / owner',
-                    profOf(userId).role ? (Object.keys(ROLE_AR).find(k=>ROLE_AR[k]===profOf(userId).role)||'caregiver') : 'caregiver');
-  if(!type) return;
-  const code='RAFIQ-'+type.slice(0,3).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
-  const {error}=await db.from('member_barcodes').insert({
-    user_id:userId, code, member_type:type, status:'active', issued_at:new Date().toISOString(),
-    note:'صدر تلقائيًا عند الموافقة'
-  });
-  if(error){ msg('تعذر إصدار الباركود: '+error.message); return; }
-  msg('تم إصدار الباركود: '+code,true);
-  load();
+  if(status==='approved'){
+    msg('تمت الموافقة وإنشاء الباركود. جارٍ إرسال رسالة الترحيب…',true);
+    await sendApprovedWelcome(id);
+  }else{
+    msg('تم التحديث إلى: '+st(status),true);
+    load();
+  }
 };
 
 async function loadCare(){
