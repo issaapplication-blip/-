@@ -1,5 +1,18 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /api/
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /review.html
+Disallow: /barcode.html
+Disallow: /admin.js
+Disallow: /intake-admin.js
+Disallow: /_headers
+Disallow: /migrations/
+Disallow: /supabase/
+Disallow: /docs/
+Disallow: /_tools/
+
+# The financial number must never be indexed or served publicly.
+Disallow: /*70600157*
+
 Sitemap: https://rafiq-o6qd.onrender.com/sitemap.xml

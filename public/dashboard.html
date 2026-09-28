@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#087f58">
+<link rel="icon" href="./assets/rafig-logo.png?v=20260928" type="image/png">
+<title>لوحة المدير | RAFIQ</title>
+<style>
+:root{--g:#087f58;--g2:#0b9b6b;--gold:#c9a85a;--red:#c9232b;--dark:#17372d;--muted:#66756f;--line:#dce8e2;--soft:#eef8f3;--cream:#fffaf0;--white:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#f2f7f5;color:var(--dark);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.7}
+.wrap{max-width:1100px;margin:auto;padding:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 4px 18px rgba(0,0,0,.05)}
+.logo{display:block;width:min(170px,52vw);margin:0 auto 8px}
+h1{color:var(--g);text-align:center;font-size:22px;margin:6px 0}
+h2{color:var(--g);font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.small{font-size:13px;color:var(--muted)}
+.center{text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.tile{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:13px;text-align:center}
+.tile b{display:block;font-size:26px;color:var(--g);line-height:1.2}
+.tile span{font-size:12px;color:var(--muted);font-weight:700}
+.tile.gold{background:var(--cream);border-color:#ead7a8}
+.tile.gold b{color:#a97e1e}
+.tile.red{background:#fff4f4;border-color:#f0c9cc}
+.tile.red b{color:var(--red)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:12px;padding:12px 18px;background:var(--g);color:#fff;font-weight:800;cursor:pointer;text-decoration:none;min-height:46px;font-size:15px}
+.alt{background:#eaf2ef;color:var(--dark)}
+.gold{background:var(--gold);color:var(--dark)}
+.danger{background:var(--red);color:#fff}
+.wide{width:100%}
+.ok{background:var(--soft);border:1px solid #b9e4d1;border-radius:12px;padding:12px;margin:10px 0}
+.err{background:#fff0f0;border:1px solid #efc2c5;color:#8b1e1e;border-radius:12px;padding:12px;margin:10px 0}
+.notice{background:var(--cream);border-right:4px solid var(--gold);border-radius:12px;padding:12px;margin:10px 0;font-size:13px}
+.hidden{display:none!important}
+label{display:block;font-size:13px;font-weight:800;margin-bottom:4px}
+input,select{width:100%;padding:12px;border:1px solid #cbdad3;border-radius:11px;font:inherit;margin-bottom:12px;background:#fff}
+input:focus,select:focus{outline:2px solid var(--g2);outline-offset:1px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:right;padding:8px 5px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:11px;font-weight:800}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
+.tabs button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 15px;font-weight:800;cursor:pointer;color:var(--dark)}
+.tabs button.on{background:var(--g);color:#fff;border-color:var(--g)}
+.bar{height:9px;background:var(--soft);border-radius:999px;overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;background:var(--g)}
+.lock{display:flex;align-items:center;gap:8px;justify-content:center;font-size:12px;color:var(--muted)}
+@media(max-width:600px){h1{font-size:19px}.grid{grid-template-columns:repeat(2,1fr)}.tile b{font-size:22px}}
+</style>
+<style>.logo-fallback{display:inline-block;font-weight:900;color:#087f58;font-size:20px;letter-spacing:.5px}</style>
+<style>body{overflow-x:hidden}nav.card{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:12px}nav.card a.btn{flex:0 0 auto;white-space:nowrap;font-size:14px;padding:10px 14px}.logo{display:block;width:min(150px,42vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.07)}.brand-logo{display:block;width:min(190px,55vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px}h1{font-size:24px}article.card h1,section.card h1{font-size:22px}@media(max-width:520px){nav.card{gap:6px}nav.card a.btn{font-size:13px;padding:9px 11px;flex:1 1 calc(50% - 3px);text-align:center}}</style>
+<style>.item h2 a,.item h3 a{display:inline-block;background:#087f58;color:#fff!important;text-decoration:none;border-radius:10px;padding:9px 14px;margin:4px 0;font-size:14px;font-weight:800;box-shadow:0 3px 10px rgba(8,127,88,.22)}.item h2 a:hover,.item h3 a:hover{background:#0b9b6b}</style>
+<meta name="description" content="لوحة مراجعة طلبات RAFIQ.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="https://rafiq-o6qd.onrender.com/dashboard.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RAFIQ | رفيق">
+<meta property="og:locale" content="ar_LB">
+<meta property="og:title" content="لوحة المراجعة | RAFIQ | رفيق">
+<meta property="og:description" content="لوحة مراجعة طلبات RAFIQ.">
+<meta property="og:url" content="https://rafiq-o6qd.onrender.com/dashboard.html">
+<meta property="og:image" content="https://rafiq-o6qd.onrender.com/assets/rafig-logo.png">
+<meta name="twitter:card" content="summary">
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ LOGIN ============ -->
+<section id="login" class="card">
+  <img class="logo" src="./assets/rafig-logo.png?v=20260928" alt="RAFIQ">
+  <h1>لوحة المدير</h1>
+  <p class="small center">دخولManagers فقط. كل محاولة تُسجَّل.</p>
+  <div style="margin-top:14px">
+    <label for="email">البريد الإلكتروني</label>
+    <input id="email" type="email" autocomplete="username" inputmode="email">
+    <label for="password">كلمة المرور</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <button class="btn wide" id="loginBtn" type="button">دخول آمن</button>
+    <div id="loginMsg"></div>
+  </div>
+  <p class="lock" style="margin-top:14px">🔒 اتصال مشفّر · الجلسة تنتهي بعد 15 دقيقة خمول</p>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section id="dash" class="hidden">
+
+  <div class="card">
+    <div class="center">
+      <h1 id="who">لوحة المدير</h1>
+      <p class="small" id="stamp"></p>
+    </div>
+    <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn alt" id="refresh" type="button">↻ تحديث</button>
+      <button class="btn danger" id="logout" type="button">خروج</button>
+    </div>
+  </div>
+
+  <div id="dashMsg"></div>
+
+  <div class="card">
+    <div class="tabs" id="tabs">
+      <button class="on" data-t="totals">المنتسبون</button>
+      <button data-t="regions">المناطق</button>
+      <button data-t="barcodes">الباركود</button>
+      <button data-t="apps">الطلبات</button>
+      <button data-t="partners">الجهات</button>
+      <button data-t="money">العمولات</button>
+      <button data-t="privacy">الخصوصية</button>
+    </div>
+
+    <!-- TOTALS -->
+    <div id="t-totals" class="tabv">
+      <h2>👥 العدد الإجمالي للمنتسبين</h2>
+      <div class="grid" id="gMembers"></div>
+      <h2 style="margin-top:18px">📊 حسب الاختصاص</h2>
+      <div class="grid" id="gTypes"></div>
+      <h2 style="margin-top:18px">📈 النمو الشهري</h2>
+      <div class="scroll"><table id="tGrowth"></table></div>
+    </div>
+
+    <!-- REGIONS -->
+    <div id="t-regions" class="tabv hidden">
+      <h2>📍 التوزيع الجغرافي</h2>
+      <p class="small">تغطية المنصة في جميع المناطق اللبنانية بدون استثناء.</p>
+      <div class="scroll"><table id="tRegions"></table></div>
+    </div>
+
+    <!-- BARCODES -->
+    <div id="t-barcodes" class="tabv hidden">
+      <h2>🎫 باركوذك</h2>
+      <div class="card" style="background:var(--cream);border-color:#ead7a8">
+        <p class="small">امسح هذا الرمز من صفحة الباركود لتجربة النظام:</p>
+        <div id="myCode" class="money" style="font-size:22px;font-weight:900">—</div>
+        <p class="small">الصفحة: <a href="./barcode.html">barcode.html</a></p>
+      </div>
+      <h2 style="margin-top:18px">📊 حالة الباركود</h2>
+      <div class="grid" id="gBarcodes"></div>
+      <div class="notice">الباركود يُنشأ بحالة <b>معلّقة</b> ولا يعمل حتى تعتمده من تبويب «الطلبات».</div>
+    </div>
+
+    <!-- APPLICATIONS -->
+    <div id="t-apps" class="tabv hidden">
+      <h2>📋 طلبات الانتساب (مراجعتك)</h2>
+      <div class="grid" id="gApps"></div>
+
+      <div class="tabs" id="appFilter" style="margin-top:16px">
+        <button class="on" data-f="pending">معلّقة</button>
+        <button data-f="under_review">قيد المراجعة</button>
+        <button data-f="approved">مقبولة</button>
+        <button data-f="rejected">مرفوضة</button>
+        <button data-f="">الكل</button>
+      </div>
+      <div id="appList"></div>
+
+      <h2 style="margin-top:20px">🧾 طلبات الرعاية</h2>
+      <div class="grid" id="gCare"></div>
+      <div id="careList"></div>
+
+      <h2 style="margin-top:20px">📄 المستندات المرفوعة</h2>
+      <div id="docList"></div>
+    </div>
+
+    <!-- PARTNERS -->
+    <div id="t-partners" class="tabv hidden">
+      <h2>🏥 الجهات المتعاقدة</h2>
+      <div class="grid" id="gPartners"></div>
+      <div class="notice">
+        🔒 لا يظهر أي اسم أو رقم قبل <b>توقيع العقد</b>. زر «إعلان» لا يعمل إلا بعد تفعيل العقد.
+      </div>
+      <h2 style="margin-top:18px">📢 إعلان جهة بعد توقيع العقد</h2>
+      <p class="small">أدخل اسم الجهة التي وقّعت العقد، ثم اضغط «إضافة». بعدها يظهر زر الإعلان.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="newPartner" placeholder="اسم المختبر أو المركز" style="flex:2;min-width:180px;margin:0">
+        <select id="newType" style="flex:1;min-width:130px;margin:0">
+          <option value="lab">مختبر</option>
+          <option value="imaging">مركز أشعة</option>
+          <option value="clinic">عيادة</option>
+          <option value="physio_center">مركز فيزيائي</option>
+          <option value="equipment">معدات طبية</option>
+          <option value="dental">أسنان</option>
+          <option value="nutrition">تغذية</option>
+          <option value="speech">نطق</option>
+        </select>
+        <input id="newPhone" placeholder="هاتف التواصل" style="flex:1;min-width:140px;margin:0" inputmode="tel">
+        <input id="newRegion" placeholder="المنطقة" style="flex:1;min-width:120px;margin:0">
+        <button class="btn" id="addPartner" type="button">إضافة</button>
+      </div>
+      <p id="partnerMsg" class="small"></p>
+      <div id="partnerList"></div>
+    </div>
+
+    <!-- MONEY -->
+    <div id="t-money" class="tabv hidden">
+      <h2>💰 العمولات</h2>
+      <div class="grid" id="gMoney"></div>
+      <div class="notice">
+        ⚠️ التحويل يدوي بالكامل عبر <b>Whish Money</b> إلى الرقم المالي <b>70 600 157</b> حصراً.<br>
+        🤖 الوكيل لا يتدخل في أي عملية مالية ولا يعرف الرقم المالي.
+      </div>
+    </div>
+
+    <!-- PRIVACY -->
+    <div id="t-privacy" class="tabv hidden">
+      <h2>🔐 طلبات كشف التواصل</h2>
+      <p class="small">لا يظهر رقم أي مقدم خدمة أو أسرة قبل موافقتك. كل طلب ينتظرك هنا.</p>
+      <div class="scroll"><table id="tUnlocks"></table></div>
+      <div class="notice">
+        🔒 الرقم المالي <b>70 600 157</b> محجوب على مستوى قاعدة البيانات ولا يظهر لأي مستخدم.<br>
+        🤖 الوكيل لا يرى ولا يدير الأرقام المالية.
+      </div>
+    </div>
+  </div>
+
+  <div class="card center">
+    <a class="btn alt" href="./">الصفحة الرئيسية</a>
+    <a class="btn alt" href="./barcode.html">صفحة الباركود</a>
+  </div>
+</section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co',
+      KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD',
+      db=supabase.createClient(SUPABASE_URL,KEY),
+      $=id=>document.getElementById(id);
+
+const IDLE_MS = 15*60*1000;
+let lastTouch = Date.now();
+['click','keydown','touchstart','mousemove'].forEach(e=>
+  document.addEventListener(e,()=>{lastTouch=Date.now();},{passive:true}));
+
+setInterval(()=>{
+  if(Date.now()-lastTouch > IDLE_MS && !$('dash').classList.contains('hidden')){
+    db.auth.signOut();
+    location.reload();
+  }
+},20000);
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function msg(t,ok){$('dashMsg').innerHTML = t ? '<div class="'+(ok?'ok':'err')+'">'+esc(t)+'</div>' : '';}
+function lmsg(t){$('loginMsg').innerHTML = t ? '<div class="err">'+esc(t)+'</div>' : '';}
+function tile(n,label,cls){return '<div class="tile '+(cls||'')+'"><b>'+n+'</b><span>'+label+'</span></div>';}
+
+/* Stats work with or without the migrations applied.
+   Tries the manager_dashboard view first, then falls back to counting
+   the base tables directly so the panel is never empty. */
+async function loadStats(){
+  // 1) preferred: the aggregated view
+  const v = await db.from('manager_dashboard').select('*').maybeSingle();
+  if(!v.error && v.data) return v.data;
+
+  // 2) fallback: count the existing tables directly
+  const [pr, fa, ap, dc, cr] = await Promise.all([
+    db.from('profiles').select('id,role,region,status').limit(2000),
+    db.from('families').select('id,user_id,region').limit(2000),
+    db.from('applications').select('id,status').limit(2000),
+    db.from('documents').select('id,verification_status').limit(2000),
+    db.from('care_requests').select('id,status').limit(2000)
+  ]);
+  if(pr.error){
+    msg('تعذر تحميل البيانات: '+pr.error.message);
+    return null;
+  }
+  const P = pr.data || [];
+  const A = ap.data || [];
+  const D = dc.data || [];
+  const C = cr.data || [];
+  const by = (arr,k,v)=>arr.filter(x=>x[k]===v).length;
+
+  // applications can be missing on a fresh install
+  const appsPending = ap.error ? 0 : by(A,'status','pending');
+  const appsReview  = ap.error ? 0 : by(A,'status','under_review');
+  const appsOk      = ap.error ? 0 : by(A,'status','approved');
+  const appsNo      = ap.error ? 0 : by(A,'status','rejected');
+
+  return {
+    families_total:  by(P,'role','family'),
+    caregivers_total: by(P,'role','caregiver'),
+    nurses_total:     by(P,'role','nurse'),
+    physios_total:    by(P,'role','physiotherapist'),
+
+    barcodes_active: 0, barcodes_pending: 0, barcodes_suspended: 0,
+    family_barcodes:0, caregiver_barcodes:0, nurse_barcodes:0,
+    physio_barcodes:0, dentist_barcodes:0, nutrition_barcodes:0,
+    speech_barcodes:0, other_medical_barcodes:0, owner_barcodes:0,
+
+    apps_pending: appsPending, apps_review: appsReview,
+    apps_approved: appsOk, apps_rejected: appsNo,
+
+    care_pending: by(C,'status','pending_review'),
+    care_matched: by(C,'status','matched'),
+    care_contract: by(C,'status','contract_pending'),
+
+    docs_pending:  by(D,'verification_status','pending'),
+    docs_approved: by(D,'verification_status','approved'),
+    docs_rejected: by(D,'verification_status','rejected'),
+
+    partners_active:0, partners_negotiating:0,
+    partners_not_contacted:0, partners_suspended:0,
+
+    commission_open:0, commission_pending:0,
+    commission_paid_30d:0, settlements_paid_30d:0,
+    _fallback: true
+  };
+}
+
+async function requireAdmin(){
+  const {data:{user}}=await db.auth.getUser();
+  if(!user) return false;
+  const {data:p,error}=await db.from('profiles')
+      .select('email,role,status').eq('id',user.id).maybeSingle();
+  if(error) return false;
+  if(!p || p.role!=='admin' || p.status!=='active'){
+    await db.auth.signOut();
+    lmsg('هذا الحساب ليس حساب مدير نشطًا.');
+    return false;
+  }
+  $('who').textContent = 'المدير: '+(p.email||user.email);
+  return true;
+}
+
+async function load(){
+  msg('جارٍ التحميل…',true);
+  $('stamp').textContent = 'آخر تحديث: '+new Date().toLocaleString('ar-LB');
+
+  const d = await loadStats();
+  if(!d){ return; }
+
+  // totals
+  const members=(d.families_total||0)+(d.caregivers_total||0)+(d.nurses_total||0)+(d.physios_total||0);
+  $('gMembers').innerHTML =
+    tile(members,'إجمالي المنتسبين')+
+    tile(d.families_total||0,'أسر')+
+    tile(d.caregivers_total||0,'مقدمو رعاية')+
+    tile(d.nurses_total||0,'ممرضون')+
+    tile(d.physios_total||0,'معالجون فيزيائي');
+
+  $('gTypes').innerHTML =
+    tile(d.family_barcodes||0,'أسر · باركود')+
+    tile(d.caregiver_barcodes||0,'رعاية · باركود')+
+    tile(d.nurse_barcodes||0,'تمريض · باركود')+
+    tile(d.physio_barcodes||0,'فيزيائي · باركود')+
+    tile(d.dentist_barcodes||0,'أسنان')+
+    tile(d.nutrition_barcodes||0,'تغذية')+
+    tile(d.speech_barcodes||0,'نطق')+
+    tile(d.other_medical_barcodes||0,'اختصاص آخر')+
+    tile(d.owner_barcodes||0,'أصحاب مؤسسات');
+
+  $('gBarcodes').innerHTML =
+    tile(d.barcodes_active||0,'باركود فعّال','')+
+    tile(d.barcodes_pending||0,'في الانتظار','gold')+
+    tile(d.barcodes_suspended||0,'موقوف','red');
+
+  // show the manager's own barcode
+  try{
+    const {data:mine}=await db.from('member_barcodes').select('code,status,member_type')
+      .eq('user_id',(await db.auth.getUser()).data.user.id).limit(1);
+    $('myCode').textContent = mine&&mine[0] ? mine[0].code : 'لا يوجد باركود — طبّق migration المدير';
+  }catch(e){ $('myCode').textContent='—'; }
+
+  $('gApps').innerHTML =
+    tile(d.apps_pending||0,'طلبات معلّقة','gold')+
+    tile(d.apps_review||0,'قيد المراجعة')+
+    tile(d.apps_approved||0,'مقبولة')+
+    tile(d.apps_rejected||0,'مرفوضة','red');
+
+  $('gDocs').innerHTML =
+    tile(d.docs_pending||0,'مستندات معلّقة','gold')+
+    tile(d.docs_approved||0,'معتمدة')+
+    tile(d.docs_rejected||0,'مرفوضة','red');
+
+  $('gCare').innerHTML =
+    tile(d.care_pending||0,'بانتظار المراجعة','gold')+
+    tile(d.care_matched||0,'تم الربط')+
+    tile(d.care_contract||0,'بانتظار عقد');
+
+  $('gPartners').innerHTML =
+    tile(d.partners_active||0,'متعاقدة نشطة')+
+    tile(d.partners_negotiating||0,'قيد التفاوض','gold')+
+    tile(d.partners_not_contacted||0,'لم يتم التواصل','red')+
+    tile(d.partners_suspended||0,'موقوفة','red');
+
+  $('gMoney').innerHTML =
+    tile((d.commission_open||0).toLocaleString(),'عمولة مفتوحة','gold')+
+    tile((d.commission_pending||0).toLocaleString(),'بانتظار التحويل','gold')+
+    tile((d.commission_paid_30d||0).toLocaleString(),'مدفوعة (30 يوم)')+
+    tile(d.settlements_paid_30d||0,'عدد التحويلات');
+
+  // regions
+  const {data:regs}=await db.from('members_by_region').select('*').limit(200);
+  if(regs&&regs.length){
+    const max=Math.max(...regs.map(r=>r.members),1);
+    $('tRegions').innerHTML='<thead><tr><th>المنطقة</th><th>العدد</th><th>باركود</th><th>معلّق</th><th></th></tr></thead><tbody>'+
+      regs.map(r=>'<tr><td>'+esc(r.region)+'</td><td><b>'+r.members+'</b></td><td>'+r.with_barcode+
+        '</td><td>'+r.pending_barcode+'</td><td style="min-width:90px"><div class="bar"><i style="width:'+
+        Math.round(r.members/max*100)+'%"></i></div></td></tr>').join('')+'</tbody>';
+  } else {
+    $('tRegions').innerHTML='<tr><td colspan="5" class="small">لا توجد بيانات مناطق بعد.</td></tr>';
+  }
+
+  // growth
+  const {data:gr}=await db.from('membership_timeline').select('*').limit(24);
+  if(gr&&gr.length){
+    $('tGrowth').innerHTML='<thead><tr><th>الشهر</th><th>أسر</th><th>رعاية</th><th>تمريض</th><th>فيزيائي</th><th>الإجمالي</th></tr></thead><tbody>'+
+      gr.map(r=>'<tr><td>'+esc(r.month)+'</td><td>'+r.families+'</td><td>'+r.caregivers+
+      '</td><td>'+r.nurses+'</td><td>'+r.physios+'</td><td><b>'+r.total+'</b></td></tr>').join('')+'</tbody>';
+  } else {
+    $('tGrowth').innerHTML='<tr><td colspan="6" class="small">لا توجد بيانات.</td></tr>';
+  }
+
+  // privacy: pending unlock requests
+  const {data:un}=await db.from('contact_unlocks')
+    .select('id,subject_user_id,requester_user_id,status,created_at,decided_at')
+    .eq('status','pending').order('created_at',{ascending:false}).limit(100);
+  if(un&&un.length){
+    $('tUnlocks').innerHTML='<thead><tr><th>الطلب</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody>'+
+      un.map(u=>'<tr><td class="small">'+esc(String(u.subject_user_id).slice(0,8))+
+        ' ← '+esc(String(u.requester_user_id).slice(0,8))+'</td><td>معلّق</td><td class="small">'+
+        esc(String(u.created_at).slice(0,16))+
+        '</td><td><button class="btn" onclick="decideUnlock(\''+u.id+'\',true)">✓ كشف</button> '+
+        '<button class="btn danger" onclick="decideUnlock(\''+u.id+'\',false)">✕ رفض</button></td></tr>').join('')+'</tbody>';
+  } else {
+    $('tUnlocks').innerHTML='<tr><td class="small">لا توجد طلبات كشف معلّقة.</td></tr>';
+  }
+
+  // partners list with publish toggle
+  await loadPartners();
+
+  // reviewable records
+  await loadApplications();
+  await loadCare();
+  await loadDocs();
+
+  msg(d && d._fallback ? 'تم التحديث بالأرقام الأساسية. الباركود والجهات والعمولات تحتاج تطبيق الـ migrations على Supabase.' : 'تم التحديث.',true);
+}
+
+$('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.tabv').forEach(v=>v.classList.add('hidden'));
+  $('t-'+b.dataset.t).classList.remove('hidden');
+});
+
+$('loginBtn').onclick=async()=>{
+  lmsg('');
+  const email=$('email').value.trim(), password=$('password').value;
+  if(!email||!password){lmsg('أدخل البريد وكلمة المرور.');return}
+  $('loginBtn').disabled=true;
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){lmsg('بيانات الدخول غير صحيحة.');$('loginBtn').disabled=false;return}
+  if(!await requireAdmin()){return}
+  $('login').classList.add('hidden');
+  $('dash').classList.remove('hidden');
+  load();
+};
+
+$('refresh').onclick=load;
+$('logout').onclick=async()=>{await db.auth.signOut();location.reload()};
+
+const TYPE_AR={lab:'مختبر',imaging:'مركز أشعة',clinic:'عيادة',physio_center:'مركز فيزيائي',
+  equipment:'معدات طبية',dental:'أسنان',nutrition:'تغذية',speech:'نطق',pharmacy:'صيدلية',other:'أخرى'};
+const ST_AR={not_contacted:'لم يتم الاتفاق',negotiating:'قيد التفاوض',active:'موقّع العقد',suspended:'موقوف'};
+
+async function loadPartners(){
+  const {data,error}=await db.from('partners')
+    .select('id,name,partner_type,region,phone,contract_status,is_public,member_discount')
+    .order('created_at',{ascending:false}).limit(100);
+  const box=$('partnerList');
+  if(error){ box.innerHTML='<div class="err">طبّق migration الشركاء أولًا (20260927_barcode_and_commission).</div>'; return; }
+  if(!data||!data.length){ box.innerHTML='<p class="small">لا توجد جهات بعد.</p>'; return; }
+  box.innerHTML='<div class="scroll"><table><thead><tr><th>الاسم</th><th>النوع</th><th>العقد</th><th>الإعلان</th><th>إجراء</th></tr></thead><tbody>'+
+    data.map(p=>{
+      const signed = p.contract_status==='active';
+      return '<tr><td><b>'+esc(p.name)+'</b>'+(p.region?'<br><span class="small">'+esc(p.region)+'</span>':'')+'</td>'+
+        '<td class="small">'+esc(TYPE_AR[p.partner_type]||p.partner_type)+'</td>'+
+        '<td><span class="badge '+(signed?'':'warn')+'">'+esc(ST_AR[p.contract_status]||p.contract_status)+'</span></td>'+
+        '<td>'+(p.is_public?'<span class="badge">معن</span>':'<span class="badge off">مخفي</span>')+'</td>'+
+        '<td>'+(signed
+          ? '<button class="btn" onclick="pubPartner(\''+p.id+'\','+(!p.is_public)+')">'+(p.is_public?'إخفاء':'📢 إعلان')+'</button>'
+          : '<button class="btn alt" onclick="signPartner(\''+p.id+'\')">توقيع العقد</button>')+
+        '</td></tr>';
+    }).join('')+'</tbody></table>';
+}
+
+/* ==========================================================
+   REVIEW — applications, care requests, documents
+   ========================================================== */
+let appFilter='pending';
+let APP={apps:[],profiles:[],care:[],docs:[]};
+
+const ROLE_AR={caregiver:'مقدم رعاية',nurse:'ممرض/ة',physiotherapist:'معالج فيزيائي',
+  family:'أسرة',dentist:'طبيب أسنان',nutritionist:'أخصائي تغذية',speech_therapist:'أخصائي نطق',
+  admin:'مدير',manager:'مدير'};
+const ST_AR2={pending:'معلّق',under_review:'قيد المراجعة',approved:'مقبول',rejected:'مرفوض',
+  cancelled:'ملغى',draft:'مسودة',pending_review:'بانتظار المراجعة',candidate_selection:'اختيار',
+  pending_match_approval:'بانتظار موافقة المطابقة',matched:'مربوط',contract_pending:'بانتظار عقد',
+  contracted:'متعاقد',in_service:'قيد الخدمة',completed:'مكتمل',cancelled_x:'ملغى'};
+const st=v=>esc(ST_AR2[v]||v||'—');
+
+function profOf(uid){
+  const p=(APP.profiles||[]).find(x=>x.id===uid);
+  if(!p) return {name:'(حساب محذوف)', role:'', phone:'', region:''};
+  return {
+    name:((p.first_name||'')+' '+(p.last_name||'')).trim()||'(بدون اسم)',
+    role:ROLE_AR[p.role]||p.role||'',
+    phone:p.phone||'',
+    region:p.region||''
+  };
+}
+
+async function loadApplications(){
+  const [a,p]=await Promise.all([
+    db.from('applications').select('*').order('created_at',{ascending:false}).limit(200),
+    db.from('profiles').select('id,first_name,last_name,phone,role,region,status').limit(500)
+  ]);
+  APP.apps   = a.data||[];
+  APP.profiles = p.data||[];
+  if(a.error){ $('appList').innerHTML='<div class="err">تعذر تحميل الطلبات: '+esc(a.error.message)+'</div>'; return; }
+  renderApps();
+}
+
+function renderApps(){
+  const list=APP.apps.filter(x=>!appFilter||x.status===appFilter);
+  if(!list.length){
+    $('appList').innerHTML='<div class="notice">لا توجد طلبات في هذه الحالة.</div>';
+    return;
+  }
+  $('appList').innerHTML='<div class="scroll"><table><thead><tr>'+
+    '<th>المتقدم</th><th>النوع</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th>'+
+    '</tr></thead><tbody>'+list.map(x=>{
+      const p=profOf(x.user_id);
+      return '<tr>'+
+        '<td><b>'+esc(p.name)+'</b>'+
+          (p.phone?'<br><span class="small" dir="ltr">'+esc(p.phone)+'</span>':'')+
+          (p.region?'<br><span class="small">📍'+esc(p.region)+'</span>':'')+
+          (x.notes?'<br><span class="small">'+esc(String(x.notes).slice(0,120))+'</span>':'')+
+        '</td>'+
+        '<td class="small">'+esc(ROLE_AR[x.application_type]||x.application_type||'—')+'</td>'+
+        '<td>'+st(x.status)+'</td>'+
+        '<td class="small">'+esc(String(x.created_at||'').slice(0,10))+'</td>'+
+        '<td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap">'+
+          (x.status!=='approved' ? '<button class="btn" onclick="reviewApp(\''+x.id+'\',\'approved\')">✓ قبول</button>':'')+
+          (x.status!=='rejected' ? '<button class="btn danger" onclick="reviewApp(\''+x.id+'\',\'rejected\')">✕ رفض</button>':'')+
+          (x.status!=='under_review'? '<button class="btn alt" onclick="reviewApp(\''+x.id+'\',\'under_review\')">مراجعة</button>':'')+
+          (x.status==='approved'? '<button class="btn gold" onclick="issueCode(\''+x.user_id+'\')">🎫 إصدار باركود</button>':'')+
+        '</div></td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+
+window.reviewApp=async(id,status)=>{
+  let note=null;
+  if(status==='rejected') note=prompt('سبب الرفض (يظهر للمنتسب):','');
+  else if(status==='approved') note=prompt('ملاحظة الموافقة (اختياري):','');
+  else note=prompt('ملاحظة (اختياري):','');
+
+  const {error}=await db.rpc('admin_review_application',{
+    p_application_id:id, p_status:status, p_notes:note||null
+  });
+  if(error){ msg('تعذر التحديث: '+error.message); return; }
+  msg('تم التحديث إلى: '+st(status),true);
+  load();
+};
+
+window.issueCode=async userId=>{
+  const type=prompt('نوع العضوية:\nfamily / caregiver / nurse / physiotherapist / dentist / nutritionist / speech_therapist / owner',
+                    profOf(userId).role ? (Object.keys(ROLE_AR).find(k=>ROLE_AR[k]===profOf(userId).role)||'caregiver') : 'caregiver');
+  if(!type) return;
+  const code='RAFIQ-'+type.slice(0,3).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
+  const {error}=await db.from('member_barcodes').insert({
+    user_id:userId, code, member_type:type, status:'active', issued_at:new Date().toISOString(),
+    note:'صدر تلقائيًا عند الموافقة'
+  });
+  if(error){ msg('تعذر إصدار الباركود: '+error.message); return; }
+  msg('تم إصدار الباركود: '+code,true);
+  load();
+};
+
+async function loadCare(){
+  const {data,error}=await db.from('care_requests')
+    .select('*').order('created_at',{ascending:false}).limit(100);
+  if(error){ $('careList').innerHTML=''; return; }
+  APP.care=data||[];
+  const list=APP.care.filter(x=>['pending_review','candidate_selection','pending_match_approval','matched','contract_pending'].includes(x.status));
+  $('careList').innerHTML = list.length
+    ? '<div class="scroll"><table><thead><tr><th>الرقم</th><th>الخدمة</th><th>الحالة</th><th>ملاحظات</th></tr></thead><tbody>'+
+      list.map(c=>'<tr><td class="small">'+esc(String(c.id).slice(0,8))+'</td>'+
+        '<td>'+esc(c.service_type||c.care_type||'—')+'</td><td>'+st(c.status)+'</td>'+
+        '<td class="small">'+esc(String(c.notes||c.details||'').slice(0,80))+'</td></tr>').join('')+'</tbody></table></div>'
+    : '<div class="notice">لا توجد طلبات رعاية معلّقة.</div>';
+}
+
+async function loadDocs(){
+  const {data,error}=await db.from('documents')
+    .select('id,user_id,document_type,file_name,mime_type,file_size,verification_status,storage_path,created_at')
+    .order('created_at',{ascending:false}).limit(100);
+  if(error){ $('docList').innerHTML='<div class="err">تعذر تحميل المستندات: '+esc(error.message)+'</div>'; return; }
+  APP.docs=data||[];
+  if(!APP.docs.length){ $('docList').innerHTML='<div class="notice">لا توجد مستندات مرفوعة بعد.</div>'; return; }
+  $('docList').innerHTML='<div class="scroll"><table><thead><tr><th>الملف</th><th>النوع</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+
+    APP.docs.map(d=>'<tr><td class="small">'+esc(d.file_name||d.document_type||'—')+
+      (d.file_size?'<br>'+Math.round(d.file_size/1024)+' KB':'')+'</td>'+
+      '<td class="small">'+esc(d.document_type||'—')+'</td>'+
+      '<td>'+st(d.verification_status)+'</td>'+
+      '<td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap">'+
+        '<button class="btn alt" onclick="openDoc(\''+encodeURIComponent(d.storage_path)+'\')">فتح</button>'+
+        '<button class="btn" onclick="reviewDoc(\''+d.id+'\',\'approved\')">✓</button>'+
+        '<button class="btn danger" onclick="reviewDoc(\''+d.id+'\',\'rejected\')">✕</button>'+
+      '</div></td></tr>').join('')+'</tbody></table></div>';
+}
+
+window.reviewDoc=async(id,status)=>{
+  const {error}=await db.rpc('admin_review_document',{p_document_id:id,p_status:status});
+  if(error){ msg('تعذر: '+error.message); return; }
+  msg('تم تحديث المستند.',true);
+  load();
+};
+
+window.openDoc=async enc=>{
+  const path=decodeURIComponent(enc);
+  const {data,error}=await db.storage.from('private_documents').createSignedUrl(path,300);
+  if(error){ msg('تعذر فتح المستند: '+error.message); return; }
+  window.open(data.signedUrl,'_blank','noopener,noreferrer');
+};
+
+$('appFilter').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#appFilter button').forEach(x=>x.classList.toggle('on',x===b));
+  appFilter=b.dataset.f;
+  renderApps();
+});
+
+window.pubPartner=async(id,on)=>{
+  const {error}=await db.rpc('publish_partner',{p_partner_id:id,p_publish:on});
+  if(error){ msg('تعذر: '+error.message); return; }
+  msg(on?'تم الإعلان — ستظهر الجهة على المنصة.':'تم الإخفاء.',true);
+  load();
+};
+
+window.signPartner=async id=>{
+  if(!confirm('تأكيد توقيع العقد مع هذه الجهة؟\n\nهذا يتيح الإعلان على المنصة. التوقيع تم بحذفها من خارج المنصة.'))return;
+  const {error}=await db.from('partners')
+    .update({contract_status:'active',contract_signed_at:new Date().toISOString()})
+    .eq('id',id);
+  if(error){ msg('تعذر: '+error.message); return; }
+  msg('تم تفعيل العقد. يمكنك الإعلان الآن.',true);
+  load();
+};
+
+$('addPartner').onclick=async()=>{
+  const name=$('newPartner').value.trim();
+  if(!name){ $('partnerMsg').textContent='اكتب اسم الجهة.'; return; }
+  const {data:{user}}=await db.auth.getUser();
+  const {error}=await db.from('partners').insert({
+    name,
+    partner_type:$('newType').value,
+    phone:$('newPhone').value.trim()||null,
+    region:$('newRegion').value.trim()||null,
+    contract_status:'not_contacted',
+    is_public:false,
+    created_by:user.id
+  });
+  if(error){ $('partnerMsg').innerHTML='<span class="err">'+esc(error.message)+'</span>'; return; }
+  $('partnerMsg').textContent='تمت الإضافة بحالة «لم يتم الاتفاق».لتوقيع العقد قبل الإعلان.';
+  $('newPartner').value='';$('newPhone').value='';$('newRegion').value='';
+  load();
+};
+
+window.decideUnlock=async(id,ok)=>{
+  msg('جارٍ التنفيذ…',true);
+  const {error}=await db.rpc('decide_contact_unlock',{p_unlock_id:id,p_approve:ok});
+  if(error){ msg('تعذر التنفيذ: '+error.message); return; }
+  msg(ok?'تم السماح بكشف التواصل.':'تم الرفض.',true);
+  load();
+};
+
+(async()=>{
+  if(await requireAdmin()){
+    $('login').classList.add('hidden');
+    $('dash').classList.remove('hidden');
+    load();
+  }
+})();
+</script>
+<script>
+/* RAFIQ logo guard: if the SVG fails to load, show a text wordmark instead. */
+document.addEventListener("DOMContentLoaded",function(){
+  document.querySelectorAll("img[src*='rafig-logo.png']").forEach(function(img){
+    img.addEventListener("error",function(){
+      var s=document.createElement("span");
+      s.className="logo-fallback";
+      s.textContent="RAFIQ | رفيق";
+      if(getComputedStyle(img).display==="none"||img.naturalWidth===0){
+        img.replaceWith(s);
+      }
+    });
+  });
+});
+</script>
+<script src="/install-app.js?v=68" defer></script>
+</body>
+</html>

@@ -1,64 +1,104 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive">
-<meta name="theme-color" content="#087f58"><link rel="icon" href="/rafig-approved-logo.jpg?v=20260927-1" type="image/jpeg"><link rel="apple-touch-icon" href="/rafig-approved-logo.jpg?v=20260927-1"><title>RAFIQ | لوحة الإدارة — 2026-09-24</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087f58">
+<link rel="icon" href="./assets/rafig-logo.png?v=20260928" type="image/png">
+<title>RAFIQ | لوحة المدير</title>
 <style>
-:root{--g:#087f58;--g2:#0b9b6b;--gold:#d5a23a;--red:#c9232b;--dark:#17372d;--muted:#64756e;--line:#dce9e3;--soft:#eef8f3;--cream:#fffaf0;--white:#fff}
-*{box-sizing:border-box}body{margin:0;background:#f5faf7;color:var(--dark);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.head{max-width:1280px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px}.brand img{width:50px;height:50px;border-radius:10px;object-fit:contain}.brand strong{display:block;color:var(--g);font-size:20px}.brand small{color:var(--muted)}button{font:inherit;cursor:pointer}.btn{border:0;border-radius:10px;padding:9px 13px;font-weight:800}.primary{background:var(--g);color:#fff}.danger{background:var(--red);color:#fff}.gold{background:var(--gold);color:var(--dark)}.ghost{background:#fff;border:1px solid var(--line);color:var(--dark)}main{max-width:1280px;margin:auto;padding:20px 14px 50px}.login,.dashboard{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 10px 30px rgba(23,55,45,.05)}.login{max-width:460px;margin:55px auto}.login h1{margin-top:0}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}.field label{font-weight:800;font-size:13px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #cbdad3;border-radius:10px;background:#fff;font:inherit}.field textarea{min-height:80px}.error,.notice{padding:11px;border-radius:10px;margin:10px 0;line-height:1.7}.error{background:#fff0f0;color:#8d1d24;border:1px solid #efc2c5}.notice{background:var(--cream);border-right:4px solid var(--gold)}.hidden{display:none!important}body:not(.rafig-admin-authorized) #adminRafiqCounters{display:none!important}.topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:15px}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:15px}.stat{background:var(--soft);border:1px solid var(--line);border-radius:15px;padding:14px}.stat b{display:block;font-size:25px;color:var(--g)}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:15px}.tab{white-space:nowrap}.tab.active{background:var(--g);color:#fff}.filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:9px;margin-bottom:12px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}.table{width:100%;border-collapse:collapse;min-width:920px}.table th,.table td{padding:11px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}.table th{background:#f4faf7;font-size:13px}.status{display:inline-block;padding:4px 8px;border-radius:99px;background:#eef2f0;font-size:12px;font-weight:900}.status.approved,.status.active{background:#def7ea;color:#11643e}.status.rejected{background:#ffe4e4;color:#8d1d24}.status.review,.status.matching{background:#fff3cf;color:#795a0b}.actions{display:flex;flex-wrap:wrap;gap:6px}.docs{display:flex;flex-direction:column;gap:6px}.doc{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fbfffd}.doc small{display:block;color:var(--muted);margin-bottom:5px}.modal{position:fixed;inset:0;background:rgba(10,30,24,.55);display:flex;align-items:center;justify-content:center;padding:15px;z-index:30}.modal-card{background:#fff;border-radius:18px;max-width:800px;width:100%;max-height:90vh;overflow:auto;padding:20px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail{border:1px solid var(--line);border-radius:12px;padding:10px}.detail b{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}.loading{text-align:center;padding:30px;color:var(--muted)}
-@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.filters,.grid2{grid-template-columns:1fr}.topbar{align-items:stretch}.topbar .actions{width:100%}.head{align-items:flex-start}}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f8f6;color:#17372d;line-height:1.6}
+main{max-width:1200px;margin:auto;padding:12px}.card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 5px 22px rgba(0,0,0,.06)}
+h1,h2,h3{color:#087f58}.brand{display:block;width:min(250px,70vw);margin:auto}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.item{border:1px solid #dce8e2;border-radius:14px;padding:14px}.btn{border:0;border-radius:10px;padding:10px 15px;background:#087f58;color:#fff;font-weight:bold;cursor:pointer}.danger{background:#a52b2b}.alt{background:#eaf2ef;color:#17372d}.actions{display:flex;gap:8px;flex-wrap:wrap}.small{font-size:13px;color:#66756f}.hidden{display:none!important}.ok,.err,.notice{padding:12px;border-radius:10px;margin:10px 0}.ok{background:#edf8f2}.err{background:#fff0f0;color:#8b1e1e}.notice{background:#fff8e8}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.status{font-weight:bold}.doc{background:#f7faf8;padding:10px;border-radius:9px;margin:7px 0}
+input,textarea{width:100%;padding:10px;border:1px solid #cbdad3;border-radius:9px;font:inherit}
 </style>
+<style>.logo-fallback{display:inline-block;font-weight:900;color:#087f58;font-size:20px;letter-spacing:.5px}</style>
+<style>body{overflow-x:hidden}nav.card{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:12px}nav.card a.btn{flex:0 0 auto;white-space:nowrap;font-size:14px;padding:10px 14px}.logo{display:block;width:min(150px,42vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.07)}.brand-logo{display:block;width:min(190px,55vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px}h1{font-size:24px}article.card h1,section.card h1{font-size:22px}@media(max-width:520px){nav.card{gap:6px}nav.card a.btn{font-size:13px;padding:9px 11px;flex:1 1 calc(50% - 3px);text-align:center}}</style>
+<style>.item h2 a,.item h3 a{display:inline-block;background:#087f58;color:#fff!important;text-decoration:none;border-radius:10px;padding:9px 14px;margin:4px 0;font-size:14px;font-weight:800;box-shadow:0 3px 10px rgba(8,127,88,.22)}.item h2 a:hover,.item h3 a:hover{background:#0b9b6b}</style>
+<meta name="description" content="لوحة إدارة RAFIQ.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="https://rafiq-o6qd.onrender.com/admin.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RAFIQ | رفيق">
+<meta property="og:locale" content="ar_LB">
+<meta property="og:title" content="إدارة المنصة | RAFIQ | رفيق">
+<meta property="og:description" content="لوحة إدارة RAFIQ.">
+<meta property="og:url" content="https://rafiq-o6qd.onrender.com/admin.html">
+<meta property="og:image" content="https://rafiq-o6qd.onrender.com/assets/rafig-logo.png">
+<meta name="twitter:card" content="summary">
 </head>
 <body>
-<header><div class="head"><div class="brand"><img src="/rafig-approved-logo.jpg?v=20260927-1" alt="RAFIQ | رفيق"><div><strong>RAFIQ | رفيق</strong><small>لوحة الإدارة والمراجعة</small></div></div><div id="adminActions" class="hidden"><button id="refresh" class="btn ghost">↻ تحديث</button> <button id="logout" class="btn danger">تسجيل الخروج</button></div></div></header>
 <main>
-<section id="login" class="login"><h1>دخول الإدارة</h1><p class="notice">هذه الصفحة للإدارة فقط. الدخول يتم عبر Supabase Auth، ولا يوجد مفتاح خدمة أو كلمة مرور داخل الواجهة.</p><div class="field"><label>البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" value="issaapplication@gmail.com" required></div><div class="field"><label>كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required></div><button id="loginBtn" class="btn primary" style="width:100%">دخول آمن</button><button id="magicBtn" class="btn gold" style="width:100%;margin-top:8px">إرسال رابط دخول آمن إلى البريد</button><button id="resetBtn" class="btn ghost" style="width:100%;margin-top:8px">إرسال رابط تعيين كلمة المرور إلى البريد</button><div id="loginError" class="error hidden"></div></section>
-<section id="dashboard" class="dashboard hidden">
-<div class="topbar"><div><h1 style="margin:0">لوحة الإدارة</h1><span id="adminEmail" style="color:var(--muted)"></span></div><div id="message"></div></div>
-<div class="stats"><div class="stat"><b id="sPending">0</b>طلبات قيد الانتظار</div><div class="stat"><b id="sReview">0</b>قيد المراجعة</div><div class="stat"><b id="sApproved">0</b>مقبولة</div><div class="stat"><b id="sRejected">0</b>مرفوضة</div><div class="stat"><b id="sDocs">0</b>مستندات</div></div>
-<div class="tabs"><button class="btn tab active" data-tab="applications">طلبات الانتساب</button><button class="btn tab" data-tab="intakes">طلبات الانتساب الجديدة</button><button class="btn tab" data-tab="care">طلبات الرعاية</button><button class="btn tab" data-tab="documents">المستندات</button></div>
-<div id="intakes" class="view hidden"><div id="publicIntakes"><div class="loading">جاري تحميل طلبات الانتساب الجديدة…</div></div></div><div id="applications" class="view"><div class="filters"><input id="appSearch" placeholder="بحث بالاسم، البريد، الهاتف"><select id="appStatus"><option value="">كل الحالات</option><option>pending</option><option>review</option><option>approved</option><option>rejected</option></select><select id="appType"><option value="">كل الأنواع</option><option value="caregiver">مقدم رعاية</option><option value="nurse">ممرض/ة</option><option value="physiotherapist">معالج فيزيائي</option><option value="family">عائلة</option><option value="cv">CV</option><option value="cover_letter">Cover Letter</option><option value="cv_cover_letter">CV + Cover Letter</option></select></div><div class="table-wrap"><table class="table"><thead><tr><th>المتقدم</th><th>النوع</th><th>الحالة</th><th>المستندات</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="appRows"></tbody></table></div></div>
-<div id="care" class="view hidden"><div class="filters"><input id="careSearch" placeholder="بحث برقم الطلب أو الخدمة"><select id="careStatus"><option value="">كل الحالات</option><option>pending</option><option>review</option><option>matching</option><option>matched</option><option>contracted</option><option>active</option><option>completed</option><option>cancelled</option></select><div></div></div><div class="table-wrap"><table class="table"><thead><tr><th>رقم الطلب</th><th>الخدمة</th><th>الجدول</th><th>الحالة</th><th>الملاحظات</th><th>إجراء</th></tr></thead><tbody id="careRows"></tbody></table></div></div>
-<div id="documents" class="view hidden"><div class="filters"><input id="docSearch" placeholder="بحث باسم الملف أو النوع"><select id="docStatus"><option value="">كل الحالات</option><option>pending</option><option>approved</option><option>rejected</option></select><div></div></div><div class="table-wrap"><table class="table"><thead><tr><th>المستخدم</th><th>النوع</th><th>الملف</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="docRows"></tbody></table></div></div>
+<section class="card" style="text-align:center">
+<img class="brand" src="./assets/rafig-logo.png?v=20260928" alt="RAFIQ - رفيق">
+<h1>لوحة مدير RAFIQ</h1>
+<p><strong>المراجعة والموافقة على الطلبات والوثائق</strong></p>
+<p class="small">هذه الصفحة لا تمنح صلاحيات بحد ذاتها. الوصول إلى البيانات والقرارات محمي داخل Supabase بدور Admin نشط.</p>
+</section>
+
+<section class="card" id="auth">
+<h2>🔐 دخول المدير</h2>
+<label>البريد الإلكتروني<input id="email" type="email" autocomplete="username"></label>
+<label>كلمة المرور<input id="password" type="password" autocomplete="current-password"></label>
+<div class="actions"><button class="btn" id="login">دخول</button><a class="btn alt" href="./app.html">العودة إلى التسجيل</a></div>
+<div id="authMsg"></div>
+</section>
+
+<section class="card hidden" id="dashboard">
+<div class="row"><div><h2>📋 الطلبات والملفات</h2><p class="small" id="who"></p></div><button class="btn alt" id="logout">تسجيل الخروج</button></div>
+<div id="dashMsg"></div>
+<div class="actions"><button class="btn" id="refresh">🔄 تحديث</button><button class="btn alt" id="pendingOnly">الطلبات المعلقة</button></div>
+<div id="applications" class="grid"></div>
+<h2>📎 الوثائق الخاصة</h2>
+<div id="documents" class="grid"></div>
 </section>
 </main>
-<div id="modal" class="modal hidden"><div class="modal-card"><div class="topbar"><h2 id="modalTitle" style="margin:0">التفاصيل</h2><button class="btn ghost" onclick="closeModal()">إغلاق</button></div><div id="modalBody"></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-(function(){
-  const urls=[
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
-    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js',
-    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'
-  ];
-  const bootMessage=(msg)=>{
-    const box=document.getElementById('loginError');
-    if(box){box.className='error';box.textContent=msg;box.classList.remove('hidden');}
-  };
-  const loadApp=()=>{
-    const a=document.createElement('script');
-    a.src='/admin.js?v=20260924-3';
-    a.async=false;
-    a.onload=()=>{
-      const i=document.createElement('script');
-      i.src='/intake-admin.js?v=20260924-3';
-      i.async=false;
-      i.onerror=()=>bootMessage('تم تحميل لوحة الإدارة، لكن تعذر تحميل وحدة مراجعة الطلبات. أعد تحميل الصفحة مرة واحدة.');
-      document.body.appendChild(i);
-    };
-    a.onerror=()=>bootMessage('تعذر تحميل نظام إدارة RAFIQ. أعد تحميل الصفحة مرة واحدة، وإذا استمر العطل أخبرنا بنص الرسالة الظاهرة هنا.');
-    document.body.appendChild(a);
-  };
-  const load=(n)=>{
-    if(window.supabase){loadApp();return;}
-    if(n>=urls.length){bootMessage('تعذر تحميل مكتبة الدخول الآمن من الشبكة. زر «دخول آمن» لن يعمل قبل تحميل المكتبة. تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة.');return;}
-    const s=document.createElement('script'); s.src=urls[n]; s.async=false;
-    s.onload=()=>window.supabase?loadApp():load(n+1);
-    s.onerror=()=>load(n+1);
-    document.head.appendChild(s);
-  };
-  load(0);
-})();
+const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co',KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
+const db=supabase.createClient(SUPABASE_URL,KEY),$=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function msg(t,ok=false){$('dashMsg').innerHTML='<div class="'+(ok?'ok':'err')+'">'+esc(t)+'</div>'}
+async function requireAdmin(){
+ const {data:{user}}=await db.auth.getUser(); if(!user){$('authMsg').innerHTML='<div class="err">يرجى تسجيل الدخول بحساب المدير.</div>';return false;}
+ const {data:p,error}=await db.from('profiles').select('email,role,status').eq('id',user.id).single();
+ if(error){$('authMsg').innerHTML='<div class="err">تعذر التحقق من صلاحيات الحساب: '+esc(error.message||'خطأ في الصلاحيات')+'</div>';return false;} if(!p||p.role!=='admin'||p.status!=='active'){await db.auth.signOut();$('authMsg').innerHTML='<div class="err">هذا الحساب ليس حساب مدير نشطًا.</div>';return false;}
+ $('who').textContent='المدير: '+(p.email||user.email);return true;
+}
+async function load(){
+ if(!await requireAdmin()){ $('dashboard').classList.add('hidden');$('auth').classList.remove('hidden'); return; }
+ $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');
+ const {data:apps,error:ae}=await db.from('applications').select('id,user_id,application_type,status,notes,created_at,updated_at').order('created_at',{ascending:false}).limit(100);
+ if(ae){msg('تعذر تحميل الطلبات: '+ae.message);return}
+ $('applications').innerHTML=apps.map(a=>'<article class="item"><div class="row"><strong>'+esc(a.application_type)+'</strong><span class="status">'+esc(a.status)+'</span></div><p class="small">ID: '+esc(a.id)+'<br>المستخدم: '+esc(a.user_id)+'<br>'+esc(a.created_at)+'</p><p>'+esc(a.notes||'لا توجد ملاحظات')+'</p><div class="actions"><button class="btn" onclick="reviewApp(\''+a.id+'\',\'approved\')">✓ موافقة</button><button class="btn danger" onclick="reviewApp(\''+a.id+'\',\'rejected\')">✕ رفض</button><button class="btn alt" onclick="reviewApp(\''+a.id+'\',\'review\')">مراجعة</button></div></article>').join('')||'<p>لا توجد طلبات.</p>';
+ const {data:docs,error:de}=await db.from('documents').select('id,user_id,document_type,file_name,mime_type,file_size,verification_status,storage_path,created_at').order('created_at',{ascending:false}).limit(100);
+ if(de){$('documents').innerHTML='<div class="err">تعذر تحميل الوثائق: '+esc(de.message)+'</div>';return}
+ $('documents').innerHTML=docs.map(d=>'<article class="item"><strong>'+esc(d.file_name)+'</strong><p class="small">'+esc(d.document_type)+' · '+esc(d.verification_status)+'<br>المستخدم: '+esc(d.user_id)+'<br>'+esc(d.storage_path)+'</p><div class="actions"><button class="btn" onclick="reviewDoc(\''+d.id+'\',\'approved\')">✓ اعتماد</button><button class="btn danger" onclick="reviewDoc(\''+d.id+'\',\'rejected\')">✕ رفض</button><button class="btn alt" onclick="openDoc(\''+encodeURIComponent(d.storage_path)+'\')">فتح الوثيقة</button></div></article>').join('')||'<p>لا توجد وثائق.</p>';
+}
+window.reviewApp=async(id,status)=>{const notes=prompt(status==='rejected'?'سبب الرفض (اختياري):':status==='approved'?'ملاحظات الموافقة (اختياري):':'ملاحظات المدير (اختياري):');const {error}=await db.rpc('admin_review_application',{p_application_id:id,p_status:status,p_notes:notes||null});if(error)return msg('تعذر تحديث الطلب: '+error.message);msg('تم تحديث الطلب بنجاح.',true);load()};
+window.reviewDoc=async(id,status)=>{const {error}=await db.rpc('admin_review_document',{p_document_id:id,p_status:status});if(error)return msg('تعذر تحديث الوثيقة: '+error.message);msg('تم تحديث الوثيقة بنجاح.',true);load()};
+window.openDoc=async encoded=>{const path=decodeURIComponent(encoded);const {data,error}=await db.storage.from('private_documents').createSignedUrl(path,300);if(error)return msg('تعذر فتح الوثيقة. تأكد من وجود مستند صحيح وصلاحيات المدير.');window.open(data.signedUrl,'_blank','noopener,noreferrer')};
+$('login').onclick=async()=>{const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('authMsg').innerHTML='<div class="err">تعذر تسجيل الدخول: '+esc(error.message||'بيانات الدخول غير صحيحة')+'</div>';return}load()};
+$('logout').onclick=async()=>{await db.auth.signOut();location.reload()};
+$('refresh').onclick=load;$('pendingOnly').onclick=async()=>{await load();document.querySelectorAll('#applications .item').forEach((el)=>{if(!el.querySelector('.status').textContent.includes('pending'))el.style.display='none'})};
+load();
 </script>
-</body></html>
+<script>
+/* RAFIQ logo guard: if the SVG fails to load, show a text wordmark instead. */
+document.addEventListener("DOMContentLoaded",function(){
+  document.querySelectorAll("img[src*='rafig-logo.png']").forEach(function(img){
+    img.addEventListener("error",function(){
+      var s=document.createElement("span");
+      s.className="logo-fallback";
+      s.textContent="RAFIQ | رفيق";
+      if(getComputedStyle(img).display==="none"||img.naturalWidth===0){
+        img.replaceWith(s);
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

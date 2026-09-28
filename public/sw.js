@@ -1,33 +1,101 @@
-self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});
-const CACHE = "rafig-v64-approved-logo-assets-20260927";
-const APP_SHELL = [
+/* ==========================================================
+   RAFIQ | رفيق — Service Worker
+   Required for the install button to appear.
+   ========================================================== */
+self.addEventListener("message", function (e) {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
+});
+
+var CACHE = "rafig-v68-20260928";
+var ASSETS = [
   "/",
+  "/index.html",
+  "/dashboard.html",
+  "/barcode.html",
+  "/agent.html",
+  "/app.html",
+  "/admin.html",
+  "/faq.html",
+  "/services.html",
+  "/caregivers.html",
+  "/regions.html",
+  "/guide.html",
+  "/lebanon.html",
+  "/elderly-care.html",
+  "/patient-care.html",
+  "/home-nursing.html",
+  "/physiotherapy.html",
   "/manifest.webmanifest",
-  "/install-pwa.js",
-  "/rafig-approved-logo.jpg?v=20260927-1",
-  "/rafig-approved-logo-192.jpg?v=20260927-1",
-  "/rafig-approved-logo-512.jpg?v=20260927-1",
+  "/install-app.js",
+  "/js/rafiq-kb.js",
+  "/js/rafiq-agent.js",
+  "/js/rafiq-welcome.js",
+  "/assets/rafig-logo.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-maskable-512.png",
+  "/apple-touch-icon.png"
 ];
 
-self.addEventListener("install",e=>e.waitUntil(
-  caches.open(CACHE).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting()).catch(()=>self.skipWaiting())
-));
+self.addEventListener("install", function (e) {
+  e.waitUntil(
+    caches.open(CACHE).then(function (c) {
+      // cache each file separately so one 404 cannot break the whole install
+      return Promise.all(ASSETS.map(function (u) {
+        return c.add(new Request(u, { cache: "reload" })).catch(function () { return null; });
+      }));
+    }).then(function () { return self.skipWaiting(); })
+  );
+});
 
-self.addEventListener("activate",e=>e.waitUntil(
-  caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())
-));
+self.addEventListener("activate", function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (k) {
+        if (k !== CACHE) return caches.delete(k);
+        return null;
+      }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
 
-self.addEventListener("fetch",e=>{
-  const r=e.request;
-  if(r.method!=="GET")return;
-  const u=new URL(r.url);
-  if(u.origin!==self.location.origin)return;
-  if(r.mode==="navigate"){
-    e.respondWith(fetch(r,{cache:"no-store"}).catch(()=>caches.match("/").then(c=>c||new Response("RAFIQ is temporarily unavailable. Please refresh in a moment.",{status:503,headers:{"Content-Type":"text/plain; charset=utf-8"}})));
+self.addEventListener("fetch", function (e) {
+  var req = e.request;
+  if (req.method !== "GET") return;
+
+  var url;
+  try { url = new URL(req.url); } catch (err) { return; }
+  if (url.origin !== self.location.origin) return;
+
+  // pages: network first, cache as offline fallback
+  if (req.mode === "navigate") {
+    e.respondWith(
+      fetch(req, { cache: "no-store" }).catch(function () {
+        return caches.match("/index.html").then(function (c) {
+          return c || new Response(
+            "RAFIQ is temporarily unavailable. Please refresh in a moment.",
+            { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+          );
+        });
+      })
+    );
     return;
   }
-  e.respondWith(fetch(r,{cache:"no-store"}).then(x=>{
-    if(x.ok&&APP_SHELL.includes(u.pathname+u.search)){const c=x.clone();caches.open(CACHE).then(k=>k.put(r,c)).catch(()=>{});}
-    return x;
-  }).catch(()=>caches.match(r).then(c=>c||new Response("Resource temporarily unavailable",{status:503,headers:{"Content-Type":"text/plain; charset=utf-8"}})));
+
+  // assets: network first, cache as fallback
+  e.respondWith(
+    fetch(req, { cache: "no-store" }).then(function (res) {
+      if (res && res.ok) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (k) {
+          return k.put(req, copy);
+        }).catch(function () {});
+      }
+      return res;
+    }).catch(function () {
+      return caches.match(req).then(function (c) {
+        return c || new Response("unavailable", { status: 503 });
+      });
+    })
+  );
 });
