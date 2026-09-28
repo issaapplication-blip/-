@@ -118,6 +118,9 @@
   function hide(){ btn.hidden = true; }
 
   if(standalone()){ hide(); return; }
+  // RAFIQ requirement: keep the install button visible on every supported
+  // non-standalone device, even when Chrome has not exposed beforeinstallprompt.
+  show();
 
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('/sw.js?v=63', {updateViaCache:'none'})
@@ -148,9 +151,8 @@
     }
   });
 
-  // Do not show a misleading install button when the browser has not
-  // exposed a native install prompt. The button appears only when the
-  // browser makes direct PWA installation available.
+  // The button remains visible. When a native prompt is unavailable,
+  // the click handler provides the browser-specific installation guidance.
 })();
 </script>
 <script>
