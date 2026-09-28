@@ -10,7 +10,9 @@ services:
       - key: RAFIQ_AGENT_MODEL
         value: gpt-5.6-luna
       - key: WHATSAPP_SENDING_ENABLED
-        value: "false"
+        value: "true"
+      - key: RAFIQ_WHATSAPP_AUTO_REPLY
+        value: "true"
       - key: META_GRAPH_API_VERSION
         value: "v23.0"
     region: virginia
