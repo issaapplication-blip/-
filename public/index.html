@@ -141,23 +141,16 @@
       deferred.userChoice.then(function(){ deferred = null; hide(); });
       return;
     }
-    // Chrome did not fire the event: point the user at the manual route.
     var msg = document.getElementById('installHint');
     if(msg){
-      msg.textContent = 'لتثبيت التطبيق: افتح قائمة المتصفح ⋮ ثم اختر '
-        + '"تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية".';
+      msg.textContent = 'يجري تجهيز التثبيت المباشر لتطبيق رفيق…';
       msg.hidden = false;
     }
   });
 
-  // If the button is still hidden after a while, offer the manual route
-  // instead of leaving the user with nothing.
-  setTimeout(function(){
-    if(btn.hidden && !standalone()){
-      btn.hidden = false;
-      btn.textContent = '📲 تثبيت التطبيق';
-    }
-  }, 2500);
+  // Do not show a misleading install button when the browser has not
+  // exposed a native install prompt. The button appears only when the
+  // browser makes direct PWA installation available.
 })();
 </script>
 <script>
