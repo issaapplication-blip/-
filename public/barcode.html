@@ -186,6 +186,8 @@ function showPartner(p){
 }
 
 $('goBtn').onclick=()=>lookup($('code').value);
+const urlCode=new URLSearchParams(location.search).get('code');
+if(urlCode){ $('code').value=urlCode; lookup(urlCode); }
 $('code').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); lookup($('code').value);} });
 
 $('camBtn').onclick=()=>{
