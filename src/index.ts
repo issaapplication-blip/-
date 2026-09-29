@@ -1,10 +1,9 @@
 import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { ensureKapsoWebhook, kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
-void ensureKapsoWebhook();
 let lastKapsoWebhookAt: string | null = null;
 let lastKapsoWebhookEvent: string | null = null;
 const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\bkareh\b|\bnurse\b/i;
@@ -142,4 +141,3 @@ console.log(JSON.stringify({
   kapsoConfigured,
   kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret())
 }));
-console.log(JSON.stringify({event:"rafig_kapso_webhook_autoconfig_disabled",reason:"webhook_managed_in_kapso_dashboard"}));
