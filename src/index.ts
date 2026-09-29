@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { ensureKapsoWebhook, kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
@@ -138,4 +138,4 @@ console.log(JSON.stringify({
   whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
   agentModel:process.env.RAFIQ_AGENT_MODEL??"gpt-5.6-luna"
 }));
-void ensureKapsoWebhook();
+console.log(JSON.stringify({event:"rafig_kapso_webhook_autoconfig_disabled",reason:"webhook_managed_in_kapso_dashboard"}));
