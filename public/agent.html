@@ -5,24 +5,29 @@
 <section class="card"><div class="err">للطلبات الحساسة أو العاجلة، تتم إحالتها إلى الإدارة للمراجعة.</div><div class="actions"><a class="btn" href="/app.html">تقديم طلب</a><a class="btn alt" href="/faq.html">الأسئلة الشائعة</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">واتساب RAFIQ</a></div></section>
 </main><script>
 (function(){
-const chat=document.getElementById('chat'),input=document.getElementById('input'),send=document.getElementById('send'),status=document.getElementById('status');
-function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
-function answer(t){
- const n=t.trim().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').toLowerCase();
- if(/(طارئ|عاجل|نزيف|لا يستطيع التنفس|اغماء|تشنج|سكتة)/.test(n)) return '🚨 إذا كانت الحالة طارئة، اتصل فورًا بالإسعاف 112 أو بأقرب مركز استشفاء. يمكن إرسال التفاصيل إلى إدارة رفيق للمراجعة.';
- if(/(دواء|جرعه|تشخيص|اوقف العلاج|تغيير العلاج)/.test(n)) return 'منصة رفيق لا تشخّص ولا تصف دواءً ولا تغيّر علاج الطبيب. يرجى الرجوع إلى الطبيب أو الفريق المعالج.';
- if(/(اسنان|تغذيه|نطق|مختبر|تحليل|تصوير|اشعه|معدات طبيه)/.test(n)) return 'انتظرونا قريبًا 🕐 — هذه الخدمة قيد الإضافة إلى منصة رفيق.';
- if(/(خدمات|ماذا تقدم|شو بتقدم|تقدمون)/.test(n)) return 'خدمات رفيق الأساسية:\n• رعاية كبار السن\n• رعاية المرضى\n• التمريض المنزلي\n• العلاج الفيزيائي المنزلي\n\nاخبرني ما الذي تحتاجه وسأوجهك إلى المسار المناسب.';
- if(/(مقدم رعايه|رعاية|مسن|كبير)/.test(n)) return 'مقدم الرعاية يساعد في الرعاية اليومية مثل النظافة واللباس والطعام والحركة والمرافقة. إذا كانت هناك إجراءات أو متابعة تمريضية، أخبرني بذلك.';
- if(/(ممرض|تمريض|حقن|قسطرة|جرح)/.test(n)) return 'التمريض المنزلي مخصص للمهام والإجراءات التمريضية وفق تعليمات الطبيب. اذكر المنطقة ونوع الحاجة وسنوجّه الطلب للمراجعة.';
- if(/(فيزيائي|علاج فيزيائي|تأهيل|تمارين|جلطه)/.test(n)) return 'العلاج الفيزيائي المنزلي يركز على إعادة التأهيل والتمارين الحركية بالتنسيق مع توصيات الفريق المعالج. اذكر المنطقة والحاجة.';
- if(/(سعر|تكلف|بكم|دفع|تحويل|whish)/.test(n)) return 'التفاصيل المالية لا يثبتها المساعد. يتم التعامل معها بعد مراجعة الإدارة.';
- if(/(مرحبا|السلام|اهلا|هلا|hello|hi)/.test(n)) return 'أهلًا بك في رفيق 👋 كيف أساعدك؟ رعاية منزلية، تمريض، علاج فيزيائي، أم تقديم طلب؟';
- if(/(طلب|تسجيل|انضم|عمل|وظيفه|مقدم خدمة)/.test(n)) return 'يمكنك تقديم الطلب مباشرة من صفحة التقديم. بعد الإرسال يبقى الطلب للمراجعة الإدارية قبل الاعتماد.';
- return 'أفهم سؤالك. أخبرني هل تحتاج رعاية منزلية، تمريضًا منزليًا، علاجًا فيزيائيًا، أم تريد تقديم طلب؟';
+const chat=document.getElementById("chat"),input=document.getElementById("input"),send=document.getElementById("send"),status=document.getElementById("status");
+function add(t,c){const d=document.createElement("div");d.className="m "+c;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+function fallback(t){
+ if(/(صعوبة\s*شديدة\s*بالتنفس|ألم\s*صدر|نزيف\s*شديد|فقدان\s*الوعي|إغماء|تشنج|سكتة|اختناق|chest pain|unconscious|stroke)/i.test(t))return "🚨 إذا كانت هناك حالة طارئة أو خطر فوري، اتصل بالإسعاف أو بأقرب جهة طبية فورًا. لا تنتظر رد رفيق.";
+ if(/(دواء|جرعة|تشخيص|وصفة|medication|dose|diagnos|prescription)/i.test(t))return "رفيق لا يشخّص ولا يصف الأدوية ولا يغيّر العلاج. يرجى الرجوع إلى الطبيب أو الفريق المعالج.";
+ if(/(خدمات|ماذا تقدم|شو بتقدم|services)/i.test(t))return "خدمات رفيق: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي. أخبرني بما تحتاجه وفي أي منطقة.";
+ if(/(ممرض|ممرضة|تمريض|nurse)/i.test(t))return "أكيد. ما المنطقة وما الساعات المطلوبة؟ ثم تُراجع الإدارة التوفر المناسب.";
+ if(/(فيزيائي|فيزيو|علاج فيزيائي|physio)/i.test(t))return "أكيد. ما المنطقة وما نوع الحاجة أو إعادة التأهيل؟";
+ if(/(رعاية|مسن|مريض|مقدم رعاية|caregiver|patient|home care)/i.test(t))return "أكيد 🌿 هل الطلب لمسن أم لمريض؟ وما المدينة أو المنطقة؟";
+ return "أفهمك 🌿 أخبرني ما الخدمة التي تحتاجها وفي أي مدينة أو منطقة، وسأساعدك بالخطوة التالية.";
 }
-
-function go(){const v=input.value.trim();if(!v)return;add(v,'u');input.value='';send.disabled=true;status.textContent='جارٍ تجهيز الرد...';setTimeout(()=>{add(answer(v),'a');send.disabled=false;status.textContent='المساعد يعمل مباشرة.';input.focus()},120)}
-send.onclick=go;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}});document.querySelectorAll('.q').forEach(b=>b.onclick=()=>{input.value=b.textContent;go()});
+async function ask(t){
+ status.textContent="جارٍ تجهيز الرد…";
+ try{
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),9000);
+  const r=await fetch("/api/agent/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:t}),signal:controller.signal});
+  clearTimeout(timer);
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok||!data.reply)throw new Error("agent unavailable");
+  return data.reply;
+ }catch(e){return fallback(t)}
+}
+async function go(){const v=input.value.trim();if(!v||send.disabled)return;add(v,"u");input.value="";send.disabled=true;const reply=await ask(v);add(reply,"a");send.disabled=false;status.textContent="المساعد جاهز.";input.focus()}
+send.onclick=go;input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();go()}});document.querySelectorAll(".q").forEach(b=>b.onclick=()=>{input.value=b.textContent;go()});
 })();
 </script></body></html>
