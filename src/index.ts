@@ -136,6 +136,8 @@ console.log(JSON.stringify({
   metaOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
   whatsappSendingEnabled:process.env.WHATSAPP_SENDING_ENABLED==="true",
   whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
-  agentModel:process.env.RAFIQ_AGENT_MODEL??"gpt-5.6-luna"
+  agentModel:process.env.RAFIQ_AGENT_MODEL??"gpt-5.6-luna",
+  kapsoConfigured,
+  kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret())
 }));
 console.log(JSON.stringify({event:"rafig_kapso_webhook_autoconfig_disabled",reason:"webhook_managed_in_kapso_dashboard"}));
