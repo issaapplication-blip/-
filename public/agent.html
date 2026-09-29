@@ -1,91 +1,28 @@
-<!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#087f58"><link rel="icon" href="./assets/rafig-logo.png?v=20260928" type="image/png"><title>RAFIQ | مساعد رفيق</title>
-<style>*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f8f6;color:#17372d}.wrap{max-width:760px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 5px 22px rgba(0,0,0,.06)}.logo{display:block;width:min(210px,65vw);margin:auto}.chat{min-height:420px;max-height:62vh;overflow:auto;border:1px solid #dce8e2;border-radius:14px;padding:12px;background:#fbfdfc}.m{padding:10px 12px;border-radius:13px;margin:8px 0;white-space:pre-wrap}.u{background:#eaf2ef;margin-right:18%}.a{background:#edf8f2;margin-left:18%}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:10px;padding:11px 15px;background:#087f58;color:#fff;font-weight:bold;cursor:pointer;text-decoration:none}.alt{background:#eaf2ef;color:#17372d}.composer{display:flex;gap:8px;margin-top:10px}.composer textarea{flex:1;min-height:52px;resize:vertical;padding:11px;border:1px solid #cbdad3;border-radius:10px;font:inherit}.small{font-size:13px;color:#66756f}.notice{background:#fff8e8;padding:10px;border-radius:10px}</style><style>.logo-fallback{display:inline-block;font-weight:900;color:#087f58;font-size:20px;letter-spacing:.5px}</style>
-<style>body{overflow-x:hidden}nav.card{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:12px}nav.card a.btn{flex:0 0 auto;white-space:nowrap;font-size:14px;padding:10px 14px}.logo{display:block;width:min(150px,42vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.07)}.brand-logo{display:block;width:min(190px,55vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px}h1{font-size:24px}article.card h1,section.card h1{font-size:22px}@media(max-width:520px){nav.card{gap:6px}nav.card a.btn{font-size:13px;padding:9px 11px;flex:1 1 calc(50% - 3px);text-align:center}}</style>
-<style>.item h2 a,.item h3 a{display:inline-block;background:#087f58;color:#fff!important;text-decoration:none;border-radius:10px;padding:9px 14px;margin:4px 0;font-size:14px;font-weight:800;box-shadow:0 3px 10px rgba(8,127,88,.22)}.item h2 a:hover,.item h3 a:hover{background:#0b9b6b}</style>
-<meta name="description" content="مساعد رفيق لاختيار خدمة الرعاية المنزلية المناسبة في لبنان.">
-<meta name="robots" content="index,follow,max-image-preview:large">
-<link rel="canonical" href="https://rafiq-o6qd.onrender.com/agent.html">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="RAFIQ | رفيق">
-<meta property="og:locale" content="ar_LB">
-<meta property="og:title" content="مساعد رفيق | RAFIQ | رفيق">
-<meta property="og:description" content="مساعد رفيق لاختيار خدمة الرعاية المنزلية المناسبة في لبنان.">
-<meta property="og:url" content="https://rafiq-o6qd.onrender.com/agent.html">
-<meta property="og:image" content="https://rafiq-o6qd.onrender.com/assets/rafig-logo.png">
-<meta name="twitter:card" content="summary">
-</head>
-<body><main class="wrap"><section class="card" style="text-align:center"><img class="logo" src="./assets/rafig-logo.png?v=20260928" alt="RAFIQ"><h1>🤖 مساعد رفيق RAFIQ</h1><p><strong>نصل بالحب والأمان لرعاية العائلة</strong></p><p class="small">مساعد أولي للاستفسارات، اختيار الخدمة، والتوجيه إلى التسجيل أو المدير. لا يقدم تشخيصًا أو قرارًا طبيًا.</p></section>
-<section class="card"><div id="auth"><label>البريد الإلكتروني<input id="email" type="email" autocomplete="email"></label><label>كلمة المرور<input id="password" type="password" autocomplete="current-password"></label><div class="actions"><button id="login" class="btn">دخول</button><a class="btn alt" href="./app.html">إنشاء حساب / التسجيل</a></div><div id="authMsg" class="small" style="margin-top:8px"></div></div><div id="chat" class="chat"></div><div class="composer"><textarea id="input" maxlength="1500" placeholder="اكتب سؤالك هنا..."></textarea><button id="send" class="btn">إرسال</button></div><div class="actions" style="margin-top:10px"><button class="btn alt q">أريد مقدم رعاية</button><button class="btn alt q">أريد ممرض/ة</button><button class="btn alt q">أريد علاج فيزيائي</button><button class="btn alt q">أريد تقديم طلب</button></div></section>
-<section class="card"><div class="notice">للطلبات العاجلة أو الحالات التي تحتاج قرارًا من الإدارة، يتولى المدير المراجعة والموافقة قبل أي إجراء حساس.</div><div class="actions" style="margin-top:10px"><a class="btn" href="./app.html">التسجيل وتقديم الطلب</a><a class="btn alt" href="./faq.html">الأسئلة الشائعة</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">واتساب RAFIQ</a><a class="btn alt" href="./">الصفحة الرئيسية</a></div></section>
-</main><script src="./js/rafiq-kb.js"></script><script src="./js/rafiq-agent.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
-const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co',KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD',db=supabase.createClient(SUPABASE_URL,KEY),$=id=>document.getElementById(id); async function boot(){try{const {data:{session}}=await db.auth.getSession();if(session){$('auth').hidden=true;}else{$('authMsg').textContent='المساعد متاح الآن مباشرة دون تسجيل دخول.';}return true}catch(_){$('authMsg').textContent='المساعد يعمل بوضع الضيف.';return true}} $('login').onclick=async()=>{try{const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('authMsg').textContent='تعذر الدخول، لكن يمكنك استخدام المساعد مباشرة دون تسجيل.';return}location.reload()}catch(_){$('authMsg').textContent='يمكن استخدام المساعد مباشرة دون تسجيل.'}};
-function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('chat').appendChild(d);$('chat').scrollTop=$('chat').scrollHeight}
-boot().then(ok=>{if(ok)add('مرحبًا بك في رفيق 👋\nأنا مساعد رفيق. أخبرني ماذا تحتاج: رعاية منزلية، تمريض، علاج فيزيائي، تسجيل مقدم خدمة، أو سؤال عام عن المنصة.','a');});
-/* conversation state so the agent collects missing details one by one.
-   absorb() is shared with the WhatsApp worker (js/rafiq-agent.js) so the
-   website and WhatsApp always read a conversation the same way. */
-let ctx={};
-const absorb=function(t){ctx=RAFIQ_AGENT.extract(t,ctx);return ctx};
-
-async function send(){
-  const v=$('input').value.trim();if(!v)return;
-  add(v,'u');$('input').value='';
-  absorb(v);
-  try{
-    /* 3-layer answer, so the assistant is never silent:
-       1) RAFIQ_AGENT  = safety guard + local KB  (always instant)
-       2) Supabase fn  = server agent            (only if 1 is thin)
-       3) fallback     = hand-off message                                */
-    let reply = RAFIQ_AGENT.answerSync(v, ctx);
-    /* The local brain is authoritative: it handles the intake one field at a
-       time. The remote agent may only answer when the local brain has nothing
-       specific to say - otherwise a generic greeting would overwrite a real,
-       contextual question. */
-    if(reply===RAFIQ_AGENT.HANDOFF){
-      /* the remote agent is enrichment only - the local answer already went out */
-      try{
-        const ctl=new AbortController();
-        const to=setTimeout(function(){ctl.abort()},2500);
-        const r=await fetch(SUPABASE_URL+'/functions/v1/rafiq-agent',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY},
-          signal:ctl.signal,body:JSON.stringify({message:v,ctx:ctx,locale:'ar'})
-        });
-        clearTimeout(to);
-        if(r.ok){
-          const j=await r.json();
-          const remote=j&&j.reply?RAFIQ_AGENT.clean(j.reply):null;
-          if(remote&&remote.length>String(reply).length) reply=remote;
-        }
-      }catch(_){}
-    }
-    add(reply||RAFIQ_AGENT.HANDOFF,'a');
-    if(RAFIQ_KB.nextField(ctx)===null && !$('chat').querySelector('.btn.newreq')){
-      const b=document.createElement('button');
-      b.className='btn alt newreq';b.style.marginTop='8px';b.textContent='طلب جديد';
-      b.onclick=function(){ctx={};b.remove();};
-      $('chat').lastChild.appendChild(b);
-    }
-  }catch(e){
-    add('تعذر الاتصال بالمساعد حاليا. يمكنك تقديم الطلب مباشرة أو التواصل عبر واتساب RAFIQ.','a');
-  }finally{ $('input').focus() }
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#087f58"><link rel="icon" href="/assets/rafig-logo.png?v=20260928"><title>RAFIQ | مساعد رفيق</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f3f8f5;color:#17372d;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}.wrap{max-width:780px;margin:auto;padding:12px}.card{background:#fff;border:1px solid #dce8e2;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 5px 20px #0000000d}.logo{width:120px;height:120px;object-fit:contain;display:block;margin:auto;border-radius:16px}.chat{height:430px;overflow:auto;border:1px solid #dce8e2;border-radius:14px;padding:12px;background:#fbfdfc}.m{padding:11px 13px;border-radius:14px;margin:8px 0;white-space:pre-wrap;line-height:1.8}.a{background:#edf8f2;margin-left:10%}.u{background:#eaf2ef;margin-right:10%}.composer{display:flex;gap:8px;margin-top:10px}.composer textarea{flex:1;min-height:58px;border:1px solid #cbdad3;border-radius:12px;padding:10px;font:inherit}.btn{border:0;border-radius:11px;padding:11px 16px;background:#087f58;color:#fff;font-weight:800;cursor:pointer}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.alt{background:#eaf2ef;color:#17372d}.status{font-size:13px;color:#66756f;text-align:center}.err{background:#fff8e8;border-right:4px solid #c9a85a;padding:10px;border-radius:10px}@media(max-width:560px){.composer{flex-direction:column}.composer .btn{width:100%}.chat{height:55vh}}</style></head><body><main class="wrap">
+<section class="card" style="text-align:center"><img class="logo" src="/assets/rafig-logo.png?v=20260928" alt="RAFIQ | رفيق"><h1>🤖 مساعد رفيق</h1><p><b>نصل بالحب والأمان لرعاية العائلة</b></p><p class="status">مساعد استقبال للمنصة — لا يقدم تشخيصًا أو وصفًا دوائيًا.</p></section>
+<section class="card"><div id="chat" class="chat" aria-live="polite"></div><div class="composer"><textarea id="input" maxlength="1500" placeholder="اكتب سؤالك هنا..."></textarea><button id="send" class="btn">إرسال</button></div><div class="actions"><button class="btn alt q">أريد مقدم رعاية</button><button class="btn alt q">أريد ممرض/ة</button><button class="btn alt q">أريد علاج فيزيائي</button><button class="btn alt q">أريد تقديم طلب</button></div><div id="status" class="status" style="margin-top:10px">المساعد يعمل مباشرة.</div></section>
+<section class="card"><div class="err">للطلبات الحساسة أو العاجلة، تتم إحالتها إلى الإدارة للمراجعة.</div><div class="actions"><a class="btn" href="/app.html">تقديم طلب</a><a class="btn alt" href="/faq.html">الأسئلة الشائعة</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">واتساب RAFIQ</a></div></section>
+</main><script>
+(function(){
+const chat=document.getElementById('chat'),input=document.getElementById('input'),send=document.getElementById('send'),status=document.getElementById('status');
+function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+function answer(t){
+ const n=t.trim().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').toLowerCase();
+ if(/(طارئ|عاجل|نزيف|لا يستطيع التنفس|اغماء|تشنج|سكتة)/.test(n)) return '🚨 إذا كانت الحالة طارئة، اتصل فورًا بالإسعاف 112 أو بأقرب مركز استشفاء. يمكن إرسال التفاصيل إلى إدارة رفيق للمراجعة.';
+ if(/(دواء|جرعه|تشخيص|اوقف العلاج|تغيير العلاج)/.test(n)) return 'منصة رفيق لا تشخّص ولا تصف دواءً ولا تغيّر علاج الطبيب. يرجى الرجوع إلى الطبيب أو الفريق المعالج.';
+ if(/(اسنان|تغذيه|نطق|مختبر|تحليل|تصوير|اشعه|معدات طبيه)/.test(n)) return 'انتظرونا قريبًا 🕐 — هذه الخدمة قيد الإضافة إلى منصة رفيق.';
+ if(/(خدمات|ماذا تقدم|شو بتقدم|تقدمون)/.test(n)) return 'خدمات رفيق الأساسية:\n• رعاية كبار السن\n• رعاية المرضى\n• التمريض المنزلي\n• العلاج الفيزيائي المنزلي\n\nاخبرني ما الذي تحتاجه وسأوجهك إلى المسار المناسب.';
+ if(/(مقدم رعايه|رعاية|مسن|كبير)/.test(n)) return 'مقدم الرعاية يساعد في الرعاية اليومية مثل النظافة واللباس والطعام والحركة والمرافقة. إذا كانت هناك إجراءات أو متابعة تمريضية، أخبرني بذلك.';
+ if(/(ممرض|تمريض|حقن|قسطرة|جرح)/.test(n)) return 'التمريض المنزلي مخصص للمهام والإجراءات التمريضية وفق تعليمات الطبيب. اذكر المنطقة ونوع الحاجة وسنوجّه الطلب للمراجعة.';
+ if(/(فيزيائي|علاج فيزيائي|تأهيل|تمارين|جلطه)/.test(n)) return 'العلاج الفيزيائي المنزلي يركز على إعادة التأهيل والتمارين الحركية بالتنسيق مع توصيات الفريق المعالج. اذكر المنطقة والحاجة.';
+ if(/(سعر|تكلف|بكم|دفع|تحويل|whish)/.test(n)) return 'التفاصيل المالية لا يثبتها المساعد. يتم التعامل معها بعد مراجعة الإدارة.';
+ if(/(مرحبا|السلام|اهلا|هلا|hello|hi)/.test(n)) return 'أهلًا بك في رفيق 👋 كيف أساعدك؟ رعاية منزلية، تمريض، علاج فيزيائي، أم تقديم طلب؟';
+ if(/(طلب|تسجيل|انضم|عمل|وظيفه|مقدم خدمة)/.test(n)) return 'يمكنك تقديم الطلب مباشرة من صفحة التقديم. بعد الإرسال يبقى الطلب للمراجعة الإدارية قبل الاعتماد.';
+ return 'أفهم سؤالك. أخبرني هل تحتاج رعاية منزلية، تمريضًا منزليًا، علاجًا فيزيائيًا، أم تريد تقديم طلب؟';
 }
-$('send').onclick=send;$('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});document.querySelectorAll('.q').forEach(b=>b.onclick=()=>{$('input').value=b.textContent;send()});
-</script><script>
-/* RAFIQ logo guard: if the SVG fails to load, show a text wordmark instead. */
-document.addEventListener("DOMContentLoaded",function(){
-  document.querySelectorAll("img[src*='rafig-logo.png']").forEach(function(img){
-    img.addEventListener("error",function(){
-      var s=document.createElement("span");
-      s.className="logo-fallback";
-      s.textContent="RAFIQ | رفيق";
-      if(getComputedStyle(img).display==="none"||img.naturalWidth===0){
-        img.replaceWith(s);
-      }
-    });
-  });
-});
-</script>
-<script src="/install-app.js?v=68" defer></script>
-</body></html>
+add('مرحبًا بك في رفيق 👋\nأنا مساعد رفيق. كيف أستطيع مساعدتك؟','a');
+function go(){const v=input.value.trim();if(!v)return;add(v,'u');input.value='';send.disabled=true;status.textContent='جارٍ تجهيز الرد...';setTimeout(()=>{add(answer(v),'a');send.disabled=false;status.textContent='المساعد يعمل مباشرة.';input.focus()},120)}
+send.onclick=go;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}});document.querySelectorAll('.q').forEach(b=>b.onclick=()=>{input.value=b.textContent;go()});
+})();
+</script><script src="/install-app.js?v=69" defer></script></body></html>
