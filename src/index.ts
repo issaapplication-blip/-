@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { ensureKapsoWebhook, kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -130,7 +130,9 @@ const app=new Elysia()
 .get("/guide-caregiver-vs-nurse.html",()=>fileResponse("public/guide-caregiver-vs-nurse.html","text/html; charset=utf-8"))
 .get("/guide-elderly-home.html",()=>fileResponse("public/guide-elderly-home.html","text/html; charset=utf-8"))
 .get("/guide-after-hospital.html",()=>fileResponse("public/guide-after-hospital.html","text/html; charset=utf-8"))
-.listen(port);
+;
+await ensureKapsoWebhook();
+app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
 console.log(JSON.stringify({
   event:"rafig_runtime_configuration",
