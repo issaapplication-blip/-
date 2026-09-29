@@ -6,6 +6,13 @@
   }
   if (standalone()) return;
 
+  // Register the PWA service worker before waiting for Chrome's installability signal.
+  // This is required for the intended PWA install flow on supported browsers.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js?v=20260929', { scope: '/' })
+      .catch(function (err) { console.warn('RAFIQ service worker registration failed', err); });
+  }
+
   var deferred = null;
 
   function showControls() {
