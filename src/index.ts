@@ -131,9 +131,9 @@ const app=new Elysia()
 .get("/guide-elderly-home.html",()=>fileResponse("public/guide-elderly-home.html","text/html; charset=utf-8"))
 .get("/guide-after-hospital.html",()=>fileResponse("public/guide-after-hospital.html","text/html; charset=utf-8"))
 ;
-await ensureKapsoWebhook();
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
+void ensureKapsoWebhook().catch((error) => console.error(JSON.stringify({event:"rafig_kapso_webhook_autoconfig_unhandled",error:String(error)})));
 console.log(JSON.stringify({
   event:"rafig_runtime_configuration",
   openAIConfigured:Boolean(process.env.OPENAI_API_KEY),
