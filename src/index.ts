@@ -1,9 +1,10 @@
 import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { ensureKapsoWebhook, kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
+void ensureKapsoWebhook();
 let lastKapsoWebhookAt: string | null = null;
 let lastKapsoWebhookEvent: string | null = null;
 const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\bkareh\b|\bnurse\b/i;
