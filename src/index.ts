@@ -16,16 +16,20 @@ const draftInboundReply = async (message: string, senderPhone?: string) => {
   const previous = careSessions.get(key);
   const active = Boolean(previous && now - previous.updatedAt < CARE_SESSION_TTL_MS);
   const careMode = CARE_KEYWORD_RE.test(message) || active;
-  if (!careMode) return draftAgentReply(message);
   const messages = [...(previous?.messages ?? []), message].slice(-8);
-  careSessions.set(key, { updatedAt: now, messages });
-  const context = [
+  if (careMode) careSessions.set(key, { updatedAt: now, messages });
+  const context = careMode ? [
     "ACTIVE RAFIQ CARE INTAKE: true",
     senderPhone ? `WhatsApp sender number (known contact, confirm it with the customer): ${senderPhone}` : "WhatsApp sender number unavailable.",
     "Recent intake conversation:",
     ...messages.map((item, index) => `${index + 1}. ${item}`),
-  ].join("\n");
-  try { return await draftAgentReply(message, undefined, context); } catch (error) { console.error(JSON.stringify({event:"rafig_agent_provider_failed",reason:String(error).slice(0,160)})); return {reply:rafiqFallback(message),model:"rafig-local-fallback"}; }
+  ].join("\n") : undefined;
+  try {
+    return await draftAgentReply(message, undefined, context);
+  } catch (error) {
+    console.error(JSON.stringify({event:"rafig_agent_provider_failed",reason:String(error).slice(0,160)}));
+    return {reply:rafiqFallback(message),model:"rafig-local-fallback"};
+  }
 };
 const MAX_WEBHOOK_BODY = 512_000;
 const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Resource-Policy":"same-origin","Content-Security-Policy":"default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://qmuxaehrahfsnabyjens.supabase.co https://graph.facebook.com https://api.kapso.ai","Cache-Control":"no-store"};
