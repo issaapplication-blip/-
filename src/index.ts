@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { ensureKapsoWebhook, kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -137,6 +137,7 @@ const app=new Elysia()
 ;
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
+void ensureKapsoWebhook().catch((error) => console.error(JSON.stringify({event:"rafig_kapso_webhook_autoconfig_unhandled",error:String(error)})));
 
 console.log(JSON.stringify({
   event:"rafig_runtime_configuration",
