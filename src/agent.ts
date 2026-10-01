@@ -1,4 +1,10 @@
-const DEFAULT_MODEL = "gpt-5.6-luna";
+const DEFAULT_MODEL = "gpt-6-luna";
+const resolveAgentModel = () => {
+  const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
+  // Keep older Render env values working after the model rename.
+  if (!configured || configured === "gpt-5.6-luna") return DEFAULT_MODEL;
+  return configured;
+};
 
 type OutreachTarget =
   | "laboratory"
@@ -209,7 +215,7 @@ const callAgent = async (input: string) => {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OpenAI server configuration is incomplete");
 
-  const model = process.env.RAFIQ_AGENT_MODEL ?? DEFAULT_MODEL;
+  const model = resolveAgentModel();
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
