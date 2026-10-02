@@ -133,39 +133,86 @@
     return map;
   };
 
-  function normalize(s) { return s.replace(/\s+/g, ' ').trim(); }
+  function normalize(s) { return s.replace(/\\s+/g, ' ').trim(); }
+
+  function translationMap(lang) {
+    if (lang === 'ar') return {};
+    return Object.assign({}, T.en, COMMON[lang] || {});
+  }
+
+  function cacheArabicSources() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (!parent || ['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)) continue;
+      if (node.nodeValue && normalize(node.nodeValue)) {
+        if (!node.__rafiqArabicSource) node.__rafiqArabicSource = node.nodeValue;
+      }
+    }
+    document.querySelectorAll('input,textarea,select,button,a,[aria-label],[title],[placeholder]').forEach(el => {
+      ['placeholder','aria-label','title'].forEach(attr => {
+        if (el.hasAttribute(attr) && !el.dataset['rafiq'+attr.replace('-','')]) {
+          el.dataset['rafiq'+attr.replace('-','')] = el.getAttribute(attr);
+        }
+      });
+    });
+  }
 
   function translateText(lang) {
-    const map = reverse(lang);
-    if (!map) return;
-    const arabicToEnglish = T.en;
+    cacheArabicSources();
+    const map = translationMap(lang);
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
     let n;
     while ((n = walker.nextNode())) {
-      if (!n.nodeValue || !normalize(n.nodeValue)) continue;
       const parent = n.parentElement;
       if (!parent || ['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)) continue;
-      nodes.push(n);
+      if (n.__rafiqArabicSource !== undefined) nodes.push(n);
     }
     nodes.forEach(node => {
-      const raw = normalize(node.nodeValue);
-      const english = arabicToEnglish[raw] || raw;
-      const target = map[english] || english;
-      if (target !== raw) node.nodeValue = node.nodeValue.replace(raw, target);
+      const source = node.__rafiqArabicSource;
+      const raw = normalize(source || '');
+      if (!raw) return;
+      const english = T.en[raw] || raw;
+      const target = lang === 'ar' ? raw : (map[english] || english);
+      const originalPrefix = source.match(/^\\s*/)?.[0] || '';
+      const originalSuffix = source.match(/\\s*$/)?.[0] || '';
+      node.nodeValue = originalPrefix + target + originalSuffix;
+    });
+  }
+
+  function translateAttributes(lang) {
+    const map = translationMap(lang);
+    const ar = {
+      'اللغة':'Language','القائمة':'Menu','شعار RAFIQ':'RAFIQ logo','شعار RAFIQ الرسمي':'Official RAFIQ logo',
+      'تثبيت تطبيق رفيق':'Install RAFIQ','RAFIQ الرئيسية':'RAFIQ Home'
+    };
+    document.querySelectorAll('[aria-label],[title],[placeholder]').forEach(el => {
+      ['aria-label','title','placeholder'].forEach(attr => {
+        const key = 'rafiq' + attr.replace('-','');
+        const source = el.dataset[key];
+        if (source == null) return;
+        const english = T.en[source] || ar[source] || source;
+        el.setAttribute(attr, lang === 'ar' ? source : (map[english] || english));
+      });
     });
   }
 
   function applyAttributes(lang) {
     const meta = {
-      ar: { title: document.title, desc: document.querySelector('meta[name="description"]')?.content || '' },
+      ar: { title: document.querySelector('title')?.dataset.rafiqArabicTitle || document.title, desc: document.querySelector('meta[name="description"]')?.dataset.rafiqArabicDesc || document.querySelector('meta[name="description"]')?.content || '' },
       en: { title: 'RAFIQ | Home Care in Lebanon', desc: 'RAFIQ home-care and health services in Lebanon.' },
       fr: { title: 'RAFIQ | Soins à domicile au Liban', desc: 'Soins à domicile et services de santé RAFIQ au Liban.' },
       it: { title: 'RAFIQ | Assistenza domiciliare in Libano', desc: 'Assistenza domiciliare e servizi sanitari RAFIQ in Libano.' },
       de: { title: 'RAFIQ | Häusliche Pflege im Libanon', desc: 'RAFIQ häusliche Pflege und Gesundheitsleistungen im Libanon.' }
     };
+    const title = document.querySelector('title');
+    const desc = document.querySelector('meta[name="description"]');
+    if (title && !title.dataset.rafiqArabicTitle) title.dataset.rafiqArabicTitle = title.textContent || title.innerText || '';
+    if (desc && !desc.dataset.rafiqArabicDesc) desc.dataset.rafiqArabicDesc = desc.content || '';
     document.title = meta[lang].title;
-    const d = document.querySelector('meta[name="description"]'); if (d) d.content = meta[lang].desc;
+    if (desc) desc.content = meta[lang].desc;
   }
 
   function buildSwitcher() {
@@ -175,7 +222,8 @@
     box.setAttribute('data-rafig-language-switcher','');
     box.className = 'rafig-language-switcher';
     box.innerHTML = '<label class="rafig-language-label" for="rafig-language">🌐</label><select id="rafig-language" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>';
-    document.body.prepend(box); document.documentElement.classList.add('rafig-i18n-active');
+    document.body.prepend(box);
+    document.documentElement.classList.add('rafig-i18n-active');
     return box;
   }
 
@@ -186,26 +234,35 @@
     document.documentElement.dataset.language = lang;
     if (persist) localStorage.setItem('rafiq-language', lang);
     applyAttributes(lang);
-    if (lang !== 'ar') translateText(lang);
-    const select = document.getElementById('rafig-language'); if (select) select.value = lang;
+    translateText(lang);
+    translateAttributes(lang);
+    const select = document.getElementById('rafig-language');
+    if (select) select.value = lang;
   }
 
   function init() {
     const box = buildSwitcher();
     if (!document.getElementById('rafig-language-style')) {
       const style = document.createElement('style'); style.id = 'rafig-language-style';
-      style.textContent = 'html.rafig-i18n-active body{padding-top:48px}.rafig-language-switcher{position:fixed;top:6px;left:6px;z-index:99999;display:flex;align-items:center;gap:5px;padding:5px 7px;background:rgba(255,255,255,.98);border:1px solid #dbe9e2;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.10);direction:ltr}.rafig-language-switcher select{border:0;background:transparent;color:#087f58;font:700 13px Arial,Tahoma,sans-serif;outline:none;cursor:pointer;max-width:120px;min-width:92px}.rafig-language-label{font-size:15px;line-height:1}.rafig-language-switcher select:focus{outline:2px solid #b88a22;outline-offset:2px}@media(max-width:480px){html.rafig-i18n-active body{padding-top:42px}.rafig-language-switcher{top:4px;left:4px}.rafig-language-switcher select{max-width:110px;font-size:12px}}';
+      style.textContent = 'html.rafig-i18n-active .rafig-language-switcher{position:fixed;top:6px;left:6px;right:auto;z-index:99999;display:flex;align-items:center;gap:5px;padding:5px 7px;background:rgba(255,255,255,.98);border:1px solid #dbe9e2;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.10);direction:ltr}html.rafig-i18n-active .rafig-language-switcher select{border:0;background:transparent;color:#087f58;font:700 13px Arial,Tahoma,sans-serif;outline:none;cursor:pointer;max-width:120px;min-width:92px}html.rafig-i18n-active .rafig-language-label{font-size:15px;line-height:1}@media(max-width:480px){html.rafig-i18n-active .rafig-language-switcher{top:4px;left:4px}html.rafig-i18n-active .rafig-language-switcher select{max-width:110px;font-size:12px}}';
       document.head.appendChild(style);
     }
+    cacheArabicSources();
     const select = box.querySelector('select');
-    select.addEventListener('change', () => {
-      const next = LANGS[select.value] ? select.value : 'ar';
-      localStorage.setItem('rafiq-language', next);
-      // Rebuild the page from the Arabic source on navigation/reload, while
-      // keeping the selected language on every RAFIQ page.
-      apply(next, false);
-      window.setTimeout(() => location.reload(), 0);
-    });
+    if (select && !select.dataset.rafiqBound) {
+      select.dataset.rafiqBound = '1';
+      select.addEventListener('change', () => {
+        const next = LANGS[select.value] ? select.value : 'ar';
+        apply(next, true);
+      });
+    }
+    document.addEventListener('click', event => {
+      const link = event.target.closest?.('a[href]');
+      if (!link) return;
+      const href = link.getAttribute('href') || '';
+      if (/^(https?:|mailto:|tel:|#|javascript:)/i.test(href)) return;
+      localStorage.setItem('rafiq-language', document.documentElement.dataset.language || 'ar');
+    }, {capture:true});
     const saved = localStorage.getItem('rafiq-language');
     const device = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'ar'])
       .map(v => String(v).toLowerCase().split('-')[0])
