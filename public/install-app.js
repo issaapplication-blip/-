@@ -1,88 +1,105 @@
-/* RAFIQ | رفيق — reliable PWA install helper v76 */
-(function () {
-  function standalone() {
-    return window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true;
-  }
-  if (standalone()) return;
+/* RAFIQ | رفيق — stable PWA installer v76 */
+(function(){
+  'use strict';
+  var SW_VERSION='76';
+  var deferredPrompt=null;
 
-  // Register the PWA service worker before waiting for Chrome's installability signal.
-  // This is required for the intended PWA install flow on supported browsers.
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js?v=76', { scope: '/' })
-      .catch(function (err) { console.warn('RAFIQ service worker registration failed', err); });
+  function isStandalone(){
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone===true;
   }
 
-  var deferred = null;
-
-  function showControls() {
-    document.querySelectorAll('[data-rafiq-install]').forEach(function (b) {
-      b.hidden = false;
-      b.style.display = '';
+  function showButtons(){
+    if(isStandalone()) return;
+    document.querySelectorAll('[data-rafiq-install]').forEach(function(button){
+      button.hidden=false;
+      button.style.display='';
+      button.removeAttribute('aria-hidden');
     });
   }
 
-  window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
-    deferred = e;
-    showControls();
-  });
-
-  window.addEventListener('appinstalled', function () {
-    deferred = null;
-    document.querySelectorAll('[data-rafiq-install]').forEach(function (b) {
-      b.hidden = true;
-      b.style.display = 'none';
+  function hideButtons(){
+    document.querySelectorAll('[data-rafiq-install]').forEach(function(button){
+      button.hidden=true;
+      button.setAttribute('aria-hidden','true');
     });
-  });
-
-  function instructions() {
-    var ua = navigator.userAgent;
-    var isIOS = /iPad|iPhone|iPod/.test(ua) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (isIOS) {
-      return 'لتثبيت رفيق على iPhone:\n\n1. اضغط زر المشاركة ↗\n2. اختر «إضافة إلى الشاشة الرئيسية»\n3. اضغط «إضافة».';
-    }
-    if (/Android/i.test(ua)) {
-      return 'لتثبيت رفيق على Android:\n\n1. افتح القائمة ⋮ في Chrome\n2. اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»\n3. اضغط «تثبيت».';
-    }
-    return 'لتثبيت رفيق:\n\nAndroid: Chrome ⋮ ← «تثبيت التطبيق»\niPhone: المشاركة ← «إضافة إلى الشاشة الرئيسية»\nالكمبيوتر: استخدم أيقونة التثبيت ⊕ في شريط العنوان.';
   }
 
-  window.RAFIQ_INSTALL = {
-    prompt: function () {
-      if (!deferred) return false;
-      deferred.prompt();
-      deferred.userChoice.then(function () { deferred = null; });
-      return true;
-    },
-    instructions: instructions
-  };
-
-  document.addEventListener('click', function (e) {
-    var b = e.target.closest && e.target.closest('[data-rafiq-install]');
-    if (!b) return;
-    e.preventDefault();
-    if (!window.RAFIQ_INSTALL.prompt()) alert(instructions());
-  });
-
-  window.addEventListener('load', function () {
-    showControls();
-
-    if (!document.querySelector('[data-rafiq-install]')) {
-      var bar = document.createElement('div');
-      bar.setAttribute('data-rafiq-bar', '1');
-      bar.style.cssText =
-        'position:fixed;inset-inline:0;bottom:0;z-index:9999;display:flex;' +
-        'gap:10px;align-items:center;justify-content:center;padding:11px 12px;' +
-        'background:#087f58;color:#fff;font-weight:800;font-size:14px;' +
-        'box-shadow:0 -6px 22px rgba(0,0,0,.2);font-family:system-ui,sans-serif';
-      bar.innerHTML =
-        '<span>ثبّت منصة رفيق على جهازك</span>' +
-        '<button type="button" data-rafiq-install style="' +
-        'background:#fff;color:#087f58;border:0;border-radius:10px;' +
-        'padding:10px 18px;font-weight:900;cursor:pointer">تثبيت الآن</button>';
-      document.body.appendChild(bar);
+  function showStatus(message){
+    var node=document.getElementById('rafig-install-status');
+    if(!node){
+      node=document.createElement('div');
+      node.id='rafig-install-status';
+      node.setAttribute('role','status');
+      node.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:100001;width:min(92vw,560px);padding:12px 15px;background:#17372d;color:#fff;border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.22);text-align:center;font:700 14px/1.7 Arial,Tahoma,sans-serif;direction:rtl';
+      document.body.appendChild(node);
     }
+    node.textContent=message;
+    clearTimeout(window.__RAFIQ_INSTALL_STATUS_TIMER__);
+    window.__RAFIQ_INSTALL_STATUS_TIMER__=setTimeout(function(){if(node.isConnected)node.remove()},5000);
+  }
+
+  if(isStandalone()){hideButtons();return;}
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js?v='+SW_VERSION,{scope:'/',updateViaCache:'none'}).catch(function(error){
+      console.warn('RAFIQ service worker registration failed',error);
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt',function(event){
+    event.preventDefault();
+    deferredPrompt=event;
+    window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=event;
+    showButtons();
   });
+
+  window.addEventListener('appinstalled',function(){
+    deferredPrompt=null;
+    window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
+    hideButtons();
+    showStatus('تم تثبيت تطبيق رفيق بنجاح ✅');
+  });
+
+  function bind(button){
+    if(button.dataset.rafigInstallBound==='1')return;
+    button.dataset.rafigInstallBound='1';
+    button.addEventListener('click',async function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      var prompt=deferredPrompt||window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
+      if(!prompt){
+        showStatus('زر التثبيت جاهز. ينتظر المتصفح تفعيل نافذة التثبيت المباشر.');
+        return;
+      }
+      try{
+        button.disabled=true;
+        await prompt.prompt();
+        var choice=await prompt.userChoice;
+        deferredPrompt=null;
+        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
+        if(choice&&choice.outcome==='accepted'){
+          hideButtons();
+        }else{
+          showStatus('أُغلقت نافذة التثبيت. اضغط «تثبيت تطبيق رفيق» للمحاولة مجددًا.');
+        }
+      }catch(error){
+        console.warn('RAFIQ install prompt error',error);
+        showStatus('تعذر فتح نافذة التثبيت المباشر على هذا المتصفح حاليًا.');
+      }finally{
+        button.disabled=false;
+      }
+    });
+  }
+
+  function init(){
+    showButtons();
+    document.querySelectorAll('[data-rafiq-install]').forEach(bind);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',init,{once:true});
+  }else{
+    init();
+  }
 })();
