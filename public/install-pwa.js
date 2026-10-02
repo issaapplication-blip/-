@@ -1,5 +1,5 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V15__) return;
+  if (window.__RAFIQ_UI_GUARD_V16__) return;
   window.__RAFIQ_UI_GUARD_V15__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
@@ -9,9 +9,9 @@
   const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
-  const APP_VERSION = '2026.10.02';
+  const APP_VERSION = '2026.10.02.1';
 
-  const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language', 'rafig-install-app'];
+  const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
 
   function cleanDuplicates() {
@@ -49,32 +49,55 @@
 
   function ensureInstallButton(){
     let button=document.getElementById('rafig-install-app');
-    if(!button){
-      const cta=document.querySelector('.cta');if(!cta)return;
-      const slot=document.createElement('div');slot.className='rafig-install-slot';
-      button=document.createElement('button');button.id='rafig-install-app';button.type='button';button.className='btn outline rafig-install-app';button.textContent='تثبيت تطبيق رفيق';
-      slot.appendChild(button);cta.insertAdjacentElement('afterend',slot);
-    }
-    if(!isStandalone()){button.hidden=false;button.style.display='';}
+    if(!button)return;
+    if(isStandalone()){button.hidden=true;button.setAttribute('aria-hidden','true');return;}
+    button.hidden=false;
+    button.style.display='inline-flex';
+    button.setAttribute('aria-hidden','false');
     if(button.dataset.rafigInstallBound==='1')return;
     button.dataset.rafigInstallBound='1';
-    button.addEventListener('click',async()=>{
+    button.addEventListener('click',async function(event){
+      event.preventDefault();
+      event.stopPropagation();
       const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
-      if(prompt){
-        try{
-          await prompt.prompt();
-          const choice=await prompt.userChoice;
-          if(choice?.outcome==='accepted'){
-            window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
-          }
-        }catch(_){}
+      if(!prompt){
+        showInstallStatus('يجري تجهيز التثبيت المباشر… يرجى إبقاء الصفحة مفتوحة للحظة ثم الضغط على الزر مرة أخرى.');
         return;
       }
-      // Do not mutate the surrounding button layout when Chrome has not
-      // exposed beforeinstallprompt yet. Keep the install control stable.
-      button.setAttribute('aria-busy','false');
-      button.blur();
+      try{
+        button.disabled=true;
+        await prompt.prompt();
+        const choice=await prompt.userChoice;
+        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
+        if(choice && choice.outcome==='accepted'){
+          button.hidden=true;
+          button.setAttribute('aria-hidden','true');
+          showInstallStatus('تم بدء تثبيت تطبيق رفيق ✅');
+        }else{
+          showInstallStatus('تم إغلاق نافذة التثبيت. يمكنك الضغط على «تثبيت تطبيق رفيق» للمحاولة مجددًا.');
+        }
+      }catch(error){
+        console.warn('RAFIQ install prompt failed',error);
+        showInstallStatus('تعذر فتح نافذة التثبيت المباشر على هذا المتصفح حاليًا.');
+      }finally{
+        button.disabled=false;
+      }
     });
+  }
+
+  function showInstallStatus(message){
+    let msg=document.getElementById('rafig-install-status');
+    if(!msg){
+      msg=document.createElement('div');
+      msg.id='rafig-install-status';
+      msg.className='install-hint';
+      msg.setAttribute('role','status');
+      msg.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:100001;width:min(92vw,560px);padding:12px 15px;background:#17372d;color:#fff;border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.22);text-align:center;font:700 14px/1.7 Arial,Tahoma,sans-serif;direction:rtl';
+      document.body.appendChild(msg);
+    }
+    msg.textContent=message;
+    clearTimeout(window.__RAFIQ_INSTALL_STATUS_TIMER__);
+    window.__RAFIQ_INSTALL_STATUS_TIMER__=setTimeout(function(){if(msg)msg.remove()},5000);
   }
 
   function ensurePublicMembershipUi(){
@@ -158,7 +181,7 @@
   const start=()=>{
     cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=75',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=76',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5','1');
           location.reload();
