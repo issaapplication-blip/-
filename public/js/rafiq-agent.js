@@ -26,7 +26,7 @@
 const RAFIQ_AGENT = (function () {
 
   const REVIEW_NUMBER = '81 506 299';
-  const FINANCIAL_NUMBER = '96170600157';
+  const FINANCIAL_NUMBER = null;
   const HANDOFF =
     `سأحوّل طلبك للمدير على الرقم ${REVIEW_NUMBER} وسيتواصل معك في أقرب وقت.`;
 
@@ -39,7 +39,7 @@ const RAFIQ_AGENT = (function () {
 
   function guard(text) {
     if (URGENT.test(text))
-      return '🚨 في حالة طارئة، اتصل فوراً بالإسعاف 112 أو أقرب مركز استشفاء.\n\n' +
+      return '🚨 في حالة طارئة، اتصل فوراً بالإسعاف 140 أو بخدمات الطوارئ المحلية/الفريق الطبي المعالج.\n\n' +
              'سأحوّل طلبك للمدير على الرقم ' + REVIEW_NUMBER + ' الآن.';
     if (MEDICINE.test(text))
       return 'منصة رفيق لا تشخّص ولا تصف دواءً ولا تغيّر علاج الطبيب. ' +
@@ -107,10 +107,7 @@ const RAFIQ_AGENT = (function () {
   function clean(reply) {
     if (!reply) return null;
     let s = String(reply).trim();
-    // the AI must never see or speak the financial number
-    s = s.replace(/961\s*70\s*600\s*157/g, '')
-         .replace(/70\s*600\s*157/g, '')
-         .replace(/\+\s*961\s*81\s*506\s*299/g, REVIEW_NUMBER)
+    s = s.replace(/\+\s*961\s*81\s*506\s*299/g, REVIEW_NUMBER)
          .replace(/961\s*81\s*506\s*299/g, REVIEW_NUMBER)
          .replace(/[ \t]{2,}/g, ' ')
          .trim();
@@ -168,7 +165,7 @@ const RAFIQ_AGENT = (function () {
   }
 
   /* ---------------- intake: pull the details out of free text ---------------- */
-  const REGIONS = /(طرابلس|الضنية|زحلة|بيروت|جونية|بعلبك|صور|النبطية|زغردا|بنت جبيل|مرجعيون|صيدا|تبنين)/;
+  const REGIONS = /(طرابلس|الضنية|زحلة|بيروت|جونية|بعلبك|صور|النبطية|زغرتا|الكورة|البترون|بنت جبيل|مرجعيون|صيدا|تبنين)/;
 
   /** Merge whatever new facts the message contains into ctx. Returns ctx. */
   function extract(text, ctx) {
