@@ -7,10 +7,10 @@ const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
 let lastKapsoWebhookAt: string | null = null;
 let lastKapsoWebhookEvent: string | null = null;
-const AGENT_DEFAULT_MODEL = "gpt-6-luna";
+const AGENT_DEFAULT_MODEL = "gpt-5.6-luna";
 const effectiveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
-  return !configured || configured === "gpt-5.6-luna" ? AGENT_DEFAULT_MODEL : configured;
+  return configured || AGENT_DEFAULT_MODEL;
 };
 const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\bkareh\b|\bnurse\b/i;
 const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
