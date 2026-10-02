@@ -24,6 +24,7 @@
       button=document.createElement('button');button.id='rafig-install-app';button.type='button';button.className='btn outline rafig-install-app';button.textContent='تثبيت تطبيق رفيق';
       slot.appendChild(button);cta.insertAdjacentElement('afterend',slot);
     }
+    if(!isStandalone()){button.hidden=false;button.style.display='';}
     if(button.dataset.rafigInstallBound==='1')return;
     button.dataset.rafigInstallBound='1';
     button.addEventListener('click',async()=>{
@@ -141,9 +142,9 @@
   const start=()=>{
     cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=71',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=72',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5')){
-          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261001_V4','1');
+          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5','1');
           location.reload();
         }
       }).catch(()=>{});
