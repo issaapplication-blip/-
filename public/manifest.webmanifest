@@ -15,13 +15,13 @@
   "prefer_related_applications": false,
   "categories": ["health", "medical", "lifestyle"],
   "icons": [
-    { "src": "/icon-192.png?v=20261001", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png?v=20261001", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-maskable-512.png?v=20261001", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/icon-192.png?v=20261002", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png?v=20261002", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png?v=20261002", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "طلب رعاية منزلية", "url": "/app.html", "icons": [{ "src": "/icon-192.png?v=20261001", "sizes": "192x192" }] },
-    { "name": "الأسئلة الشائعة", "url": "/faq.html", "icons": [{ "src": "/icon-192.png?v=20261001", "sizes": "192x192" }] },
-    { "name": "الوكيل المساعد", "url": "/agent.html", "icons": [{ "src": "/icon-192.png?v=20261001", "sizes": "192x192" }] }
+    { "name": "طلب رعاية منزلية", "url": "/app.html", "icons": [{ "src": "/icon-192.png?v=20261002", "sizes": "192x192" }] },
+    { "name": "الأسئلة الشائعة", "url": "/faq.html", "icons": [{ "src": "/icon-192.png?v=20261002", "sizes": "192x192" }] },
+    { "name": "الوكيل المساعد", "url": "/agent.html", "icons": [{ "src": "/icon-192.png?v=20261002", "sizes": "192x192" }] }
   ]
 }
