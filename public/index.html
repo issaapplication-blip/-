@@ -7,120 +7,133 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="description" content="RAFIQ | رفيق — منصة رعاية منزلية في لبنان تربط العائلات بمقدمي الرعاية والممرضين والمعالجين الفيزيائيين، مع خدمات للمنتسبين وشبكة خدمات صحية ومساندة.">
+<meta name="description" content="RAFIQ | رفيق — منصة رعاية منزلية في لبنان تربط العائلات بمقدمي الرعاية والممرضين والمعالجين الفيزيائيين وتبني شبكة خدمات صحية ومساندة.">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://rafiq-o6qd.onrender.com/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="RAFIQ | رفيق — الرعاية المنزلية في لبنان">
-<meta property="og:description" content="رعاية منزلية وخدمات صحية ومساندة للعائلات ومقدمي الرعاية والتمريض والعلاج الفيزيائي في لبنان.">
+<meta property="og:title" content="RAFIQ | رفيق — نصل بالحب والأمان لرعاية العائلة">
+<meta property="og:description" content="رعاية منزلية وخدمات صحية ومساندة للعائلات والمنتسبين إلى RAFIQ في لبنان.">
 <meta property="og:url" content="https://rafiq-o6qd.onrender.com/">
 <meta property="og:site_name" content="RAFIQ | رفيق">
-<meta name="keywords" content="RAFIQ, رفيق, رعاية منزلية, رعاية المسنين, تمريض منزلي, مقدمو الرعاية, علاج فيزيائي, مختبرات, مراكز أشعة, أطباء, اختصاصيو تغذية, خدمات صحية, خدمات منزلية">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="./assets/rafig-logo.png?v=20260928" type="image/png">
-<link rel="apple-touch-icon" href="./assets/rafig-logo.png?v=20260928">
-<title>RAFIQ | رفيق — رعاية منزلية للمسنين والمرضى في لبنان</title>
+<link rel="manifest" href="/manifest.webmanifest?v=20261002-1">
+<link rel="icon" href="/icon-192.png?v=20261002" type="image/png">
+<link rel="apple-touch-icon" href="/icon-192.png?v=20261002">
+<title>RAFIQ | رفيق — رعاية منزلية في لبنان</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f8f6;color:#17372d;line-height:1.7}main{max-width:1050px;margin:auto;padding:12px}.card{background:#fff;border-radius:20px;padding:22px;margin:14px 0;box-shadow:0 5px 22px rgba(0,0,0,.06)}h1,h2,h3{color:#087f58}.hero{text-align:center}.logo{display:block;width:min(360px,82vw);height:auto;margin:0 auto 8px}.tagline{font-size:20px;font-weight:700;color:#17613b}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.item{border:1px solid #dce8e2;border-radius:14px;padding:16px}.btn{display:inline-block;border:0;border-radius:11px;padding:12px 18px;background:#087f58;color:#fff;font-weight:bold;text-decoration:none;cursor:pointer}
-/* الأقسام القادمة قريبًا */
-.item.soon{position:relative;background:linear-gradient(180deg,#fffaf0,#fff);border:1px dashed #e0c98a}
-.item.soon h3{opacity:.85}
-.soon-badge{display:inline-block;background:linear-gradient(135deg,#c9a85a,#b8943f);color:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:900;margin:2px 0 8px;box-shadow:0 3px 10px rgba(201,168,90,.32)}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.notice{line-height:1.9}.alt{background:#eaf2ef;color:#17372d}.actions{display:flex;gap:10px;flex-wrap:wrap}.contact{font-size:18px}.contact a{font-weight:700}.small{font-size:13px;color:#66756f}.install[hidden]{display:none}.install{background:#b98a12;color:#fff}.notice{padding:13px;border-radius:10px;background:#fff8e8}@media(max-width:600px){main{padding:7px}.card{padding:16px}.btn{width:100%;text-align:center}.logo{width:min(330px,88vw)}}
+:root{--green:#087f58;--green2:#0a9a6b;--ink:#17372d;--muted:#61736c;--gold:#b88a22;--bg:#f3f8f5;--line:#dbe9e2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#eef7f3 0,#f8fbf9 38%,#f3f8f5 100%);color:var(--ink);font-family:Arial,Tahoma,sans-serif;line-height:1.75;overflow-x:hidden}main{width:min(1180px,100%);margin:auto;padding:12px}
+.topbar{position:sticky;top:8px;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px;padding:9px 12px;box-shadow:0 8px 28px rgba(20,70,50,.08)}
+.brand-mini{display:flex;align-items:center;gap:9px;font-weight:900;color:var(--green);text-decoration:none}.brand-mini img{width:42px;height:42px;object-fit:contain;border-radius:11px}.menu{position:relative}.menu summary{list-style:none;cursor:pointer;width:44px;height:40px;display:grid;place-items:center;border-radius:12px;background:#eef7f3;color:var(--green);font-size:23px;font-weight:900}.menu summary::-webkit-details-marker{display:none}.menu-panel{position:absolute;left:0;top:48px;width:min(290px,82vw);background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;box-shadow:0 18px 45px rgba(0,0,0,.13)}.menu-panel a{display:block;padding:11px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:800}.menu-panel a:hover{background:#eef7f3;color:var(--green)}
+.card{background:rgba(255,255,255,.96);border:1px solid rgba(219,233,226,.9);border-radius:24px;padding:24px;margin:15px 0;box-shadow:0 8px 30px rgba(20,70,50,.07)}.hero{text-align:center;padding:24px 18px 28px}.hero-logo{display:block;width:min(190px,42vw);height:auto;margin:0 auto 8px;border-radius:24px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.10))}.tagline{font-size:clamp(19px,3vw,26px);font-weight:900;color:var(--green);margin:4px 0}.welcome{display:inline-block;margin:8px auto 14px;padding:10px 15px;border-radius:14px;background:#fff8e6;border:1px solid #ead59d;color:#745719;font-weight:800;max-width:850px}.lead{font-size:clamp(16px,2vw,19px);max-width:850px;margin:10px auto;color:#355148}.actions{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:9px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:11px 17px;border:0;border-radius:13px;background:var(--green);color:#fff;text-decoration:none;font-weight:900;cursor:pointer;box-shadow:0 5px 14px rgba(8,127,88,.18)}.btn:hover{background:var(--green2)}.btn.alt{background:#edf6f2;color:var(--green);box-shadow:none}.btn.install{background:var(--gold);color:#fff}.btn.whatsapp{background:#178b52}.section-title{text-align:center;margin:0 0 5px;color:var(--green);font-size:clamp(22px,3vw,30px)}.section-sub{text-align:center;color:var(--muted);max-width:800px;margin:0 auto 18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.service{overflow:hidden;padding:0}.service img,.photo-card img{display:block;width:100%;height:250px;object-fit:cover}.service-body,.photo-body{padding:18px}.service h3,.photo-card h3{margin:0 0 5px;color:var(--green);font-size:20px}.photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.photo-card{overflow:hidden;padding:0}.photo-card img{height:280px}.photo-credit{font-size:12px;color:var(--muted)}.welcome-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.welcome-box{padding:17px;border-radius:17px;background:#f7fbf9;border:1px solid var(--line)}.welcome-box h3{margin:0 0 6px;color:var(--green)}.soon{border:1px dashed #d9c486;background:#fffaf0}.soon-badge{display:inline-block;background:#c29a3e;color:#fff;border-radius:999px;padding:4px 11px;font-size:12px;font-weight:900}.small{font-size:13px;color:var(--muted)}.install-hint{margin:8px auto 0}.footer{text-align:center}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:720px){main{padding:7px}.topbar{top:5px}.card{border-radius:19px;padding:18px;margin:11px 0}.hero{padding:20px 12px 24px}.grid,.photo-grid,.welcome-grid{grid-template-columns:1fr}.service img,.photo-card img{height:230px}.actions .btn{width:100%}.hero-logo{width:min(165px,48vw)}.menu-panel{right:0;left:auto}.brand-mini span{font-size:14px}}
+@media(min-width:1100px){.hero-logo{width:205px}.service img{height:280px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
-<style>.logo-fallback{display:inline-block;font-weight:900;color:#087f58;font-size:20px;letter-spacing:.5px}</style>
-<style>body{overflow-x:hidden}nav.card{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:12px}nav.card a.btn{flex:0 0 auto;white-space:nowrap;font-size:14px;padding:10px 14px}.logo{display:block;width:min(150px,42vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.07)}.brand-logo{display:block;width:min(190px,55vw)!important;height:auto!important;margin:0 auto 10px!important;background:#fff;border-radius:14px;padding:6px}h1{font-size:24px}article.card h1,section.card h1{font-size:22px}@media(max-width:520px){nav.card{gap:6px}nav.card a.btn{font-size:13px;padding:9px 11px;flex:1 1 calc(50% - 3px);text-align:center}}</style>
-<style>.item h2 a,.item h3 a{display:inline-block;background:#087f58;color:#fff!important;text-decoration:none;border-radius:10px;padding:9px 14px;margin:4px 0;font-size:14px;font-weight:800;box-shadow:0 3px 10px rgba(8,127,88,.22)}.item h2 a:hover,.item h3 a:hover{background:#0b9b6b}</style>
 </head>
 <body>
-<main><nav class="card" aria-label="التنقل الرئيسي"><div class="actions">
-<a class="btn alt" href="./services.html">رعاية منزلية</a>
-<a class="btn alt" href="./caregivers.html">لمقدمي الرعاية</a>
-<a class="btn alt" href="./regions.html">المناطق</a>
-<a class="btn alt" href="./guide.html">دليل الرعاية</a><a class="btn alt" href="./faq.html">الأسئلة الشائعة</a>
-<a class="btn alt" href="./barcode.html">🎫 الباركود</a>
-<a class="btn alt" href="./lebanon.html">🇱🇧 كل لبنان</a>
-</div></nav>
-<section class="card hero">
-<img class="logo" src="./assets/rafig-logo.png?v=20260928" alt="RAFIQ - رفيق للخدمات" width="512" height="512" decoding="async" fetchpriority="high">
-<h1>رفيق | RAFIQ</h1>
-<p class="tagline">نصل بالحب والأمان لرعاية العائلة</p>
-<p><strong>مدير منصة رفيق RAFIQ للخدمات</strong></p>
-<p>منصة لتنظيم خدمات الرعاية المنزلية والصحية، وربط العائلات بمقدمي الرعاية والممرضين والمعالجين الفيزيائيين، وبناء شبكة من مقدمي الخدمات والجهات المساندة وفق مراجعة واتفاقات موثقة.</p>
-<div class="actions" style="justify-content:center"><a class="btn" href="./app.html">التسجيل وتقديم طلب</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">واتساب المراسلات</a><a class="btn" href="./agent.html">🤖 مساعد رفيق</a><button id="rafig-install-app" class="btn install" type="button" data-rafiq-install aria-label="تثبيت تطبيق رفيق">📲 تثبيت تطبيق رفيق</button><p id="installHint" class="small" hidden style="margin-top:8px"></p></div>
-</section>
-<section class="card"><h2>رعاية منزلية في لبنان</h2><p>RAFIQ هي منصة لتنظيم خدمات الرعاية المنزلية وربط العائلات بمقدمي الرعاية والممرضين والمعالجين الفيزيائيين وفق احتياجات الحالة والمنطقة والخبرة والتوفر. نعمل على بناء شبكة خدمات مفيدة للعائلات وللمنتسبين إلى المنصة.</p><div class="grid"><div class="item"><h3><a href="./elderly-care.html">رعاية كبار السن</a></h3><p>تنظيم طلبات الرعاية اليومية والليلية والمساعدة للأشخاص غير المستقلين.</p></div><div class="item"><h3><a href="./patient-care.html">رعاية المرضى</a></h3><p>طلبات الرعاية المنزلية ومتابعة احتياجات الحالة وفق المعلومات المقدمة من العائلة.</p></div><div class="item"><h3><a href="./home-nursing.html">التمريض المنزلي</a></h3><p>ربط طلبات التمريض بالممرضين والممرضات وفق الاختصاص والخبرة والموقع.</p></div><div class="item"><h3><a href="./physiotherapy.html">العلاج الفيزيائي المنزلي</a></h3><p>تنظيم طلبات العلاج الفيزيائي وربطها بالمعالجين ضمن شبكة RAFIQ.</p></div></div></section><section class="card"><h2>خدمات RAFIQ</h2><div class="grid">
-<div class="item"><h3>🤝 مقدمو الرعاية</h3><p>تسجيل الخبرة والخدمات واللغات ومناطق العمل والوثائق المهنية.</p></div>
-<div class="item"><h3>👩‍⚕️ التمريض</h3><p>تسجيل الاختصاص والخبرة والخدمات والوثائق والترخيص وفق المراجعة.</p></div>
-<div class="item"><h3>🧑‍🦽 العلاج الفيزيائي</h3><p>تسجيل الاختصاص والخبرة والخدمات والمناطق والعمل ضمن شبكة RAFIQ.</p></div>
-<div class="item"><h3>👨‍👩‍👧 طلبات العائلات</h3><p>إرسال بيانات الحالة والموقع والجدول والاحتياجات لتتم مراجعتها ومطابقتها.</p></div>
-<div class="item"><h3>🧪 المختبرات ومراكز الأشعة</h3><p>إمكانية الانضمام إلى شبكة مقدمي الخدمات المساندة والتعاقد وفق اتفاق واضح ومراجعة الإدارة.</p></div>
-<div class="item soon"><h3>🩺 أطباء من مختلف الاختصاصات</h3><span class="soon-badge">⏳ انتظرونا قريبًا</span><p>مع إمكانية التعاقد مع أطباء من جميع الاختصاصات ضمن توسع شبكة الخدمات.</p></div>
-<div class="item soon"><h3>🥗 اختصاصيو التغذية</h3><span class="soon-badge">⏳ انتظرونا قريبًا</span><p>ضمن تطوير شبكة الخدمات الصحية والمساندة في RAFIQ.</p></div>
-<div class="item soon"><h3>🦷 أطباء الأسنان</h3><span class="soon-badge">⏳ انتظرونا قريبًا</span><p>ضمن شبكة الخدمات الطبية المتخصصة في RAFIQ.</p></div>
-<div class="item soon"><h3>🗣️ اختصاصيو النطق</h3><span class="soon-badge">⏳ انتظرونا قريبًا</span><p>ضمن تطوير شبكة الخدمات الصحية والمساندة في RAFIQ.</p></div>
-</div></section>
-<section class="card"><h2>🎫 باركود المنصة</h2><p>لكل منتسب باركود خاص يوثّق نوع خدمته وأسعاره وخصوماته، ولكل جهة متعاقدة باركود خاص يُسجَّل به العمل المنجز. <a href="./barcode.html">امسح الباركود</a>.</p><p class="small">لا يظهر أي رقم هاتف أو بيانات خاصة قبل توقيع الاتفاق وموافقة الإدارة.</p></section>
-<section class="card"><h2>📄 أسعار CV و Cover Letter</h2>
-<div class="scroll"><table style="width:100%;border-collapse:collapse;margin:12px 0">
-<thead><tr style="background:#eef8f3">
-<th style="text-align:right;padding:11px;border:1px solid #dce8e2">الخدمة</th>
-<th style="text-align:center;padding:11px;border:1px solid #dce8e2">🎁 ضمن العرض</th>
-<th style="text-align:center;padding:11px;border:1px solid #dce8e2">السعر العادي</th>
-</tr></thead>
-<tbody>
-<tr><td style="padding:11px;border:1px solid #dce8e2"><b>CV احترافي</b></td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;color:#087f58;font-weight:900">$25</td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;text-decoration:line-through;color:#66756f">$35</td></tr>
-<tr><td style="padding:11px;border:1px solid #dce8e2"><b>Cover Letter</b></td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;color:#087f58;font-weight:900">$10</td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;text-decoration:line-through;color:#66756f">$16</td></tr>
-<tr style="background:#f7fbf9"><td style="padding:11px;border:1px solid #dce8e2"><b>CV + Cover Letter</b></td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;color:#087f58;font-weight:900">$35</td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;text-decoration:line-through;color:#66756f">$51</td></tr>
-<tr><td style="padding:11px;border:1px solid #dce8e2"><b>لغة إضافية للـCV</b></td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;color:#087f58;font-weight:900">+$20</td>
-<td style="text-align:center;padding:11px;border:1px solid #dce8e2;text-decoration:line-through;color:#66756f">+$28</td></tr>
-</tbody></table></div>
-<h3 style="margin:16px 0 6px">ما يتضمنه السعر</h3>
-<ul style="margin:0;padding-right:20px;line-height:2">
-<li>🇱🇧 العربية + 🇬🇧 الإنجليزية</li>
-<li>📄 PDF + Word</li>
-<li>🎨 تصميم مهني مناسب للوظيفة.</li>
-<li>✅ مراجعة اللغة والأخطاء والتنسيق.</li>
-<li>🤖 تحسين قابلية القراءة بواسطة أنظمة ATS.</li>
-<li>🎯 تخصيص المحتوى حسب الوظيفة، من دون اختلاق أي خبرة أو شهادة أو مؤهل.</li>
-</ul>
-<p class="small"><b>صياغة ATS المعتمدة:</b><br>
-«نموذج مصمم وفق ممارسات مناسبة لأكثر الأنظمة التي تعمل بنظام ATS وقابل للقراءة الآلية، مع تخصيص المحتوى حسب الوظيفة.»</p>
-<p class="notice" style="background:#fff8e8;border-right:4px solid #c9a85a;padding:13px;border-radius:10px">
-🎁 <b>العرض الخاص:</b> سعر $25 للـCV و<b>$35 للـCV + Cover Letter</b> مخصص لعرض المتابعين والمشتركين في المنصة،
-وبالأخص المتقدمين للعمل من خلال RAFIQ.</p>
-<p class="small">يبدأ تنفيذ الخدمة بعد اكتمال البيانات والتحقق من الدفع عبر Whish Money على الرقم المالي <b dir="ltr">70 600 157</b>، والتسليم المستهدف خلال 24 ساعة عند اكتمال المتطلبات.</p>
-</section>
-<section class="card"><h2>التواصل والدفع</h2><div class="grid"><div class="item contact"><h3>📲 المراسلات الرسمية</h3><p dir="ltr">+961 81 506 299</p><p class="small">هذا الرقم مخصص للمراسلات وخدمة العملاء وتحت إشراف وكيل RAFIQ.</p></div><div class="item contact"><h3>💳 الأمور المالية والتحويلات</h3><p dir="ltr">+961 70 600 157</p><p class="small">رقم Whish Money مخصص للأمور المالية والتحويلات فقط.</p></div></div></section>
-<section class="card"><h2>ما الذي يميز نموذج RAFIQ؟</h2><div class="grid"><div class="item"><h3>بدون اشتراك لمقدمي الرعاية</h3><p>لا يوجد اشتراك شهري أو سنوي لمقدمي الرعاية والتمريض والمعالجين الفيزيائيين للانضمام إلى المنصة في نموذجها الأولي.</p></div><div class="item"><h3>خدمات للعائلات والمنتسبين</h3><p>RAFIQ لا تركز على العائلة فقط؛ نعمل أيضًا على تطوير خدمات ومزايا للمنتسبين إلى المنصة.</p></div><div class="item"><h3>تقييم بإشراف الإدارة</h3><p>يمكن تطوير نظام تقييم ومراجعة داخلي لمتابعة جودة مقدمي الخدمات، مع إشراف الإدارة وعدم تحويل التقييم إلى إعلان عام غير منضبط.</p></div><div class="item"><h3>خصومات وخدمات مساندة</h3><p>نعمل على إضافة مزايا مثل خصومات الفحوصات المخبرية والتصوير والمعدات الطبية وغيرها بعد الاتفاق مع مقدمي الخدمات.</p></div></div></section><section class="card"><h2>الشركاء ومقدمو الخدمات</h2><p>تعمل RAFIQ على بناء شبكة من مقدمي الخدمات الموثوقين، ومنها المختبرات، مراكز الأشعة، المعالجون الفيزيائيون، الأطباء من مختلف الاختصاصات، اختصاصيو التغذية، ومقدمو الخدمات المساندة.</p><p>يمكن أن تبدأ المشاركة مجانًا في مرحلة بناء الشبكة، ولا يتم اعتماد أي جهة كشريك أو إعلان اسمها وشعارها أو أي عرض أو خصم إلا بعد موافقة الإدارة ووجود اتفاق واضح.</p></section>
-<section class="card"><h2>التواصل الاجتماعي</h2><div class="actions"><a class="btn alt" href="https://www.facebook.com/share/1DZ4CG7hbn/" target="_blank" rel="noopener">Facebook</a><a class="btn alt" href="https://www.instagram.com/issaapplication?igsi=M2ttcjc3N2Mzbmpu" target="_blank" rel="noopener">Instagram</a></div><p class="small">يتم إعداد الإعلانات والرسائل للمراجعة أولًا، ولا يتم اعتماد التواصل الخارجي أو النشر باسم RAFIQ إلا وفق موافقة الإدارة.</p></section>
-<footer class="card small">© RAFIQ | رفيق للخدمات · نصل بالحب والأمان لرعاية العائلة · issaapplication@gmail.com</footer>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"RAFIQ | رفيق","url":"https://rafiq-o6qd.onrender.com/","description":"منصة لتنظيم خدمات الرعاية المنزلية والصحية في لبنان وربط العائلات بمقدمي الخدمات."}</script>
-</main>
-<script src="/install-pwa.js?v=74" defer></script>
+<main>
+<header class="topbar">
+<a class="brand-mini" href="/" aria-label="RAFIQ الرئيسية"><img src="/rafig-approved-logo.jpg?v=20261002" alt="شعار RAFIQ"><span>RAFIQ | رفيق</span></a>
+<details class="menu">
+<summary aria-label="القائمة">⋮</summary>
+<div class="menu-panel">
+<a href="/">الرئيسية</a>
+<a href="/services.html">الخدمات</a>
+<a href="/app.html">طلب رعاية أو انتساب</a>
+<hr style="border:0;border-top:1px solid #e7eee9;margin:7px 0">
+<a href="/guide.html">دليل الرعاية</a>
+<a href="/faq.html">الأسئلة الشائعة</a>
+<a href="/regions.html">المناطق</a>
+<a href="/caregivers.html">مقدمو الرعاية</a>
+<a href="/agent.html">مساعد رفيق</a>
+</div>
+</details>
+</header>
 
-<script>
-/* RAFIQ logo guard: if the SVG fails to load, show a text wordmark instead. */
-document.addEventListener("DOMContentLoaded",function(){
-  document.querySelectorAll("img[src*='rafig-logo.png']").forEach(function(img){
-    img.addEventListener("error",function(){
-      var s=document.createElement("span");
-      s.className="logo-fallback";
-      s.textContent="RAFIQ | رفيق";
-      if(getComputedStyle(img).display==="none"||img.naturalWidth===0){
-        img.replaceWith(s);
-      }
-    });
-  });
-});
+<section class="card hero" id="home">
+<img class="hero-logo" src="/rafig-approved-logo.jpg?v=20261002" alt="RAFIQ | رفيق — الشعار الرسمي" width="512" height="512" fetchpriority="high" decoding="async">
+<h1 style="margin:2px 0 0;color:var(--green)">رفيق | RAFIQ</h1>
+<p class="tagline">نصل بالحب والأمان لرعاية العائلة</p>
+<div class="welcome" id="dailyWelcome" aria-live="polite"></div>
+<p class="lead"><strong>منصة رعاية منزلية وخدمات صحية في لبنان</strong> تنظّم طلبات العائلات، وتربطها بمقدمي الرعاية والممرضين والمعالجين الفيزيائيين، وتبني شبكة خدمات مساندة وفق مراجعة الإدارة والاتفاقات الموثقة.</p>
+<div class="actions">
+<a class="btn" href="/app.html">📝 طلب رعاية أو انتساب</a>
+<a class="btn whatsapp" href="https://wa.me/96181506299" target="_blank" rel="noopener">💬 واتساب RAFIQ</a>
+<a class="btn install" id="rafig-install-app" data-rafiq-install type="button" href="/install.html">📲 تثبيت تطبيق رفيق</a>
+<a class="btn alt" href="/services.html">استكشف الخدمات</a>
+</div>
+<p id="installHint" class="small install-hint" hidden></p>
+</section>
+
+<section class="card">
+<h2 class="section-title">كيف تساعد RAFIQ؟</h2>
+<p class="section-sub">واجهة مختصرة وواضحة للعائلة وللمنتسبين، مع وصول سريع إلى الخدمة المطلوبة.</p>
+<div class="grid">
+<article class="card service"><img src="https://images.pexels.com/photos/29372727/pexels-photo-29372727.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="مقدم رعاية يساعد مسنة في المنزل" loading="lazy"><div class="service-body"><h3>رعاية كبار السن</h3><p>تنظيم احتياجات الرعاية اليومية والليلية والمساعدة المنزلية وفق معلومات الحالة.</p><a class="btn alt" href="/elderly-care.html">تفاصيل الرعاية</a></div></article>
+<article class="card service"><img src="https://images.pexels.com/photos/6129232/pexels-photo-6129232.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="ممرضة تراقب محلولًا وريديًا" loading="lazy"><div class="service-body"><h3>التمريض المنزلي</h3><p>تنظيم طلبات التمريض وربطها بالاختصاص والخبرة والمنطقة بعد المراجعة.</p><a class="btn alt" href="/home-nursing.html">تفاصيل التمريض</a></div></article>
+<article class="card service"><img src="https://images.pexels.com/photos/20860624/pexels-photo-20860624.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="معالج فيزيائي يساعد مريضًا في إعادة التأهيل" loading="lazy"><div class="service-body"><h3>العلاج الفيزيائي</h3><p>طلبات العلاج الفيزيائي وربطها بالمعالجين ضمن شبكة RAFIQ.</p><a class="btn alt" href="/physiotherapy.html">تفاصيل العلاج الفيزيائي</a></div></article>
+<article class="card service"><img src="https://images.pexels.com/photos/6285368/pexels-photo-6285368.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="فحص مخبري وسحب عينة دم" loading="lazy"><div class="service-body"><h3>الخدمات الصحية المساندة</h3><p>شبكة تتوسع لتشمل المختبرات والتصوير والمعدات وغيرها وفق الاتفاق والمراجعة.</p><a class="btn alt" href="/services.html">عرض شبكة الخدمات</a></div></article>
+</div>
+</section>
+
+<section class="card">
+<h2 class="section-title">رسائل رفيق للمنتسبين</h2>
+<p class="section-sub">كل فئة لها مكان واضح ودور مهم في بناء شبكة رعاية موثوقة.</p>
+<div class="welcome-grid">
+<div class="welcome-box"><h3>👨‍👩‍👧 للعائلات ومقدمي الطلبات</h3><p>أهلًا بكم في RAFIQ. طلبكم هو نقطة البداية لفهم احتياج العائلة وتنظيمه ومراجعته للوصول إلى الخدمة المناسبة.</p></div>
+<div class="welcome-box"><h3>🤝 لمقدمي الرعاية</h3><p>وجودكم يضيف خبرتكم الإنسانية والمهنية إلى شبكة RAFIQ. نساعد على تنظيم ملفكم وخدماتكم ومناطق العمل ليصبح الوصول إليكم أوضح عند وجود طلب مناسب.</p></div>
+<div class="welcome-box"><h3>👩‍⚕️ للممرضين والمعالجين الفيزيائيين</h3><p>خبرتكم جزء أساسي من شبكة الرعاية. الانضمام المنظم يساعد العائلات على الوصول إلى الاختصاص المناسب، مع مراجعة الإدارة للملفات.</p></div>
+<div class="welcome-box"><h3>🧪 للجهات الصحية والمساندة</h3><p>المختبرات ومراكز الأشعة والمعدات والخدمات المساندة شركاء مهمون في منظومة الرعاية، ويُبنى التعاون بعد التواصل والمراجعة والاتفاق الواضح.</p></div>
+</div>
+</section>
+
+<section class="card">
+<h2 class="section-title">رعاية حقيقية تبدأ من التفاصيل</h2>
+<p class="section-sub">صور توضيحية واقعية لسيناريوهات الخدمة، موزعة حسب الاختصاص.</p>
+<div class="photo-grid">
+<figure class="card photo-card"><img src="https://images.pexels.com/photos/37330699/pexels-photo-37330699.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="مسنة في حديقة ضمن أجواء رعاية خارجية" loading="lazy"><figcaption class="photo-body"><h3>رفقة ودعم في الحياة اليومية</h3><p>رعاية المسنين لا تقتصر على المساعدة؛ بل تشمل الرفقة والاهتمام والاستقلالية قدر الإمكان.</p><p class="photo-credit">الصورة: Pexels — صورة مجانية للاستخدام.</p></figcaption></figure>
+<figure class="card photo-card"><img src="https://images.pexels.com/photos/29372696/pexels-photo-29372696.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="مقدم رعاية يساعد مسنًا أثناء تناول الطعام" loading="lazy"><figcaption class="photo-body"><h3>المساعدة أثناء الوجبات</h3><p>المساعدة اليومية قد تشمل دعم المسن أثناء تناول الطعام وفق احتياجاته وتعليمات الأسرة.</p><p class="photo-credit">الصورة: Pexels — صورة مجانية للاستخدام.</p></figcaption></figure>
+</div>
+</section>
+
+<section class="card">
+<h2 class="section-title">التوسع القادم</h2>
+<div class="grid">
+<div class="card soon"><span class="soon-badge">⏳ انتظرونا قريبًا</span><h3 style="color:var(--green)">🦷 أطباء الأسنان</h3><p>إضافة تدريجية ضمن شبكة الخدمات المتخصصة.</p></div>
+<div class="card soon"><span class="soon-badge">⏳ انتظرونا قريبًا</span><h3 style="color:var(--green)">🥗 اختصاصيو التغذية</h3><p>توسيع شبكة الدعم الصحي للعائلات والمنتسبين.</p></div>
+<div class="card soon"><span class="soon-badge">⏳ انتظرونا قريبًا</span><h3 style="color:var(--green)">🗣️ اختصاصيو النطق</h3><p>خدمات مساندة إضافية ضمن خطة التوسع.</p></div>
+<div class="card soon"><span class="soon-badge">⏳ انتظرونا قريبًا</span><h3 style="color:var(--green)">🩺 خدمات ومعدات طبية</h3><p>شبكة خدمات مساندة بعد التواصل والاتفاق والمراجعة.</p></div>
+</div>
+</section>
+
+<section class="card footer">
+<p><strong>RAFIQ | رفيق</strong> — نصل بالحب والأمان لرعاية العائلة</p>
+<p class="small">المراسلات الرسمية: +961 81 506 299 · الأمور المالية والتحويلات فقط: +961 70 600 157</p>
+<p class="small">© RAFIQ | رفيق · issaapplication@gmail.com</p>
+</section>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"RAFIQ | رفيق","url":"https://rafiq-o6qd.onrender.com/","logo":"https://rafiq-o6qd.onrender.com/rafig-approved-logo.jpg","description":"منصة لتنظيم خدمات الرعاية المنزلية والصحية في لبنان وربط العائلات بمقدمي الخدمات."}
 </script>
+<script>
+(function(){
+  const messages=[
+    "أهلًا بكم في رفيق 🌿 اليوم نبدأ بخطوة بسيطة نحو رعاية أكثر تنظيمًا وأمانًا للعائلة.",
+    "مرحبًا بكم في RAFIQ 🤍 وجودكم مهم؛ أخبرونا بما تحتاجه العائلة وسنرتب الطلب بوضوح.",
+    "صباح/مساء الخير من رفيق 🌿 الرعاية تبدأ بالاستماع وفهم الاحتياج قبل اختيار الخدمة.",
+    "أهلًا بكم 🤝 رفيق يجمع العائلات وأصحاب الخبرة ضمن شبكة رعاية منظمة في لبنان.",
+    "مرحبًا بكم في RAFIQ 🏡 هدفنا أن تكون رحلة طلب الرعاية أسهل وأوضح للعائلة والمنتسب.",
+    "أهلًا بكم 🌸 لكل مسن ومريض وعائلة ومقدم خدمة مكان مهم في منظومة رفيق.",
+    "مرحبًا بكم في رفيق 💚 نبدأ من احتياجكم، وننظم المعلومات، ثم نترك قرارات الاعتماد والمطابقة للإدارة."
+  ];
+  const el=document.getElementById("dailyWelcome");
+  if(el){
+    const day=Math.floor(Date.now()/86400000);
+    el.textContent=messages[day%messages.length];
+  }
+})();
+</script>
+<script src="/install-pwa.js?v=75" defer></script>
+</main>
 </body>
 </html>
