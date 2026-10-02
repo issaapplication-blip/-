@@ -38,25 +38,23 @@ const kapsoPlatformRequest = async (
   return result;
 };
 
+const isInboundWebhook = (hook: any) =>
+  hook?.kind === "kapso" &&
+  Array.isArray(hook?.events) &&
+  hook.events.includes("whatsapp.message.received");
+
 const configureKapsoWebhook = async (
   phoneNumberId: string,
   webhooks: any[],
 ) => {
   const desired = webhooks.find(
     (hook) =>
-      hook?.kind === "kapso" &&
-      hook?.url === KAPSO_WEBHOOK_URL &&
-      Array.isArray(hook?.events) &&
-      hook.events.includes("whatsapp.message.received"),
+      isInboundWebhook(hook) &&
+      hook?.url === KAPSO_WEBHOOK_URL,
   );
 
   for (const hook of webhooks) {
-    const isInboundHook =
-      hook?.kind === "kapso" &&
-      Array.isArray(hook?.events) &&
-      hook.events.includes("whatsapp.message.received");
-
-    if (!isInboundHook) continue;
+    if (!isInboundWebhook(hook)) continue;
     if (hook?.url === KAPSO_WEBHOOK_URL) continue;
     if (hook?.active !== true) continue;
 
@@ -173,24 +171,59 @@ export async function ensureKapsoWebhook() {
 
   const phoneNumberId = kapsoPhoneNumberId();
   try {
-    const pages = [1];
-    const allWebhooks: any[] = [];
-    for (const page of pages) {
-      const result = await kapsoPlatformRequest(
-        `/whatsapp/phone_numbers/${phoneNumberId}/webhooks?per_page=100&page=${page}`,
-      );
-      const items = Array.isArray(result?.data) ? result.data : [];
-      allWebhooks.push(...items);
-      break;
-    }
-
-    return await configureKapsoWebhook(phoneNumberId, allWebhooks);
+    const result = await kapsoPlatformRequest(
+      `/whatsapp/phone_numbers/${phoneNumberId}/webhooks?per_page=100&page=1`,
+    );
+    const webhooks = Array.isArray(result?.data) ? result.data : [];
+    return await configureKapsoWebhook(phoneNumberId, webhooks);
   } catch (error) {
     console.error(JSON.stringify({
       event: "rafig_kapso_webhook_autoconfig_failed",
       error: String(error),
     }));
     return { configured: false, reason: "kapso_api_error" };
+  }
+};
+
+export async function kapsoWebhookStatus() {
+  if (!kapsoKey()) {
+    return {
+      configured: false,
+      target: KAPSO_WEBHOOK_URL,
+      activeInboundCount: 0,
+      targetActive: false,
+      duplicateActiveCount: 0,
+    };
+  }
+  try {
+    const phoneNumberId = kapsoPhoneNumberId();
+    const result = await kapsoPlatformRequest(
+      `/whatsapp/phone_numbers/${phoneNumberId}/webhooks?per_page=100&page=1`,
+    );
+    const webhooks = Array.isArray(result?.data) ? result.data : [];
+    const inbound = webhooks.filter(isInboundWebhook);
+    const targetActive = inbound.some(
+      (hook) => hook?.url === KAPSO_WEBHOOK_URL && hook?.active === true,
+    );
+    const duplicateActiveCount = inbound.filter(
+      (hook) => hook?.url !== KAPSO_WEBHOOK_URL && hook?.active === true,
+    ).length;
+    return {
+      configured: true,
+      target: KAPSO_WEBHOOK_URL,
+      activeInboundCount: inbound.filter((hook) => hook?.active === true).length,
+      targetActive,
+      duplicateActiveCount,
+    };
+  } catch {
+    return {
+      configured: true,
+      target: KAPSO_WEBHOOK_URL,
+      activeInboundCount: null,
+      targetActive: null,
+      duplicateActiveCount: null,
+      checkFailed: true,
+    };
   }
 }
 
