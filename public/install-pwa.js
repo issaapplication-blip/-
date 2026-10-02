@@ -1,5 +1,5 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V17__) return;
+  if (window.__RAFIQ_UI_GUARD_V18__) return;
   window.__RAFIQ_UI_GUARD_V17__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
@@ -9,7 +9,7 @@
   const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
-  const APP_VERSION = '2026.10.02.1';
+  const APP_VERSION = '2026.10.02.2';
 
   const fixedIds = ['joinBtn', 'careBtn', 'status-button'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
@@ -183,7 +183,7 @@
     if(navigator.serviceWorker){
       navigator.serviceWorker.register('/sw.js?v=77',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6')){
-          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5','1');
+          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6','1');
           location.reload();
         }
       }).catch(()=>{});
