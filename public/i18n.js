@@ -175,7 +175,7 @@
     box.setAttribute('data-rafig-language-switcher','');
     box.className = 'rafig-language-switcher';
     box.innerHTML = '<label class="rafig-language-label" for="rafig-language">🌐</label><select id="rafig-language" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>';
-    document.body.prepend(box);
+    document.body.prepend(box); document.documentElement.classList.add('rafig-i18n-active');
     return box;
   }
 
@@ -194,7 +194,7 @@
     const box = buildSwitcher();
     if (!document.getElementById('rafig-language-style')) {
       const style = document.createElement('style'); style.id = 'rafig-language-style';
-      style.textContent = '.rafig-language-switcher{position:fixed;top:10px;left:10px;z-index:9999;display:flex;align-items:center;gap:5px;padding:5px 7px;background:rgba(255,255,255,.96);border:1px solid #dbe9e2;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.10);direction:ltr}.rafig-language-switcher select{border:0;background:transparent;color:#087f58;font:700 13px Arial,Tahoma,sans-serif;outline:none;cursor:pointer;max-width:120px}.rafig-language-label{font-size:15px;line-height:1}.rafig-language-switcher select:focus{outline:2px solid #b88a22;outline-offset:2px}@media(max-width:480px){.rafig-language-switcher{top:6px;left:6px}.rafig-language-switcher select{max-width:105px;font-size:12px}}';
+      style.textContent = '.rafig-language-switcher{position:fixed;top:6px;left:6px;z-index:99999;display:flex;align-items:center;gap:5px;padding:5px 7px;background:rgba(255,255,255,.98);border:1px solid #dbe9e2;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.10);direction:ltr}.rafig-language-switcher select{border:0;background:transparent;color:#087f58;font:700 13px Arial,Tahoma,sans-serif;outline:none;cursor:pointer;max-width:120px;min-width:92px}.rafig-language-label{font-size:15px;line-height:1}.rafig-language-switcher select:focus{outline:2px solid #b88a22;outline-offset:2px}@media(max-width:480px){.rafig-language-switcher{top:4px;left:4px}.rafig-language-switcher select{max-width:105px;font-size:12px}}';
       document.head.appendChild(style);
     }
     const select = box.querySelector('select');

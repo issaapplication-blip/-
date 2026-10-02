@@ -6,6 +6,10 @@
   const UPLOAD_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-upload';
   const MAX_FILES = 8;
   const MAX_SIZE = 10 * 1024 * 1024;
+  const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
+  const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
+  const APP_VERSION = '2026.10.02';
 
   const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language', 'rafig-install-app'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
@@ -14,6 +18,33 @@
     for (const id of fixedIds) { const nodes = document.querySelectorAll('#' + id.replace(/([:.])/g, '\\$1')); for (let i=1;i<nodes.length;i++) nodes[i].remove(); }
     document.querySelectorAll('.status').forEach(el => el.remove());
     const seen=new Set(); document.querySelectorAll('button,a.btn').forEach(el=>{if(!el.isConnected)return;const text=(el.textContent||'').replace(/\s+/g,' ').trim();if(!uniqueLabels.has(text))return;const key=el.tagName+'|'+text;if(seen.has(key))el.remove();else seen.add(key)});
+  }
+
+  function getInstallId(){
+    try{
+      let id=localStorage.getItem(INSTALL_ID_KEY);
+      if(!id){id=crypto.randomUUID();localStorage.setItem(INSTALL_ID_KEY,id);}
+      return id;
+    }catch(_){return null;}
+  }
+
+  async function recordPwaInstallation(){
+    const installationId=getInstallId(); if(!installationId)return;
+    try{
+      await fetch(SUPABASE_URL+'/rest/v1/rpc/record_pwa_install',{
+        method:'POST',
+        headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({
+          p_installation_id:installationId,
+          p_user_agent:String(navigator.userAgent||''),
+          p_platform:String(navigator.platform||''),
+          p_language:String(document.documentElement.lang||navigator.language||''),
+          p_app_version:APP_VERSION,
+          p_source_path:location.pathname
+        }),
+        keepalive:true
+      });
+    }catch(_){}
   }
 
   function ensureInstallButton(){
@@ -123,11 +154,11 @@
   const isStandalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
   if(isStandalone())document.querySelectorAll('#rafig-install-app,.rafig-install-slot').forEach(el=>el.remove());
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;ensureInstallButton();const s=document.getElementById('rafig-install-status');if(s)s.remove()});
-  window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;document.querySelectorAll('#rafig-install-app,.rafig-install-slot,#rafig-install-status').forEach(el=>el.remove())});
+  window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;void recordPwaInstallation();document.querySelectorAll('#rafig-install-app,.rafig-install-slot,#rafig-install-status').forEach(el=>el.remove())});
   const start=()=>{
-    cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();
+    cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=74',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=75',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5','1');
           location.reload();
