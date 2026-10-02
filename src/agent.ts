@@ -1,4 +1,4 @@
-const DEFAULT_MODEL = "gpt-5.6-luna";
+const DEFAULT_MODEL = "gpt-5.6-sol";
 const resolveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
   if (!configured) return DEFAULT_MODEL;
