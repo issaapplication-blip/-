@@ -217,12 +217,21 @@
 
   function buildSwitcher() {
     let box = document.querySelector('[data-rafig-language-switcher]');
-    if (box) return box;
-    box = document.createElement('div');
-    box.setAttribute('data-rafig-language-switcher','');
-    box.className = 'rafig-language-switcher';
-    box.innerHTML = '<label class="rafig-language-label" for="rafig-language">🌐</label><select id="rafig-language" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>';
-    document.body.prepend(box);
+    if (!box) {
+      box = document.createElement('div');
+      box.setAttribute('data-rafig-language-switcher','');
+      box.className = 'rafig-language-switcher';
+      box.innerHTML = '<label class="rafig-language-label" for="rafig-language">🌐</label><select id="rafig-language" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>';
+    }
+    const topbar = document.querySelector('header.topbar');
+    if (topbar) {
+      const brand = topbar.querySelector('.brand, .brand-mini');
+      if (brand) topbar.insertBefore(box, brand);
+      else topbar.prepend(box);
+      box.classList.add('rafig-language-in-topbar');
+    } else if (!box.isConnected) {
+      document.body.prepend(box);
+    }
     document.documentElement.classList.add('rafig-i18n-active');
     return box;
   }
@@ -244,7 +253,7 @@
     const box = buildSwitcher();
     if (!document.getElementById('rafig-language-style')) {
       const style = document.createElement('style'); style.id = 'rafig-language-style';
-      style.textContent = 'html.rafig-i18n-active .rafig-language-switcher{position:fixed;top:6px;left:6px;right:auto;z-index:99999;display:flex;align-items:center;gap:5px;padding:5px 7px;background:rgba(255,255,255,.98);border:1px solid #dbe9e2;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.10);direction:ltr}html.rafig-i18n-active .rafig-language-switcher select{border:0;background:transparent;color:#087f58;font:700 13px Arial,Tahoma,sans-serif;outline:none;cursor:pointer;max-width:120px;min-width:92px}html.rafig-i18n-active .rafig-language-label{font-size:15px;line-height:1}@media(max-width:480px){html.rafig-i18n-active .rafig-language-switcher{top:4px;left:4px}html.rafig-i18n-active .rafig-language-switcher select{max-width:110px;font-size:12px}}';
+      style.textContent = 'html.rafig-i18n-active header.topbar{direction:ltr;justify-content:flex-start;min-height:58px}html.rafig-i18n-active header.topbar .rafig-language-switcher{position:static;order:0;flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:5px 7px;background:rgba(255,255,255,.98);border:1px solid #dbe9e2;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.10);direction:ltr;margin:0 8px 0 0}html.rafig-i18n-active header.topbar .brand,html.rafig-i18n-active header.topbar .brand-mini{order:1;direction:rtl}html.rafig-i18n-active header.topbar .menu{order:2;margin-left:auto}html.rafig-i18n-active .rafig-language-switcher:not(.rafig-language-in-topbar){position:fixed;top:6px;left:6px;right:auto;z-index:99999}html.rafig-i18n-active .rafig-language-switcher select{border:0;background:transparent;color:#087f58;font:700 13px Arial,Tahoma,sans-serif;outline:none;cursor:pointer;max-width:120px;min-width:92px}html.rafig-i18n-active .rafig-language-label{font-size:15px;line-height:1}@media(max-width:480px){html.rafig-i18n-active header.topbar .rafig-language-switcher{margin-right:5px;padding:4px 6px}html.rafig-i18n-active header.topbar .rafig-language-switcher select{max-width:110px;font-size:12px}}';
       document.head.appendChild(style);
     }
     cacheArabicSources();
