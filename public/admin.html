@@ -103,7 +103,7 @@ const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let allRequests=[]; let allFiles=[]; let liveChannel=null; let showPendingOnly=false; let refreshTimer=null;
+let allRequests=[]; let allFiles=[]; let legacyDocuments=[]; let liveChannel=null; let showPendingOnly=false; let refreshTimer=null;
 
 function showAuthError(text){$('authMsg').innerHTML='<div class="err">'+esc(text)+'</div>'}
 function showMsg(text,ok=false){$('dashMsg').innerHTML='<div class="'+(ok?'ok':'err')+'">'+esc(text)+'</div>'}
@@ -141,7 +141,11 @@ async function loadFiles(){
   const {data,error}=await db.from('application_intake_files').select('id,intake_id,storage_path,file_name,mime_type,file_size,verification_status,created_at,document_category').order('created_at',{ascending:false}).limit(500);
   if(error){$('fileList').innerHTML='<div class="err">تعذر تحميل الملفات: '+esc(error.message)+'</div>';return}
   allFiles=data||[];
-  $('fileList').innerHTML=allFiles.length?allFiles.map(f=>'<div class="doc"><strong>'+esc(f.file_name)+'</strong><div class="small">'+esc(f.document_category||'مستند')+' · '+esc(f.mime_type||'')+' · '+Math.round(Number(f.file_size||0)/1024)+' KB · الحالة: '+esc(statusLabel(f.verification_status))+'</div><div class="actions" style="margin-top:7px"><button class="btn alt" data-open-file="'+esc(f.storage_path)+'">فتح</button><button class="btn alt" data-download-file="'+esc(f.storage_path)+'" data-download-name="'+esc(f.file_name)+'">تحميل</button><button class="btn" data-file-status="approved" data-file-id="'+esc(f.id)+'">اعتماد</button><button class="btn danger" data-file-status="rejected" data-file-id="'+esc(f.id)+'">رفض</button></div></div>').join(''):'<p>لا توجد ملفات مرفقة.</p>';
+  const legacy=await db.from('documents').select('id,user_id,document_type,storage_path,file_name,mime_type,file_size,verification_status,created_at').order('created_at',{ascending:false}).limit(500);
+  legacyDocuments=legacy.data||[];
+  const intakeHtml=allFiles.map(f=>'<div class="doc"><strong>'+esc(f.file_name)+'</strong><div class="small">'+esc(f.document_category||'مستند')+' · '+esc(f.mime_type||'')+' · '+Math.round(Number(f.file_size||0)/1024)+' KB · الحالة: '+esc(statusLabel(f.verification_status))+'</div><div class="actions" style="margin-top:7px"><button class="btn alt" data-open-file="'+esc(f.storage_path)+'">فتح</button><button class="btn alt" data-download-file="'+esc(f.storage_path)+'" data-download-name="'+esc(f.file_name)+'">تحميل</button><button class="btn" data-file-status="approved" data-file-id="'+esc(f.id)+'">اعتماد</button><button class="btn danger" data-file-status="rejected" data-file-id="'+esc(f.id)+'">رفض</button></div></div>').join('');
+  const legacyHtml=legacyDocuments.map(d=>'<div class="doc"><strong>'+esc(d.file_name||'مستند')+'</strong><div class="small">سجل مستندات قديم · '+esc(d.document_type||'')+' · '+esc(d.mime_type||'')+' · '+Math.round(Number(d.file_size||0)/1024)+' KB · الحالة: '+esc(statusLabel(d.verification_status))+'</div><div class="actions" style="margin-top:7px"><button class="btn alt" data-open-legacy="'+esc(d.storage_path)+'">فتح</button><button class="btn alt" data-download-legacy="'+esc(d.storage_path)+'" data-name="'+esc(d.file_name||'document')+'">تحميل</button><button class="btn" data-legacy-status="approved" data-legacy-id="'+esc(d.id)+'">اعتماد</button><button class="btn danger" data-legacy-status="rejected" data-legacy-id="'+esc(d.id)+'">رفض</button></div></div>').join('');
+  $('fileList').innerHTML=(intakeHtml+legacyHtml)||'<p>لا توجد ملفات مرفقة.</p>';
   bindFileButtons();
 }
 
@@ -160,6 +164,9 @@ function bindFileButtons(){
   document.querySelectorAll('[data-open-file]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.openFile,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح الملف: '+(e?.message||'خطأ غير معروف'))}});
   document.querySelectorAll('[data-download-file]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.downloadFile,b.dataset.downloadName)}catch(e){showMsg('تعذر تحميل الملف: '+(e?.message||'خطأ غير معروف'))}});
   document.querySelectorAll('[data-file-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.fileStatus;const {error}=await db.from('application_intake_files').update({verification_status:st}).eq('id',b.dataset.fileId);if(error){showMsg('تعذر تحديث حالة الملف: '+error.message);return}showMsg('تم تحديث حالة الملف.',true);await loadAll()});
+  document.querySelectorAll('[data-open-legacy]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.openLegacy,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح المستند القديم: '+(e?.message||'خطأ غير معروف'))}});
+  document.querySelectorAll('[data-download-legacy]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.downloadLegacy,b.dataset.name)}catch(e){showMsg('تعذر تحميل المستند القديم: '+(e?.message||'خطأ غير معروف'))}});
+  document.querySelectorAll('[data-legacy-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.legacyStatus;const {error}=await db.from('documents').update({verification_status:st}).eq('id',b.dataset.legacyId);if(error){showMsg('تعذر تحديث حالة المستند: '+error.message);return}showMsg('تم تحديث حالة المستند.',true);await loadAll()});
 }
 
 function openRequest(id){
