@@ -1,6 +1,6 @@
 (() => {
-  if (window.__RAFIQ_UI_GUARD_V16__) return;
-  window.__RAFIQ_UI_GUARD_V15__ = true;
+  if (window.__RAFIQ_UI_GUARD_V17__) return;
+  window.__RAFIQ_UI_GUARD_V17__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
   const UPLOAD_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-upload';
@@ -11,7 +11,7 @@
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
   const APP_VERSION = '2026.10.02.1';
 
-  const fixedIds = ['joinBtn', 'careBtn', 'status-button', 'language'];
+  const fixedIds = ['joinBtn', 'careBtn', 'status-button'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
 
   function cleanDuplicates() {
@@ -179,10 +179,10 @@
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;ensureInstallButton();const s=document.getElementById('rafig-install-status');if(s)s.remove()});
   window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;void recordPwaInstallation();document.querySelectorAll('#rafig-install-app,.rafig-install-slot,#rafig-install-status').forEach(el=>el.remove())});
   const start=()=>{
-    cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
+    ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=76',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
-        if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5')){
+      navigator.serviceWorker.register('/sw.js?v=77',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+        if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5','1');
           location.reload();
         }
