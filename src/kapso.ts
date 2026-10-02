@@ -38,10 +38,15 @@ const kapsoPlatformRequest = async (
   return result;
 };
 
-const isInboundWebhook = (hook: any) =>
-  hook?.kind === "kapso" &&
-  Array.isArray(hook?.events) &&
-  hook.events.includes("whatsapp.message.received");
+const isInboundWebhook = (hook: any) => {
+  if (hook?.kind === "kapso") {
+    return Array.isArray(hook?.events) && hook.events.includes("whatsapp.message.received");
+  }
+  if (hook?.kind === "meta") {
+    return true;
+  }
+  return false;
+};
 
 const configureKapsoWebhook = async (
   phoneNumberId: string,
@@ -55,7 +60,7 @@ const configureKapsoWebhook = async (
 
   for (const hook of webhooks) {
     if (!isInboundWebhook(hook)) continue;
-    if (hook?.url === KAPSO_WEBHOOK_URL) continue;
+    if (hook?.kind === "kapso" && hook?.url === KAPSO_WEBHOOK_URL) continue;
     if (hook?.active !== true) continue;
 
     try {
