@@ -17,6 +17,14 @@ jobs:
       - name: Install ImageMagick
         uses: mfinelli/setup-imagemagick@v6
 
+      - name: Verify ImageMagick and source logo
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v convert
+          command -v identify
+          test -f public/assets/rafig-logo.png
+
       - name: Generate PWA icons from approved RAFIQ logo
         shell: bash
         run: |
@@ -27,6 +35,15 @@ jobs:
           convert public/assets/rafig-logo.png -resize 448x448 -gravity center -background white -extent 512x512 -strip public/icon-maskable-512.png
           convert public/assets/rafig-logo.png -resize 180x180! -strip public/apple-touch-icon.png
           identify public/icon-192.png public/icon-512.png public/icon-maskable-512.png public/apple-touch-icon.png
+
+      - name: Validate generated icon dimensions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(identify -format '%wx%h' public/icon-192.png)" = "192x192"
+          test "$(identify -format '%wx%h' public/icon-512.png)" = "512x512"
+          test "$(identify -format '%wx%h' public/icon-maskable-512.png)" = "512x512"
+          test "$(identify -format '%wx%h' public/apple-touch-icon.png)" = "180x180"
 
       - name: Commit generated icons
         shell: bash
