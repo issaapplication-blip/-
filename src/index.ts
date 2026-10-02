@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { ensureKapsoWebhook, kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { ensureKapsoWebhook, kapsoConfigured, kapsoSendText, kapsoWebhookSecret, kapsoWebhookStatus } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -61,7 +61,7 @@ const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)for(const [k,v] of Object.entries(securityHeaders))response.headers.set(k,v)})
 .get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
-.get("/api/status",()=>({ok:true,platform:"RAFIQ | رفيق",mode:kapsoConfigured()?"kapso-agent-ready":"meta-cloud-api-ready",kapsoConfigured:kapsoConfigured(),kapsoEnabled:process.env.KAPSO_ENABLED==="true",kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret()),kapsoWebhookLastReceivedAt:lastKapsoWebhookAt,kapsoWebhookLastEvent:lastKapsoWebhookEvent,whatsappSending:process.env.WHATSAPP_SENDING_ENABLED==="true",whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",whatsappWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN&&process.env.META_APP_SECRET),whatsappOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN&&process.env.META_PHONE_NUMBER_ID),openAIConfigured:Boolean(process.env.OPENAI_API_KEY),agentModel:effectiveAgentModel(),channelMode:"agent-draft-admin-publish",proactiveMessagesRequireApproval:true}))
+.get("/api/status",()=>({ok:true,platform:"RAFIQ | رفيق",mode:kapsoConfigured()?"kapso-agent-ready":"meta-cloud-api-ready",kapsoConfigured:kapsoConfigured(),kapsoEnabled:process.env.KAPSO_ENABLED==="true",kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret()),kapsoWebhookLastReceivedAt:lastKapsoWebhookAt,kapsoWebhookLastEvent:lastKapsoWebhookEvent,whatsappSending:process.env.WHATSAPP_SENDING_ENABLED==="true",whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",whatsappWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN&&process.env.META_APP_SECRET),whatsappOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN&&process.env.META_PHONE_NUMBER_ID),openAIConfigured:Boolean(process.env.OPENAI_API_KEY),agentModel:effectiveAgentModel(),channelMode:"agent-draft-admin-publish",proactiveMessagesRequireApproval:true,kapsoInboundWebhook:await kapsoWebhookStatus()}))
 .post("/api/admin/send-approved-welcome",async({request,set})=>{
   if(process.env.WHATSAPP_SENDING_ENABLED!=="true"||!kapsoConfigured()){
     set.status=503;return{ok:false,error:"Kapso WhatsApp sending is not configured"};
