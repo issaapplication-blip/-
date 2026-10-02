@@ -199,11 +199,19 @@
     }
     const select = box.querySelector('select');
     select.addEventListener('change', () => {
-      localStorage.setItem('rafiq-language', select.value);
-      location.reload();
+      const next = LANGS[select.value] ? select.value : 'ar';
+      localStorage.setItem('rafiq-language', next);
+      // Rebuild the page from the Arabic source on navigation/reload, while
+      // keeping the selected language on every RAFIQ page.
+      apply(next, false);
+      window.setTimeout(() => location.reload(), 0);
     });
-    const saved = localStorage.getItem('rafiq-language') || 'ar';
-    apply(saved, false);
+    const saved = localStorage.getItem('rafiq-language');
+    const device = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'ar'])
+      .map(v => String(v).toLowerCase().split('-')[0])
+      .find(v => Object.prototype.hasOwnProperty.call(LANGS, v));
+    const initial = saved || device || 'ar';
+    apply(initial, !saved);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
