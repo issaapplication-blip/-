@@ -1,6 +1,8 @@
 const KAPSO_BASE_URL = process.env.KAPSO_BASE_URL ?? "https://api.kapso.ai/meta/whatsapp/v24.0";
 const KAPSO_PLATFORM_BASE_URL = "https://api.kapso.ai/platform/v1";
-const KAPSO_WEBHOOK_URL = "https://rafiq-o6qd.onrender.com/api/kapso/webhook";
+const KAPSO_WEBHOOK_URL =
+  process.env.KAPSO_ORCHESTRATOR_WEBHOOK_URL ??
+  "https://mhdissa980.app.n8n.cloud/webhook/rafiq-kapso-inbound";
 const kapsoKey = () => process.env["KAPSO_" + "API_KEY"];
 const kapsoPhoneNumberId = () => process.env.KAPSO_PHONE_NUMBER_ID ?? "1324609540731383";
 let runtimeKapsoWebhookSecret: string | null = null;
@@ -36,63 +38,93 @@ const kapsoPlatformRequest = async (
   return result;
 };
 
-export async function ensureKapsoWebhook() {
-  if (!kapsoKey()) {
-    console.warn(JSON.stringify({
-      event: "rafig_kapso_webhook_autoconfig_skipped",
-      reason: "KAPSO_API_KEY_missing",
-    }));
-    return { configured: false, reason: "KAPSO_API_KEY_missing" };
-  }
-
-  const phoneNumberId = kapsoPhoneNumberId();
-  try {
-    const result = await kapsoPlatformRequest(
-      `/whatsapp/phone_numbers/${phoneNumberId}/webhooks?per_page=100&page=1`,
-    );
-    const webhooks = Array.isArray(result?.data) ? result.data : [];
-    const matching = webhooks.find((hook: any) =>
+const configureKapsoWebhook = async (
+  phoneNumberId: string,
+  webhooks: any[],
+) => {
+  const desired = webhooks.find(
+    (hook) =>
       hook?.kind === "kapso" &&
       hook?.url === KAPSO_WEBHOOK_URL &&
       Array.isArray(hook?.events) &&
       hook.events.includes("whatsapp.message.received"),
-    );
+  );
 
-    if (matching) {
-      runtimeKapsoWebhookSecret =
-        typeof matching.secret_key === "string" && matching.secret_key
-          ? matching.secret_key
-          : runtimeKapsoWebhookSecret;
-      if (matching.active !== true) {
-        try {
-          await kapsoPlatformRequest(
-            `/whatsapp/phone_numbers/${phoneNumberId}/webhooks/${matching.id}`,
-            {
-              method: "PATCH",
-              body: JSON.stringify({
-                whatsapp_webhook: {
-                  active: true,
-                  events: ["whatsapp.message.received"],
-                },
-              }),
+  for (const hook of webhooks) {
+    const isInboundHook =
+      hook?.kind === "kapso" &&
+      Array.isArray(hook?.events) &&
+      hook.events.includes("whatsapp.message.received");
+
+    if (!isInboundHook) continue;
+    if (hook?.url === KAPSO_WEBHOOK_URL) continue;
+    if (hook?.active !== true) continue;
+
+    try {
+      await kapsoPlatformRequest(
+        `/whatsapp/phone_numbers/${phoneNumberId}/webhooks/${hook.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            whatsapp_webhook: {
+              active: false,
             },
-          );
-        } catch (error) {
-          console.error(JSON.stringify({
-            event: "rafig_kapso_webhook_autoconfig_activate_failed",
-            error: String(error),
-          }));
-        }
-      }
-      console.log(JSON.stringify({
-        event: "rafig_kapso_webhook_autoconfig_ready",
-        active: true,
-        existing: true,
-        webhookEvent: "whatsapp.message.received",
+          }),
+        },
+      );
+      console.warn(JSON.stringify({
+        event: "rafig_kapso_duplicate_inbound_webhook_disabled",
+        webhookId: String(hook?.id ?? ""),
       }));
-      return { configured: true, existing: true };
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: "rafig_kapso_duplicate_inbound_webhook_disable_failed",
+        webhookId: String(hook?.id ?? ""),
+        error: String(error),
+      }));
+    }
+  }
+
+  if (desired) {
+    runtimeKapsoWebhookSecret =
+      typeof desired.secret_key === "string" && desired.secret_key
+        ? desired.secret_key
+        : runtimeKapsoWebhookSecret;
+
+    if (desired.active !== true) {
+      try {
+        await kapsoPlatformRequest(
+          `/whatsapp/phone_numbers/${phoneNumberId}/webhooks/${desired.id}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({
+              whatsapp_webhook: {
+                active: true,
+                events: ["whatsapp.message.received"],
+              },
+            }),
+          },
+        );
+      } catch (error) {
+        console.error(JSON.stringify({
+          event: "rafig_kapso_n8n_webhook_activate_failed",
+          error: String(error),
+        }));
+        return { configured: false, reason: "activate_failed" };
+      }
     }
 
+    console.log(JSON.stringify({
+      event: "rafig_kapso_n8n_webhook_ready",
+      active: true,
+      existing: true,
+      target: KAPSO_WEBHOOK_URL,
+      webhookEvent: "whatsapp.message.received",
+    }));
+    return { configured: true, existing: true };
+  }
+
+  try {
     const created = await kapsoPlatformRequest(
       `/whatsapp/phone_numbers/${phoneNumberId}/webhooks`,
       {
@@ -114,12 +146,45 @@ export async function ensureKapsoWebhook() {
         : runtimeKapsoWebhookSecret;
 
     console.log(JSON.stringify({
-      event: "rafig_kapso_webhook_autoconfig_created",
+      event: "rafig_kapso_n8n_webhook_created",
       active: true,
       existing: false,
+      target: KAPSO_WEBHOOK_URL,
       webhookEvent: "whatsapp.message.received",
     }));
     return { configured: true, existing: false };
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "rafig_kapso_n8n_webhook_create_failed",
+      error: String(error),
+    }));
+    return { configured: false, reason: "create_failed" };
+  }
+};
+
+export async function ensureKapsoWebhook() {
+  if (!kapsoKey()) {
+    console.warn(JSON.stringify({
+      event: "rafig_kapso_webhook_autoconfig_skipped",
+      reason: "KAPSO_API_KEY_missing",
+    }));
+    return { configured: false, reason: "KAPSO_API_KEY_missing" };
+  }
+
+  const phoneNumberId = kapsoPhoneNumberId();
+  try {
+    const pages = [1];
+    const allWebhooks: any[] = [];
+    for (const page of pages) {
+      const result = await kapsoPlatformRequest(
+        `/whatsapp/phone_numbers/${phoneNumberId}/webhooks?per_page=100&page=${page}`,
+      );
+      const items = Array.isArray(result?.data) ? result.data : [];
+      allWebhooks.push(...items);
+      break;
+    }
+
+    return await configureKapsoWebhook(phoneNumberId, allWebhooks);
   } catch (error) {
     console.error(JSON.stringify({
       event: "rafig_kapso_webhook_autoconfig_failed",
