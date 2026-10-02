@@ -8,11 +8,15 @@ services:
       - key: BUN_VERSION
         value: 1.3.0
       - key: RAFIQ_AGENT_MODEL
-        value: gpt-6-luna
+        value: gpt-5.6-sol
       - key: WHATSAPP_SENDING_ENABLED
         value: "true"
       - key: RAFIQ_WHATSAPP_AUTO_REPLY
+        value: "false"
+      - key: KAPSO_ENABLED
         value: "true"
+      - key: KAPSO_WEBHOOK_AUTOCONFIG
+        value: "false"
       - key: META_GRAPH_API_VERSION
         value: "v23.0"
     region: virginia
