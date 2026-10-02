@@ -272,11 +272,10 @@
       if (/^(https?:|mailto:|tel:|#|javascript:)/i.test(href)) return;
       localStorage.setItem('rafiq-language', document.documentElement.dataset.language || 'ar');
     }, {capture:true});
+    // Arabic is always the platform default. A previously selected language is restored only
+    // when the user explicitly chose it; the device/browser language must never override Arabic.
     const saved = localStorage.getItem('rafiq-language');
-    const device = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'ar'])
-      .map(v => String(v).toLowerCase().split('-')[0])
-      .find(v => Object.prototype.hasOwnProperty.call(LANGS, v));
-    const initial = saved || device || 'ar';
+    const initial = saved && Object.prototype.hasOwnProperty.call(LANGS, saved) ? saved : 'ar';
     apply(initial, !saved);
   }
 
