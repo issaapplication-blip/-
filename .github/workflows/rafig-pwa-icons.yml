@@ -14,6 +14,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install ImageMagick
+        uses: mfinelli/setup-imagemagick@v6
+
       - name: Generate PWA icons from approved RAFIQ logo
         shell: bash
         run: |
