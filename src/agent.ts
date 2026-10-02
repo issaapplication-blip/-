@@ -1,8 +1,7 @@
-const DEFAULT_MODEL = "gpt-6-luna";
+const DEFAULT_MODEL = "gpt-5.6-luna";
 const resolveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
-  // Keep older Render env values working after the model rename.
-  if (!configured || configured === "gpt-5.6-luna") return DEFAULT_MODEL;
+  if (!configured) return DEFAULT_MODEL;
   return configured;
 };
 
