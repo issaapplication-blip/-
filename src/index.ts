@@ -7,7 +7,7 @@ const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
 let lastKapsoWebhookAt: string | null = null;
 let lastKapsoWebhookEvent: string | null = null;
-const AGENT_DEFAULT_MODEL = "gpt-5.6-luna";
+const AGENT_DEFAULT_MODEL = "gpt-5.6-sol";
 const effectiveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
   return configured || AGENT_DEFAULT_MODEL;
