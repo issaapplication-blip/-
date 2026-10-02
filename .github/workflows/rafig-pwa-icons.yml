@@ -1,0 +1,40 @@
+name: RAFIQ PWA icons
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  generate-icons:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate PWA icons from approved RAFIQ logo
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f public/assets/rafig-logo.png
+          convert public/assets/rafig-logo.png -resize 192x192! -strip public/icon-192.png
+          convert public/assets/rafig-logo.png -resize 512x512! -strip public/icon-512.png
+          convert public/assets/rafig-logo.png -resize 448x448 -gravity center -background white -extent 512x512 -strip public/icon-maskable-512.png
+          convert public/assets/rafig-logo.png -resize 180x180! -strip public/apple-touch-icon.png
+          identify public/icon-192.png public/icon-512.png public/icon-maskable-512.png public/apple-touch-icon.png
+
+      - name: Commit generated icons
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/icon-192.png public/icon-512.png public/icon-maskable-512.png public/apple-touch-icon.png
+          if git diff --cached --quiet; then
+            echo "PWA icons already current."
+            exit 0
+          fi
+          git commit -m "fix: generate exact-size RAFIQ PWA icons"
+          git push
