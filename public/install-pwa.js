@@ -35,29 +35,14 @@
           const choice=await prompt.userChoice;
           if(choice?.outcome==='accepted'){
             window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
-            button.remove();
-            document.querySelectorAll('.rafig-install-slot').forEach(el=>el.remove());
           }
         }catch(_){}
         return;
       }
-      let msg=document.getElementById('rafig-install-status');
-      if(!msg){
-        msg=document.createElement('div');msg.id='rafig-install-status';msg.className='notice';
-        msg.style.cssText='margin:10px auto 0;max-width:720px;line-height:1.9;text-align:right';
-        button.insertAdjacentElement('afterend',msg);
-      }
-      const standalone=isStandalone();
-      const swReady=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
-      const isAndroid=/Android/i.test(navigator.userAgent);
-      const isChrome=/Chrome\\//i.test(navigator.userAgent)&&!/Edg\\//i.test(navigator.userAgent);
-      msg.innerHTML='<strong>تثبيت RAFIQ</strong><br>'+
-        (standalone?'التطبيق مثبت بالفعل على هذا الجهاز.':(isAndroid&&isChrome?
-          (swReady?'RAFIQ جاهز للتثبيت. إذا لم يظهر طلب التثبيت داخل الزر بعد، افتح قائمة ⋮ في Chrome ثم اختر <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>.':
-           'يجري تجهيز خدمة التثبيت الآن. بعد اكتمالها أعد تحميل الصفحة مرة واحدة ثم استخدم زر <b>تثبيت تطبيق رفيق</b>.'):
-          'للتثبيت استخدم Google Chrome على Android.'))+
-        '<br><small style="opacity:.82">سيظهر زر التثبيت المباشر داخل RAFIQ عندما يرسل Chrome حدث التثبيت. هذا الحدث يعتمد على شروط Chrome، ومنها تفاعل المستخدم مع الصفحة.</small>';
-      msg.scrollIntoView({behavior:'smooth',block:'nearest'});
+      // Do not mutate the surrounding button layout when Chrome has not
+      // exposed beforeinstallprompt yet. Keep the install control stable.
+      button.setAttribute('aria-busy','false');
+      button.blur();
     });
   }
 
@@ -142,14 +127,15 @@
   const start=()=>{
     cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=73',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=74',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V5','1');
           location.reload();
         }
       }).catch(()=>{});
     }
-    let runs=0;const timer=setInterval(()=>{cleanDuplicates();ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();runs++;if(runs>=40)clearInterval(timer)},250);
+    // Run UI initialization once. Do not repeatedly rewrite the DOM after user interaction.
+    // Repeated cleanup caused visible button reflow and could interfere with the install gesture.
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
