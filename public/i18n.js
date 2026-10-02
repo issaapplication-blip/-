@@ -138,6 +138,7 @@
   function translateText(lang) {
     const map = reverse(lang);
     if (!map) return;
+    const arabicToEnglish = T.en;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
     let n;
@@ -149,7 +150,9 @@
     }
     nodes.forEach(node => {
       const raw = normalize(node.nodeValue);
-      if (map[raw]) node.nodeValue = node.nodeValue.replace(raw, map[raw]);
+      const english = arabicToEnglish[raw] || raw;
+      const target = map[english] || english;
+      if (target !== raw) node.nodeValue = node.nodeValue.replace(raw, target);
     });
   }
 
@@ -196,14 +199,8 @@
     }
     const select = box.querySelector('select');
     select.addEventListener('change', () => {
-      const lang = select.value;
-      if (lang === 'ar') {
-        // Reloading is intentional: Arabic is the canonical source and avoids partial reverse translation.
-        localStorage.setItem('rafiq-language','ar');
-        location.reload();
-        return;
-      }
-      apply(lang, true);
+      localStorage.setItem('rafiq-language', select.value);
+      location.reload();
     });
     const saved = localStorage.getItem('rafiq-language') || 'ar';
     apply(saved, false);
