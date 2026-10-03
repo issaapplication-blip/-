@@ -62,3 +62,5 @@ jobs:
           fi
           git commit -m "fix: generate exact-size RAFIQ PWA icons"
           git push
+
+# PWA icon generation uses the hosted Ubuntu runner ImageMagick package.
