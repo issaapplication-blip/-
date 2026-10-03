@@ -173,9 +173,11 @@ function openRequest(id){
   const x=allRequests.find(v=>v.id===id);if(!x)return;
   const files=allFiles.filter(f=>f.intake_id===id);
   const pairs=Object.entries(x.payload||{}).map(([k,v])=>'<div class="detail"><b>'+esc(k)+'</b><br>'+esc(typeof v==='object'?JSON.stringify(v):v)+'</div>').join('');
+  const email=String(x.payload?.email||x.payload?.personal_email||x.payload?.email_address||'—');
+  const whatsapp=String(x.payload?.whatsapp_phone||x.payload?.whatsapp||x.phone||'—');
   const docs=files.map(f=>'<div class="doc"><strong>'+esc(f.file_name)+'</strong><div class="small">'+esc(f.document_category||'مستند')+' · '+esc(f.mime_type||'')+' · '+Math.round(Number(f.file_size||0)/1024)+' KB · الحالة: '+esc(statusLabel(f.verification_status))+'</div><div class="actions"><button class="btn alt" data-modal-open="'+esc(f.storage_path)+'">فتح</button><button class="btn alt" data-modal-download="'+esc(f.storage_path)+'" data-name="'+esc(f.file_name)+'">تحميل</button><button class="btn" data-modal-doc-status="approved" data-doc-id="'+esc(f.id)+'">اعتماد</button><button class="btn danger" data-modal-doc-status="rejected" data-doc-id="'+esc(f.id)+'">رفض</button></div></div>').join('')||'<p>لا توجد ملفات مرفوعة لهذا الطلب.</p>';
   $('modalTitle').textContent='طلب #'+x.application_number+' — '+(x.application_type||'');
-  $('modalBody').innerHTML='<div class="detail-grid"><div class="detail"><b>المتقدم</b><br>'+esc(x.applicant_name||'—')+'</div><div class="detail"><b>الهاتف</b><br>'+esc(x.phone||'—')+'</div><div class="detail"><b>المنطقة</b><br>'+esc(x.area||'—')+'</div><div class="detail"><b>الحالة</b><br>'+esc(statusLabel(x.status))+'</div><div class="detail"><b>المصدر</b><br>'+esc(x.source||'—')+'</div><div class="detail"><b>التاريخ</b><br>'+esc(formatDate(x.created_at))+'</div></div><h3>بيانات الطلب</h3><div class="detail-grid">'+pairs+'</div><h3>الملفات</h3>'+docs+'<div class="actions" style="margin-top:14px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn" data-review="approved">موافقة</button><button class="btn danger" data-review="rejected">رفض</button></div>';
+  $('modalBody').innerHTML='<div class="detail-grid"><div class="detail"><b>المتقدم</b><br>'+esc(x.applicant_name||'—')+'</div><div class="detail"><b>الهاتف الشخصي</b><br><span dir="ltr">'+esc(x.phone||'—')+'</span></div><div class="detail"><b>واتساب</b><br><span dir="ltr">'+esc(whatsapp)+'</span></div><div class="detail"><b>البريد الإلكتروني</b><br>'+esc(email)+'</div><div class="detail"><b>المنطقة</b><br>'+esc(x.area||'—')+'</div><div class="detail"><b>الحالة</b><br>'+esc(statusLabel(x.status))+'</div><div class="detail"><b>المصدر</b><br>'+esc(x.source||'—')+'</div><div class="detail"><b>التاريخ</b><br>'+esc(formatDate(x.created_at))+'</div></div><h3>بيانات الطلب</h3><div class="detail-grid">'+pairs+'</div><h3>الملفات</h3>'+docs+'<div class="actions" style="margin-top:14px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn" data-review="approved">موافقة</button><button class="btn danger" data-review="rejected">رفض</button></div>';
   $('modal').classList.remove('hidden');
   $('modalBody').querySelectorAll('[data-modal-open]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.modalOpen,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح الملف: '+(e?.message||'خطأ غير معروف'))}});
   $('modalBody').querySelectorAll('[data-modal-download]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.modalDownload,b.dataset.name)}catch(e){showMsg('تعذر تحميل الملف: '+(e?.message||'خطأ غير معروف'))}});
@@ -188,10 +190,16 @@ async function reviewRequest(id,status){
   const promptText=status==='rejected'?'سبب الرفض (اختياري):':status==='approved'?'ملاحظات الموافقة (اختياري):':'ملاحظات المدير (اختياري):';
   const notes=prompt(promptText)||null;
   let data,error;
-  if(x.application_type==='انتساب عام'){
-    ({data,error}=await db.rpc('admin_approve_public_member',{p_intake_id:id,p_status:status,p_notes:notes}));
-  }else{
-    ({data,error}=await db.from('application_intakes').update({status,admin_decision_notes:notes,updated_at:new Date().toISOString()}).eq('id',id).select('id').single());
+  ({data,error}=await db.rpc('admin_approve_application_intake',{p_intake_id:id,p_status:status,p_notes:notes}));
+  if(!error && status==='approved' && data?.barcode_code){
+    const contactPhone=data?.whatsapp_phone||x.payload?.whatsapp_phone||x.payload?.whatsapp||x.phone||'—';
+    const contactEmail=data?.email||x.payload?.email||x.payload?.personal_email||x.payload?.email_address||'—';
+    const box=document.createElement('div');
+    box.className='ok';
+    box.innerHTML='<strong>تم قبول الطلب وإنشاء باركود العضوية.</strong><br><code style="display:block;direction:ltr;white-space:normal;overflow-wrap:anywhere;margin-top:8px">'+esc(data.barcode_code)+'</code><div class="small" style="margin-top:8px">واتساب: <span dir="ltr">'+esc(contactPhone)+'</span> · البريد: '+esc(contactEmail)+'</div><button class="btn alt" type="button" id="copyBarcodeNow" style="margin-top:8px">نسخ الباركود</button>';
+    document.querySelector('#modalBody')?.prepend(box);
+    document.getElementById('copyBarcodeNow')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(String(data.barcode_code));showMsg('تم نسخ الباركود.',true)}catch(_){showMsg('تم إنشاء الباركود، لكن تعذر النسخ التلقائي.')}}); 
+    await new Promise(r=>setTimeout(r,900));
   }
   if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}
   await db.from('audit_logs').insert({action:'admin_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes}});
