@@ -231,7 +231,7 @@ const callAgent = async (input: string) => {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    console.error(JSON.stringify({ event: "rafig.agent", status: "provider_error", providerStatus: response.status }));
+    console.error(JSON.stringify({ event: "rafig.agent", status: "provider_error", providerStatus: response.status, providerError: payload?.error?.message || payload?.error?.type || payload?.message || "unknown" }));
     throw new Error("OpenAI agent request failed");
   }
 
