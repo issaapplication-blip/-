@@ -1,7 +1,7 @@
 /* RAFIQ | رفيق — stable PWA installer v76 */
 (function(){
   'use strict';
-  var SW_VERSION='76';
+  var SW_VERSION='79';
   var deferredPrompt=null;
 
   function isStandalone(){
@@ -13,7 +13,7 @@
     if(isStandalone()) return;
     document.querySelectorAll('[data-rafiq-install]').forEach(function(button){
       button.hidden=false;
-      button.style.display='';
+      button.style.removeProperty('display');
       button.removeAttribute('aria-hidden');
     });
   }
@@ -73,7 +73,7 @@
         return;
       }
       try{
-        button.disabled=true;
+        button.setAttribute('aria-busy','true');
         await prompt.prompt();
         var choice=await prompt.userChoice;
         deferredPrompt=null;
@@ -87,7 +87,7 @@
         console.warn('RAFIQ install prompt error',error);
         showStatus('تعذر فتح نافذة التثبيت المباشر على هذا المتصفح حاليًا.');
       }finally{
-        button.disabled=false;
+        button.removeAttribute('aria-busy');
       }
     });
   }
