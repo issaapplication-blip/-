@@ -44,9 +44,64 @@ const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"D
 const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0};
 const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
 const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
-const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessage=async(message:any,conversation:any={})=>{const identity=kapsoIdentity(message,conversation);const forbiddenDigits="70600157";if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}const body=typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():"");const destination=identity.phone?{to:identity.phone}:{recipient:identity.bsuid};if(!body||(!destination.to&&!destination.recipient)){return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"}}try{console.log(JSON.stringify({event:"rafig_kapso_inbound_received",messageId:String(message.id??""),fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,username:identity.username||null,phoneNumberId:String(message?.kapso?.phone_number_id??conversation?.phone_number_id??"")}));const result=await draftInboundReply(body,identity.phone||undefined);if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){try{const outbound=kapsoConfigured()?await kapsoSendText(destination,result.reply):identity.phone?await sendWhatsAppText(identity.phone,result.reply):null;if(!outbound)throw new Error("BSUID-only inbound requires Kapso API configuration");console.log(JSON.stringify({event:"rafig_kapso_auto_reply_sent",provider:kapsoConfigured()?"kapso":"meta",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),outboundMessageId:outbound?.messages?.[0]?.id??null}));return{id:String(message.id??""),status:outbound?.messages?.[0]?.id?"auto_replied":"draft_ready"}}catch(error){console.error(JSON.stringify({event:"rafig_kapso_auto_reply_failed",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),error:String(error)}));return{id:String(message.id??""),status:"draft_ready_send_failed"}}}return{id:String(message.id??""),status:"draft_ready"}}catch(error){console.error(JSON.stringify({event:"rafig_kapso_agent_failed",messageId:String(message.id??""),error:String(error)}));return{id:String(message.id??""),status:"draft_failed"}}};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
+const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessage=async(message:any,conversation:any={})=>{
+  const identity=kapsoIdentity(message,conversation);
+  const forbiddenDigits="70600157";
+  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
+  const body=typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():"");
+  const destination=identity.phone?{to:identity.phone}:{recipient:identity.bsuid};
+  if(!body||(!destination.to&&!destination.recipient))return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
+  try{
+    const inbound=await recordInboundEvent(message,identity);
+    console.log(JSON.stringify({event:"rafig_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
+    const result=await draftInboundReply(body,identity.phone||undefined);
+    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
+      try{
+        const outbound=kapsoConfigured()?await kapsoSendText(destination,result.reply):identity.phone?await sendWhatsAppText(identity.phone,result.reply):null;
+        if(!outbound)throw new Error("BSUID-only inbound requires Kapso API configuration");
+        await recordOutboundMessage(identity.phone||"",result.reply,outbound);
+        await updateInboundEvent(String(message.id??""),"processed");
+        console.log(JSON.stringify({event:"rafig_kapso_auto_reply_sent",provider:kapsoConfigured()?"kapso":"meta",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),outboundMessageId:outbound?.messages?.[0]?.id??null}));
+        return{id:String(message.id??""),status:outbound?.messages?.[0]?.id?"auto_replied":"draft_ready"};
+      }catch(error){
+        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
+        console.error(JSON.stringify({event:"rafig_kapso_auto_reply_failed",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),error:String(error)}));
+        return{id:String(message.id??""),status:"draft_ready_send_failed"};
+      }
+    }
+    await updateInboundEvent(String(message.id??""),"processed");
+    return{id:String(message.id??""),status:"draft_ready"};
+  }catch(error){
+    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
+    console.error(JSON.stringify({event:"rafig_kapso_agent_failed",messageId:String(message.id??""),error:String(error)}));
+    return{id:String(message.id??""),status:"draft_failed"};
+  }
+};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "https://qmuxaehrahfsnabyjens.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_ANON_KEY ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+const supabaseServerRest=async(path:string,init:RequestInit={})=>{
+  if(!SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase server configuration is incomplete");
+  const response=await fetch(SUPABASE_URL+path,{...init,headers:{apikey:SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json",...(init.headers??{})}});
+  const body=await response.json().catch(()=>null);
+  return {response,body};
+};
+const recordInboundEvent=async(message:any,identity:any)=>{
+  const providerMessageId=String(message?.id??"").trim();
+  if(!providerMessageId)return null;
+  const r=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?on_conflict=provider%2Cprovider_message_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({provider:"kapso",provider_message_id:providerMessageId,from_phone:identity.phone||null,message_type:typeof message?.type==="string"?message.type:"text",text_body:typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():null),payload:message??{},processing_status:"processing"})});
+  if(!r.response.ok)throw new Error("could not persist inbound WhatsApp event");
+  return Array.isArray(r.body)?r.body[0]:r.body;
+};
+const updateInboundEvent=async(providerMessageId:string,status:string,errorMessage?:string)=>{
+  if(!SUPABASE_SERVICE_ROLE_KEY||!providerMessageId)return;
+  await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq.kapso&provider_message_id=eq."+encodeURIComponent(providerMessageId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({processing_status:status,error_message:errorMessage??null,processed_at:new Date().toISOString()})});
+};
+const recordOutboundMessage=async(toPhone:string,body:string,result:any)=>{
+  if(!SUPABASE_SERVICE_ROLE_KEY)return;
+  await supabaseServerRest("/rest/v1/whatsapp_outbound_messages",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({provider:"kapso",provider_message_id:result?.messages?.[0]?.id??null,to_phone:toPhone,body,status:"sent",payload:result??{}})});
+};
+
 const bearerToken=(request:Request)=>{const h=request.headers.get("authorization")??"";return h.startsWith("Bearer ")?h.slice(7).trim():""};
 const supabaseRest=async(path:string,token:string,init:RequestInit={})=>{
   const response=await fetch(SUPABASE_URL+path,{...init,headers:{
