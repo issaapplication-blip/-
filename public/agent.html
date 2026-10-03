@@ -30,4 +30,4 @@ async function ask(t){
 async function go(){const v=input.value.trim();if(!v||send.disabled)return;add(v,"u");input.value="";send.disabled=true;const reply=await ask(v);add(reply,"a");send.disabled=false;status.textContent="المساعد جاهز.";input.focus()}
 send.onclick=go;input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();go()}});document.querySelectorAll(".q").forEach(b=>b.onclick=()=>{input.value=b.textContent;go()});
 })();
-</script></body></html>
+</script><script src="/i18n.js?v=3" defer></script></body></html>
