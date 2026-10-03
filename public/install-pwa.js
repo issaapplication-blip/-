@@ -53,6 +53,8 @@
     if(isStandalone()){button.hidden=true;button.setAttribute('aria-hidden','true');return;}
     button.hidden=false;
     button.style.display='inline-flex';
+    button.style.position='relative';
+    button.style.zIndex='2';
     button.setAttribute('aria-hidden','false');
     if(button.dataset.rafigInstallBound==='1')return;
     button.dataset.rafigInstallBound='1';
@@ -61,7 +63,7 @@
       event.stopPropagation();
       const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
       if(!prompt){
-        showInstallStatus('يجري تجهيز التثبيت المباشر… يرجى إبقاء الصفحة مفتوحة للحظة ثم الضغط على الزر مرة أخرى.');
+        showInstallStatus('التثبيت المباشر غير متاح من هذا المتصفح في هذه اللحظة. على Android/Chrome: افتح قائمة ⋮ ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».');
         return;
       }
       try{
