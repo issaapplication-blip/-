@@ -39,6 +39,7 @@ const draftInboundReply = async (message: string, senderPhone?: string) => {
 const MAX_WEBHOOK_BODY = 512_000;
 const N8N_WEBHOOK_BASE_URL = (process.env.N8N_WEBHOOK_BASE_URL ?? "https://mhdissa980.app.n8n.cloud").replace(/\/+$/, "");
 const N8N_RAFIQ_WEBHOOK_ID = process.env.N8N_RAFIQ_WEBHOOK_ID ?? "60ea9b1c910f1f23716e24f9";
+const N8N_RAFIQ_WEBHOOK_PATH = process.env.N8N_RAFIQ_WEBHOOK_PATH ?? "rafiq-kapso-inbound";
 const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Resource-Policy":"same-origin","Content-Security-Policy":"default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https://images.pexels.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://qmuxaehrahfsnabyjens.supabase.co https://graph.facebook.com https://api.kapso.ai","Cache-Control":"no-store"};
 const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0};
 const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
@@ -108,7 +109,7 @@ const app=new Elysia()
   if(contentLength>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const body=await request.text();
   if(body.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
-  const upstreamUrl=N8N_WEBHOOK_BASE_URL+"/webhook/"+encodeURIComponent(webhookId);
+  const upstreamUrl=N8N_WEBHOOK_BASE_URL+"/webhook/"+encodeURIComponent(N8N_RAFIQ_WEBHOOK_PATH);
   const forwardHeaders=new Headers(request.headers);
   forwardHeaders.delete("host");
   forwardHeaders.delete("content-length");
