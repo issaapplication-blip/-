@@ -48,13 +48,14 @@
   }
 
   function ensureInstallButton(){
-    let button=document.getElementById('rafig-install-app');
+    const button=document.getElementById('rafig-install-app');
     if(!button)return;
-    if(isStandalone()){button.hidden=true;button.setAttribute('aria-hidden','true');return;}
+    if(isStandalone()){
+      button.hidden=true;
+      button.setAttribute('aria-hidden','true');
+      return;
+    }
     button.hidden=false;
-    button.style.removeProperty('display');
-    button.style.removeProperty('position');
-    button.style.removeProperty('z-index');
     button.setAttribute('aria-hidden','false');
     if(button.dataset.rafigInstallBound==='1')return;
     button.dataset.rafigInstallBound='1';
@@ -63,26 +64,25 @@
       event.stopPropagation();
       const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
       if(!prompt){
-        showInstallStatus('التثبيت المباشر غير متاح من هذا المتصفح في هذه اللحظة. على Android/Chrome: افتح قائمة ⋮ ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».');
+        showInstallStatus('جارٍ تجهيز التثبيت المباشر… حدّث الصفحة مرة واحدة ثم اضغط الزر مجددًا.');
         return;
       }
       try{
-        button.setAttribute('aria-busy','true');
-        await prompt.prompt();
+        button.disabled=true;
+        const result=await prompt.prompt();
         const choice=await prompt.userChoice;
         window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
         if(choice && choice.outcome==='accepted'){
-          button.hidden=true;
-          button.setAttribute('aria-hidden','true');
           showInstallStatus('تم بدء تثبيت تطبيق رفيق ✅');
         }else{
-          showInstallStatus('تم إغلاق نافذة التثبيت. يمكنك الضغط على «تثبيت تطبيق رفيق» للمحاولة مجددًا.');
+          showInstallStatus('لم يتم تأكيد التثبيت. يمكنك المحاولة مجددًا.');
         }
       }catch(error){
         console.warn('RAFIQ install prompt failed',error);
-        showInstallStatus('تعذر فتح نافذة التثبيت المباشر على هذا المتصفح حاليًا.');
+        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
+        showInstallStatus('تعذر فتح نافذة التثبيت الآن. أعد تحميل الصفحة ثم جرّب الزر مجددًا.');
       }finally{
-        button.removeAttribute('aria-busy');
+        button.disabled=false;
       }
     });
   }
