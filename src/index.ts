@@ -116,6 +116,25 @@ const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)for(const [k,v] of Object.entries(securityHeaders))response.headers.set(k,v)})
 .get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
+.post("/api/kapso/webhook",async({request,set})=>{
+  const raw=await request.text();
+  if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
+  const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
+  const secret=kapsoWebhookSecret();
+  if(secret&&(!signature||!(await verifyKapsoSignature(raw,signature)))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  lastKapsoWebhookAt=new Date().toISOString();
+  lastKapsoWebhookEvent=typeof payload?.event==="string"?payload.event:typeof payload?.type==="string"?payload.type:"unknown";
+  const candidates:any[]=[];
+  if(Array.isArray(payload?.messages))candidates.push(...payload.messages.map((m:any)=>({message:m,conversation:payload?.conversation??{}})));
+  if(payload?.message)candidates.push({message:payload.message,conversation:payload?.conversation??payload?.data?.conversation??{}});
+  if(payload?.data?.message)candidates.push({message:payload.data.message,conversation:payload?.data?.conversation??payload?.conversation??{}});
+  if(Array.isArray(payload?.data?.messages))candidates.push(...payload.data.messages.map((m:any)=>({message:m,conversation:payload?.data?.conversation??payload?.conversation??{}})));
+  for(const message of extractIncomingMessages(payload))candidates.push({message,conversation:{phone_number:message.from}});
+  if(!candidates.length){set.status=200;return{ok:true,status:"ignored_no_message"}}
+  const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
+  return{ok:true,status:"processed",results};
+})
 .get("/api/status",()=>({ok:true,platform:"RAFIQ | رفيق",mode:kapsoConfigured()?"kapso-agent-ready":"meta-cloud-api-ready",kapsoConfigured:kapsoConfigured(),kapsoEnabled:process.env.KAPSO_ENABLED==="true",kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret()),kapsoWebhookLastReceivedAt:lastKapsoWebhookAt,kapsoWebhookLastEvent:lastKapsoWebhookEvent,whatsappSending:process.env.WHATSAPP_SENDING_ENABLED==="true",whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",whatsappWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN&&process.env.META_APP_SECRET),whatsappOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN&&process.env.META_PHONE_NUMBER_ID),openAIConfigured:Boolean(process.env.OPENAI_API_KEY),agentModel:effectiveAgentModel(),channelMode:"agent-draft-admin-publish",proactiveMessagesRequireApproval:true}))
 .post("/api/admin/send-approved-welcome",async({request,set})=>{
   if(process.env.WHATSAPP_SENDING_ENABLED!=="true"||!kapsoConfigured()){
