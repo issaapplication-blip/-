@@ -133,7 +133,7 @@
     return map;
   };
 
-  function normalize(s) { return s.replace(/\\s+/g, ' ').trim(); }
+  function normalize(s) { return s.replace(/\s+/g, ' ').trim(); }
 
   function translationMap(lang) {
     if (lang === 'ar') return {};
@@ -181,8 +181,8 @@
       if (!raw) return;
       const english = T.en[raw] || reverseArabic[raw] || raw;
       const target = lang === 'ar' ? raw : (map[english] || english);
-      const originalPrefix = source.match(/^\\s*/)?.[0] || '';
-      const originalSuffix = source.match(/\\s*$/)?.[0] || '';
+      const originalPrefix = source.match(/^\s*/)?.[0] || '';
+      const originalSuffix = source.match(/\s*$/)?.[0] || '';
       node.nodeValue = originalPrefix + target + originalSuffix;
     });
   }
