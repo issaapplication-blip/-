@@ -162,6 +162,11 @@
   function translateText(lang) {
     cacheArabicSources();
     const map = translationMap(lang);
+    const reverseArabic = {};
+    Object.keys(T.en).forEach(key => {
+      const value = T.en[key];
+      if (typeof value === 'string' && value.trim()) reverseArabic[normalize(value)] = key;
+    });
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
     let n;
@@ -174,7 +179,7 @@
       const source = node.__rafiqArabicSource;
       const raw = normalize(source || '');
       if (!raw) return;
-      const english = T.en[raw] || raw;
+      const english = T.en[raw] || reverseArabic[raw] || raw;
       const target = lang === 'ar' ? raw : (map[english] || english);
       const originalPrefix = source.match(/^\\s*/)?.[0] || '';
       const originalSuffix = source.match(/\\s*$/)?.[0] || '';
@@ -281,30 +286,4 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
-})();
-
-/* RAFIQ global language switcher: keep languages at far left and apply immediately on every public page. */
-(function(){
-  'use strict';
-  function mountLanguageSwitcher(){
-    const topbar=document.querySelector('.topbar');
-    if(!topbar || topbar.querySelector('[data-rafig-language-switcher]')) return;
-    const wrap=document.createElement('div');
-    wrap.setAttribute('data-rafig-language-switcher','');
-    wrap.className='rafig-language-switcher';
-    wrap.setAttribute('aria-label','اختيار اللغة');
-    wrap.innerHTML='<span class="rafig-language-label" aria-hidden="true">🌐</span><label class="sr-only" for="rafig-language-global">اللغة</label><select id="rafig-language-global" aria-label="اللغة"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>';
-    topbar.insertBefore(wrap,topbar.firstChild);
-    const select=wrap.querySelector('select');
-    const saved=localStorage.getItem('rafig-language') || document.documentElement.lang || 'ar';
-    select.value=['ar','en','fr','it','de'].includes(saved)?saved:'ar';
-    select.addEventListener('change',()=>{
-      localStorage.setItem('rafig-language',select.value);
-      document.documentElement.lang=select.value;
-      document.documentElement.dir=select.value==='ar'?'rtl':'ltr';
-      window.dispatchEvent(new CustomEvent('rafig:language-change',{detail:{lang:select.value}}));
-      location.reload();
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountLanguageSwitcher,{once:true}); else mountLanguageSwitcher();
 })();
