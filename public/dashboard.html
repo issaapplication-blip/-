@@ -614,23 +614,38 @@ async function loadCare(){
 }
 
 async function loadDocs(){
-  const {data,error}=await db.from('documents')
-    .select('id,user_id,document_type,file_name,mime_type,file_size,verification_status,storage_path,created_at')
-    .order('created_at',{ascending:false}).limit(100);
-  if(error){ $('docList').innerHTML='<div class="err">تعذر تحميل المستندات: '+esc(error.message)+'</div>'; return; }
-  APP.docs=data||[];
-  if(!APP.docs.length){ $('docList').innerHTML='<div class="notice">لا توجد مستندات مرفوعة بعد.</div>'; return; }
-  $('docList').innerHTML='<div class="scroll"><table><thead><tr><th>الملف</th><th>النوع</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+
-    APP.docs.map(d=>'<tr><td class="small">'+esc(d.file_name||d.document_type||'—')+
-      (d.file_size?'<br>'+Math.round(d.file_size/1024)+' KB':'')+'</td>'+
-      '<td class="small">'+esc(d.document_type||'—')+'</td>'+
-      '<td>'+st(d.verification_status)+'</td>'+
-      '<td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap">'+
-        '<button class="btn alt" onclick="openDoc(\''+encodeURIComponent(d.storage_path)+'\')">فتح</button>'+
-        '<button class="btn" onclick="reviewDoc(\''+d.id+'\',\'approved\')">✓</button>'+
-        '<button class="btn danger" onclick="reviewDoc(\''+d.id+'\',\'rejected\')">✕</button>'+
-      '</div></td></tr>').join('')+'</tbody></table></div>';
+  const [legacy,intake]=await Promise.all([
+    db.from('documents').select('id,user_id,document_type,file_name,mime_type,file_size,verification_status,storage_path,created_at').order('created_at',{ascending:false}).limit(100),
+    db.from('application_intake_files').select('id,intake_id,document_category,file_name,mime_type,file_size,verification_status,storage_path,created_at').order('created_at',{ascending:false}).limit(100)
+  ]);
+  if(legacy.error && intake.error){
+    $('docList').innerHTML='<div class="err">تعذر تحميل المستندات والملفات: '+esc(legacy.error.message||intake.error.message||'خطأ غير معروف')+'</div>';
+    return;
+  }
+  const legacyDocs=legacy.data||[];
+  const intakeDocs=intake.data||[];
+  APP.docs=legacyDocs;
+  const legacyHtml=legacyDocs.map(d=>{
+    return '<tr><td class="small">'+esc(d.file_name||d.document_type||'—')+(d.file_size?'<br>'+Math.round(d.file_size/1024)+' KB':'')+'</td><td class="small">'+esc(d.document_type||'—')+'</td><td>'+st(d.verification_status)+'</td><td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn alt" onclick="openDoc(\\''+encodeURIComponent(d.storage_path)+'\\')">فتح</button><button class="btn" onclick="reviewDoc(\\''+d.id+'\\',\\'approved\\')">✓</button><button class="btn danger" onclick="reviewDoc(\\''+d.id+'\\',\\'rejected\\')">✕</button></div></td></tr>';
+  }).join('');
+  const intakeHtml=intakeDocs.map(f=>{
+    return '<tr><td class="small">'+esc(f.file_name||'—')+(f.file_size?'<br>'+Math.round(f.file_size/1024)+' KB':'')+'</td><td class="small">'+esc(f.document_category||'طلب رعاية/انتساب')+'</td><td>'+st(f.verification_status)+'</td><td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn alt" onclick="openIntakeDoc(\\''+encodeURIComponent(f.storage_path)+'\\')">فتح</button><button class="btn" onclick="reviewIntakeDoc(\\''+f.id+'\\',\\'approved\\')">✓</button><button class="btn danger" onclick="reviewIntakeDoc(\\''+f.id+'\\',\\'rejected\\')">✕</button></div></td></tr>';
+  }).join('');
+  if(!legacyHtml&&!intakeHtml){$('docList').innerHTML='<div class="notice">لا توجد مستندات مرفوعة بعد.</div>';return}
+  $('docList').innerHTML='<div class="scroll"><table><thead><tr><th>الملف</th><th>النوع</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+legacyHtml+intakeHtml+'</tbody></table></div>';
 }
+
+window.openIntakeDoc=async enc=>{
+  const path=decodeURIComponent(enc);
+  const {data,error}=await db.storage.from('application-files').createSignedUrl(path,300);
+  if(error){msg('تعذر فتح ملف الطلب: '+error.message);return}
+  window.open(data.signedUrl,'_blank','noopener,noreferrer');
+};
+window.reviewIntakeDoc=async(id,status)=>{
+  const {error}=await db.from('application_intake_files').update({verification_status:status}).eq('id',id);
+  if(error){msg('تعذر تحديث ملف الطلب: '+error.message);return}
+  msg('تم تحديث حالة الملف.',true);load();
+};
 
 window.reviewDoc=async(id,status)=>{
   const {error}=await db.rpc('admin_review_document',{p_document_id:id,p_status:status});
