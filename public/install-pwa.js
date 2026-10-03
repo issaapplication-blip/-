@@ -1,6 +1,6 @@
 (() => {
   if (window.__RAFIQ_UI_GUARD_V18__) return;
-  window.__RAFIQ_UI_GUARD_V17__ = true;
+  window.__RAFIQ_UI_GUARD_V18__ = true;
 
   const INTAKE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-intake';
   const UPLOAD_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-upload';
@@ -176,9 +176,18 @@
 
   const isStandalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
   if(isStandalone())document.querySelectorAll('#rafig-install-app,.rafig-install-slot').forEach(el=>el.remove());
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;ensureInstallButton();const s=document.getElementById('rafig-install-status');if(s)s.remove()});
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;
+    ensureInstallButton();
+    const button=document.getElementById('rafig-install-app');
+    if(button) button.disabled=false;
+    const s=document.getElementById('rafig-install-status'); if(s)s.remove();
+  },{passive:false});
   window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;void recordPwaInstallation();document.querySelectorAll('#rafig-install-app,.rafig-install-slot,#rafig-install-status').forEach(el=>el.remove())});
   const start=()=>{
+    // Keep the install control stable: never rebuild or reorder the action buttons after startup.
+    ensureInstallButton();
     ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
       navigator.serviceWorker.register('/sw.js?v=77',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
@@ -188,8 +197,10 @@
         }
       }).catch(()=>{});
     }
-    // Run UI initialization once. Do not repeatedly rewrite the DOM after user interaction.
-    // Repeated cleanup caused visible button reflow and could interfere with the install gesture.
+    window.addEventListener('pageshow',()=>ensureInstallButton(),{passive:true});
+    window.addEventListener('load',()=>ensureInstallButton(),{once:true,passive:true});
+    // Native one-tap installation is available when the browser exposes beforeinstallprompt.
+    // Unsupported browsers keep the button stable and receive a clear fallback message instead of reflowing the page.
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
