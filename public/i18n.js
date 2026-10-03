@@ -282,3 +282,29 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
+
+/* RAFIQ global language switcher: keep languages at far left and apply immediately on every public page. */
+(function(){
+  'use strict';
+  function mountLanguageSwitcher(){
+    const topbar=document.querySelector('.topbar');
+    if(!topbar || topbar.querySelector('[data-rafig-language-switcher]')) return;
+    const wrap=document.createElement('div');
+    wrap.setAttribute('data-rafig-language-switcher','');
+    wrap.className='rafig-language-switcher';
+    wrap.setAttribute('aria-label','اختيار اللغة');
+    wrap.innerHTML='<span class="rafig-language-label" aria-hidden="true">🌐</span><label class="sr-only" for="rafig-language-global">اللغة</label><select id="rafig-language-global" aria-label="اللغة"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>';
+    topbar.insertBefore(wrap,topbar.firstChild);
+    const select=wrap.querySelector('select');
+    const saved=localStorage.getItem('rafig-language') || document.documentElement.lang || 'ar';
+    select.value=['ar','en','fr','it','de'].includes(saved)?saved:'ar';
+    select.addEventListener('change',()=>{
+      localStorage.setItem('rafig-language',select.value);
+      document.documentElement.lang=select.value;
+      document.documentElement.dir=select.value==='ar'?'rtl':'ltr';
+      window.dispatchEvent(new CustomEvent('rafig:language-change',{detail:{lang:select.value}}));
+      location.reload();
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountLanguageSwitcher,{once:true}); else mountLanguageSwitcher();
+})();
