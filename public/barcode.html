@@ -125,6 +125,13 @@ async function lookup(code){
   if(!code){ msg('اكتب أو امسح رمز الباركود أولاً.'); return; }
   msg('جارٍ البحث…',true);
 
+  // 1) manager-issued barcode
+  const {data:issued,error:ie}=await db.rpc('public_lookup_issued_barcode',{p_code:code});
+  if(!ie&&issued){
+    showIssued(issued,code);
+    return;
+  }
+
   // 1) member barcode
   const {data:mb,error:me}=await db.from('member_barcodes')
       .select('code,member_type,status').eq('code',code).maybeSingle();
@@ -149,6 +156,18 @@ async function lookup(code){
   }
 
   msg('لم يتم العثور على هذا الرمز. تأكد من المسح الصحيح.');
+}
+
+function showIssued(v,code){
+  $('scanCard').classList.add('hidden');
+  $('result').classList.remove('hidden');
+  $('rBadge').className='badge';
+  $('rBadge').textContent=TYPE_AR[v.member_type]||v.member_type||'عضو منصة';
+  $('rName').textContent='عضو معتمد في منصة RAFIQ';
+  $('rCode').textContent='الرمز: '+code;
+  $('rRows').innerHTML=row('الحالة','<span class="badge">معتمد</span>')+row('نوع العضوية',esc(TYPE_AR[v.member_type]||v.member_type||'—'));
+  $('rNote').innerHTML='هذا الباركود صادر عن إدارة RAFIQ بعد مراجعة الطلب والمستندات.';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function showMember(m){
