@@ -9,7 +9,7 @@
   const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
-  const APP_VERSION = '2026.10.02.2';
+  const APP_VERSION = '2026.10.03.1';
 
   const fixedIds = ['joinBtn', 'careBtn', 'status-button'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
@@ -52,9 +52,9 @@
     if(!button)return;
     if(isStandalone()){button.hidden=true;button.setAttribute('aria-hidden','true');return;}
     button.hidden=false;
-    button.style.display='inline-flex';
-    button.style.position='relative';
-    button.style.zIndex='2';
+    button.style.removeProperty('display');
+    button.style.removeProperty('position');
+    button.style.removeProperty('z-index');
     button.setAttribute('aria-hidden','false');
     if(button.dataset.rafigInstallBound==='1')return;
     button.dataset.rafigInstallBound='1';
@@ -67,7 +67,7 @@
         return;
       }
       try{
-        button.disabled=true;
+        button.setAttribute('aria-busy','true');
         await prompt.prompt();
         const choice=await prompt.userChoice;
         window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
@@ -82,7 +82,7 @@
         console.warn('RAFIQ install prompt failed',error);
         showInstallStatus('تعذر فتح نافذة التثبيت المباشر على هذا المتصفح حاليًا.');
       }finally{
-        button.disabled=false;
+        button.removeAttribute('aria-busy');
       }
     });
   }
@@ -192,7 +192,7 @@
     ensureInstallButton();
     ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=78',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=79',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6','1');
           location.reload();
