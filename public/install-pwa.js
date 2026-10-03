@@ -192,7 +192,7 @@
     ensureInstallButton();
     ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=77',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=78',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6','1');
           location.reload();
