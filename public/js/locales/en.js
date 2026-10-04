@@ -366,7 +366,7 @@
     'faq.end.h': 'Ready to request a service?',
     'faq.end.p': 'Send your request and our team will review it and arrange the matching.',
 
-    'safety.nodiagnose': 'We do not diagnose, prescribe, or change a doctor’s treatment.'
+    'safety.nodiagnose': 'We do not diagnose, prescribe, or change a doctor’s treatment.',
     'home.welcome': "Welcome to Rafiq 🌿 We start with one simple step toward more organised and safer care for your family.",
   };
 
