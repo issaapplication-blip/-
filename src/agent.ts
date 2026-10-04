@@ -1,3 +1,4 @@
+import { answerRafiqKnowledge, RAFIQ_SERVICE_KNOWLEDGE } from "./rafiq-service-knowledge";
 const DEFAULT_MODEL = "gpt-5.6-sol";
 const resolveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
@@ -13,6 +14,8 @@ type OutreachTarget =
   | "nursing";
 
 const SYSTEM_PROMPT = `You are the senior customer-service and intake agent of RAFIQ | رفيق, a Lebanese home-care platform for elderly people and patients.
+
+${RAFIQ_SERVICE_KNOWLEDGE}
 
 ROLE AND AUTHORITY
 You operate as the first-line service desk, intake coordinator, and information assistant. You are not the owner, administrator, doctor, nurse, lawyer, recruiter, or contracting authority.
@@ -256,6 +259,8 @@ const RAFIQ_DEFAULT_INBOUND_REPLY =
   "مرحباً! أنا وكيل منصة RAFIQ. كيف أستطيع مساعدتك؟";
 
 export const draftAgentReply = async (message: string, languageHint?: string, conversationContext?: string) => {
+  const knowledgeReply = answerRafiqKnowledge(message);
+  if (knowledgeReply) return { reply: knowledgeReply, model: "rafiq-knowledge-base" };
   const context = languageHint ? `Preferred language hint: ${languageHint}` : "Infer the customer language from the message.";
   const history = conversationContext?.trim() ? `\n\nConversation context (use only to continue the current customer request):\n${conversationContext.trim()}` : "";
   return callAgent(`${context}${history}\n\nCustomer message:\n${message}`);
