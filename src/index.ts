@@ -215,8 +215,10 @@ const app=new Elysia()
     }
     const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
     let result;
-    try {\n      result=await draftAgentReply(textBody,"ar",`TELEGRAM ACTIVE CASE\\nChat ID: ${chatId}\\nCustomer name: ${senderName||"unknown"}\\nRecent conversation:\\n${conversationHistory}\\n\\nCHANNEL POLICY: Telegram is the active first-line RAFIQ channel. Handle normal service questions and care intake directly. Ask only the next missing question. If the case requires human/admin action, clearly tell the customer and provide WhatsApp +961 81 506 299 as the direct escalation channel. Never claim a transfer occurred unless confirmed.`);
-    } catch (agentError) {\n      console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));\n      result={reply:rafiqFallback(textBody),model:"rafig-local-fallback"};
+    try {
+      result=await draftAgentReply(textBody,"ar",`TELEGRAM ACTIVE CASE\\nChat ID: ${chatId}\\nCustomer name: ${senderName||"unknown"}\\nRecent conversation:\\n${conversationHistory}\\n\\nCHANNEL POLICY: Telegram is the active first-line RAFIQ channel. Handle normal service questions and care intake directly. Ask only the next missing question. If the case requires human/admin action, clearly tell the customer and provide WhatsApp +961 81 506 299 as the direct escalation channel. Never claim a transfer occurred unless confirmed.`);
+    } catch (agentError) {
+      console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));\n      result={reply:rafiqFallback(textBody),model:"rafig-local-fallback"};
     }
     const lower=result.reply.toLowerCase();
     const escalation=result.reply.includes("WhatsApp")||result.reply.includes("واتساب")||result.reply.includes("الإدارة")||result.reply.includes("ادارة رفيق")||result.reply.includes("قرار إداري")||result.reply.includes("تواصل مع فريق رفيق");
