@@ -119,8 +119,6 @@ const RAFIQ_I18N = (function () {
      compatible without rewriting their SEO/content structure. */
   var sourceToKey = Object.create(null);
   var legacyKeys = {
-    'اللغة': 'lang.note',
-    'العربية': 'lang.note',
     'RAFIQ | رفيق': 'home.h1',
     'نصل بالحب والأمان لرعاية العائلة': 'home.tagline',
     'منصة رعاية منزلية وخدمات صحية في لبنان': 'home.who',
@@ -145,7 +143,6 @@ const RAFIQ_I18N = (function () {
     'العلاج الفيزيائي': 'home.pick.4.t',
     'رعاية كبار السن': 'home.pick.1.t',
     'رعاية المرضى': 'home.pick.2.t',
-    'المناطق': 'regions.h1',
     'دليل الرعاية المنزلية RAFIQ': 'guide.h1',
     'الأسئلة الشائعة حول الرعاية المنزلية': 'faq.h1',
     'إرسال طلب الانتساب مجانًا': 'cta.request',
