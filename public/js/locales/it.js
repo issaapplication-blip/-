@@ -365,6 +365,7 @@
     'faq.end.p': 'Invia la tua richiesta e il nostro team la verificherà e organizzerà l’abbinamento.',
 
     'safety.nodiagnose': 'Non formuliamo diagnosi, non prescriviamo e non modifichiamo una cura medica.'
+    'home.welcome': "Benvenuti in Rafiq 🌿 Iniziamo con un passo semplice verso un’assistenza familiare più organizzata e sicura.",
   };
 
   RAFIQ_I18N.register('it', dict);
