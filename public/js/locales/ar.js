@@ -375,6 +375,7 @@
 
     /* ---- safety line, must never change meaning ---- */
     'safety.nodiagnose': 'لا نشخّص ولا نصف دواءً ولا نغيّر علاج الطبيب.'
+    'home.welcome': "أهلًا بكم في رفيق 🌿 نبدأ بخطوة بسيطة نحو رعاية أكثر تنظيمًا وأمانًا للعائلة.",
   };
 
   RAFIQ_I18N.register('ar', dict);
