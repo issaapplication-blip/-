@@ -124,14 +124,15 @@ const app=new Elysia()
   if(secret&&(!signature||!(await verifyKapsoSignature(raw,signature)))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
-  lastKapsoWebhookEvent=typeof payload?.event==="string"?payload.event:typeof payload?.type==="string"?payload.type:"unknown";
+  const eventBody=payload?.request_body??payload;
+  lastKapsoWebhookEvent=typeof eventBody?.event==="string"?eventBody.event:typeof eventBody?.type==="string"?eventBody.type:"unknown";
   const candidates:any[]=[];
-  if(Array.isArray(payload?.messages))candidates.push(...payload.messages.map((m:any)=>({message:m,conversation:payload?.conversation??{}})));
-  if(payload?.message)candidates.push({message:payload.message,conversation:payload?.conversation??payload?.data?.conversation??{}});
-  if(payload?.data?.message)candidates.push({message:payload.data.message,conversation:payload?.data?.conversation??payload?.conversation??{}});
-  if(Array.isArray(payload?.data?.messages))candidates.push(...payload.data.messages.map((m:any)=>({message:m,conversation:payload?.data?.conversation??payload?.conversation??{}})));
-  for(const message of extractIncomingMessages(payload))candidates.push({message,conversation:{phone_number:message.from}});
-  if(!candidates.length){set.status=200;return{ok:true,status:"ignored_no_message"}}
+  if(Array.isArray(eventBody?.messages))candidates.push(...eventBody.messages.map((m:any)=>({message:m,conversation:eventBody?.conversation??{}})));
+  if(eventBody?.message)candidates.push({message:eventBody.message,conversation:eventBody?.conversation??eventBody?.data?.conversation??{}});
+  if(eventBody?.data?.message)candidates.push({message:eventBody.data.message,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}});
+  if(Array.isArray(eventBody?.data?.messages))candidates.push(...eventBody.data.messages.map((m:any)=>({message:m,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}})));
+  for(const message of extractIncomingMessages(eventBody))candidates.push({message,conversation:{phone_number:message.from}});
+  if(!candidates.length){console.warn(JSON.stringify({event:"rafig_kapso_webhook_ignored",reason:"no_message",eventType:lastKapsoWebhookEvent,hasRequestBody:Boolean(payload?.request_body)}));set.status=200;return{ok:true,status:"ignored_no_message"}}
   const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
   return{ok:true,status:"processed",results};
 }).get("/api/webhooks/webhook/:webhookId",({params})=>({ok:true,status:"webhook_endpoint_ready",webhookId:String(params.webhookId??""),provider:"kapso",acceptedMethod:"POST"}))
@@ -143,14 +144,15 @@ const app=new Elysia()
   if(secret&&(!signature||!(await verifyKapsoSignature(raw,signature)))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
-  lastKapsoWebhookEvent=typeof payload?.event==="string"?payload.event:typeof payload?.type==="string"?payload.type:"unknown";
+  const eventBody=payload?.request_body??payload;
+  lastKapsoWebhookEvent=typeof eventBody?.event==="string"?eventBody.event:typeof eventBody?.type==="string"?eventBody.type:"unknown";
   const candidates:any[]=[];
-  if(Array.isArray(payload?.messages))candidates.push(...payload.messages.map((m:any)=>({message:m,conversation:payload?.conversation??{}})));
-  if(payload?.message)candidates.push({message:payload.message,conversation:payload?.conversation??payload?.data?.conversation??{}});
-  if(payload?.data?.message)candidates.push({message:payload.data.message,conversation:payload?.data?.conversation??payload?.conversation??{}});
-  if(Array.isArray(payload?.data?.messages))candidates.push(...payload.data.messages.map((m:any)=>({message:m,conversation:payload?.data?.conversation??payload?.conversation??{}})));
-  for(const message of extractIncomingMessages(payload))candidates.push({message,conversation:{phone_number:message.from}});
-  if(!candidates.length){set.status=200;return{ok:true,status:"ignored_no_message"}}
+  if(Array.isArray(eventBody?.messages))candidates.push(...eventBody.messages.map((m:any)=>({message:m,conversation:eventBody?.conversation??{}})));
+  if(eventBody?.message)candidates.push({message:eventBody.message,conversation:eventBody?.conversation??eventBody?.data?.conversation??{}});
+  if(eventBody?.data?.message)candidates.push({message:eventBody.data.message,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}});
+  if(Array.isArray(eventBody?.data?.messages))candidates.push(...eventBody.data.messages.map((m:any)=>({message:m,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}})));
+  for(const message of extractIncomingMessages(eventBody))candidates.push({message,conversation:{phone_number:message.from}});
+  if(!candidates.length){console.warn(JSON.stringify({event:"rafig_kapso_webhook_ignored",reason:"no_message",eventType:lastKapsoWebhookEvent,hasRequestBody:Boolean(payload?.request_body)}));set.status=200;return{ok:true,status:"ignored_no_message"}}
   const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
   return{ok:true,status:"processed",results};
 })
