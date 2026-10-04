@@ -373,4 +373,11 @@ const RAFIQ_I18N = (function () {
 })();
 
 if (typeof globalThis !== 'undefined') globalThis.RAFIQ_I18N = RAFIQ_I18N;
+
+/* Start automatically on every public page. */
+(function () {
+  function boot() { try { RAFIQ_I18N.start(); } catch (e) { console.error('RAFIQ i18n boot failed', e); } }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
+})();
 if (typeof module !== 'undefined' && module.exports) module.exports = RAFIQ_I18N;
