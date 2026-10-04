@@ -83,7 +83,7 @@ const supabaseServerRest=async(path:string,init:RequestInit={})=>{
   const headers=new Headers(init.headers);
   headers.set("apikey",SUPABASE_SERVICE_ROLE_KEY);
   headers.set("Content-Type","application/json");
-  if(!SUPABASE_SERVICE_ROLE_KEY.startsWith("sb_")) headers.set("Authorization","Bearer "+SUPABASE_SERVICE_ROLE_KEY);
+  headers.set("Authorization","Bearer "+SUPABASE_SERVICE_ROLE_KEY);
   const response=await fetch(SUPABASE_URL+path,{...init,headers});
   const body=await response.json().catch(()=>null);
   return {response,body};
