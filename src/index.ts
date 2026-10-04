@@ -116,7 +116,7 @@ const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)for(const [k,v] of Object.entries(securityHeaders))response.headers.set(k,v)})
 .get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
-.post("/api/kapso/webhook",async({request,set})=>{
+.post("/api/kapso/webhook",async({request,set}.post("/api/webhooks/webhook/:webhookId",async({request,set})=>{request,set}))=>{
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
