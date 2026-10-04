@@ -278,7 +278,9 @@ const RAFIQ_I18N = (function () {
     wrap.appendChild(btn);
     wrap.appendChild(menu);
     bar.appendChild(wrap);
-    document.body.appendChild(bar);
+    var host = document.querySelector('.topbar');
+    if (host) host.insertBefore(bar, host.firstChild);
+    else document.body.appendChild(bar);
 
     function open() {
       menu.hidden = false;
