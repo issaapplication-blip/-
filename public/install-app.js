@@ -110,65 +110,10 @@
     say('install.done', 'تم التثبيت ✅ التطبيق الآن على شاشتك.');
   });
 
-  /* ---------- make the manifest installable on ANY host -------------
-     Chrome refuses to install unless it can fetch both a 192 and a 512 icon.
-     Some hosts serve only part of the site, so a correct manifest can still
-     leave the user with no install button at all. When we detect that, we
-     publish a repaired manifest built from the one image that always loads. */
-  function iconLoads(src) {
-    return fetch(src, { cache: 'force-cache' })
-      .then(function (r) {
-        return !!r.ok && (r.headers.get('content-type') || '').indexOf('image') === 0;
-      })
-      .catch(function () { return false; });
-  }
-
-  function repairManifest() {
-    var link = document.querySelector('link[rel=manifest]');
-    if (!link || !window.fetch || !window.Blob) return Promise.resolve(false);
-
-    return fetch(link.href, { cache: 'no-store' })
-      .then(function (r) { return r.json(); })
-      .then(function (m) {
-        var icons = m.icons || [];
-        if (!icons.length) return false;
-
-        return Promise.all(icons.map(function (i) {
-          return iconLoads(new URL(i.src, location.href).href);
-        })).then(function (results) {
-          var size = function (i) { return parseInt(String(i.sizes).split('x')[0], 10) || 0; };
-          var ok192 = false, ok512 = false;
-          icons.forEach(function (i, n) {
-            if (!results[n]) return;
-            var s = size(i);
-            if (s >= 512) ok512 = true;
-            else if (s >= 192) ok192 = true;
-          });
-          if (ok192 && ok512) return false;          // nothing to repair
-
-          var logo = '/assets/rafig-logo.png';       // always served
-          m.icons = [
-            { src: logo, sizes: '192x192', type: 'image/png', purpose: 'any' },
-            { src: logo, sizes: '512x512', type: 'image/png', purpose: 'any' },
-            { src: logo, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
-          ];
-          (m.shortcuts || []).forEach(function (s) {
-            s.icons = [{ src: logo, sizes: '192x192' }];
-          });
-          link.href = URL.createObjectURL(
-            new Blob([JSON.stringify(m)], { type: 'application/manifest+json' })
-          );
-          if (window.console) console.info('RAFIQ: manifest repaired (host was missing an icon)');
-          return true;
-        });
-      })
-      .catch(function () { return false; });
-  }
-
   /* ---------- service worker: required for installability ---------- */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/sw.js?v=72', { updateViaCache: 'none' })
+      navigator.serviceWorker.register('/sw.js?v=80', { updateViaCache: 'none' })
         .catch(function () { /* the site still works without it */ });
     });
   }
@@ -268,15 +213,6 @@ window.RAFIQ_INSTALL = {
   function boot() {
     if (standalone()) { hide(); return; }
     show();
-
-    // verify the manifest is really installable on THIS host, and repair it
-    // when the host is missing an icon
-    repairManifest().then(function (repaired) {
-      window.RAFIQ_INSTALL.manifestRepaired = repaired;
-      try {
-        document.dispatchEvent(new CustomEvent('rafiq:manifest', { detail: { repaired: repaired } }));
-      } catch (e) { /* older browser */ }
-    });
 
     // give the browser a moment to fire beforeinstallprompt
     setTimeout(function () {
