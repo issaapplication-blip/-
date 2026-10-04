@@ -200,8 +200,6 @@ window.RAFIQ_INSTALL = {
     steps: steps,
     show: show,
     hide: hide,
-    repair: repairManifest,
-    manifestRepaired: false,
     diagnose: diagnose,
     reason: reason,
     reasonEntry: reasonEntry,
