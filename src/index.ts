@@ -229,7 +229,7 @@ const app=new Elysia()
 })
 .get("/api/telegram/status",async({set})=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,configured:false}}
-  try{const info=await telegramGetWebhookInfo();return{ok:true,configured:true,webhook:info?.result??null,autoReply:process.env.RAFIQ_TELEGRAM_AUTO_REPLY==="true"}}catch{set.status=502;return{ok:false,configured:true,error:"Telegram API unavailable"}}
+  try{const info=await telegramGetWebhookInfo();return{ok:true,configured:true,webhook:info?.result??null,autoReply:(process.env.RAFIQ_TELEGRAM_AUTO_REPLY??"true")==="true"}}catch{set.status=502;return{ok:false,configured:true,error:"Telegram API unavailable"}}
 })
 .post("/api/telegram/register-webhook",async({request,set})=>{
   if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}
