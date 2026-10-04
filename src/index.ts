@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
+import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
@@ -159,6 +160,60 @@ const app=new Elysia()
   if(!candidates.length){console.warn(JSON.stringify({event:"rafig_kapso_webhook_ignored",reason:"no_message",eventType:lastKapsoWebhookEvent,hasRequestBody:Boolean(payload?.request_body)}));set.status=200;return{ok:true,status:"ignored_no_message"}}
   const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
   return{ok:true,status:"processed",results};
+})
+.post("/api/telegram/webhook",async({request,set})=>{
+  if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
+  if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
+  const update=await request.json().catch(()=>null) as any;
+  const message=update?.message;
+  const chatId=message?.chat?.id;
+  const textBody=typeof message?.text==="string"?message.text.trim():"";
+  if(!chatId||!textBody)return{ok:true,status:"ignored_non_text"};
+  const externalConversationId=String(chatId);
+  const senderName=[message?.from?.first_name,message?.from?.last_name].filter(Boolean).join(" ").trim();
+  const username=typeof message?.from?.username==="string"?message.from.username:"";
+  const contextMessage={channel:"telegram",chat_id:chatId,telegram_user_id:message?.from?.id??null,username,sender_name:senderName,text:textBody,received_at:new Date().toISOString()};
+  try{
+    const existing=await supabaseServerRest("/rest/v1/rafiq_conversations?channel=eq.telegram&external_conversation_id=eq."+encodeURIComponent(externalConversationId)+"&select=id,context&limit=1");
+    const row=Array.isArray(existing.body)?existing.body[0]:null;
+    const previousContext=Array.isArray(row?.context)?row.context:[];
+    const nextContext=[...previousContext,contextMessage].slice(-20);
+    let conversationId=row?.id??null;
+    if(conversationId){
+      const updated=await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:nextContext,updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})});
+      if(!updated.response.ok)throw new Error("could not update Telegram conversation");
+    }else{
+      const created=await supabaseServerRest("/rest/v1/rafiq_conversations?on_conflict=channel%2Cexternal_conversation_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({channel:"telegram",external_conversation_id:externalConversationId,customer_phone:null,language:"ar",context:nextContext,escalation_state:"none",last_message_at:new Date().toISOString()})});
+      if(!created.response.ok)throw new Error("could not create Telegram conversation");
+      const createdRow=Array.isArray(created.body)?created.body[0]:created.body;
+      conversationId=createdRow?.id??null;
+    }
+    const result=await draftInboundReply(textBody);
+    await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_inbound_review",status:"open",payload:{channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model}})}).catch(()=>{});
+    if(process.env.RAFIQ_TELEGRAM_AUTO_REPLY==="true"){
+      const outbound=await telegramSendText(chatId,result.reply);
+      await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:result.reply,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});
+      return{ok:true,status:"auto_replied",message_id:outbound?.result?.message_id??null};
+    }
+    await telegramSendText(chatId,"وصل طلبك إلى رفيق 🇱🇧. تم تسجيله للمراجعة والمتابعة، وسيتابع فريق رفيق الطلب معك.").catch(()=>{});
+    return{ok:true,status:"received_for_admin_review",conversation_id:conversationId};
+  }catch(error){
+    console.error(JSON.stringify({event:"rafig_telegram_webhook_failed",error:String(error).slice(0,500)}));
+    set.status=500;return{ok:false,error:"Telegram message processing failed"};
+  }
+})
+.get("/api/telegram/status",async({set})=>{
+  if(!telegramConfigured()){set.status=503;return{ok:false,configured:false}}
+  try{const info=await telegramGetWebhookInfo();return{ok:true,configured:true,webhook:info?.result??null,autoReply:process.env.RAFIQ_TELEGRAM_AUTO_REPLY==="true"}}catch{set.status=502;return{ok:false,configured:true,error:"Telegram API unavailable"}}
+})
+.post("/api/telegram/register-webhook",async({request,set})=>{
+  if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}
+  if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot token is not configured"}}
+  const base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"");
+  try{
+    const result=await telegramSetWebhook(base+"/api/telegram/webhook",telegramWebhookSecret()||undefined);
+    return{ok:true,webhookUrl:base+"/api/telegram/webhook",result};
+  }catch{set.status=502;return{ok:false,error:"Telegram webhook registration failed"}}
 })
 .get("/api/status",()=>({ok:true,platform:"RAFIQ | رفيق",mode:kapsoConfigured()?"kapso-agent-ready":"meta-cloud-api-ready",kapsoConfigured:kapsoConfigured(),kapsoEnabled:process.env.KAPSO_ENABLED==="true",kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret()),kapsoWebhookLastReceivedAt:lastKapsoWebhookAt,kapsoWebhookLastEvent:lastKapsoWebhookEvent,whatsappSending:process.env.WHATSAPP_SENDING_ENABLED==="true",whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",whatsappWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN&&process.env.META_APP_SECRET),whatsappOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN&&process.env.META_PHONE_NUMBER_ID),openAIConfigured:Boolean(process.env.OPENAI_API_KEY),agentModel:effectiveAgentModel(),channelMode:"agent-draft-admin-publish",proactiveMessagesRequireApproval:true}))
 .post("/api/admin/send-approved-welcome",async({request,set})=>{
