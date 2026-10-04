@@ -292,3 +292,24 @@ a.btn {
   .ra-lang-btn { font-size: 13px; padding: 8px 11px; }
   .ra-lang-btn .lbl { max-width: 92px; }
 }
+
+/* RAFIQ language switcher: one control only, inside the logo/header bar. */
+[data-rafig-language-switcher], .rafig-language-switcher { display:none !important; }
+.topbar > .ra-lang {
+  position:static;
+  inset:auto;
+  width:auto;
+  padding:0;
+  background:transparent;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  pointer-events:auto;
+  direction:ltr;
+  text-align:left;
+  flex:0 0 auto;
+}
+.topbar > .ra-lang > * { pointer-events:auto; }
+.topbar > .ra-lang .ra-lang-menu { z-index:10000; }
+@media (max-width:699px) {
+  .topbar > .ra-lang .ra-lang-btn { min-height:44px; }
+}
