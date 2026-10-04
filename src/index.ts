@@ -203,7 +203,7 @@ const app=new Elysia()
       if(!updated.response.ok)throw new Error("could not update Telegram conversation");
     }else{
       const created=await supabaseServerRest("/rest/v1/rafiq_conversations?on_conflict=channel%2Cexternal_conversation_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({channel:"telegram",external_conversation_id:externalConversationId,customer_phone:null,language:"ar",context:nextContext,escalation_state:"none",last_message_at:new Date().toISOString()})});
-      if(!created.response.ok)throw new Error("could not create Telegram conversation");
+      if(!created.response.ok){ console.error(JSON.stringify({event:"rafig_telegram_conversation_create_failed",status:created.response.status,body:created.body})); }
       const createdRow=Array.isArray(created.body)?created.body[0]:created.body;
       conversationId=createdRow?.id??null;
     }
@@ -214,11 +214,11 @@ const app=new Elysia()
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
     const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
-    const result=await draftAgentReply(textBody,"ar",`TELEGRAM ACTIVE CASE\nChat ID: ${chatId}\nCustomer name: ${senderName||"unknown"}\nRecent conversation:\n${conversationHistory}\n\nCHANNEL POLICY: Telegram is the active first-line RAFIQ channel. Handle normal service questions and care intake directly. Ask only the next missing question. If the case requires human/admin action, clearly tell the customer and provide WhatsApp +961 81 506 299 as the direct escalation channel. Never claim a transfer occurred unless confirmed.`);
+    let result;\n    try {\n      result=await draftAgentReply(textBody,"ar",`TELEGRAM ACTIVE CASE\\nChat ID: ${chatId}\\nCustomer name: ${senderName||"unknown"}\\nRecent conversation:\\n${conversationHistory}\\n\\nCHANNEL POLICY: Telegram is the active first-line RAFIQ channel. Handle normal service questions and care intake directly. Ask only the next missing question. If the case requires human/admin action, clearly tell the customer and provide WhatsApp +961 81 506 299 as the direct escalation channel. Never claim a transfer occurred unless confirmed.`);\n    } catch (agentError) {\n      console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));\n      result={reply:rafiqFallback(textBody),model:"rafig-local-fallback"};\n    }
     const lower=result.reply.toLowerCase();
     const escalation=result.reply.includes("WhatsApp")||result.reply.includes("واتساب")||result.reply.includes("الإدارة")||result.reply.includes("ادارة رفيق")||result.reply.includes("قرار إداري")||result.reply.includes("تواصل مع فريق رفيق");
     const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,escalation};
-    if(escalation) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
+    if(escalation && conversationId) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
     const outbound=await telegramSendText(chatId,result.reply);
     await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:result.reply,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString(),escalation_state:escalation?"admin_review":"none"})}).catch(()=>{});
     return{ok:true,status:escalation?"auto_replied_and_escalated":"auto_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
@@ -229,7 +229,7 @@ const app=new Elysia()
 })
 .get("/api/telegram/status",async({set})=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,configured:false}}
-  try{const info=await telegramGetWebhookInfo();return{ok:true,configured:true,webhook:info?.result??null,autoReply:(process.env.RAFIQ_TELEGRAM_AUTO_REPLY??"true")==="true"}}catch{set.status=502;return{ok:false,configured:true,error:"Telegram API unavailable"}}
+  try{const info=await telegramGetWebhookInfo();return{ok:true,configured:true,webhook:info?.result??null,autoReply:true}}catch{set.status=502;return{ok:false,configured:true,error:"Telegram API unavailable"}}
 })
 .post("/api/telegram/register-webhook",async({request,set})=>{
   if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}
