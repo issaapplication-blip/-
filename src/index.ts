@@ -129,7 +129,7 @@ const telegramCommandReply = (command: string) => {
 };
 const registerTelegramWebhookOnStartup = async () => {
   if (!telegramConfigured()) return;
-  const base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replaceAll("/","");
+  let base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"); while(base.endsWith("/")) base=base.slice(0,-1);
   try {
     await telegramSetWebhook(base+"/api/telegram/webhook",telegramWebhookSecret()||undefined);
     console.log(JSON.stringify({event:"rafig_telegram_webhook_registered",url:base+"/api/telegram/webhook"}));
