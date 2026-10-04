@@ -9,7 +9,7 @@
   const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
-  const APP_VERSION = '2026.10.03.1';
+  const APP_VERSION = '2026.10.04.1';
 
   const fixedIds = ['joinBtn', 'careBtn', 'status-button'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
@@ -62,9 +62,13 @@
     button.addEventListener('click',async function(event){
       event.preventDefault();
       event.stopPropagation();
+      if (window.RAFIQ_INSTALL && typeof window.RAFIQ_INSTALL.install === 'function' && !window.__RAFIQ_DEFERRED_INSTALL_PROMPT__) {
+        window.RAFIQ_INSTALL.install(event);
+        return;
+      }
       const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
       if(!prompt){
-        showInstallStatus('جارٍ تجهيز التثبيت المباشر… حدّث الصفحة مرة واحدة ثم اضغط الزر مجددًا.');
+        showInstallStatus('جارٍ تجهيز التثبيت المباشر… انتظر لحظة ثم اضغط الزر مجددًا.');
         return;
       }
       try{
@@ -192,7 +196,7 @@
     ensureInstallButton();
     ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=79',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=80',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6','1');
           location.reload();
