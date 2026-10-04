@@ -364,7 +364,7 @@
     'faq.end.h': 'Prêt à demander un service ?',
     'faq.end.p': 'Envoyez votre demande et notre équipe l’examinera et organisera la mise en relation.',
 
-    'safety.nodiagnose': 'Nous ne posons pas de diagnostic, ne prescrivons pas et ne modifions pas un traitement médical.'
+    'safety.nodiagnose': 'Nous ne posons pas de diagnostic, ne prescrivons pas et ne modifions pas un traitement médical.',
     'home.welcome': "Bienvenue chez Rafiq 🌿 Nous commençons par une étape simple vers des soins familiaux plus organisés et plus sûrs.",
   };
 
