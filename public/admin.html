@@ -191,37 +191,39 @@ async function reviewRequest(id,status){
   const notes=prompt(promptText)||null;
   let data,error;
   ({data,error}=await db.rpc('admin_approve_application_intake',{p_intake_id:id,p_status:status,p_notes:notes}));
-  if(!error && status==='approved' && data?.barcode_code){
-    const contactPhone=data?.whatsapp_phone||x.payload?.whatsapp_phone||x.payload?.whatsapp||x.phone||'غير محدد';
-    const contactEmail=data?.email||x.payload?.email||x.payload?.personal_email||x.payload?.email_address||'غير محدد';
-    const role=(data?.member_type||(
-      /ممرض|nurse/i.test(x.application_type||'')?'ممرض/ة':
-      /فيزيائي|physio/i.test(x.application_type||'')?'معالج فيزيائي':
-      /رعاية|caregiver/i.test(x.application_type||'')?'مقدم رعاية':
-      /انتساب|family/i.test(x.application_type||'')?'عائلة/منتسب':(x.application_type||'عضو منصة')
-    ));
-    const barcodeCode=[x.applicant_name||'العضو',x.area||'غير محدد',x.phone||'غير محدد','واتساب',contactPhone,contactEmail,role].map(v=>String(v).trim()).join('_');
-    const hashBytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(barcodeCode));
-    const codeHash=Array.from(new Uint8Array(hashBytes)).map(v=>v.toString(16).padStart(2,'0')).join('');
-    const {error:barcodeError}=await db.from('issued_barcodes').upsert({intake_id:id,code:barcodeCode,code_hash:codeHash,member_type:role,status:'active',issued_by:(await db.auth.getUser()).data.user.id,updated_at:new Date().toISOString()},{onConflict:'intake_id'});
-    if(barcodeError){showMsg('تم قبول الطلب لكن تعذر تحديث باركود بيانات الاتصال: '+barcodeError.message);return;}
-    data.barcode_code=barcodeCode;
-    data.whatsapp_phone=contactPhone==='غير محدد'?null:contactPhone;
-    data.email=contactEmail==='غير محدد'?null:contactEmail;
+  if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}
+
+  if(status==='approved' && data?.barcode_code){
     const box=document.createElement('div');
     box.className='ok';
-    box.innerHTML='<strong>تم قبول الطلب وإنشاء باركود العضوية.</strong><br><code style="display:block;direction:ltr;white-space:normal;overflow-wrap:anywhere;margin-top:8px">'+esc(data.barcode_code)+'</code><div class="small" style="margin-top:8px">واتساب: <span dir="ltr">'+esc(contactPhone)+'</span> · البريد: '+esc(contactEmail)+'</div><button class="btn alt" type="button" id="copyBarcodeNow" style="margin-top:8px">نسخ الباركود</button>';
+    box.innerHTML='<strong>تم قبول الطلب وإنشاء باركود العضوية.</strong><br><code style="display:block;direction:ltr;white-space:normal;overflow-wrap:anywhere;margin-top:8px">'+esc(data.barcode_code)+'</code><div class="small" style="margin-top:8px">سيتم إرسال إشعار القبول والباركود عبر واتساب بعد الموافقة.</div><button class="btn alt" type="button" id="copyBarcodeNow" style="margin-top:8px">نسخ الباركود</button>';
     document.querySelector('#modalBody')?.prepend(box);
-    document.getElementById('copyBarcodeNow')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(String(data.barcode_code));showMsg('تم نسخ الباركود.',true)}catch(_){showMsg('تم إنشاء الباركود، لكن تعذر النسخ التلقائي.')}}); 
-    await new Promise(r=>setTimeout(r,900));
+    document.getElementById('copyBarcodeNow')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(String(data.barcode_code));showMsg('تم نسخ الباركود.',true)}catch(_){showMsg('تم إنشاء الباركود، لكن تعذر النسخ التلقائي.')}});
+
+    try{
+      const session=(await db.auth.getSession()).data.session;
+      if(!session?.access_token)throw new Error('جلسة المدير غير متاحة');
+      const resp=await fetch('/api/admin/send-approved-welcome',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+        body:JSON.stringify({applicationId:id})
+      });
+      const sendResult=await resp.json().catch(()=>({}));
+      if(!resp.ok && sendResult?.status!=='already_sent'){
+        showMsg('تم قبول الطلب وإنشاء الباركود، لكن تعذر إرسال إشعار واتساب: '+(sendResult?.error||'خطأ غير معروف'));
+      }else{
+        showMsg(sendResult?.status==='already_sent'?'إشعار القبول كان مرسلاً مسبقاً.':'تم إرسال إشعار القبول والباركود عبر واتساب بنجاح.',true);
+      }
+    }catch(e){
+      showMsg('تم قبول الطلب وإنشاء الباركود، لكن تعذر إرسال إشعار واتساب: '+String(e));
+    }
   }
-  if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}
-  await db.from('audit_logs').insert({action:'admin_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes}});
+
+  await db.from('audit_logs').insert({action:'admin_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes,notification_attempted:status==='approved'}});
   $('modal').classList.add('hidden');
   await loadAll();
-  showMsg('تم تسجيل قرار المدير بنجاح.',true);
+  if(status!=='approved')showMsg('تم تسجيل قرار المدير بنجاح.',true);
 }
-
 async function loadAll(){
   await Promise.all([loadCounts(),loadRequests(),loadFiles()]);
   $('lastUpdate').textContent='آخر تحديث: '+new Date().toLocaleString('ar-LB');
