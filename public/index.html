@@ -52,7 +52,7 @@
 <img class="hero-logo" src="/rafig-approved-logo.jpg?v=20261002" alt="RAFIQ | رفيق — الشعار الرسمي" width="512" height="512" fetchpriority="high" decoding="async">
 <h1 style="margin:2px 0 0;color:var(--green)">رفيق | RAFIQ</h1>
 <p class="tagline">نصل بالحب والأمان لرعاية العائلة</p>
-<div class="welcome" id="dailyWelcome" aria-live="polite"></div>
+<div class="welcome" id="dailyWelcome" aria-live="polite" data-i18n="home.welcome"></div>
 <p class="lead"><strong>منصة رعاية منزلية وخدمات صحية في لبنان</strong> تنظّم طلبات العائلات، وتربطها بمقدمي الرعاية والممرضين والمعالجين الفيزيائيين، وتبني شبكة خدمات مساندة وفق مراجعة الإدارة والاتفاقات الموثقة.</p>
 <div class="actions">
 <a class="btn" href="/app.html">📝 طلب رعاية أو انتساب</a>
@@ -129,19 +129,10 @@
 </script>
 <script>
 (function(){
-  const messages=[
-    "أهلًا بكم في رفيق 🌿 اليوم نبدأ بخطوة بسيطة نحو رعاية أكثر تنظيمًا وأمانًا للعائلة.",
-    "مرحبًا بكم في RAFIQ 🤍 وجودكم مهم؛ أخبرونا بما تحتاجه العائلة وسنرتب الطلب بوضوح.",
-    "صباح/مساء الخير من رفيق 🌿 الرعاية تبدأ بالاستماع وفهم الاحتياج قبل اختيار الخدمة.",
-    "أهلًا بكم 🤝 رفيق يجمع العائلات وأصحاب الخبرة ضمن شبكة رعاية منظمة في لبنان.",
-    "مرحبًا بكم في RAFIQ 🏡 هدفنا أن تكون رحلة طلب الرعاية أسهل وأوضح للعائلة والمنتسب.",
-    "أهلًا بكم 🌸 لكل مسن ومريض وعائلة ومقدم خدمة مكان مهم في منظومة رفيق.",
-    "مرحبًا بكم في رفيق 💚 نبدأ من احتياجكم، وننظم المعلومات، ثم نترك قرارات الاعتماد والمطابقة للإدارة."
-  ];
   const el=document.getElementById("dailyWelcome");
   if(el){
-    const day=Math.floor(Date.now()/86400000);
-    el.textContent=messages[day%messages.length];
+    el.setAttribute("data-i18n","home.welcome");
+    document.dispatchEvent(new CustomEvent("rafiq:i18n:refresh"));
   }
 })();
 </script>
