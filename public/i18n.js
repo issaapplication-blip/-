@@ -113,6 +113,117 @@ const RAFIQ_I18N = (function () {
     return null;
   }
 
+  /* Some older public pages were written before data-i18n markers were
+     added. Their Arabic copy is still valid source copy, so translate it
+     by looking it up in the Arabic source bundle. This keeps old pages
+     compatible without rewriting their SEO/content structure. */
+  var sourceToKey = Object.create(null);
+  var legacyKeys = {
+    'اللغة': 'lang.note',
+    'العربية': 'lang.note',
+    'RAFIQ | رفيق': 'home.h1',
+    'نصل بالحب والأمان لرعاية العائلة': 'home.tagline',
+    'منصة رعاية منزلية وخدمات صحية في لبنان': 'home.who',
+    'طلب رعاية أو انتساب': 'nav.form',
+    'الرئيسية': 'nav.home',
+    'الخدمات': 'nav.services',
+    'المناطق': 'nav.regions',
+    'كل المناطق': 'nav.allRegions',
+    'دليل الرعاية': 'nav.guideAlt',
+    'الأسئلة الشائعة': 'nav.faq',
+    'لمقدمي الرعاية': 'nav.caregivers',
+    'مقدمو الرعاية': 'nav.caregivers',
+    'اسأل الوكيل': 'nav.agent',
+    'مساعد رفيق': 'nav.agent',
+    'واتساب RAFIQ': 'cta.wa',
+    'واتساب': 'cta.waShort',
+    'تقديم طلب': 'cta.request',
+    'ابدأ التسجيل': 'services.join.cta',
+    'خدمات RAFIQ': 'services.h1',
+    'الرعاية المنزلية': 'services.home.h',
+    'التمريض المنزلي': 'home.pick.3.t',
+    'العلاج الفيزيائي': 'home.pick.4.t',
+    'رعاية كبار السن': 'home.pick.1.t',
+    'رعاية المرضى': 'home.pick.2.t',
+    'المناطق': 'regions.h1',
+    'دليل الرعاية المنزلية RAFIQ': 'guide.h1',
+    'الأسئلة الشائعة حول الرعاية المنزلية': 'faq.h1',
+    'إرسال طلب الانتساب مجانًا': 'cta.request',
+    'إرسال الطلب': 'cta.request',
+    'انتظرونا قريبًا': 'services.soon.badge',
+    'خدمات قادمة': 'services.soon.h',
+    'التسجيل': 'care.i1.h',
+    'وظائف الرعاية': 'care.i2.h',
+    'CV احترافي ATS': 'care.i3.h',
+    'بدون اشتراك': 'care.i4.h'
+  };
+
+  function normalizeSource(s) {
+    return String(s == null ? '' : s).replace(/\\s+/g, ' ').trim();
+  }
+
+  function rebuildSourceIndex() {
+    sourceToKey = Object.create(null);
+    var ar = bundles[DEFAULT] || {};
+    Object.keys(ar).forEach(function (key) {
+      var value = normalizeSource(ar[key]);
+      if (value) sourceToKey[value] = key;
+    });
+    Object.keys(legacyKeys).forEach(function (value) {
+      sourceToKey[normalizeSource(value)] = legacyKeys[value];
+    });
+  }
+
+  function translateSource(text, lang) {
+    var normalized = normalizeSource(text);
+    if (!normalized) return null;
+    var key = sourceToKey[normalized];
+    return key ? translate(key, lang) : null;
+  }
+
+  function translateLegacyPage(lang) {
+    if (lang === DEFAULT) return 0;
+    rebuildSourceIndex();
+    var changed = 0;
+    var root = document.querySelector('main') || document.body;
+    if (!root) return changed;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    var node;
+    while ((node = walker.nextNode())) {
+      var parent = node.parentElement;
+      if (!parent || parent.closest('script,style,template,.ra-lang,[data-i18n]')) continue;
+      var raw = node.nodeValue;
+      var translated = translateSource(raw, lang);
+      if (translated && normalizeSource(raw) === normalizeSource(translated)) continue;
+      if (translated) {
+        var leading = raw.match(/^\\s*/)?.[0] || '';
+        var trailing = raw.match(/\\s*$/)?.[0] || '';
+        node.nodeValue = leading + translated + trailing;
+        changed++;
+      }
+    }
+    return changed;
+  }
+
+  function translateAttributes(lang) {
+    if (lang === DEFAULT) return 0;
+    var changed = 0;
+    var attrs = ['title','alt','aria-label'];
+    var els = document.querySelectorAll('[title],[alt],[aria-label]');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (el.closest('.ra-lang,script,style,template')) continue;
+      for (var j = 0; j < attrs.length; j++) {
+        var name = attrs[j];
+        if (!el.hasAttribute(name)) continue;
+        var raw = el.getAttribute(name);
+        var val = translateSource(raw, lang);
+        if (val && val !== raw) { el.setAttribute(name, val); changed++; }
+      }
+    }
+    return changed;
+  }
+
   /* Apply a language to the current page */
   function apply(code, opts) {
     opts = opts || {};
@@ -142,6 +253,11 @@ const RAFIQ_I18N = (function () {
       if (val !== null && val !== '') { el.textContent = val; filled++; }
       else { missing++; }
     }
+
+    // Translate legacy pages that predate data-i18n markers.
+    var legacyFilled = translateLegacyPage(code);
+    var attributeFilled = translateAttributes(code);
+    filled += legacyFilled + attributeFilled;
 
     // placeholder attributes, so inputs are never in the wrong language
     var ph = document.querySelectorAll('[data-i18n-placeholder]');
@@ -348,7 +464,7 @@ const RAFIQ_I18N = (function () {
       write(want);                      // and remember it from now on
     }
     buildButton();
-    return loadScript(want).then(function () {
+    return Promise.all([loadScript(DEFAULT), loadScript(want)]).then(function () {
       var r = setLanguage(want);
       r.auto = auto;
       r.detected = detected;
@@ -368,7 +484,7 @@ const RAFIQ_I18N = (function () {
     LANGS: LANGS,
     get current() { return current; },
     get detected() { return detected; },
-    version: '2'
+    version: '3'
   };
 })();
 
