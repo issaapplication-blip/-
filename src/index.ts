@@ -131,7 +131,7 @@ const registerTelegramWebhookOnStartup = async () => {
   if (!telegramConfigured()) return;
   let base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"); while(base.endsWith("/")) base=base.slice(0,-1);
   try {
-    await telegramSetWebhook(base+"/api/telegram/webhook",telegramWebhookSecret()||undefined);
+    await telegramSetWebhook(base+"/api/telegram/webhook?v=3",telegramWebhookSecret()||undefined);
     console.log(JSON.stringify({event:"rafig_telegram_webhook_registered",url:base+"/api/telegram/webhook"}));
   } catch (error) {
     console.error(JSON.stringify({event:"rafig_telegram_webhook_registration_failed",error:String(error).slice(0,200)}));
