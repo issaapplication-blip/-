@@ -365,6 +365,7 @@
     'faq.end.p': 'Senden Sie Ihre Anfrage; unser Team prüft sie und organisiert die Vermittlung.',
 
     'safety.nodiagnose': 'Wir stellen keine Diagnose, verschreiben nicht und ändern keine ärztliche Behandlung.'
+    'home.welcome': "Willkommen bei Rafiq 🌿 Wir beginnen mit einem einfachen Schritt zu einer besser organisierten und sichereren Betreuung Ihrer Familie.",
   };
 
   RAFIQ_I18N.register('de', dict);
