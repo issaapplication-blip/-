@@ -134,7 +134,8 @@ const app=new Elysia()
   if(!candidates.length){set.status=200;return{ok:true,status:"ignored_no_message"}}
   const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
   return{ok:true,status:"processed",results};
-}).post("/api/webhooks/webhook/:webhookId",async({request,set})=>{
+}).get("/api/webhooks/webhook/:webhookId",({params})=>({ok:true,status:"webhook_endpoint_ready",webhookId:String(params.webhookId??""),provider:"kapso",acceptedMethod:"POST"}))
+.post("/api/webhooks/webhook/:webhookId",async({request,set})=>{
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
