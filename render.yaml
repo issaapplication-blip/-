@@ -12,7 +12,7 @@ services:
       - key: WHATSAPP_SENDING_ENABLED
         value: "true"
       - key: RAFIQ_WHATSAPP_AUTO_REPLY
-        value: "false"
+        value: "true"
       - key: KAPSO_ENABLED
         value: "true"
       - key: KAPSO_WEBHOOK_AUTOCONFIG
