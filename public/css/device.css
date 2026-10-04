@@ -1,0 +1,294 @@
+/* ==========================================================
+   RAFIQ — cross-device readiness
+   ------------------------------------------------------------
+   Fixes two real defects that only appear on phones and tablets:
+
+   1) iOS and iPad in landscape slide the top and bottom of the
+      page under the notch and the home indicator. Padding with
+      env(safe-area-inset-*) keeps every control reachable.
+
+   2) iOS Safari silently enlarges text in landscape, which
+      overflows the layout and breaks the grids. Fixing the
+      text-size-adjust stops that, and the type stays responsive
+      with clamp() instead.
+
+   It also holds the space for the language bar, so the bar can sit
+   on top of the page without ever covering a heading or a logo.
+   ========================================================== */
+
+:root {
+  --ra-sat: env(safe-area-inset-top, 0px);
+  --ra-sar: env(safe-area-inset-right, 0px);
+  --ra-sab: env(safe-area-inset-bottom, 0px);
+  --ra-sal: env(safe-area-inset-left, 0px);
+  /* height reserved for the fixed language bar + its breathing room */
+  --ra-langbar: 60px;
+}
+
+body {
+  padding-left:  var(--ra-sal);
+  padding-right: var(--ra-sar);
+  padding-bottom: var(--ra-sab);
+  /* the top inset belongs to the language bar, not to the page */
+  padding-top: calc(var(--ra-sat) + var(--ra-langbar));
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ==========================================================
+   The language bar.
+
+   It is pinned to the physical top-left corner in EVERY language.
+   It deliberately does not use inset-inline-start: that would move
+   it to the right-hand side the moment the page flips to Arabic,
+   which is exactly the kind of surprise a language switch must
+   never produce.
+
+   "Physical" also means the safe-area maths stays simple: on a
+   notched phone in landscape the inset lands on the left edge,
+   and left: inset + gap keeps the button clear of the notch.
+   ========================================================== */
+
+.ra-lang {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  padding: calc(var(--ra-sat) + 8px) calc(var(--ra-sar) + 12px) 0 calc(var(--ra-sal) + 10px);
+  background: linear-gradient(180deg, rgba(255,255,255,.97) 62%, rgba(255,255,255,0));
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+  pointer-events: none;      /* the bar itself never eats a tap */
+  /* force the bar's own layout left-to-right. In an RTL flex row the
+     first child would otherwise sit on the right, which is exactly
+     the jump we are trying to avoid. */
+  direction: ltr;
+  text-align: left;
+}
+
+.ra-lang > * { pointer-events: auto; }
+
+.ra-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;                 /* iOS minimum comfortable target */
+  padding: 9px 13px;
+  border: 1px solid #cfe3da;
+  border-radius: 999px;
+  background: #fff;
+  color: #0b6b4a;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(8, 90, 62, .13);
+}
+.ra-lang-btn:hover { border-color: #0f9c6d; }
+.ra-lang-btn:active { transform: translateY(1px); }
+.ra-lang-btn:focus-visible { outline: 3px solid #0f9c6d; outline-offset: 2px; }
+.ra-lang-btn .gl { font-size: 17px; line-height: 1; }
+.ra-lang-btn .lbl { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ra-lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 210px;
+  background: #fff;
+  border: 1px solid #dce8e2;
+  border-radius: 16px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .18);
+  padding: 6px;
+}
+.ra-lang-menu[hidden] { display: none; }
+
+.ra-lang-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #17372d;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.ra-lang-menu button:hover  { background: #f1f8f5; }
+.ra-lang-menu button[aria-current="true"] { background: #e7f5ef; color: #087f58; }
+.ra-lang-menu button .gl { font-size: 19px; line-height: 1; }
+.ra-lang-menu button .tick { margin-left: auto; font-weight: 900; color: #087f58; }
+.ra-lang-menu .note {
+  padding: 9px 12px 7px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #6b7c75;
+  border-top: 1px solid #eef4f1;
+  margin-top: 4px;
+}
+
+/* a narrow phone has to fit five scripts, so keep the type fluid */
+.cta .c-main { font-size: clamp(15px, 4.4vw, 19px); }
+.brand h1     { font-size: clamp(21px, 6.4vw, 30px); }
+.brand .tagline { font-size: clamp(14px, 3.9vw, 17px); }
+.page-head h1 { font-size: clamp(19px, 5.6vw, 26px); }
+.pick .t      { font-size: clamp(13.5px, 3.8vw, 17px); }
+.pick .d      { font-size: clamp(11.5px, 3.2vw, 13.5px); }
+h2            { font-size: clamp(17px, 4.6vw, 22px); }
+
+/* a Latin script needs a touch more air than Arabic */
+html[lang="en"] body, html[lang="fr"] body,
+html[lang="it"] body, html[lang="de"] body { letter-spacing: .1px; }
+html[lang="en"] .brand .logo, html[lang="fr"] .brand .logo,
+html[lang="it"] .brand .logo, html[lang="de"] .brand .logo { width: min(230px, 58vw); }
+
+/* ==========================================================
+   The logo at the top of the page.
+
+   It is pinned to the physical RIGHT edge in every language, for
+   the same reason the language bar is pinned to the physical left:
+   a header that jumps sides when the visitor changes language
+   reads as a glitch.
+
+   Three traps this block deliberately avoids:
+
+   1) No logical properties. `justify-self: end` and
+      `inset-inline-start` are relative to the writing direction, so
+      they put the logo on the LEFT the moment the page flips to
+      Arabic - the exact opposite of what is wanted here. `float`
+      and `margin-left` are physical, so they behave identically in
+      RTL and LTR.
+
+   2) Specificity. The pages carry their own `.logo` / `.brand-logo`
+      rules with `margin:0 auto !important`. A single-class rule here
+      would LOSE to `.brand .logo`, so every wrapper that actually
+      exists in the project is named explicitly and at one level
+      higher.
+
+   3) Inline styles. Three pages put `style="text-align:center"` on
+      the very element that holds the logo, and an inline style beats
+      any stylesheet. `:has()` is the only way to reach the parent
+      from here, so it is used to set the text back to the left. If a
+      browser is too old for `:has()` the text simply stays centred,
+      which still looks correct - only the logo placement depends on it.
+   ========================================================== */
+
+.brand img[src*="rafig-logo"],
+.page-head img[src*="rafig-logo"],
+.card img[src*="rafig-logo"],
+img.logo,
+img.brand-logo,
+img[src*="rafig-logo"] {
+  display: block;
+  margin-left: auto !important;   /* push to the physical right */
+  margin-right: 0 !important;
+}
+
+/* the words beside the logo read from the left */
+.brand,
+.page-head { text-align: left; }
+.card:has(> img[src*="rafig-logo"]),
+article.card:has(> img[src*="rafig-logo"]) { text-align: left !important; }
+
+/* On a wide screen the name, the tagline and the line about the
+   platform sit BESIDE the logo instead of under it, so the header
+   stays one tidy row instead of a tall stack. float:right is what
+   makes this direction-proof. */
+@media (min-width: 700px) {
+  .brand img[src*="rafig-logo"],
+  .page-head img[src*="rafig-logo"],
+  .card img[src*="rafig-logo"],
+  img[src*="rafig-logo"] {
+    float: right;
+    margin: 4px 0 10px 22px !important;   /* the 22px sits on the left: the gap */
+  }
+  /* whatever follows the logo must not wrap around it */
+  .brand::after,
+  .page-head::after,
+  .card:has(> img[src*="rafig-logo"])::after { content: ""; display: block; clear: both; }
+  .cta, .actions, #installHint, .pick, .grid { clear: both; }
+  .brand h1, .brand .tagline, .brand .who,
+  .page-head h1, .page-head .tagline { text-align: left; }
+}
+
+/* On a narrow phone the logo needs its full width, so it goes on its
+   own line above the words - still flush to the right. */
+@media (max-width: 699px) {
+  .brand img[src*="rafig-logo"],
+  .page-head img[src*="rafig-logo"],
+  .card img[src*="rafig-logo"],
+  img[src*="rafig-logo"] {
+    float: none;
+    margin-bottom: 10px !important;
+  }
+  .brand h1, .brand .tagline, .brand .who,
+  .page-head h1, .page-head .tagline { text-align: left; }
+}
+
+/* a Latin script is wider than Arabic, so the logo box can be a
+   little larger without the name wrapping under it too early */
+html[lang="en"] img[src*="rafig-logo"],
+html[lang="fr"] img[src*="rafig-logo"],
+html[lang="it"] img[src*="rafig-logo"],
+html[lang="de"] img[src*="rafig-logo"] { width: min(230px, 56vw); }
+
+/* ==========================================================
+   Tap targets.
+
+   iOS treats anything under 44x44 CSS pixels as a small target and
+   users routinely mis-tap them. Several of the page stylesheets set
+   their buttons to 39-41px, which is below the threshold, so the
+   floor is enforced here rather than left to each page.
+
+   Anchors need flex centring because an inline-block anchor sits its
+   text on the text baseline; a real <button> already centres its own
+   content, so it only needs the height.
+   ========================================================== */
+
+a.btn,
+button.btn,
+.btn.install,
+[data-rafiq-install] {
+  min-height: 44px;
+}
+
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  a.btn,
+  button.btn,
+  .btn.install,
+  [data-rafiq-install] { min-height: 46px; }
+}
+
+/* shown only on a page that has no translation yet */
+.ra-untranslated {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: #fff8e8;
+  border: 1px solid #f0e0b8;
+  color: #6a5312;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+@media (max-width: 380px) {
+  .ra-lang-btn { font-size: 13px; padding: 8px 11px; }
+  .ra-lang-btn .lbl { max-width: 92px; }
+}
