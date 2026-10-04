@@ -79,7 +79,7 @@ const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "").trim();
 const supabaseServerRest=async(path:string,init:RequestInit={})=>{
   if(!SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase server configuration is incomplete");
-  const headers:Record<string,string>={apikey:SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json",...(init.headers as Record<string,string>??{})};
+  const headers:Record<string,string>={apikey:SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json",...((init.headers as Record<string,string>) ?? {})};
   if(!SUPABASE_SERVICE_ROLE_KEY.startsWith("sb_")) headers.Authorization="Bearer "+SUPABASE_SERVICE_ROLE_KEY;
   const response=await fetch(SUPABASE_URL+path,{...init,headers});
   const body=await response.json().catch(()=>null);
