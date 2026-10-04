@@ -240,7 +240,6 @@ const app=new Elysia()
     return{ok:true,webhookUrl:base+"/api/telegram/webhook",result};
   }catch{set.status=502;return{ok:false,error:"Telegram webhook registration failed"}}
 })
- .onStart(async()=>{ await registerTelegramWebhookOnStartup(); })
 .get("/api/status",()=>({ok:true,platform:"RAFIQ | رفيق",mode:kapsoConfigured()?"kapso-agent-ready":"meta-cloud-api-ready",kapsoConfigured:kapsoConfigured(),kapsoEnabled:process.env.KAPSO_ENABLED==="true",kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret()),kapsoWebhookLastReceivedAt:lastKapsoWebhookAt,kapsoWebhookLastEvent:lastKapsoWebhookEvent,whatsappSending:process.env.WHATSAPP_SENDING_ENABLED==="true",whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",whatsappWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN&&process.env.META_APP_SECRET),whatsappOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN&&process.env.META_PHONE_NUMBER_ID),openAIConfigured:Boolean(process.env.OPENAI_API_KEY),agentModel:effectiveAgentModel(),channelMode:"agent-draft-admin-publish",proactiveMessagesRequireApproval:true}))
 .post("/api/admin/send-approved-welcome",async({request,set})=>{
   if(process.env.WHATSAPP_SENDING_ENABLED!=="true"||!kapsoConfigured()){
@@ -335,6 +334,7 @@ const app=new Elysia()
 ;
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
+void registerTelegramWebhookOnStartup();
 
 
 console.log(JSON.stringify({
