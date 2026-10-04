@@ -152,11 +152,16 @@ const app=new Elysia()
   if(!prof.response.ok||!profile||profile.role!=="admin"||profile.status!=="active"){
     set.status=403;return{ok:false,error:"admin access required"};
   }
-  const out=await supabaseRest("/rest/v1/whatsapp_outbox?application_id=eq."+encodeURIComponent(applicationId)+"&status=eq.pending&select=id,recipient,message,qr_payload&limit=1",token);
-  const row=Array.isArray(out.body)?out.body[0]:null;
+  let out=await supabaseRest("/rest/v1/whatsapp_outbox?application_id=eq."+encodeURIComponent(applicationId)+"&status=eq.pending&select=id,recipient,message,qr_payload&limit=1",token);
+  let row=Array.isArray(out.body)?out.body[0]:null;
   if(!out.response.ok){set.status=502;return{ok:false,error:"could not load approval message"}}
   if(!row){
-    const sent=await supabaseRest("/rest/v1/whatsapp_outbox?application_id=eq."+encodeURIComponent(applicationId)+"&status=eq.sent&select=id,provider_message_id&limit=1",token);
+    out=await supabaseRest("/rest/v1/whatsapp_outbox?intake_id=eq."+encodeURIComponent(applicationId)+"&status=eq.pending&select=id,recipient,message,qr_payload&limit=1",token);
+    row=Array.isArray(out.body)?out.body[0]:null;
+  }
+  if(!row){
+    let sent=await supabaseRest("/rest/v1/whatsapp_outbox?application_id=eq."+encodeURIComponent(applicationId)+"&status=eq.sent&select=id,provider_message_id&limit=1",token);
+    if(!Array.isArray(sent.body)||!sent.body[0]) sent=await supabaseRest("/rest/v1/whatsapp_outbox?intake_id=eq."+encodeURIComponent(applicationId)+"&status=eq.sent&select=id,provider_message_id&limit=1",token);
     if(Array.isArray(sent.body)&&sent.body[0]) return{ok:true,status:"already_sent",messageId:sent.body[0].provider_message_id??null};
     set.status=404;return{ok:false,error:"no pending approval message"};
   }
