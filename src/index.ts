@@ -18,6 +18,7 @@ const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\b
 const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
 const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
 const TELEGRAM_ANNOUNCEMENT_KEY = "rafig-family-launch-2026-10";
+const RAFIQ_WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
 const TELEGRAM_ANNOUNCEMENT_CUTOFF = "2026-10-05T00:00:00.000Z";
 const TELEGRAM_ANNOUNCEMENT = [
   "📣 خبر رفيق | RAFIQ 🇱🇧",
@@ -304,7 +305,7 @@ const app=new Elysia()
   telegramChannel:RAFIQ_TELEGRAM_CHANNEL,
   whatsapp:RAFIQ_WHATSAPP,
   whatsappNumber:RAFIQ_WHATSAPP_NUMBER,
-  whatsappChannel:(process.env.RAFIQ_WHATSAPP_CHANNEL_URL??"").trim()||null
+  whatsappChannel:RAFIQ_WHATSAPP_CHANNEL_URL
 }))
 .post("/api/admin/telegram/broadcast",async({request,set})=>{
   if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}
@@ -320,7 +321,7 @@ const app=new Elysia()
 })
 .post("/api/admin/whatsapp/family-announcement-draft",async({request,set})=>{
   if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}
-  const channelUrl=(process.env.RAFIQ_WHATSAPP_CHANNEL_URL??"").trim();
+  const channelUrl=RAFIQ_WHATSAPP_CHANNEL_URL;
   const message=[
     "📣 رفيق | RAFIQ 🇱🇧",
     "منصة رفيق تساعد الأهل في لبنان على الوصول إلى خدمات الرعاية داخل المنزل:",
