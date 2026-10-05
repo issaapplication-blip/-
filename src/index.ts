@@ -3,7 +3,8 @@ import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
-import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
+import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
+import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
 import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER } from "./rafiq-service-knowledge";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -213,6 +214,7 @@ const telegramCommandReply = (command: string) => {
   if (c === "/request") return "بكل سرور. سنبني الطلب معًا خطوة بخطوة. ابدأ بإخباري: هل الطلب لمسن أم لمريض؟ وفي أي مدينة؟";
   if (c === "/help") return "يمكنك كتابة طلبك كما تتحدث مع شخص من فريق رفيق. سأفهم التفاصيل وأسألك فقط عن المعلومات الناقصة. إذا احتاج الأمر قرارًا إداريًا، سأحوّله للفريق وأعطيك رقم WhatsApp الرسمي: +961 81 506 299.";
   if (c === "/contact") return ["للمتابعة المباشرة مع إدارة رفيق عبر WhatsApp: +961 81 506 299","https://wa.me/96181506299"].join("\n");
+  if (c === "/cv") return cvMenuText();
   return "";
 };
 const registerTelegramWebhookOnStartup = async () => {
@@ -272,51 +274,118 @@ const app=new Elysia()
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
   if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
   const update=await request.json().catch(()=>null) as any;
-   const channelPost=update?.channel_post;
-   if(channelPost?.chat?.id){
-     console.log(JSON.stringify({event:"rafig_telegram_channel_seen",chatId:String(channelPost.chat.id),title:channelPost.chat.title??null,username:channelPost.chat.username??null}));
-     return{ok:true,status:"channel_post_seen",channel_id:String(channelPost.chat.id)};
-   }
-   const message=update?.message;
+  const channelPost=update?.channel_post;
+  if(channelPost?.chat?.id){
+    console.log(JSON.stringify({event:"rafig_telegram_channel_seen",chatId:String(channelPost.chat.id),title:channelPost.chat.title??null,username:channelPost.chat.username??null}));
+    return{ok:true,status:"channel_post_seen",channel_id:String(channelPost.chat.id)};
+  }
+  const message=update?.message;
   const chatId=message?.chat?.id;
-  const textBody=typeof message?.text==="string"?message.text.trim():"";
-  if(!chatId||!textBody)return{ok:true,status:"ignored_non_text"};
+  if(!chatId)return{ok:true,status:"ignored_no_chat"};
   const externalConversationId=String(chatId);
   const senderName=[message?.from?.first_name,message?.from?.last_name].filter(Boolean).join(" ").trim();
   const username=typeof message?.from?.username==="string"?message.from.username:"";
-  const contextMessage={channel:"telegram",chat_id:chatId,telegram_user_id:message?.from?.id??null,username,sender_name:senderName,text:textBody,received_at:new Date().toISOString()};
+  const textBody=typeof message?.text==="string"?message.text.trim():"";
   try{
     const existing=await supabaseServerRest("/rest/v1/rafiq_conversations?channel=eq.telegram&external_conversation_id=eq."+encodeURIComponent(externalConversationId)+"&select=id,context&limit=1");
     const row=Array.isArray(existing.body)?existing.body[0]:null;
     const previousContext=Array.isArray(row?.context)?row.context:[];
+    const contextMessage={channel:"telegram",chat_id:chatId,telegram_user_id:message?.from?.id??null,username,sender_name:senderName,text:textBody||null,received_at:new Date().toISOString()};
     const nextContext=[...previousContext,contextMessage].slice(-20);
     let conversationId=row?.id??null;
     if(conversationId){
-      const updated=await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:nextContext,updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})});
-      if(!updated.response.ok)throw new Error("could not update Telegram conversation");
+      await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:nextContext,updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})});
     }else{
       const created=await supabaseServerRest("/rest/v1/rafiq_conversations?on_conflict=channel%2Cexternal_conversation_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({channel:"telegram",external_conversation_id:externalConversationId,customer_phone:null,language:"ar",context:nextContext,escalation_state:"none",last_message_at:new Date().toISOString()})});
-      if(!created.response.ok){ console.error(JSON.stringify({event:"rafig_telegram_conversation_create_failed",status:created.response.status,body:created.body})); }
       const createdRow=Array.isArray(created.body)?created.body[0]:created.body;
       conversationId=createdRow?.id??null;
     }
+
+    const orders=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?chat_id=eq."+encodeURIComponent(externalConversationId)+"&order_status=not.in.(completed,cancelled)&select=*&order=updated_at.desc&limit=1");
+    const activeOrder=Array.isArray(orders.body)?orders.body[0]:null;
+
+    const reply=async(body:string)=>{const outbound=await telegramSendText(chatId,telegramSigned(body));if(conversationId)await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:body,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});return outbound;};
+
+    const document = message?.document;
+    const photo = Array.isArray(message?.photo) && message.photo.length ? message.photo[message.photo.length-1] : null;
+    if(document || photo){
+      if(activeOrder && activeOrder.order_status==="collecting" && !activeOrder.old_cv_file_id){
+        const fileId=String(document?.file_id??photo?.file_id??"");
+        const upd=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(activeOrder.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({old_cv_file_id:fileId,order_status:"awaiting_payment",updated_at:new Date().toISOString()})});
+        if(!upd.response.ok)throw new Error("could not save old CV file");
+        await reply(cvPaymentText(Number(activeOrder.amount_usd)));
+        return{ok:true,status:"cv_old_file_received",order_id:activeOrder.id};
+      }
+      if(activeOrder && (activeOrder.order_status==="awaiting_payment" || activeOrder.payment_status==="pending_payment")){
+        const fileId=String(document?.file_id??photo?.file_id??"");
+        const proofType=document?"document":"photo";
+        const upd=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(activeOrder.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({payment_proof_file_id:fileId,payment_proof_type:proofType,payment_status:"proof_submitted",order_status:"payment_review",updated_at:new Date().toISOString()})});
+        if(!upd.response.ok)throw new Error("could not save payment proof");
+        await reply("✅ تم استلام إثبات الدفع. طلبك الآن «بانتظار تأكيد الدفع» من إدارة رفيق. لن يتم تسليم النسخة النهائية قبل التأكيد.");
+        return{ok:true,status:"cv_payment_proof_received",order_id:activeOrder.id};
+      }
+      await reply("📎 أرسل الملف ضمن طلب CV بعد اختيار الخدمة، وسأحفظه ضمن الطلب. لا ترسل كلمات مرور أو رموز OTP.");
+      return{ok:true,status:"file_without_active_cv"};
+    }
+
+    if(!textBody)return{ok:true,status:"ignored_non_text"};
+
     const commandReply=telegramCommandReply(textBody);
     if(commandReply){
-      const welcomeOnStart = textBody.toLowerCase().split(" ")[0] === "/start";
-    const replyBody = welcomeOnStart ? TELEGRAM_WELCOME : commandReply;
-    const outbound=await telegramSendText(chatId,telegramSigned(replyBody));
-      await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:replyBody,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});
+      const welcomeOnStart=textBody.toLowerCase().split(" ")[0]==="/start";
+      const outbound=await reply(welcomeOnStart?TELEGRAM_WELCOME:commandReply);
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
+
+    const choice=cvChoice(textBody);
+    const startsCv=/^(cv|السيرة|cover\s*letter|سيرة ذاتية|1|2|3)$/i.test(textBody.trim()) || choice!==null;
+    if(startsCv && !activeOrder){
+      if(!choice){await reply(cvMenuText());return{ok:true,status:"cv_menu"}}
+      const created=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({chat_id:externalConversationId,telegram_user_id:String(message?.from?.id??""),username,service:choice.service,amount_usd:choice.amount,order_status:"collecting",payment_status:"pending_payment"})});
+      if(!created.response.ok)throw new Error("could not create CV order");
+      const order=Array.isArray(created.body)?created.body[0]:created.body;
+      await reply("✅ اخترت خدمة "+choice.service+".\n\n"+cvPrompt("name"));
+      return{ok:true,status:"cv_started",order_id:order?.id??null};
+    }
+
+    if(activeOrder){
+      if(activeOrder.order_status==="payment_review"){
+        await reply("⏳ إثبات الدفع وصل إلى إدارة رفيق وهو قيد المراجعة. لا حاجة لإرسال دفعة أخرى الآن.");
+        return{ok:true,status:"cv_payment_under_review",order_id:activeOrder.id};
+      }
+      if(activeOrder.order_status==="awaiting_payment"){
+        await reply(cvPaymentText(Number(activeOrder.amount_usd)));
+        return{ok:true,status:"cv_awaiting_payment",order_id:activeOrder.id};
+      }
+      const patch:any={updated_at:new Date().toISOString()};
+      let prompt="";
+      if(!activeOrder.full_name){patch.full_name=textBody;prompt=cvPrompt("target");}
+      else if(!activeOrder.target_job){patch.target_job=textBody;prompt=cvPrompt("experience");}
+      else if(!activeOrder.experience){patch.experience=textBody;prompt=cvPrompt("languages");}
+      else if(activeOrder.extra_language===null || activeOrder.extra_language===undefined){
+        patch.extra_language=/^(لا|لا يوجد|none|no)$/i.test(textBody)?"":textBody;
+        if(patch.extra_language)patch.amount_usd=Number(activeOrder.amount_usd)+20;
+        prompt=cvPrompt("oldcv");
+      }else if(!activeOrder.old_cv_file_id && /^(لا|لا يوجد|none|no)$/i.test(textBody)){
+        patch.order_status="awaiting_payment";prompt=cvPaymentText(Number(activeOrder.amount_usd));
+      }else if(!activeOrder.old_cv_file_id){
+        await reply("📎 أرسل ملف الـCV القديم هنا، أو اكتب «لا يوجد» إذا لم يكن لديك ملف.");
+        return{ok:true,status:"cv_waiting_old_file",order_id:activeOrder.id};
+      }
+      const upd=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(activeOrder.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify(patch)});
+      if(!upd.response.ok)throw new Error("could not update CV order");
+      if(prompt)await reply(prompt);
+      return{ok:true,status:"cv_step_updated",order_id:activeOrder.id};
+    }
+
     const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
-     const directKnowledge=answerRafiqKnowledge(textBody);
-     let result; try { if(directKnowledge){ result={reply:directKnowledge,model:"rafig-knowledge"}; } else { result=await draftAgentReply(textBody,"ar","TELEGRAM ACTIVE CASE | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+" | POLICY: Reply in clear natural Arabic. Understand the meaning, not just keywords. Answer the actual question first in 1-3 short paragraphs, then ask at most ONE useful next question. Never repeat information already supplied. If ambiguous, explain briefly and ask one clarifying question. Use concrete RAFIQ facts. For human/admin action, clearly provide WhatsApp +961 81 506 299. Never claim a transfer occurred unless confirmed."); } } catch (agentError) { console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)})); result={reply:rafiqFallback(textBody,conversationHistory),model:"rafig-local-fallback"}; }
-    const lower=result.reply.toLowerCase();
+    const directKnowledge=answerRafiqKnowledge(textBody);
+    let result;
+    try{if(directKnowledge){result={reply:directKnowledge,model:"rafig-knowledge"}}else{result=await draftAgentReply(textBody,"ar","TELEGRAM ACTIVE CASE | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+" | POLICY: Reply in clear natural Arabic. Understand meaning, answer first, ask at most ONE useful next question. Never repeat information already supplied. For human/admin action, clearly provide WhatsApp +961 81 506 299. Never claim payment, approval, transfer, booking or availability without confirmation.")}}catch(agentError){console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));result={reply:rafiqFallback(textBody,conversationHistory),model:"rafig-local-fallback"}}
     const escalation=result.reply.includes("WhatsApp")||result.reply.includes("واتساب")||result.reply.includes("الإدارة")||result.reply.includes("ادارة رفيق")||result.reply.includes("قرار إداري")||result.reply.includes("تواصل مع فريق رفيق");
     const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,escalation};
-    if(escalation && conversationId) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
-    const outbound=await telegramSendText(chatId,telegramSigned(result.reply));
-    await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:result.reply,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString(),escalation_state:escalation?"admin_review":"none"})}).catch(()=>{});
+    if(escalation && conversationId)await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
+    const outbound=await reply(result.reply);
     return{ok:true,status:escalation?"auto_replied_and_escalated":"auto_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
   }catch(error){
     console.error(JSON.stringify({event:"rafig_telegram_webhook_failed",error:String(error).slice(0,500)}));
