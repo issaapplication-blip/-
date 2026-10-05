@@ -58,3 +58,10 @@ export const verifyTelegramWebhookSecret = (request: Request) => {
   if (!expected) return true;
   return request.headers.get("x-telegram-bot-api-secret-token") === expected;
 };
+
+export const telegramSendPhoto = async (chatId: string | number, photo: string, caption?: string) =>
+  callTelegram("sendPhoto", {
+    chat_id: chatId,
+    photo,
+    ...(caption ? { caption: signedText(caption) } : {}),
+  });
