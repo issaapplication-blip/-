@@ -22,10 +22,13 @@ const callTelegram = async (method: string, body: Record<string, unknown>) => {
   return result;
 };
 
+const RAFIQ_TELEGRAM_SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
+const signedText = (text: string) => text.includes(RAFIQ_TELEGRAM_SIGNATURE) ? text : `${text}\n\n${RAFIQ_TELEGRAM_SIGNATURE}`;
+
 export const telegramSendText = async (chatId: string | number, text: string) =>
   callTelegram("sendMessage", {
     chat_id: chatId,
-    text,
+    text: signedText(text),
     disable_web_page_preview: true,
   });
 
