@@ -3,7 +3,7 @@ import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
-import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_NUMBER } from "./rafiq-service-knowledge";
+import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER } from "./rafiq-service-knowledge";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
@@ -18,7 +18,7 @@ const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\b
 const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
 const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
 const TELEGRAM_ANNOUNCEMENT_KEY = "rafig-family-launch-2026-10";
-const RAFIQ_WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
+const RAFIQ_WHATSAPP_CHANNEL_URL = RAFIQ_WHATSAPP_CHANNEL;
 const TELEGRAM_ANNOUNCEMENT_CUTOFF = "2026-10-05T00:00:00.000Z";
 const TELEGRAM_ANNOUNCEMENT = [
   "📣 خبر رفيق | RAFIQ 🇱🇧",
@@ -63,7 +63,7 @@ const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"D
 const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0};
 const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
 const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
-const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessage=async(message:any,conversation:any={})=>{
+const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessageCore=async(message:any,conversation:any={})=>{
   const identity=kapsoIdentity(message,conversation);
   const forbiddenDigits="70600157";
   if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
@@ -71,7 +71,7 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
   const destination=identity.phone?{to:identity.phone}:{recipient:identity.bsuid};
   if(!body||(!destination.to&&!destination.recipient))return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
   try{
-    const inbound=await recordInboundEvent(message,identity);
+    const inbound=await recordInboundEvent(message,identity);if(inbound?.duplicate){console.log(JSON.stringify({event:"rafig_kapso_duplicate_ignored",messageId:String(message?.id??"")}));return{id:String(message?.id??"unknown"),status:"duplicate_ignored"}}
     console.log(JSON.stringify({event:"rafig_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
     const result=await draftInboundReply(body,identity.phone||undefined);
     if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
@@ -95,7 +95,7 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
     console.error(JSON.stringify({event:"rafig_kapso_agent_failed",messageId:String(message.id??""),error:String(error)}));
     return{id:String(message.id??""),status:"draft_failed"};
   }
-};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
+};const kapsoInFlight=new Set<string>();const processKapsoMessage=async(message:any,conversation:any={})=>{const id=String(message?.id??"");if(id&&kapsoInFlight.has(id))return{id,status:"duplicate_in_flight"};if(id)kapsoInFlight.add(id);try{return await processKapsoMessageCore(message,conversation)}finally{if(id)kapsoInFlight.delete(id)}};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? "https://qmuxaehrahfsnabyjens.supabase.co").trim().replace(/\/+$/,"");
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "").trim();
@@ -111,7 +111,7 @@ const supabaseServerRest=async(path:string,init:RequestInit={})=>{
 };
 const recordInboundEvent=async(message:any,identity:any)=>{
   const providerMessageId=String(message?.id??"").trim();
-  if(!providerMessageId)return null;
+  if(!providerMessageId)return null;const prevRow=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq.kapso&provider_message_id=eq."+encodeURIComponent(providerMessageId)+"&select=id,processing_status&limit=1");const prev=Array.isArray(prevRow.body)?prevRow.body[0]:null;if(prev&&prev.processing_status==="processed")return{...prev,duplicate:true};
   const r=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?on_conflict=provider%2Cprovider_message_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({provider:"kapso",provider_message_id:providerMessageId,from_phone:identity.phone||null,message_type:typeof message?.type==="string"?message.type:"text",text_body:typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():null),payload:message??{},processing_status:"processing"})});
   if(!r.response.ok){const detail=typeof r.body==="string"?r.body:JSON.stringify(r.body??{});throw new Error(`could not persist inbound WhatsApp event (${r.response.status}): ${detail.slice(0,700)}`);}
   return Array.isArray(r.body)?r.body[0]:r.body;
@@ -203,7 +203,7 @@ const app=new Elysia()
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
   const secret=kapsoWebhookSecret();
-  if(secret&&(!signature||!(await verifyKapsoSignature(raw,signature)))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
   const eventBody=payload?.request_body??payload;
@@ -223,7 +223,7 @@ const app=new Elysia()
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
   const secret=kapsoWebhookSecret();
-  if(secret&&(!signature||!(await verifyKapsoSignature(raw,signature)))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
   const eventBody=payload?.request_body??payload;
@@ -435,7 +435,7 @@ const app=new Elysia()
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
 void registerTelegramWebhookOnStartup();
-setTimeout(() => {
+setTimeout(() => { if(process.env.TELEGRAM_BROADCAST_ON_START!=="true") return;
   void broadcastTelegramAnnouncement(TELEGRAM_ANNOUNCEMENT_KEY, TELEGRAM_ANNOUNCEMENT, TELEGRAM_ANNOUNCEMENT_CUTOFF)
     .then(result => console.log(JSON.stringify({event:"rafig_telegram_announcement_broadcast",...result})))
     .catch(error => console.error(JSON.stringify({event:"rafig_telegram_announcement_broadcast_failed",error:String(error).slice(0,300)})));
@@ -450,6 +450,6 @@ console.log(JSON.stringify({
   whatsappSendingEnabled:process.env.WHATSAPP_SENDING_ENABLED==="true",
   whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
   agentModel:effectiveAgentModel(),
-  kapsoConfigured,
+  kapsoConfigured:kapsoConfigured(),
   kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret())
 }));
