@@ -1,6 +1,8 @@
 /* RAFIQ | رفيق — universal PWA installer */
 (function(){
   'use strict';
+  if(window.__RAFIQ_INSTALL_CONTROLLER_V82__) return;
+  window.__RAFIQ_INSTALL_CONTROLLER_V82__=true;
   var deferred=null;
 
   function installed(){
@@ -74,6 +76,7 @@
 
   window.addEventListener('appinstalled',function(){
     deferred=null;window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;hide();
+    window.dispatchEvent(new CustomEvent('rafig:pwa-installed'));
   });
 
   document.addEventListener('click',function(e){
@@ -85,7 +88,7 @@
 
   if('serviceWorker' in navigator){
     window.addEventListener('load',function(){
-      navigator.serviceWorker.register('/sw.js?v=81',{updateViaCache:'none'}).then(function(reg){
+      navigator.serviceWorker.register('/sw.js?v=82',{updateViaCache:'none'}).then(function(reg){
         if(reg&&reg.update)reg.update();
       }).catch(function(){});
     });
