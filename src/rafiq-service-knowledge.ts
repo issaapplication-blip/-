@@ -1,6 +1,6 @@
 /* RAFIQ | رفيق — centralized family-facing service knowledge */
 export const RAFIQ_TELEGRAM_BOT = "https://t.me/RAFIQ_Care_Bot";
-export const RAFIQ_TELEGRAM_CHANNEL = "https://t.me/+LOW0s-MnPD84ZWM0";
+export const RAFIQ_TELEGRAM_CHANNEL = "https://t.me/+a7CDblNyGkw1Yjg8";
 export const RAFIQ_WEBSITE = "https://rafiq-o6qd.onrender.com";
 export const RAFIQ_WHATSAPP = "https://wa.me/96181506299";
 export const RAFIQ_WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
