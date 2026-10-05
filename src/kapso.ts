@@ -27,6 +27,7 @@ export async function kapsoSendText(
     {
       method: "POST",
       headers: kapsoHeaders(),
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         messaging_product: "whatsapp",
         ...(target.to
@@ -55,6 +56,7 @@ export async function kapsoSendRecipient(recipient: string, body: string) {
     {
       method: "POST",
       headers: kapsoHeaders(),
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         messaging_product: "whatsapp",
         recipient,

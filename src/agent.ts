@@ -224,11 +224,12 @@ const callAgent = async (input: string) => {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
+    signal: AbortSignal.timeout(25000),
     body: JSON.stringify({
       model,
       instructions: SYSTEM_PROMPT,
       input,
-      max_output_tokens: 700,
+      max_output_tokens: 1200,
     }),
   });
 
