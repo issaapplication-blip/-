@@ -44,6 +44,8 @@ exception when others then
   return new;
 end $fn$;
 
+revoke all on function public.notify_admins_new_application() from public,anon,authenticated;
+
 drop trigger if exists trg_notify_admins_new_application on public.application_intakes;
 create trigger trg_notify_admins_new_application after insert on public.application_intakes
 for each row execute function public.notify_admins_new_application();
