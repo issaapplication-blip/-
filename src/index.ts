@@ -344,7 +344,11 @@ const app=new Elysia()
     const existing=await supabaseServerRest("/rest/v1/rafiq_conversations?channel=eq.telegram&external_conversation_id=eq."+encodeURIComponent(externalConversationId)+"&select=id,context&limit=1");
     const row=Array.isArray(existing.body)?existing.body[0]:null;
     const previousContext=Array.isArray(row?.context)?row.context:[];
-    const contextMessage={channel:"telegram",chat_id:chatId,telegram_user_id:message?.from?.id??null,username,sender_name:senderName,text:textBody||null,received_at:new Date().toISOString()};
+    const incomingMessageId=String(message?.message_id??"").trim();
+    if(incomingMessageId && previousContext.some((item:any)=>item?.direction==="inbound" && String(item?.message_id??"")===incomingMessageId)){
+      return{ok:true,status:"duplicate_update_ignored",conversation_id:row?.id??null};
+    }
+    const contextMessage={channel:"telegram",direction:"inbound",message_id:incomingMessageId||null,chat_id:chatId,telegram_user_id:message?.from?.id??null,username,sender_name:senderName,text:textBody||null,received_at:new Date().toISOString()};
     const nextContext=[...previousContext,contextMessage].slice(-20);
     let conversationId=row?.id??null;
     if(conversationId){
