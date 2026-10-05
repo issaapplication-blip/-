@@ -30,7 +30,7 @@ body {
   padding-right: var(--ra-sar);
   padding-bottom: var(--ra-sab);
   /* the top inset belongs to the language bar, not to the page */
-  padding-top: calc(var(--ra-sat) + var(--ra-langbar));
+  padding-top: var(--ra-sat);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -293,8 +293,20 @@ a.btn {
   .ra-lang-btn .lbl { max-width: 92px; }
 }
 
-/* RAFIQ language switcher: one control only, inside the logo/header bar. */
-[data-rafig-language-switcher], .rafig-language-switcher { display:none !important; }
+/* RAFIQ topbar: menu at the physical far-left, language at the physical far-right, no logo in the topbar. */
+.topbar { direction:ltr !important; }
+.topbar > .brand,
+.topbar > .brand-mini { display:none !important; }
+.topbar > .menu,
+.topbar > .topbar-menu { order:1 !important; margin-left:0 !important; margin-right:auto !important; }
+.topbar > .ra-lang,
+.topbar > [data-rafig-language-switcher],
+.topbar > .rafig-language-switcher { order:2 !important; margin-left:auto !important; margin-right:0 !important; }
+.topbar > .menu .panel,
+.topbar > .menu .menu-panel,
+.topbar > .topbar-menu .panel,
+.topbar > .topbar-menu .menu-panel { left:0 !important; right:auto !important; }
+
 .topbar > .ra-lang {
   position:static;
   inset:auto;
@@ -311,5 +323,15 @@ a.btn {
 .topbar > .ra-lang > * { pointer-events:auto; }
 .topbar > .ra-lang .ra-lang-menu { z-index:10000; }
 @media (max-width:699px) {
+  .topbar { min-height:58px; }
   .topbar > .ra-lang .ra-lang-btn { min-height:44px; }
+  .topbar > .rafig-language-switcher { position:static !important; transform:none !important; }
+}
+
+
+/* Index-page language control uses the same physical-right placement. */
+.topbar > .rafig-language-switcher {
+  display:flex !important;
+  position:static !important;
+  transform:none !important;
 }
