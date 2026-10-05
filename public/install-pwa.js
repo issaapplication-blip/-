@@ -9,7 +9,7 @@
   const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
-  const APP_VERSION = '2026.10.04.1';
+  const APP_VERSION = '2026.10.05.1';
 
   const fixedIds = ['joinBtn', 'careBtn', 'status-button'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
@@ -57,11 +57,7 @@
     }
     button.hidden=false;
     button.setAttribute('aria-hidden','false');
-    if(button.dataset.rafigInstallBound==='1')return;
-    button.dataset.rafigInstallBound='1';
-    // The universal installer in install-app.js owns the click handler.
-    // Keeping a single owner prevents duplicate prompt() calls and swallowed clicks.
-;
+
   }
 
   function showInstallStatus(message){
@@ -154,32 +150,15 @@
   }
 
   const isStandalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
-  if(isStandalone())document.querySelectorAll('#rafig-install-app,.rafig-install-slot').forEach(el=>el.remove());
-  window.addEventListener('beforeinstallprompt',e=>{
-    e.preventDefault();
-    window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=e;
-    ensureInstallButton();
-    const button=document.getElementById('rafig-install-app');
-    if(button) button.disabled=false;
-    const s=document.getElementById('rafig-install-status'); if(s)s.remove();
-  },{passive:false});
-  window.addEventListener('appinstalled',()=>{window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;void recordPwaInstallation();document.querySelectorAll('#rafig-install-app,.rafig-install-slot,#rafig-install-status').forEach(el=>el.remove())});
+  // install-app.js is the single owner of beforeinstallprompt, appinstalled, the native prompt,
+  // and service-worker registration. This file only records successful installations and manages intake UI.
+  window.addEventListener('rafig:pwa-installed',()=>{void recordPwaInstallation()},{once:false});
   const start=()=>{
-    // Keep the install control stable: never rebuild or reorder the action buttons after startup.
+    // Keep the install control stable: never rebuild, remove, or reorder the action buttons after startup.
     ensureInstallButton();
-    ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
-    if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=81',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
-        if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6')){
-          sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6','1');
-          location.reload();
-        }
-      }).catch(()=>{});
-    }
-    window.addEventListener('pageshow',()=>ensureInstallButton(),{passive:true});
-    window.addEventListener('load',()=>ensureInstallButton(),{once:true,passive:true});
-    // Native one-tap installation is available when the browser exposes beforeinstallprompt.
-    // Unsupported browsers keep the button stable and receive a clear fallback message instead of reflowing the page.
+    ensurePublicMembershipUi();
+    installApplicationPersistence();
+    if(isStandalone())void recordPwaInstallation();
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
