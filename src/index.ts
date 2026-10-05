@@ -18,6 +18,7 @@ const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\b
 const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
 const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
 const TELEGRAM_ANNOUNCEMENT_KEY = "rafig-family-launch-2026-10";
+const TELEGRAM_ANNOUNCEMENT_CUTOFF = "2026-10-05T00:00:00.000Z";
 const TELEGRAM_ANNOUNCEMENT = [
   "📣 خبر رفيق | RAFIQ 🇱🇧",
   "نطلق اليوم قناة تواصل مباشرة لمساعدة الأهل في الوصول إلى الرعاية المنزلية بشكل أوضح وأسهل.",
@@ -137,9 +138,10 @@ const supabaseRest=async(path:string,token:string,init:RequestInit={})=>{
 const requireAdminToken=(request:Request)=>Boolean(process.env.RAFIQ_ADMIN_ACTION_TOKEN&&request.headers.get("x-rafig-admin-token")===process.env.RAFIQ_ADMIN_ACTION_TOKEN);
 const sendWhatsAppText=async(to:string,body:string)=>{const accessToken=process.env.META_ACCESS_TOKEN,phoneNumberId=process.env.META_PHONE_NUMBER_ID,apiVersion=process.env.META_GRAPH_API_VERSION??"v23.0";if(!accessToken||!phoneNumberId)throw new Error("WhatsApp Cloud API server configuration is incomplete");const response=await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,{method:"POST",headers:{Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",recipient_type:"individual",to,type:"text",text:{preview_url:false,body}})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(`Meta WhatsApp API error (${response.status})`);return result};
 const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html","public/barcode.html","public/member.html"]); const RAFIQ_LOGO_STYLE='<style id="rafig-logo-quality">.brand img,.brand-mini img,.hero-logo,.logo,.brand-logo{background:#fff!important;object-fit:contain!important;image-rendering:auto!important;filter:none!important}.brand img,.brand-mini img,.logo,.brand-logo{border-radius:14px!important;padding:6px!important;box-sizing:border-box!important}.hero-logo{display:block;background:#fff!important;border-radius:18px!important;padding:10px!important;box-shadow:0 5px 18px rgba(0,0,0,.08)!important}</style>'; const fileResponse=async(path:string,type:string,cache="no-store")=>{const file=Bun.file(path);if(!(await file.exists()))return new Response("Not Found",{status:404,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});let body:any=await file.arrayBuffer();if(type.startsWith("text/html")&&!PUBLIC_I18N_EXCLUDED.has(path)){let html=new TextDecoder().decode(body);if(type.startsWith("text/html")&&!html.includes("id=\"rafig-logo-quality\"")){html=html.includes("</head>")?html.replace("</head>",RAFIQ_LOGO_STYLE+"</head>"):RAFIQ_LOGO_STYLE+html;}if(!html.includes("/css/device.css")){const marker="</head>";const tag='<link rel="stylesheet" href="/css/device.css?v=72">';html=html.includes(marker)?html.replace(marker,tag+marker):tag+html;}if(!html.includes("/i18n.js")){const marker="</body>";const tag='<script src="/i18n.js?v=3" defer></script>';html=html.includes(marker)?html.replace(marker,tag+marker):html+tag;}body=html;}const bytes=typeof body==="string"?new TextEncoder().encode(body):new Uint8Array(body);return new Response(body,{status:200,headers:{"Content-Type":type,"Content-Length":String(bytes.byteLength),"Cache-Control":cache}})};
-const broadcastTelegramAnnouncement = async (announcementKey: string, body: string) => {
+const broadcastTelegramAnnouncement = async (announcementKey: string, body: string, cutoffIso?: string) => {
   if (!telegramConfigured()) throw new Error("Telegram bot is not configured");
-  const list = await supabaseServerRest("/rest/v1/rafiq_conversations?channel=eq.telegram&external_conversation_id=not.is.null&select=external_conversation_id");
+  const cutoff = cutoffIso ? `&created_at=lt.${encodeURIComponent(cutoffIso)}` : "";
+  const list = await supabaseServerRest("/rest/v1/rafiq_conversations?channel=eq.telegram&external_conversation_id=not.is.null&select=external_conversation_id"+cutoff);
   if (!list.response.ok) throw new Error("could not load Telegram conversations");
   const rawTargets = Array.isArray(list.body) ? list.body : [];
   const targets = [...new Set(rawTargets.map((row:any)=>String(row?.external_conversation_id??"").trim()).filter(Boolean))];
@@ -432,13 +434,11 @@ const app=new Elysia()
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
 void registerTelegramWebhookOnStartup();
-if (process.env.RAFIQ_TELEGRAM_BROADCAST_ON_START === "true") {
-  setTimeout(() => {
-    void broadcastTelegramAnnouncement(TELEGRAM_ANNOUNCEMENT_KEY, TELEGRAM_ANNOUNCEMENT)
-      .then(result => console.log(JSON.stringify({event:"rafig_telegram_announcement_broadcast",...result})))
-      .catch(error => console.error(JSON.stringify({event:"rafig_telegram_announcement_broadcast_failed",error:String(error).slice(0,300)})));
-  }, 1500);
-}
+setTimeout(() => {
+  void broadcastTelegramAnnouncement(TELEGRAM_ANNOUNCEMENT_KEY, TELEGRAM_ANNOUNCEMENT, TELEGRAM_ANNOUNCEMENT_CUTOFF)
+    .then(result => console.log(JSON.stringify({event:"rafig_telegram_announcement_broadcast",...result})))
+    .catch(error => console.error(JSON.stringify({event:"rafig_telegram_announcement_broadcast_failed",error:String(error).slice(0,300)})));
+}, 1500);
 
 
 console.log(JSON.stringify({
