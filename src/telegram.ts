@@ -32,6 +32,13 @@ export const telegramSendText = async (chatId: string | number, text: string) =>
     disable_web_page_preview: true,
   });
 
+export const telegramSendDocument = async (chatId: string | number, documentFileId: string, caption?: string) =>
+  callTelegram("sendDocument", {
+    chat_id: chatId,
+    document: documentFileId,
+    ...(caption ? { caption: signedText(caption) } : {}),
+  });
+
 export const telegramSetWebhook = async (url: string, secretToken?: string) =>
   callTelegram("setWebhook", {
     url,
