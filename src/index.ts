@@ -19,6 +19,22 @@ const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\b
 const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
 const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
 const TELEGRAM_ANNOUNCEMENT_KEY = "rafig-family-launch-2026-10";
+const TELEGRAM_ONBOARDING_KEY = "rafig-telegram-channel-bot-invite-2026-10";
+const TELEGRAM_ONBOARDING_MESSAGE = [
+  "👋 أهلًا بكم من رفيق | RAFIQ 🇱🇧",
+  "يسرّنا أن نعرّفكم رسميًا بخدمة رفيق للرعاية المنزلية في لبنان.",
+  "",
+  "يمكنكم استخدام بوت رفيق للسؤال عن الخدمات أو كتابة طلبكم مباشرة:",
+  "🤖 بوت رفيق: " + RAFIQ_TELEGRAM_BOT,
+  "🔗 رابط الدعوة: " + RAFIQ_TELEGRAM_INVITE,
+  "",
+  "ولمتابعة الإعلانات والأخبار والتحديثات:",
+  "📢 قناة رفيق: " + RAFIQ_TELEGRAM_CHANNEL,
+  "",
+  "إذا احتجتم إلى متابعة إدارية أو معلومات حساسة، يمكنكم التواصل مع إدارة رفيق عبر WhatsApp: +961 81 506 299",
+  "",
+  "— فريق رفيق | RAFIQ 🇱🇧"
+].join("\n");
 const RAFIQ_WHATSAPP_CHANNEL_URL = RAFIQ_WHATSAPP_CHANNEL;
 const RAFIQ_TELEGRAM_INVITE = `${RAFIQ_TELEGRAM_BOT}?start=rafiq`;
 const RAFIQ_TELEGRAM_SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
@@ -458,10 +474,11 @@ const app=new Elysia()
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
 void registerTelegramWebhookOnStartup();
-setTimeout(() => { if(process.env.TELEGRAM_BROADCAST_ON_START!=="true") return;
-  void broadcastTelegramAnnouncement(TELEGRAM_ANNOUNCEMENT_KEY, TELEGRAM_ANNOUNCEMENT, TELEGRAM_ANNOUNCEMENT_CUTOFF)
-    .then(result => console.log(JSON.stringify({event:"rafig_telegram_announcement_broadcast",...result})))
-    .catch(error => console.error(JSON.stringify({event:"rafig_telegram_announcement_broadcast_failed",error:String(error).slice(0,300)})));
+setTimeout(() => {
+  if(process.env.TELEGRAM_BROADCAST_ON_START!=="true") return;
+  void broadcastTelegramAnnouncement(TELEGRAM_ONBOARDING_KEY, TELEGRAM_ONBOARDING_MESSAGE, TELEGRAM_ANNOUNCEMENT_CUTOFF)
+    .then(result => console.log(JSON.stringify({event:"rafig_telegram_onboarding_broadcast",...result})))
+    .catch(error => console.error(JSON.stringify({event:"rafig_telegram_onboarding_broadcast_failed",error:String(error).slice(0,300)})));
 }, 1500);
 
 
