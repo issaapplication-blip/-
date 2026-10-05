@@ -3,8 +3,9 @@ import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
-import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
+import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
+import { handleManagerCommand, parseManagerChatIds } from "./telegram-manager";
 import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER } from "./rafiq-service-knowledge";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -510,6 +511,36 @@ const app=new Elysia()
     const activeOrder=Array.isArray(orders.body)?orders.body[0]:null;
 
     const reply=async(body:string)=>{const outbound=await telegramSendText(chatId,telegramSigned(body));if(conversationId)await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:body,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});return outbound;};
+
+    const managerChatIds = parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
+    const managerHandled = await handleManagerCommand(
+      { chatId, chatType: message?.chat?.type, text: textBody },
+      {
+        managerChatIds,
+        rpc: async (fn, args) => {
+          const r = await supabaseServerRest("/rest/v1/rpc/" + fn, {
+            method: "POST",
+            body: JSON.stringify(args),
+          });
+          return {
+            data: r.response.ok ? r.body : null,
+            error: r.response.ok ? null : { message: "manager RPC failed" },
+          };
+        },
+        send: (c, body) => telegramSendText(c, telegramSigned(body)),
+        photoUrl: async (storagePath) => {
+          const encoded = storagePath.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/");
+          const r = await supabaseServerRest("/storage/v1/object/sign/private_documents/" + encoded, {
+            method: "POST",
+            body: JSON.stringify({ expiresIn: 600 }),
+          });
+          if (!r.response.ok) throw new Error("could not sign manager photo");
+          return r.body?.signedURL ?? r.body?.signedUrl ?? null;
+        },
+        sendPhoto: (c, url, caption) => telegramSendPhoto(c, url, caption),
+      },
+    );
+    if (managerHandled) return { ok: true, status: "manager_command_handled" };
 
     const document = message?.document;
     const photo = Array.isArray(message?.photo) && message.photo.length ? message.photo[message.photo.length-1] : null;
