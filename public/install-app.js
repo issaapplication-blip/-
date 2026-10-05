@@ -27,9 +27,21 @@
   function hints(){return document.querySelectorAll('[data-rafiq-install-hint],#installHint');}
   function hide(){buttons().forEach(function(b){b.hidden=true;});hints().forEach(function(h){h.hidden=true;});}
   function show(){if(installed()){hide();return;}buttons().forEach(function(b){b.hidden=false;});}
+  function ensureHintNode(){
+    var h=document.querySelector('[data-rafiq-install-hint],#installHint');
+    if(h)return h;
+    h=document.createElement('div');
+    h.id='rafig-install-hint';
+    h.setAttribute('role','status');
+    h.setAttribute('aria-live','polite');
+    h.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:100001;width:min(92vw,560px);padding:12px 15px;background:#17372d;color:#fff;border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.22);text-align:center;font:700 14px/1.7 Arial,Tahoma,sans-serif;direction:rtl';
+    document.body.appendChild(h);
+    return h;
+  }
   function hint(key,ar){
-    var msg=T(key,ar);
-    hints().forEach(function(h){h.textContent=msg;h.hidden=false;});
+    var msg=T(key,ar), hs=hints();
+    if(hs.length) hs.forEach(function(h){h.textContent=msg;h.hidden=false;});
+    else ensureHintNode().textContent=msg;
   }
   function fallback(){
     if(!window.isSecureContext){hint('install.https','التثبيت المباشر يحتاج HTTPS. افتح منصة رفيق من الرابط الرسمي الآمن.');return;}
