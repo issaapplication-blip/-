@@ -138,30 +138,8 @@ const RAFIQ_KB = (function () {
     return 'انتظرونا قريبًا 🕐 — الخدمات الصحية المساندة (طب الأسنان، التغذية، النطق، المختبرات، التصوير الطبي، المعدات الطبية) قيد الإضافة. ما الخدمة التي تحتاجها الآن؟';
   }
 
-  function priceAnswer(text){
-    const n = norm(text);
-    const lines = [];
-    let any = false;
-    if (/(مقدم رعاية|رعاية|مسن|رعايه)/.test(n) && !/(ممرض|فيزيائي)/.test(n)) {
-      lines.push('مقدم الرعاية المنزلية — الأسعار المستهدفة:');
-      PRICE_SHEET.caregiver.forEach(x => lines.push('- ' + x.service + ': ' + x.range));
-      any = true;
-    }
-    if (/(ممرض|تمريض)/.test(n)) {
-      lines.push(any ? '' : 'الممرض/ة — الأسعار المستهدفة:');
-      lines.push('- ' + PRICE_SHEET.nurse[0].service + ': ' + PRICE_SHEET.nurse[0].range);
-      any = true;
-    }
-    if (/(فيزيائي|معالج|تأهيل|جلطة)/.test(n)) {
-      lines.push(any ? '' : 'العلاج الفيزيائي المنزلي:');
-      lines.push('- ' + PRICE_SHEET.physio[0].service + ': ' + PRICE_SHEET.physio[0].range);
-      any = true;
-    }
-    if (!any) return null;
-    lines.push('');
-    lines.push('هذه أسعار تشغيلية مستهدفة للمنصة، وليست وعدا بسعر نهائي قبل مراجعة الطلب وتأكيد مقدم الخدمة.');
-    lines.push('سأحوّل طلبك للمدير على الرقم 81 506 299 لتأكيد التفاصيل.');
-    return lines.join('\n');
+  function priceAnswer(){
+    return MONEY_BLOCK;
   }
 
   const MONEY_BLOCK = 'لا أستطيع تثبيت سعر نهائي أو التعامل المالي — التحويل يتم عبر Whish Money بعد مراجعة الإدارة. سأحوّل طلبك للمدير على الرقم 81 506 299.';
