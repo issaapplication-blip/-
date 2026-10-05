@@ -21,6 +21,7 @@ const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
 const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
 const TELEGRAM_ANNOUNCEMENT_KEY = "rafig-family-launch-2026-10";
 const TELEGRAM_ONBOARDING_KEY = "rafig-telegram-channel-bot-invite-2026-10";
+const RAFIQ_TELEGRAM_INVITE = `${RAFIQ_TELEGRAM_BOT}?start=rafiq`;
 const TELEGRAM_ONBOARDING_MESSAGE = [
   "👋 أهلًا بكم من رفيق | RAFIQ 🇱🇧",
   "يسرّنا أن نعرّفكم رسميًا بخدمة رفيق للرعاية المنزلية في لبنان.",
@@ -37,7 +38,6 @@ const TELEGRAM_ONBOARDING_MESSAGE = [
   "— فريق رفيق | RAFIQ 🇱🇧"
 ].join("\n");
 const RAFIQ_WHATSAPP_CHANNEL_URL = RAFIQ_WHATSAPP_CHANNEL;
-const RAFIQ_TELEGRAM_INVITE = `${RAFIQ_TELEGRAM_BOT}?start=rafiq`;
 const RAFIQ_TELEGRAM_SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
 const telegramSigned = (body: string) => body.includes(RAFIQ_TELEGRAM_SIGNATURE) ? body : `${body}\n\n${RAFIQ_TELEGRAM_SIGNATURE}`;
 const TELEGRAM_WELCOME = [
