@@ -59,36 +59,9 @@
     button.setAttribute('aria-hidden','false');
     if(button.dataset.rafigInstallBound==='1')return;
     button.dataset.rafigInstallBound='1';
-    button.addEventListener('click',async function(event){
-      event.preventDefault();
-      event.stopPropagation();
-      if (window.RAFIQ_INSTALL && typeof window.RAFIQ_INSTALL.install === 'function' && !window.__RAFIQ_DEFERRED_INSTALL_PROMPT__) {
-        window.RAFIQ_INSTALL.install(event);
-        return;
-      }
-      const prompt=window.__RAFIQ_DEFERRED_INSTALL_PROMPT__;
-      if(!prompt){
-        showInstallStatus('جارٍ تجهيز التثبيت المباشر… انتظر لحظة ثم اضغط الزر مجددًا.');
-        return;
-      }
-      try{
-        button.disabled=true;
-        const result=await prompt.prompt();
-        const choice=await prompt.userChoice;
-        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
-        if(choice && choice.outcome==='accepted'){
-          showInstallStatus('تم بدء تثبيت تطبيق رفيق ✅');
-        }else{
-          showInstallStatus('لم يتم تأكيد التثبيت. يمكنك المحاولة مجددًا.');
-        }
-      }catch(error){
-        console.warn('RAFIQ install prompt failed',error);
-        window.__RAFIQ_DEFERRED_INSTALL_PROMPT__=null;
-        showInstallStatus('تعذر فتح نافذة التثبيت الآن. أعد تحميل الصفحة ثم جرّب الزر مجددًا.');
-      }finally{
-        button.disabled=false;
-      }
-    });
+    // The universal installer in install-app.js owns the click handler.
+    // Keeping a single owner prevents duplicate prompt() calls and swallowed clicks.
+;
   }
 
   function showInstallStatus(message){
@@ -196,7 +169,7 @@
     ensureInstallButton();
     ensurePublicMembershipUi();installApplicationPersistence();ensureInstallButton();if(isStandalone())void recordPwaInstallation();
     if(navigator.serviceWorker){
-      navigator.serviceWorker.register('/sw.js?v=80',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
+      navigator.serviceWorker.register('/sw.js?v=81',{updateViaCache:'none'}).catch(()=>{});navigator.serviceWorker.ready.then(()=>{
         if(!navigator.serviceWorker.controller&&!sessionStorage.getItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6')){
           sessionStorage.setItem('RAFIQ_SW_CONTROL_RELOAD_20261002_V6','1');
           location.reload();
