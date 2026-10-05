@@ -33,7 +33,7 @@ export const telegramSetWebhook = async (url: string, secretToken?: string) =>
   callTelegram("setWebhook", {
     url,
     ...(secretToken ? { secret_token: secretToken } : {}),
-    allowed_updates: ["message"],
+    allowed_updates: ["message","channel_post"],
     drop_pending_updates: false,
   });
 
