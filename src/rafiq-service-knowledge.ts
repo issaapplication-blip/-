@@ -26,7 +26,7 @@ WHAT RAFIQ CAN EXPLAIN DIRECTLY:
 3. Home nursing: professional nursing tasks by a qualified nurse when nursing is appropriate and the service is confirmed.
 4. Home physiotherapy: rehabilitation and movement support by a physiotherapy provider, according to the treating team's recommendations.
 5. A single case can need more than one service; do not merge caregiver, nurse, and physiotherapist roles.
-6. Regions served/considered: Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut, and other areas of Lebanon subject to case review.
+6. Service area: requests can come from different areas of Lebanon and are reviewed according to the requested service and location. Do not proactively list multiple cities/regions unless the customer explicitly asks which areas are covered.
 7. Cooking, general house cleaning, driving, and work outside the agreed care scope are not automatically included; exact duties must be specified and agreed before service.
 8. Families may state preferences such as male/female provider, day/night, live-in/shift, location, and relevant experience. Preferences are considered; they are not promises.
 9. Provider applications and documents are handled privately by RAFIQ administration. Never claim an individual provider is approved, licensed, available, or background-checked unless an explicit platform record confirms it.
@@ -63,7 +63,7 @@ NORMAL FAMILY FAQ:
 - "أريد مقدم رعاية" → "أكيد 🌿 هل الطلب لمسن أم لمريض؟ وما المدينة أو المنطقة؟"
 - "أريد ممرض/ة" → "أكيد. ما المدينة وما الساعات المطلوبة، وما نوع المهمة التمريضية المطلوبة؟"
 - "أريد علاج فيزيائي" → "أكيد. ما المنطقة وما نوع الحاجة أو إعادة التأهيل؟"
-- "شو المناطق؟" → List Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut, and other Lebanese areas subject to review.
+- "شو المناطق؟" → "نستقبل طلبات من مختلف مناطق لبنان، وتتم مراجعة كل طلب بحسب المنطقة والخدمة المطلوبة."
 - "كيف أتواصل؟" → Give the official WhatsApp care/admin number and Telegram bot/channel.
 - "شو القنوات؟" → Website + Telegram bot + Telegram channel + official WhatsApp.
 - "الخدمات الجديدة؟" → Say "انتظرونا قريبًا" for dentists, nutrition, speech therapy, labs, imaging, and medical equipment.
@@ -111,6 +111,10 @@ export function answerRafiqKnowledge(message:string): string | null {
     return "أهلًا وسهلًا بكم في رفيق 🌿\nنصل بالحب والأمان لرعاية العائلة. كيف أستطيع مساعدتكم؟";
   }
 
+  if(/(?:شو خدمات مقدم الرعاية|ما هي خدمات مقدم الرعاية|ماذا يقدم مقدم الرعاية|شو بيعمل مقدم الرعاية|شو بعمل مقدم الرعاية|مهام مقدم الرعاية|خدماته كمقدم رعاية|caregiver duties|caregiver services)/i.test(t)){
+    return "مقدم الرعاية يساعد في الاحتياجات اليومية غير التمريضية، مثل المرافقة والإشراف، المساعدة في النظافة وارتداء الملابس، المساعدة في تناول الطعام، المساعدة على الحركة والتنقل، والعناية اليومية الشخصية، إضافة إلى الرعاية النهارية أو الليلية أو المبيت بحسب الطلب وما يتم الاتفاق عليه. أما المهام التمريضية المهنية والعلاج الفيزيائي فلها مقدمو خدمة متخصصون.";
+  }
+
   if(/(?:شو هي رفيق|ما هي رفيق|شو بتقدم|ماذا تقدم|الخدمات|services|شو خدماتكم)/i.test(t)){
     return "منصة رفيق تساعد الأهل في لبنان على تنظيم خدمات الرعاية داخل المنزل 👴🏠\n• رعاية كبار السن\n• رعاية المرضى\n• التمريض المنزلي\n• العلاج الفيزيائي المنزلي\nيمكنني مساعدتكم في اختيار الخدمة أو بدء الطلب.";
   }
@@ -153,8 +157,8 @@ export function answerRafiqKnowledge(message:string): string | null {
     return "تُراجع معلومات وملفات مقدمي الخدمة من إدارة رفيق ضمن إجراءات المنصة. لا نعد بضمان مطلق، ولا نصف شخصًا بأنه معتمد أو متاح إلا عندما يكون ذلك مؤكدًا في النظام.";
   }
 
-  if(/(?:المناطق|وين بتشتغلوا|وين موجودين|طرابلس|الضنيه|الضنية|زغرتا|الكوره|الكورة|البترون|بيروت|لبنان)/i.test(t)){
-    return "نعمل في طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت، وباقي مناطق لبنان بحسب الطلب وإمكانية مراجعته.";
+  if(/(?:المناطق|وين بتشتغلوا|وين موجودين|شو المناطق|where.*areas|areas.*covered)/i.test(t)){
+    return "نستقبل طلبات من مختلف مناطق لبنان، وتتم مراجعة كل طلب بحسب المنطقة والخدمة المطلوبة.";
   }
 
   if(/(?:تواصل|رقم رفيق|واتساب|whatsapp|telegram|تلغرام|تيليجرام|قناة)/i.test(t)){
