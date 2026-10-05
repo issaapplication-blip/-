@@ -3,6 +3,9 @@ name: RAFIQ PWA icons
 on:
   push:
     branches: [main]
+    paths:
+      - 'public/assets/rafig-logo.png'
+      - '.github/workflows/rafig-pwa-icons.yml'
 
 permissions:
   contents: write
