@@ -330,6 +330,13 @@ const telegramAdminApprove=async(ref:string)=>{
   await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",admin_decision_notes:"تم القبول وإصدار الرقم والباركود من إدارة RAFIQ",updated_at:new Date().toISOString()})});
   if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",updated_at:new Date().toISOString()})});
   const link=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"")+"/barcode.html?code="+encodeURIComponent(code);
+  const link=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"")+"/barcode.html?code="+encodeURIComponent(code);
+  const applicantUsername=String(p.profile?.telegram_username??payload.telegram_username??"").replace(/^@/,"").trim();
+  if(applicantUsername){
+    const ir=await supabaseServerRest("/rest/v1/rafiq_telegram_identities?username=ilike."+encodeURIComponent(applicantUsername)+"&select=chat_id&order=last_seen_at.desc&limit=1");
+    const recipient=Array.isArray(ir.body)?ir.body[0]?.chat_id:null;
+    if(recipient)await telegramSendText(recipient,telegramSigned("🎉 أهلًا بك في RAFIQ | رفيق\\n\\nتم قبول طلبك رسميًا.\\n🪪 رقمك الشخصي: "+memberNumber+"\\n🔖 باركودك: "+code+"\\n🔗 افتح بطاقة الباركود: "+link+"\\n\\nاحتفظ بهذا الرقم والباركود لاستخدامهما ضمن منصة رفيق.")).catch(()=>{});
+  }
   return{intake,type,memberNumber,code,link};
 };
 const telegramAdminReject=async(ref:string,note:string)=>{
@@ -362,6 +369,8 @@ const telegramAdminCommand=async(message:any)=>{
   }
   if(cmd==="/approve"){
     try{
+    await supabaseServerRest("/rest/v1/rafiq_telegram_identities?on_conflict=telegram_user_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({telegram_user_id:String(message?.from?.id??""),chat_id:String(chatId),username:username||null,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,last_seen_at:new Date().toISOString()})}).catch(()=>{});
+
     const adminHandled=await telegramAdminCommand(message);
     if(adminHandled)return{ok:true,status:"admin_command",message_id:adminHandled?.result?.message_id??null,admin:true};const out=await telegramAdminApprove(parts[1]??"");return telegramSendText(chatId,telegramAdminSigned("✅ تم اعتماد الملف #"+String(out.intake.application_number)+"\n\n🪪 الرقم الشخصي: "+out.memberNumber+"\n🔖 الباركود: "+out.code+"\n🔗 بطاقة الباركود: "+out.link+"\n\nتم حفظ الملف الكامل في السجل الخاص."));}
     catch(e){return telegramSendText(chatId,telegramAdminSigned("❌ "+String(e).slice(0,300)));}
