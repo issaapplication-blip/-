@@ -227,9 +227,63 @@ const registerTelegramWebhookOnStartup = async () => {
     console.error(JSON.stringify({event:"rafig_telegram_webhook_registration_failed",error:String(error).slice(0,200)}));
   }
 };
+const requireSupabaseAdmin = async (request:Request) => {
+  const token=bearerToken(request);
+  if(!token)return null;
+  const me=await supabaseRest("/auth/v1/user",token,{headers:{apikey:SUPABASE_PUBLISHABLE_KEY}});
+  if(!me.response.ok||!me.body?.id)return null;
+  const prof=await supabaseRest("/rest/v1/profiles?id=eq."+encodeURIComponent(me.body.id)+"&select=id,role,status&limit=1",token);
+  const profile=Array.isArray(prof.body)?prof.body[0]:null;
+  if(!prof.response.ok||profile?.role!=="admin"||profile?.status!=="active")return null;
+  return {token,userId:me.body.id};
+};
+
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)for(const [k,v] of Object.entries(securityHeaders))response.headers.set(k,v)})
 .get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
+.get("/api/admin/telegram-cv/orders",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?order_status=not.in.(completed,cancelled)&order=updated_at.desc&select=*",admin.token);
+  if(!r.response.ok){set.status=502;return{ok:false,error:"could not load CV orders"}}
+  return{ok:true,orders:Array.isArray(r.body)?r.body:[]};
+})
+.post("/api/admin/telegram-cv/confirm-payment",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const orderId=typeof input?.orderId==="string"?input.orderId.trim():"";
+  if(!/^[0-9a-f-]{36}$/i.test(orderId)){set.status=400;return{ok:false,error:"invalid order id"}}
+  const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId),admin.token,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify({payment_status:"confirmed",order_status:"in_progress",admin_note:typeof input?.note==="string"?input.note.slice(0,1000):null,updated_at:new Date().toISOString()})});
+  if(!r.response.ok){set.status=502;return{ok:false,error:"could not confirm payment"}}
+  return{ok:true,status:"payment_confirmed",order:Array.isArray(r.body)?r.body[0]??null:r.body};
+})
+.post("/api/admin/telegram-cv/reject-payment",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const orderId=typeof input?.orderId==="string"?input.orderId.trim():"";
+  if(!/^[0-9a-f-]{36}$/i.test(orderId)){set.status=400;return{ok:false,error:"invalid order id"}}
+  const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId),admin.token,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify({payment_status:"rejected",order_status:"awaiting_payment",admin_note:typeof input?.note==="string"?input.note.slice(0,1000):"Payment proof rejected",updated_at:new Date().toISOString()})});
+  if(!r.response.ok){set.status=502;return{ok:false,error:"could not reject payment"}}
+  return{ok:true,status:"payment_rejected",order:Array.isArray(r.body)?r.body[0]??null:r.body};
+})
+.post("/api/admin/telegram-cv/deliver",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const orderId=typeof input?.orderId==="string"?input.orderId.trim():"";
+  const fileId=typeof input?.documentFileId==="string"?input.documentFileId.trim():"";
+  if(!/^[0-9a-f-]{36}$/i.test(orderId)||!fileId){set.status=400;return{ok:false,error:"invalid order id or Telegram document file id"}}
+  const loaded=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId)+"&select=id,chat_id,service,payment_status,order_status",admin.token);
+  const order=Array.isArray(loaded.body)?loaded.body[0]:null;
+  if(!loaded.response.ok||!order){set.status=404;return{ok:false,error:"order not found"}}
+  if(order.payment_status!=="confirmed"){set.status=409;return{ok:false,error:"payment must be confirmed before delivery"}}
+  try{
+    const caption="✅ تم تأكيد الدفع وتسليم ملفك النهائي من رفيق | RAFIQ 🇱🇧";
+    const sent=await telegramSendDocument(String(order.chat_id),fileId,caption);
+    const messageId=sent?.result?.message_id??null;
+    const saved=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId),admin.token,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify({final_document_file_id:fileId,final_document_type:"telegram_file_id",order_status:"completed",updated_at:new Date().toISOString()})});
+    if(!saved.response.ok){set.status=502;return{ok:false,error:"document sent but order status update failed",messageId}}
+    return{ok:true,status:"delivered",messageId};
+  }catch(error){set.status=502;return{ok:false,error:"Telegram document delivery failed"}}
+})
 .post("/api/kapso/webhook",async({request,set})=>{
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
