@@ -6,7 +6,7 @@ self.addEventListener("message", function (e) {
   if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-var CACHE = "rafig-v80-20261004";
+var CACHE = "rafig-v81-20261005";
 var ASSETS = [
   "/",
   "/index.html",
