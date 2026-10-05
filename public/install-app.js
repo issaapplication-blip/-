@@ -79,27 +79,40 @@
     window.dispatchEvent(new CustomEvent('rafig:pwa-installed'));
   });
 
-  document.addEventListener('click',function(e){
-    var b=e.target&&e.target.closest?e.target.closest('[data-rafiq-install],#installApp'):null;
-    if(b)install(e);
-  });
+  function bindInstallButtons(){
+    buttons().forEach(function(b){
+      if(b.__rafigInstallBound)return;
+      b.__rafigInstallBound=true;
+      b.addEventListener('click',install);
+    });
+  }
+  bindInstallButtons();
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',bindInstallButtons,{once:true});
+  }
 
   document.addEventListener('rafiq:i18n',function(){if(!installed()&&!deferred)fallback();});
 
   if('serviceWorker' in navigator){
-    window.addEventListener('load',function(){
-      navigator.serviceWorker.register('/sw.js?v=82',{updateViaCache:'none'}).then(function(reg){
-        if(reg&&reg.update)reg.update();
-      }).catch(function(){});
+    navigator.serviceWorker.register('/sw.js?v=82',{scope:'/',updateViaCache:'none'}).then(function(reg){
+      if(reg&&reg.update)reg.update();
+    }).catch(function(err){
+      console.warn('[RAFIQ PWA] Service Worker registration failed',err);
     });
   }
 
   function boot(){
     if(installed()){hide();return;}
     show();
-    setTimeout(function(){if(!deferred)fallback();},1200);
+    setTimeout(function(){
+      if(!deferred && !installed()){
+        var h=ensureHintNode();
+        h.textContent=T('install.wait','زر التثبيت جاهز. إذا لم تظهر نافذة النظام، فهذا المتصفح لا يتيح التثبيت المباشر لهذه الصفحة حالياً.');
+        h.hidden=false;
+      }
+    },8000);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){bindInstallButtons();boot();},{once:true});else boot();
 
   window.RAFIQ_INSTALL={install:install,show:show,hide:hide,canPrompt:function(){return !!(deferred||window.__RAFIQ_DEFERRED_INSTALL_PROMPT__);},isInstalled:installed};
 })();
