@@ -3,6 +3,7 @@ export const RAFIQ_TELEGRAM_BOT = "https://t.me/RAFIQ_Care_Bot";
 export const RAFIQ_TELEGRAM_CHANNEL = "https://t.me/+LOW0s-MnPD84ZWM0";
 export const RAFIQ_WEBSITE = "https://rafiq-o6qd.onrender.com";
 export const RAFIQ_WHATSAPP = "https://wa.me/96181506299";
+export const RAFIQ_WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
 export const RAFIQ_WHATSAPP_NUMBER = "+961 81 506 299";
 
 export const RAFIQ_SERVICE_KNOWLEDGE = `
@@ -16,6 +17,7 @@ RAFIQ identity:
 - Official care/admin WhatsApp: ${RAFIQ_WHATSAPP_NUMBER} (${RAFIQ_WHATSAPP})
 - Telegram bot: @RAFIQ_Care_Bot (${RAFIQ_TELEGRAM_BOT})
 - Official Telegram channel: ${RAFIQ_TELEGRAM_CHANNEL}
+- Official WhatsApp Channel: ${RAFIQ_WHATSAPP_CHANNEL}
 - Arabic is the default. Answer in the user's language when clearly detectable; Arabic remains the default.
 
 WHAT RAFIQ CAN EXPLAIN DIRECTLY:
@@ -156,7 +158,7 @@ export function answerRafiqKnowledge(message:string): string | null {
   }
 
   if(/(?:تواصل|رقم رفيق|واتساب|whatsapp|telegram|تلغرام|تيليجرام|قناة)/i.test(t)){
-    return `قنوات رفيق الرسمية:\n• WhatsApp: ${RAFIQ_WHATSAPP_NUMBER} — ${RAFIQ_WHATSAPP}\n• Telegram Bot: @RAFIQ_Care_Bot\n• Telegram Channel: ${RAFIQ_TELEGRAM_CHANNEL}\n• الموقع: ${RAFIQ_WEBSITE}`;
+    return `قنوات رفيق الرسمية:\n• WhatsApp: ${RAFIQ_WHATSAPP_NUMBER} — ${RAFIQ_WHATSAPP}\n• Telegram Bot: @RAFIQ_Care_Bot\n• Telegram Channel: ${RAFIQ_TELEGRAM_CHANNEL}\n• WhatsApp Channel: ${RAFIQ_WHATSAPP_CHANNEL}\n• الموقع: ${RAFIQ_WEBSITE}`;
   }
 
   if(/(?:مجانا|مجاني|اشتراك)/i.test(t)){
