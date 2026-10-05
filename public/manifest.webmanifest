@@ -15,13 +15,13 @@
   "prefer_related_applications": false,
   "categories": ["health","medical","lifestyle"],
   "icons": [
-    {"src":"/icon-192.png?v=20261003-1","sizes":"192x192","type":"image/png","purpose":"any"},
-    {"src":"/icon-512.png?v=20261003-1","sizes":"512x512","type":"image/png","purpose":"any"},
-    {"src":"/icon-maskable-512.png?v=20261003-1","sizes":"512x512","type":"image/png","purpose":"maskable"}
+    {"src":"/icon-192.png?v=20261005-1","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"/icon-512.png?v=20261005-1","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"/icon-maskable-512.png?v=20261005-1","sizes":"512x512","type":"image/png","purpose":"maskable"}
   ],
   "shortcuts": [
-    {"name":"الرئيسية","short_name":"الرئيسية","url":"/","icons":[{"src":"/icon-192.png?v=20261003-1","sizes":"192x192"}]},
-    {"name":"الخدمات","short_name":"الخدمات","url":"/services.html","icons":[{"src":"/icon-192.png?v=20261003-1","sizes":"192x192"}]},
-    {"name":"طلب رعاية أو انتساب","short_name":"طلب/انتساب","url":"/app.html","icons":[{"src":"/icon-192.png?v=20261003-1","sizes":"192x192"}]}
+    {"name":"الرئيسية","short_name":"الرئيسية","url":"/","icons":[{"src":"/icon-192.png?v=20261005-1","sizes":"192x192"}]},
+    {"name":"الخدمات","short_name":"الخدمات","url":"/services.html","icons":[{"src":"/icon-192.png?v=20261005-1","sizes":"192x192"}]},
+    {"name":"طلب رعاية أو انتساب","short_name":"طلب/انتساب","url":"/app.html","icons":[{"src":"/icon-192.png?v=20261005-1","sizes":"192x192"}]}
   ]
 }
