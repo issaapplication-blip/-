@@ -1,5 +1,3 @@
-import type { } from "./telegram";
-
 export type ManagerCommandInput = { chatId: string | number; chatType?: string; text?: string | null };
 export type ManagerRpcResult = { data: any; error: { message?: string } | null };
 export type ManagerDeps = {
