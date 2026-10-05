@@ -238,6 +238,145 @@ const requireSupabaseAdmin = async (request:Request) => {
   return {token,userId:me.body.id};
 };
 
+
+const telegramAdminAllowed=(message:any)=>{
+  if(message?.chat?.type!=="private")return false;
+  const username=String(message?.from?.username??"").replace(/^@/,"").toLowerCase();
+  const chatId=String(message?.chat?.id??"");
+  const usernames=String(process.env.RAFIQ_TELEGRAM_ADMIN_USERNAMES??"MHDISSA980").split(",").map(v=>v.trim().replace(/^@/,"").toLowerCase()).filter(Boolean);
+  const chatIds=String(process.env.RAFIQ_TELEGRAM_ADMIN_CHAT_IDS??"").split(",").map(v=>v.trim()).filter(Boolean);
+  return (username&&usernames.includes(username))||(chatId&&chatIds.includes(chatId));
+};
+const telegramMemberType=(applicationType:string)=>{
+  const t=String(applicationType??"");
+  if(t.includes("مقدم")||/caregiver/i.test(t))return"caregiver";
+  if(t.includes("ممرض")||/nurse/i.test(t))return"nurse";
+  if(t.includes("معالج")||/physio/i.test(t))return"physiotherapist";
+  return null;
+};
+const telegramTypeLabel=(type:string)=>({caregiver:"مقدمو الرعاية",nurse:"الممرضون/الممرضات",physiotherapist:"المعالجون الفيزيائيون"} as Record<string,string>)[type]??type;
+const telegramPrefix=(type:string)=>({caregiver:"CG",nurse:"NR",physiotherapist:"PT"} as Record<string,string>)[type]??"MB";
+const telegramAdminSigned=(body:string)=>telegramSigned(body);
+const telegramHash=async(value:string)=>{
+  const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+};
+const telegramAdminIntake=async(ref:string)=>{
+  const clean=String(ref??"").trim();
+  if(!clean)return null;
+  let url="";
+  if(/^\\d+$/.test(clean))url="/rest/v1/application_intakes?application_number=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
+  else if(/^[0-9a-f-]{36}$/i.test(clean))url="/rest/v1/application_intakes?id=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
+  else return null;
+  const r=await supabaseServerRest(url);
+  return r.response.ok&&Array.isArray(r.body)&&r.body[0]?r.body[0]:null;
+};
+const telegramAdminProfileForIntake=async(intake:any)=>{
+  const n=intake?.application_number;
+  if(!n)return{application:null,profile:null,photo:null};
+  const ar=await supabaseServerRest("/rest/v1/applications?application_number=eq."+encodeURIComponent(String(n))+"&select=id,user_id,application_type,status&limit=1");
+  const application=Array.isArray(ar.body)?ar.body[0]:null;
+  if(!application?.user_id)return{application,profile:null,photo:null};
+  const pr=await supabaseServerRest("/rest/v1/profiles?id=eq."+encodeURIComponent(application.user_id)+"&select=id,first_name,last_name,mother_name,phone,telegram_phone,telegram_username,address,photo_storage_path&limit=1");
+  const profile=Array.isArray(pr.body)?pr.body[0]:null;
+  const dr=await supabaseServerRest("/rest/v1/documents?user_id=eq."+encodeURIComponent(application.user_id)+"&document_type=eq.profile_photo&order=created_at.desc&select=storage_path,file_name,mime_type&limit=1");
+  const photo=Array.isArray(dr.body)?dr.body[0]:null;
+  return{application,profile,photo};
+};
+const telegramAdminFormatIntake=async(intake:any)=>{
+  const p=await telegramAdminProfileForIntake(intake);
+  const payload=intake?.payload&&typeof intake.payload==="object"?intake.payload:{};
+  const type=telegramMemberType(intake?.application_type)||"—";
+  const fullName=p.profile?[p.profile.first_name,p.profile.last_name].filter(Boolean).join(" "):String(intake?.applicant_name??"");
+  return[
+    "👤 <b>"+telegramTypeLabel(type)+"</b>","📌 الطلب: "+String(intake?.application_number??"—"),
+    "👤 الاسم الثلاثي: "+(fullName||"—"),"👩 اسم الوالدة: "+String(p.profile?.mother_name??payload.mother_name??"—"),
+    "👨 اسم الأب: "+String(payload.father??"—"),"🎂 تاريخ الميلاد: "+String(payload.dob??"—"),
+    "📍 العنوان: "+String(p.profile?.address??payload.address??intake?.area??"—"),"📞 واتساب: "+String(p.profile?.phone??intake?.phone??"—"),
+    "✈️ Telegram: "+(p.profile?.telegram_username?("@"+String(p.profile.telegram_username).replace(/^@/,"")):"—")+" / "+String(p.profile?.telegram_phone??"—"),
+    "🎓 الصفة/الاختصاص: "+String(payload.specialty??payload.qualification??payload.license??type),"🧰 الخبرة: "+String(payload.experience??"—"),
+    "🗣️ اللغات: "+String(payload.languages??"—"),"🛠️ الخدمات: "+String(payload.services??"—"),
+    "🕒 التوفر: "+String(payload.availability??"—"),"📎 الصورة الشخصية: "+(p.photo?.storage_path||p.profile?.photo_storage_path?"موجودة في الملف الخاص":"غير مرفقة"),
+    "📋 الحالة: "+String(intake?.status??"—")
+  ].join("\n");
+};
+const telegramAdminList=async(statuses:string[],type?:string)=>{
+  const or=statuses.map(s=>"status.eq."+encodeURIComponent(s)).join(",");
+  const r=await supabaseServerRest("/rest/v1/application_intakes?or=("+or+")&order=created_at.desc&select=id,application_number,application_type,applicant_name,phone,area,status,created_at&limit=50");
+  const rows=Array.isArray(r.body)?r.body:[];
+  return type?rows.filter((x:any)=>telegramMemberType(x.application_type)===type):rows;
+};
+const telegramAdminApprove=async(ref:string)=>{
+  const intake=await telegramAdminIntake(ref); if(!intake)throw new Error("لم يتم العثور على الطلب");
+  const type=telegramMemberType(intake.application_type); if(!type)throw new Error("هذا الطلب ليس طلب انتساب لمقدم خدمة");
+  const p=await telegramAdminProfileForIntake(intake);
+  const prefix=telegramPrefix(type);
+  const memberNumber="RAFIQ-"+prefix+"-"+String(intake.application_number??"").padStart(6,"0");
+  const code="RAFIQ-"+prefix+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,10).toUpperCase();
+  const hash=await telegramHash(code);
+  const payload=intake.payload&&typeof intake.payload==="object"?intake.payload:{};
+  const up=await supabaseServerRest("/rest/v1/rafiq_provider_registry?on_conflict=intake_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({
+    intake_id:intake.id,application_number:intake.application_number,member_number:memberNumber,barcode_code:code,member_type:type,status:"approved",
+    full_name:p.profile?[p.profile.first_name,p.profile.last_name].filter(Boolean).join(" "):intake.applicant_name,mother_name:p.profile?.mother_name??payload.mother_name??null,
+    father_name:payload.father??null,birth_date:payload.dob??null,photo_storage_path:p.photo?.storage_path??p.profile?.photo_storage_path??null,address:p.profile?.address??payload.address??null,
+    area:intake.area??payload.area??null,phone:p.profile?.phone??intake.phone??null,whatsapp_phone:p.profile?.phone??intake.phone??null,
+    telegram_phone:p.profile?.telegram_phone??null,telegram_username:p.profile?.telegram_username??null,platform_role:type,specialty:payload.specialty??null,
+    qualification:payload.qualification??payload.license??null,experience:payload.experience??null,languages:payload.languages??null,services:payload.services??null,availability:payload.availability??null,
+    approved_at:new Date().toISOString(),updated_at:new Date().toISOString()
+  })});
+  if(!up.response.ok)throw new Error("تعذر إنشاء ملف العضو");
+  const barcode=await supabaseServerRest("/rest/v1/issued_barcodes?on_conflict=code",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({intake_id:intake.id,code,code_hash:hash,member_type:type,status:"active",issued_at:new Date().toISOString()})});
+  if(!barcode.response.ok)throw new Error("تعذر إصدار الباركود");
+  await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",admin_decision_notes:"تم القبول وإصدار الرقم والباركود من إدارة RAFIQ",updated_at:new Date().toISOString()})});
+  if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",updated_at:new Date().toISOString()})});
+  const link=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"")+"/barcode.html?code="+encodeURIComponent(code);
+  return{intake,type,memberNumber,code,link};
+};
+const telegramAdminReject=async(ref:string,note:string)=>{
+  const intake=await telegramAdminIntake(ref); if(!intake)throw new Error("لم يتم العثور على الطلب");
+  await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"rejected",admin_decision_notes:note||"تم رفض الطلب من الإدارة",updated_at:new Date().toISOString()})});
+  const p=await telegramAdminProfileForIntake(intake);
+  if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"rejected",updated_at:new Date().toISOString()})});
+  return intake;
+};
+const telegramAdminMenu=()=>["🔐 <b>لوحة مدير RAFIQ عبر Telegram</b>","","📂 /pending — قيد المراجعة","🤝 /caregivers — مقدمو الرعاية","👩‍⚕️ /nurses — الممرضون/الممرضات","🧑‍🦽 /physios — المعالجون الفيزيائيون","❌ /rejected — المرفوضون","✅ /approved — المقبولون","🔎 /candidate 108 — ملف متقدم","✔️ /approve 108 — قبول وإصدار الرقم والباركود","✖️ /reject 108 السبب — رفض الطلب","🗂️ /cases — حالات الرعاية المفتوحة","ℹ️ /help — المساعدة"].join("\n");
+const telegramAdminCommand=async(message:any)=>{
+  if(!telegramAdminAllowed(message))return null;
+  const chatId=message.chat.id;
+  const textBody=typeof message?.text==="string"?message.text.trim():"";
+  const parts=textBody.split(/\s+/);
+  const cmd=String(parts[0]??"").toLowerCase();
+  if(!["/admin","/pending","/caregivers","/nurses","/physios","/rejected","/approved","/candidate","/approve","/reject","/cases","/help"].includes(cmd))return null;
+  if(cmd==="/admin"||cmd==="/help")return telegramSendText(chatId,telegramAdminSigned(telegramAdminMenu()));
+  if(cmd==="/candidate"){
+    const intake=await telegramAdminIntake(parts[1]??""); if(!intake)return telegramSendText(chatId,telegramAdminSigned("❌ لم أجد هذا الطلب."));
+    return telegramSendText(chatId,telegramAdminSigned(await telegramAdminFormatIntake(intake)));
+  }
+  if(cmd==="/pending"||cmd==="/caregivers"||cmd==="/nurses"||cmd==="/physios"||cmd==="/rejected"||cmd==="/approved"){
+    const type=cmd==="/caregivers"?"caregiver":cmd==="/nurses"?"nurse":cmd==="/physios"?"physiotherapist":undefined;
+    const statuses=cmd==="/rejected"?["rejected"]:cmd==="/approved"?["approved"]:["pending","review"];
+    const rows=await telegramAdminList(statuses,type);
+    if(!rows.length)return telegramSendText(chatId,telegramAdminSigned("لا توجد ملفات ضمن هذا القسم."));
+    const body=rows.map((x:any)=>"• #"+x.application_number+" — "+(x.applicant_name||"—")+" — "+telegramTypeLabel(telegramMemberType(x.application_type)||x.application_type)+" — "+x.status+"\n  /candidate "+x.application_number).join("\n");
+    return telegramSendText(chatId,telegramAdminSigned(body));
+  }
+  if(cmd==="/approve"){
+    try{
+    const adminHandled=await telegramAdminCommand(message);
+    if(adminHandled)return{ok:true,status:"admin_command",message_id:adminHandled?.result?.message_id??null,admin:true};const out=await telegramAdminApprove(parts[1]??"");return telegramSendText(chatId,telegramAdminSigned("✅ تم اعتماد الملف #"+String(out.intake.application_number)+"\n\n🪪 الرقم الشخصي: "+out.memberNumber+"\n🔖 الباركود: "+out.code+"\n🔗 بطاقة الباركود: "+out.link+"\n\nتم حفظ الملف الكامل في السجل الخاص."));}
+    catch(e){return telegramSendText(chatId,telegramAdminSigned("❌ "+String(e).slice(0,300)));}
+  }
+  if(cmd==="/reject"){
+    try{const out=await telegramAdminReject(parts[1]??"",parts.slice(2).join(" "));return telegramSendText(chatId,telegramAdminSigned("❌ تم رفض الطلب #"+String(out.application_number)+" ونقله إلى ملف المرفوضين."));}
+    catch(e){return telegramSendText(chatId,telegramAdminSigned("❌ "+String(e).slice(0,300)));}
+  }
+  if(cmd==="/cases"){
+    const r=await supabaseServerRest("/rest/v1/care_requests?status=in.(pending,review,matching)&order=created_at.desc&select=id,request_number,service_type,required_provider_type,status,created_at&limit=30");
+    const rows=Array.isArray(r.body)?r.body:[];
+    return telegramSendText(chatId,telegramAdminSigned(rows.length?rows.map((x:any)=>"• الحالة #"+(x.request_number||x.id)+" — "+(x.service_type||"—")+" — "+(x.required_provider_type||"—")+" — "+x.status).join("\n"):"لا توجد حالات مفتوحة حاليًا."));
+  }
+  return null;
+};
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)for(const [k,v] of Object.entries(securityHeaders))response.headers.set(k,v)})
 .get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
