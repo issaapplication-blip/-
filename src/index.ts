@@ -20,6 +20,19 @@ const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
 const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
 const TELEGRAM_ANNOUNCEMENT_KEY = "rafig-family-launch-2026-10";
 const RAFIQ_WHATSAPP_CHANNEL_URL = RAFIQ_WHATSAPP_CHANNEL;
+const RAFIQ_TELEGRAM_INVITE = `${RAFIQ_TELEGRAM_BOT}?start=rafiq`;
+const RAFIQ_TELEGRAM_SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
+const telegramSigned = (body: string) => body.includes(RAFIQ_TELEGRAM_SIGNATURE) ? body : `${body}\n\n${RAFIQ_TELEGRAM_SIGNATURE}`;
+const TELEGRAM_WELCOME = [
+  "أهلًا وسهلًا بك في رفيق | RAFIQ 🇱🇧",
+  "أنا مساعد رفيق للرعاية المنزلية. يمكنك أن تسألني عن خدمات رفيق أو تكتب طلبك كما تتحدث مع فريقنا.",
+  "",
+  "👴 رعاية كبار السن\n🏠 رعاية المرضى\n👩‍⚕️ التمريض المنزلي\n🦿 العلاج الفيزيائي المنزلي",
+  "",
+  "📢 قناة رفيق: " + RAFIQ_TELEGRAM_CHANNEL,
+  "🤖 رابط دعوة البوت: " + RAFIQ_TELEGRAM_INVITE,
+  "📱 عند الحاجة إلى متابعة إدارية أو معلومات حساسة: WhatsApp +961 81 506 299"
+].join("\n");
 const TELEGRAM_ANNOUNCEMENT_CUTOFF = "2026-10-05T00:00:00.000Z";
 const TELEGRAM_ANNOUNCEMENT = [
   "📣 خبر رفيق | RAFIQ 🇱🇧",
@@ -273,8 +286,10 @@ const app=new Elysia()
     }
     const commandReply=telegramCommandReply(textBody);
     if(commandReply){
-      const outbound=await telegramSendText(chatId,commandReply);
-      await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:commandReply,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});
+      const welcomeOnStart = textBody.toLowerCase().split(" ")[0] === "/start";
+    const replyBody = welcomeOnStart ? TELEGRAM_WELCOME : commandReply;
+    const outbound=await telegramSendText(chatId,telegramSigned(replyBody));
+      await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:replyBody,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
     const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
@@ -284,7 +299,7 @@ const app=new Elysia()
     const escalation=result.reply.includes("WhatsApp")||result.reply.includes("واتساب")||result.reply.includes("الإدارة")||result.reply.includes("ادارة رفيق")||result.reply.includes("قرار إداري")||result.reply.includes("تواصل مع فريق رفيق");
     const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,escalation};
     if(escalation && conversationId) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
-    const outbound=await telegramSendText(chatId,result.reply);
+    const outbound=await telegramSendText(chatId,telegramSigned(result.reply));
     await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:result.reply,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString(),escalation_state:escalation?"admin_review":"none"})}).catch(()=>{});
     return{ok:true,status:escalation?"auto_replied_and_escalated":"auto_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
   }catch(error){
@@ -309,6 +324,7 @@ const app=new Elysia()
   ok:true,
   website:RAFIQ_WEBSITE,
   telegramBot:RAFIQ_TELEGRAM_BOT,
+  telegramInvite:RAFIQ_TELEGRAM_INVITE,
   telegramChannel:RAFIQ_TELEGRAM_CHANNEL,
   whatsapp:RAFIQ_WHATSAPP,
   whatsappNumber:RAFIQ_WHATSAPP_NUMBER,
