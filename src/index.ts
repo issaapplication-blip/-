@@ -111,7 +111,7 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
   const destination=identity.phone?{to:identity.phone}:{recipient:identity.bsuid};
   if(!body||(!destination.to&&!destination.recipient))return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
   try{
-    const inbound=await recordInboundEvent(message,identity);if(inbound?.duplicate){console.log(JSON.stringify({event:"rafig_kapso_duplicate_ignored",messageId:String(message?.id??"")}));return{id:String(message?.id??"unknown"),status:"duplicate_ignored"}}
+    const inbound=await recordInboundEvent(message,identity,"kapso");if(inbound?.duplicate){console.log(JSON.stringify({event:"rafig_kapso_duplicate_ignored",messageId:String(message?.id??"")}));return{id:String(message?.id??"unknown"),status:"duplicate_ignored"}}
     console.log(JSON.stringify({event:"rafig_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
     await forwardWhatsAppToTelegramManager(message,identity,body);
     if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING==="true" && (process.env.RAFIQ_WHATSAPP_AUTO_REPLY!=="true" || process.env.WHATSAPP_SENDING_ENABLED!=="true")){
@@ -140,7 +140,44 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
     console.error(JSON.stringify({event:"rafig_kapso_agent_failed",messageId:String(message.id??""),error:String(error)}));
     return{id:String(message.id??""),status:"draft_failed"};
   }
-};const kapsoInFlight=new Set<string>();const processKapsoMessage=async(message:any,conversation:any={})=>{const id=String(message?.id??"");if(id&&kapsoInFlight.has(id))return{id,status:"duplicate_in_flight"};if(id)kapsoInFlight.add(id);try{return await processKapsoMessageCore(message,conversation)}finally{if(id)kapsoInFlight.delete(id)}};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
+};const processMetaMessageCore=async(message:any)=>{
+  const identity={phone:typeof message?.from==="string"?message.from:""};
+  const forbiddenDigits="70600157";
+  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
+  const body=typeof message?.text?.body==="string"?message.text.body.trim():"";
+  if(!body||!identity.phone)return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
+  try{
+    const inbound=await recordInboundEvent(message,identity,"meta");
+    if(inbound?.duplicate)return{id:String(message?.id??"unknown"),status:"duplicate_ignored"};
+    console.log(JSON.stringify({event:"rafig_meta_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
+    await forwardWhatsAppToTelegramManager(message,identity,body);
+    const result=await draftInboundReply(body,identity.phone);
+    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
+      try{
+        const outbound=kapsoConfigured()?await kapsoSendText({to:identity.phone},result.reply):await sendWhatsAppText(identity.phone,result.reply);
+        await recordOutboundMessage(identity.phone,result.reply,outbound);
+        await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
+        return{id:String(message.id??""),status:"auto_replied",outboundMessageId:outbound?.messages?.[0]?.id??null};
+      }catch(error){
+        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
+        return{id:String(message.id??""),status:"draft_ready_send_failed"};
+      }
+    }
+    await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
+    return{id:String(message.id??""),status:"draft_ready"};
+  }catch(error){
+    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
+    console.error(JSON.stringify({event:"rafig_meta_webhook_failed",messageId:String(message?.id??""),error:String(error)}));
+    return{id:String(message?.id??""),status:"draft_failed"};
+  }
+};
+const processMetaMessage=async(message:any)=>{
+  const id=String(message?.id??"");
+  if(id&&kapsoInFlight.has("meta:"+id))return{id,status:"duplicate_in_flight"};
+  if(id)kapsoInFlight.add("meta:"+id);
+  try{return await processMetaMessageCore(message)}finally{if(id)kapsoInFlight.delete("meta:"+id)}
+};
+const kapsoInFlight=new Set<string>();const processKapsoMessage=async(message:any,conversation:any={})=>{const id=String(message?.id??"");if(id&&kapsoInFlight.has(id))return{id,status:"duplicate_in_flight"};if(id)kapsoInFlight.add(id);try{return await processKapsoMessageCore(message,conversation)}finally{if(id)kapsoInFlight.delete(id)}};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? "https://qmuxaehrahfsnabyjens.supabase.co").trim().replace(/\/+$/,"");
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "").trim();
@@ -154,16 +191,25 @@ const supabaseServerRest=async(path:string,init:RequestInit={})=>{
   const body=await response.json().catch(()=>null);
   return {response,body};
 };
-const recordInboundEvent=async(message:any,identity:any)=>{
+const recordInboundEvent=async(message:any,identity:any,provider="kapso")=>{
   const providerMessageId=String(message?.id??"").trim();
-  if(!providerMessageId)return null;const prevRow=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq.kapso&provider_message_id=eq."+encodeURIComponent(providerMessageId)+"&select=id,processing_status&limit=1");const prev=Array.isArray(prevRow.body)?prevRow.body[0]:null;if(prev&&prev.processing_status==="processed")return{...prev,duplicate:true};
-  const r=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?on_conflict=provider%2Cprovider_message_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({provider:"kapso",provider_message_id:providerMessageId,from_phone:identity.phone||null,message_type:typeof message?.type==="string"?message.type:"text",text_body:typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():null),payload:message??{},processing_status:"processing"})});
+  if(!providerMessageId)return null;
+  const prevRow=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider_message_id=eq."+encodeURIComponent(providerMessageId)+"&select=id,provider,processing_status&order=received_at.desc&limit=1");
+  const prev=Array.isArray(prevRow.body)?prevRow.body[0]:null;
+  if(prev)return{...prev,duplicate:true};
+  const textBody=typeof message?.text?.body==="string"
+    ? message.text.body.trim()
+    : (typeof message?.kapso?.content==="string"?message.kapso.content.trim():null);
+  const r=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?on_conflict=provider%2Cprovider_message_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({
+    provider,provider_message_id:providerMessageId,from_phone:identity.phone||null,
+    message_type:typeof message?.type==="string"?message.type:"text",text_body:textBody||null,payload:message??{},processing_status:"processing"
+  })});
   if(!r.response.ok){const detail=typeof r.body==="string"?r.body:JSON.stringify(r.body??{});throw new Error(`could not persist inbound WhatsApp event (${r.response.status}): ${detail.slice(0,700)}`);}
   return Array.isArray(r.body)?r.body[0]:r.body;
 };
-const updateInboundEvent=async(providerMessageId:string,status:string,errorMessage?:string)=>{
+const updateInboundEvent=async(providerMessageId:string,status:string,errorMessage?:string,provider="kapso")=>{
   if(!SUPABASE_SERVICE_ROLE_KEY||!providerMessageId)return;
-  await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq.kapso&provider_message_id=eq."+encodeURIComponent(providerMessageId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({processing_status:status,error_message:errorMessage??null,processed_at:new Date().toISOString()})});
+  await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq."+encodeURIComponent(provider)+"&provider_message_id=eq."+encodeURIComponent(providerMessageId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({processing_status:status,error_message:errorMessage??null,processed_at:new Date().toISOString()})});
 };
 const recordOutboundMessage=async(toPhone:string,body:string,result:any)=>{
   if(!SUPABASE_SERVICE_ROLE_KEY)return;
@@ -444,6 +490,24 @@ const app=new Elysia()
     if(!saved.response.ok){set.status=502;return{ok:false,error:"document sent but order status update failed",messageId}}
     return{ok:true,status:"delivered",messageId};
   }catch(error){set.status=502;return{ok:false,error:"Telegram document delivery failed"}}
+})
+.get("/api/whatsapp/webhook",({query,set})=>{
+  const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=(process.env.META_VERIFY_TOKEN??"").trim();
+  if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;
+  set.status=403;return{ok:false,error:"webhook verification failed"};
+})
+.post("/api/whatsapp/webhook",async({request,set})=>{
+  const raw=await request.text();
+  if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
+  const signature=request.headers.get("x-hub-signature-256");
+  if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  if(payload?.object!=="whatsapp_business_account"){set.status=200;return{ok:true,status:"ignored_non_whatsapp_object"}}
+  const messages=extractIncomingMessages(payload);
+  if(!messages.length){set.status=200;return{ok:true,status:"ignored_no_incoming_messages"}}
+  const results=[];
+  for(const message of messages)results.push(await processMetaMessage(message));
+  return{ok:true,status:"processed",results};
 })
 .post("/api/kapso/webhook",async({request,set})=>{
   const raw=await request.text();
