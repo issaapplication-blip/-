@@ -76,6 +76,12 @@ const norm = (s:string) => String(s||"")
   .replace(/ى/g,"ي")
   .toLowerCase();
 
+export function rafiqRequiresHumanReply(message:string): boolean {
+  const t=String(message||"").trim();
+  if(!t || EMERGENCY.test(t)) return false;
+  return SENSITIVE.some(r=>r.test(t));
+}
+
 export const RAFIQ_SAFE_HANDOFF =
   `هذه النقطة تحتاج مراجعة مباشرة من إدارة رفيق حتى نعطيكم جوابًا دقيقًا. يمكنكم متابعة الحالة عبر WhatsApp الرسمي: ${RAFIQ_WHATSAPP_NUMBER}\n${RAFIQ_WHATSAPP}`;
 
