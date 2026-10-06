@@ -522,10 +522,30 @@ const app=new Elysia()
             method: "POST",
             body: JSON.stringify(args),
           });
-          return {
-            data: r.response.ok ? r.body : null,
-            error: r.response.ok ? null : { message: "manager RPC failed" },
-          };
+          if (r.response.ok) return { data: r.body, error: null };
+
+          // Fallback for read-only manager lists if PostgREST has a stale RPC signature/cache.
+          if (fn === "manager_folder_counts") {
+            const q = await supabaseServerRest("/rest/v1/admin_application_folder_counts?select=category,folder,total&order=category.asc,folder.asc");
+            if (q.response.ok) return { data: q.body, error: null };
+          }
+          if (fn === "manager_list_applications") {
+            const category = String(args.p_category ?? "");
+            const folder = String(args.p_folder ?? "");
+            const limit = Math.min(Math.max(Number(args.p_limit ?? 20), 1), 50);
+            const q = await supabaseServerRest(
+              "/rest/v1/admin_application_folders?select=application_number,membership_number,applicant_name,category,folder,area,specialty,created_at" +
+              "&category=eq." + encodeURIComponent(category) +
+              "&folder=eq." + encodeURIComponent(folder) +
+              "&order=created_at.desc&limit=" + String(limit)
+            );
+            if (q.response.ok) return { data: q.body, error: null };
+          }
+          const detail = typeof r.body === "object" && r.body
+            ? String(r.body.message ?? r.body.error_description ?? r.body.hint ?? "manager RPC failed")
+            : "manager RPC failed";
+          console.error(JSON.stringify({event:"rafig_telegram_manager_rpc_failed",function:fn,status:r.response.status,detail:detail.slice(0,300)}));
+          return { data: null, error: { message: detail } };
         },
         send: (c, body) => telegramSendText(c, telegramSigned(body)),
         photoUrl: async (storagePath) => {
