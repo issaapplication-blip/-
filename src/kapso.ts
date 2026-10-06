@@ -1,9 +1,19 @@
 const KAPSO_BASE_URL = process.env.KAPSO_BASE_URL ?? "https://api.kapso.ai/meta/whatsapp/v24.0";
+// RAFIQ Meta/Kapso identity: WABA 1571101954509141, phone number ID 1324609540731383.
+// WABA ID is an account ID, not a Meta App ID; Kapso message API routes by phone number ID.
+const KAPSO_WABA_ID = process.env.KAPSO_WABA_ID ?? "1571101954509141";
+const KAPSO_PHONE_NUMBER_ID = process.env.KAPSO_PHONE_NUMBER_ID ?? "1324609540731383";
 const kapsoKey = () => process.env["KAPSO_" + "API_KEY"];
-const kapsoPhoneNumberId = () => process.env.KAPSO_PHONE_NUMBER_ID ?? "1324609540731383";
+const kapsoPhoneNumberId = () => KAPSO_PHONE_NUMBER_ID;
 
 export const kapsoConfigured = () =>
-  Boolean(kapsoKey() && kapsoPhoneNumberId());
+  Boolean(kapsoKey() && KAPSO_WABA_ID && kapsoPhoneNumberId());
+
+export const kapsoConnectionInfo = () => ({
+  wabaId: KAPSO_WABA_ID,
+  phoneNumberId: KAPSO_PHONE_NUMBER_ID,
+  baseUrl: KAPSO_BASE_URL,
+});
 
 export const kapsoWebhookSecret = () =>
   process.env.KAPSO_WEBHOOK_SECRET ?? null;
