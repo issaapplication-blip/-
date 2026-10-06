@@ -6,7 +6,7 @@ import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
 import { handleManagerCommand, parseManagerChatIds } from "./telegram-manager";
-import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER } from "./rafiq-service-knowledge";
+import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER, rafiqRequiresHumanReply } from "./rafiq-service-knowledge";
 
 const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
@@ -561,6 +561,15 @@ const app=new Elysia()
       },
     );
     if (managerHandled) return { ok: true, status: "manager_command_handled" };
+
+    if(textBody && rafiqRequiresHumanReply(textBody)){
+      const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,reason:"human_reply_required",status:"open"};
+      if(conversationId) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_human_reply_required",status:"open",payload})}).catch(()=>{});
+      const managers=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
+      const managerNotice="🔔 طلب يحتاج رد الإدارة\\n\\nمن Telegram: "+(senderName||"غير معروف")+"\\nالمحادثة: "+String(chatId)+"\\n\\nرسالة العميل:\\n"+textBody+"\\n\\n⚠️ لم يتم إرسال رد تلقائي للعميل.";
+      for(const managerId of managers){ await telegramSendText(managerId,telegramSigned(managerNotice)).catch(()=>{}); }
+      return{ok:true,status:"human_reply_required_no_auto_reply",conversation_id:conversationId};
+    }
 
     const document = message?.document;
     const photo = Array.isArray(message?.photo) && message.photo.length ? message.photo[message.photo.length-1] : null;
