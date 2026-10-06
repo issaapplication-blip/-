@@ -41,6 +41,14 @@ const TELEGRAM_ONBOARDING_MESSAGE = [
 const RAFIQ_WHATSAPP_CHANNEL_URL = RAFIQ_WHATSAPP_CHANNEL;
 const RAFIQ_TELEGRAM_SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
 const telegramSigned = (body: string) => body.includes(RAFIQ_TELEGRAM_SIGNATURE) ? body : `${body}\n\n${RAFIQ_TELEGRAM_SIGNATURE}`;
+const forwardWhatsAppToTelegramManager=async(message:any,identity:any,body:string)=>{
+  if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING!=="true")return;
+  const managerChatIds=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
+  if(!managerChatIds.length){console.warn(JSON.stringify({event:"rafig_whatsapp_to_telegram_no_manager_ids"}));return;}
+  const messageType=typeof message?.type==="string"?message.type:"text";
+  const notice=telegramSigned(["📲 رسالة WhatsApp واردة إلى RAFIQ","","👤 رقم العميل: "+(identity.phone||"غير متوفر"),"💬 نوع الرسالة: "+messageType,"💬 الرسالة:",body||"[رسالة غير نصية]","","🟡 الحالة: بانتظار متابعة المدير","⚠️ لا يوجد رد تلقائي على WhatsApp حاليًا.","يمكن للمدير نسخ الرد المناسب وإرساله يدويًا عبر WhatsApp."].join("\n"));
+  for(const managerId of managerChatIds){await telegramSendText(managerId,notice).catch(error=>console.error(JSON.stringify({event:"rafig_whatsapp_to_telegram_send_failed",managerId,error:String(error).slice(0,240)})));}
+};
 const TELEGRAM_WELCOME = [
   "أهلًا وسهلًا بك في رفيق | RAFIQ 🇱🇧",
   "أنا مساعد رفيق للرعاية المنزلية. يمكنك أن تسألني عن خدمات رفيق أو تكتب طلبك كما تتحدث مع فريقنا.",
@@ -105,6 +113,11 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
   try{
     const inbound=await recordInboundEvent(message,identity);if(inbound?.duplicate){console.log(JSON.stringify({event:"rafig_kapso_duplicate_ignored",messageId:String(message?.id??"")}));return{id:String(message?.id??"unknown"),status:"duplicate_ignored"}}
     console.log(JSON.stringify({event:"rafig_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
+    await forwardWhatsAppToTelegramManager(message,identity,body);
+    if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING==="true" && (process.env.RAFIQ_WHATSAPP_AUTO_REPLY!=="true" || process.env.WHATSAPP_SENDING_ENABLED!=="true")){
+      await updateInboundEvent(String(message.id??""),"processed");
+      return{id:String(message.id??""),status:"forwarded_to_telegram"};
+    }
     const result=await draftInboundReply(body,identity.phone||undefined);
     if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
       try{
