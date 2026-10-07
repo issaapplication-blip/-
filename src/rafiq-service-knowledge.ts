@@ -1,4 +1,5 @@
 /* RAFIQ | رفيق — centralized family-facing service knowledge */
+// Telegram FAQ routing is intentionally deterministic for common customer questions.
 export const RAFIQ_TELEGRAM_BOT = "https://t.me/RAFIQ_Care_Bot";
 export const RAFIQ_TELEGRAM_CHANNEL = "https://t.me/+a7CDblNyGkw1Yjg8";
 export const RAFIQ_WEBSITE = "https://rafiq-o6qd.onrender.com";
