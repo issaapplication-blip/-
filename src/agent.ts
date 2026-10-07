@@ -261,8 +261,8 @@ const RAFIQ_CARE_INTAKE_REPLY =
 const RAFIQ_DEFAULT_INBOUND_REPLY =
   "مرحباً! أنا وكيل منصة RAFIQ. كيف أستطيع مساعدتك؟";
 
-export const draftAgentReply = async (message: string, languageHint?: string, conversationContext?: string) => {
-  const knowledgeReply = answerRafiqKnowledge(message);
+export const draftAgentReply = async (message: string, languageHint?: string, conversationContext?: string, useKnowledgeBase = true) => {
+  const knowledgeReply = useKnowledgeBase ? answerRafiqKnowledge(message) : null;
   if (knowledgeReply) return { reply: knowledgeReply, model: "rafiq-knowledge-base" };
   const context = languageHint ? `Preferred language hint: ${languageHint}` : "Infer the customer language from the message.";
   const history = conversationContext?.trim() ? `\n\nConversation context (use only to continue the current customer request):\n${conversationContext.trim()}` : "";
