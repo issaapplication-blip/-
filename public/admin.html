@@ -234,7 +234,27 @@ async function reviewRequest(id,status){
   await db.from('audit_logs').insert({action:'admin_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes,notification_attempted:status==='approved'}});
   $('modal').classList.add('hidden');
   await loadAll();
-  if(status!=='approved')showMsg('تم تسجيل قرار المدير بنجاح.',true);
+  if(status==='review'){
+    try{
+      const session=(await db.auth.getSession()).data.session;
+      if(session?.access_token){
+        const resp=await fetch('/api/admin/send-completion-request',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+          body:JSON.stringify({applicationId:id,notes})
+        });
+        const sendResult=await resp.json().catch(()=>({}));
+        if(sendResult?.status==='telegram_sent'||sendResult?.status==='whatsapp_sent'){
+          showMsg('تم إرسال رسالة استكمال الملفات عبر '+(sendResult.channel==='telegram'?'Telegram':'WhatsApp')+'.',true);
+        }else{
+          showMsg('تم وضع الطلب قيد المراجعة وتسجيل رسالة الاستكمال للمتابعة.');
+        }
+      }
+    }catch(e){
+      showMsg('تم وضع الطلب قيد المراجعة، وتعذر إرسال رسالة الاستكمال تلقائياً.');
+    }
+  }
+  if(status!=='approved' && status!=='review')showMsg('تم تسجيل قرار المدير بنجاح.',true);
 }
 async function loadCompletion(){
   const rows=allRequests.filter(x=>x.status==='review');
