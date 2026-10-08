@@ -20,6 +20,8 @@ jobs:
           name: rafiq-load-results
           path: tests/load/results/production-summary.json
   browser:
+    needs: load
+    if: ${{ needs.load.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
