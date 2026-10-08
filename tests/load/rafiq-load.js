@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import {check,sleep} from 'k6';
-import {Rate,Trend} from 'k6/metrics';
+import {Rate,Trend,Counter} from 'k6/metrics';
+const statusCounts=new Counter('http_status_codes');
 
 const BASE=__ENV.BASE_URL||'https://rafiq-o6qd.onrender.com';
 const errors=new Rate('rafiq_errors');
@@ -15,6 +16,7 @@ function hit(loadLevel){
       tags:{path,load_level:String(loadLevel)},
       headers:{'X-Forwarded-For':`198.18.${Math.floor((__VU-1)/256)}.${((__VU-1)%256)+1}`}
     });
+    statusCounts.add(1,{code:String(r.status),load_level:String(loadLevel),path});
     const ok=check(r,{'status < 500':x=>x.status<500,'latency < 5s':x=>x.timings.duration<5000});
     errors.add(!ok,{path,load_level:String(loadLevel)});
     if(loadLevel===200)latency200.add(r.timings.duration,{path});
