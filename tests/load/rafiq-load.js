@@ -13,7 +13,7 @@ function hit(loadLevel){
   for(const path of paths){
     const r=http.get(BASE+path,{
       tags:{path,load_level:String(loadLevel)},
-      headers:{'X-Forwarded-For':`198.51.100.${(__VU%250)+1}`}
+      headers:{'X-Forwarded-For':`198.18.${Math.floor((__VU-1)/256)}.${((__VU-1)%256)+1}`}
     });
     const ok=check(r,{'status < 500':x=>x.status<500,'latency < 5s':x=>x.timings.duration<5000});
     errors.add(!ok,{path,load_level:String(loadLevel)});
