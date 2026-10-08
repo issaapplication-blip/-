@@ -749,7 +749,8 @@ const app=new Elysia()
     const commandReply=telegramCommandReply(textBody);
     if(commandReply){
       const welcomeOnStart=textBody.toLowerCase().split(" ")[0]==="/start";
-      const outbound=await reply(welcomeOnStart?TELEGRAM_WELCOME:commandReply);\n      if(welcomeOnStart && message?.chat?.type==="private") await telegramSendContactRequest(chatId).catch(()=>{});
+      const outbound=await reply(welcomeOnStart?TELEGRAM_WELCOME:commandReply);
+      if(welcomeOnStart && message?.chat?.type==="private") await telegramSendContactRequest(chatId).catch(()=>{});
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
 
