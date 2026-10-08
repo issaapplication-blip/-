@@ -216,7 +216,6 @@ async function reviewRequest(id,status){
   ({data,error}=await db.rpc('admin_approve_application_intake',{p_intake_id:id,p_status:status,p_notes:notes}));
   if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}
 
-  if(status==='rejected' && Array.isArray(data?.deleted_file_paths) && data.deleted_file_paths.length){const paths=data.deleted_file_paths.filter(Boolean);const sr=await db.storage.from('private_documents').remove(paths);if(sr.error)console.warn('rejected storage cleanup failed',sr.error)}
   if(status==='approved' && data?.barcode_code){
     const box=document.createElement('div');
     box.className='ok';
