@@ -3,7 +3,7 @@ import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
-import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
+import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
 import { sendMessage } from "./messaging-service";
 import { RAFIQ_CONFIG } from "./rafiq-config";
@@ -44,6 +44,63 @@ const TELEGRAM_ONBOARDING_MESSAGE = [
 const RAFIQ_WHATSAPP_CHANNEL_URL = RAFIQ_WHATSAPP_CHANNEL;
 const RAFIQ_TELEGRAM_SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
 const telegramSigned = (body: string) => body.includes(RAFIQ_TELEGRAM_SIGNATURE) ? body : `${body}\n\n${RAFIQ_TELEGRAM_SIGNATURE}`;
+const telegramLanguage = (message:any) => {
+  const code=String(message?.from?.language_code??"").toLowerCase();
+  if(code.startsWith("en")) return "en";
+  if(code.startsWith("fr")) return "fr";
+  if(code.startsWith("it")) return "it";
+  if(code.startsWith("de")) return "de";
+  const t=String(message?.text??"");
+  if(/\\b(hello|hi|what|how|services|request|help|contact)\\b/i.test(t)) return "en";
+  if(/[أ-ي]/.test(t)) return "ar";
+  return "ar";
+};
+const TELEGRAM_BROADCAST_IMAGE = (process.env.TELEGRAM_BROADCAST_IMAGE_URL || `${RAFIQ_WEBSITE}/assets/rafig-logo.png`).trim();
+const TELEGRAM_BROADCAST_BUTTON = {inline_keyboard:[[{text:"🌐 منصة RAFIQ",url:RAFIQ_WEBSITE}]]};
+const sleep = (ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+const isTelegramBlockedError=(error:any)=>{
+  const s=String(error?.telegramDescription||error?.message||"").toLowerCase();
+  return Number(error?.telegramStatus)===403 && /(blocked|deactivated|chat not found|forbidden|user is deactivated)/i.test(s);
+};
+const telegramBroadcastOne=async(recipientId:string,text:string)=>{
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      return await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
+    }catch(error:any){
+      const retryAfter=Number(error?.retryAfter||0);
+      if(retryAfter>0){ await sleep(Math.min(retryAfter*1000,10000)); continue; }
+      if(Number(error?.telegramStatus)===429){ await sleep(Math.min(1000*(attempt+1),5000)); continue; }
+      throw error;
+    }
+  }
+  throw new Error("Telegram broadcast retry limit reached");
+};
+const telegramBroadcast=async(text:string,testOnly=false)=>{
+  const announcementKey="manager-broadcast-"+Date.now();
+  const rows=await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?is_subscribed=eq.true&select=chat_id");
+  const subscribers=Array.isArray(rows.body)?rows.body.map((x:any)=>String(x.chat_id)).filter(Boolean):[];
+  const targets=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?is_active=eq.true&select=chat_id,chat_type");
+  const targetIds=Array.isArray(targets.body)?targets.body.map((x:any)=>String(x.chat_id)).filter(Boolean):[];
+  const recipients=testOnly ? [String(parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS)[0]||"")].filter(Boolean) : Array.from(new Set([...subscribers,...targetIds]));
+  let sent=0,failed=0,blocked=0;
+  for(let i=0;i<recipients.length;i++){
+    const recipientId=recipients[i];
+    try{
+      await telegramBroadcastOne(recipientId,text);
+      sent++;
+      await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:announcementKey,recipient_id:recipientId,status:"sent",sent_at:new Date().toISOString(),updated_at:new Date().toISOString()})}).catch(()=>{});
+    }catch(error:any){
+      if(isTelegramBlockedError(error) && !targetIds.includes(recipientId)){
+        blocked++;
+        await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?chat_id=eq."+encodeURIComponent(recipientId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({is_subscribed:false,unsubscribed_at:new Date().toISOString(),updated_at:new Date().toISOString()})}).catch(()=>{});
+      }else failed++;
+      await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:announcementKey,recipient_id:recipientId,status:"failed",error_message:String(error?.telegramDescription||error?.message||error).slice(0,500),updated_at:new Date().toISOString()})}).catch(()=>{});
+    }
+    await sleep(50);
+  }
+  return {sent,failed,blocked,targets:targetIds.length};
+};
+
 const forwardWhatsAppToTelegramManager=async(message:any,identity:any,body:string)=>{
   if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING!=="true")return;
   const managerChatIds=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
@@ -617,12 +674,19 @@ const app=new Elysia()
   const update=await request.json().catch(()=>null) as any;
   const channelPost=update?.channel_post;
   if(channelPost?.chat?.id){
-    console.log(JSON.stringify({event:"rafig_telegram_channel_seen",chatId:String(channelPost.chat.id),title:channelPost.chat.title??null,username:channelPost.chat.username??null}));
-    return{ok:true,status:"channel_post_seen",channel_id:String(channelPost.chat.id)};
+    const cp=channelPost.chat;
+    if(["group","supergroup","channel"].includes(String(cp.type))){
+      await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({chat_id:String(cp.id),chat_type:String(cp.type),title:cp.title??null,username:cp.username??null,is_active:true,last_seen_at:new Date().toISOString()})}).catch(()=>{});
+    }
+    console.log(JSON.stringify({event:"rafig_telegram_channel_seen",chatId:String(cp.id),title:cp.title??null,username:cp.username??null}));
+    return{ok:true,status:"channel_post_seen",channel_id:String(cp.id)};
   }
   const message=update?.message;
   const chatId=message?.chat?.id;
   if(!chatId)return{ok:true,status:"ignored_no_chat"};
+  if(["group","supergroup","channel"].includes(String(message?.chat?.type))){
+    await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({chat_id:String(chatId),chat_type:String(message.chat.type),title:message.chat.title??null,username:message.chat.username??null,is_active:true,last_seen_at:new Date().toISOString()})}).catch(()=>{});
+  }
   const externalConversationId=String(chatId);
   const senderName=[message?.from?.first_name,message?.from?.last_name].filter(Boolean).join(" ").trim();
   const username=typeof message?.from?.username==="string"?message.from.username:"";
@@ -747,11 +811,52 @@ const app=new Elysia()
       return{ok:true,status:"file_without_active_cv"};
     }
 
+
+    const language=telegramLanguage(message);
+    if(message?.chat?.type==="private"){
+      const cmd=textBody.toLowerCase().split(/\\s+/)[0];
+      if(cmd==="/start" || cmd==="/subscribe"){
+        await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({
+          chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),username:username||null,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,
+          language,subscribed_at:new Date().toISOString(),unsubscribed_at:null,is_subscribed:true,updated_at:new Date().toISOString()
+        })}).catch(()=>{});
+      }else if(cmd==="/stop"){
+        await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?chat_id=eq."+encodeURIComponent(String(chatId)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({is_subscribed:false,unsubscribed_at:new Date().toISOString(),updated_at:new Date().toISOString()})}).catch(()=>{});
+        await reply("⛔ تم إيقاف اشتراكك في إعلانات رفيق. يمكنك العودة في أي وقت عبر /subscribe.");
+        return{ok:true,status:"telegram_unsubscribed",conversation_id:conversationId};
+      }
+    }
+
     if(!textBody)return{ok:true,status:"ignored_non_text"};
 
+    const command=textBody.toLowerCase().split(/\\s+/)[0];
+    if(command==="/subscribe"){
+      const outbound=await reply("✅ تم تفعيل اشتراكك في إعلانات رفيق من جديد.");
+      return{ok:true,status:"telegram_subscribed",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
+    }
+    if(command==="/invite"){
+      const outbound=await reply("📨 شارك بوت رفيق مع جهات اتصالك عبر هذا الرابط:\n\n"+RAFIQ_TELEGRAM_INVITE);
+      return{ok:true,status:"invite_sent",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
+    }
+    if(command==="/services"){
+      const outbound=await telegramSendText(chatId,telegramSigned("خدمات رفيق الأساسية:"),{inline_keyboard:[
+        [{text:"👴 رعاية كبار السن",callback_data:"svc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"svc:patient"}],
+        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"svc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"svc:physio"}]
+      ]});
+      return{ok:true,status:"services_menu",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
+    }
+    if(command==="/request"){
+      const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
+      await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
+      const outbound=await telegramSendText(chatId,telegramSigned("📝 بدأنا طلب رعاية جديد.\nرقم الطلب: "+requestId+"\n\nاختر الخدمة:"),{inline_keyboard:[
+        [{text:"👴 كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 مريض",callback_data:"reqsvc:patient"}],
+        [{text:"👩‍⚕️ تمريض",callback_data:"reqsvc:nurse"},{text:"🦿 علاج فيزيائي",callback_data:"reqsvc:physio"}]
+      ]});
+      return{ok:true,status:"request_started",request_id:requestId,message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
+    }
     const commandReply=telegramCommandReply(textBody);
     if(commandReply){
-      const welcomeOnStart=textBody.toLowerCase().split(" ")[0]==="/start";
+      const welcomeOnStart=command==="/start";
       const outbound=await reply(welcomeOnStart?TELEGRAM_WELCOME:commandReply);
       if(welcomeOnStart && message?.chat?.type==="private") await telegramSendContactRequest(chatId).catch(()=>{});
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
@@ -800,7 +905,7 @@ const app=new Elysia()
 
     const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
     let result;
-    try{result=await draftAgentReply(textBody,"ar","TELEGRAM ACTIVE CASE | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+" | POLICY: Reply in clear natural Arabic. Understand meaning, answer first, ask at most ONE useful next question. Never repeat information already supplied. For human/admin action, clearly provide WhatsApp +961 81 506 299. Never claim payment, approval, transfer, booking or availability without confirmation.")}catch(agentError){console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));result={reply:rafiqFallback(textBody,conversationHistory),model:"rafig-local-fallback"}}
+    try{result=await draftAgentReply(textBody,language,"TELEGRAM ACTIVE CASE | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+" | POLICY: Reply in clear natural Arabic. Understand meaning, answer first, ask at most ONE useful next question. Never repeat information already supplied. For human/admin action, clearly provide WhatsApp +961 81 506 299. Never claim payment, approval, transfer, booking or availability without confirmation.")}catch(agentError){console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));result={reply:rafiqFallback(textBody,conversationHistory),model:"rafig-local-fallback"}}
     const escalation=result.reply.includes("WhatsApp")||result.reply.includes("واتساب")||result.reply.includes("الإدارة")||result.reply.includes("ادارة رفيق")||result.reply.includes("قرار إداري")||result.reply.includes("تواصل مع فريق رفيق");
     const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,escalation};
     if(escalation && conversationId)await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
