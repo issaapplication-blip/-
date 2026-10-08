@@ -1001,7 +1001,7 @@ if(process.env.TELEGRAM_SPECIALTY_PUBLISH_ON_START==="true" && process.env.TELEG
     fetch(base+"/api/telegram/publish-specialty-now/"+token)
       .then(async r=>console.log(JSON.stringify({event:"rafig_telegram_specialty_publish_on_start",status:r.status,body:(await r.text()).slice(0,500)})))
       .catch(error=>console.error(JSON.stringify({event:"rafig_telegram_specialty_publish_on_start_failed",error:String(error).slice(0,300)})));
-  },2500);
+  },12000);
 }
 setTimeout(() => {
   if(process.env.TELEGRAM_BROADCAST_ON_START!=="true") return;
