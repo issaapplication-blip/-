@@ -277,6 +277,55 @@ const telegramCommandReply = (command: string) => {
   if (c === "/cv") return cvMenuText();
   return "";
 };
+const TELEGRAM_MARKETING_TARGET = () => String(process.env.TELEGRAM_MARKETING_CHAT_ID || "").trim();
+const TELEGRAM_MARKETING_ADS = [
+  "🌿 RAFIQ | رفيق\\n\\nرعاية كبار السن والمرضى تبدأ بخطوة صحيحة.\\nنقدّم خدمات رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\\n\\n💚 انضموا إلى مجتمع رفيق وتابعوا خدماتنا ومستجداتنا.\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
+  "💚 عندما تحتاج عائلتك إلى رعاية منزلية، رفيق معكم بخطوات واضحة ومنظمة.\\n\\n👴 كبار السن\\n🏠 المرضى\\n👩‍⚕️ التمريض المنزلي\\n🦿 العلاج الفيزيائي المنزلي\\n\\nانضموا إلى مجتمع رفيق: https://t.me/+a7CDblNyGkw1Yjg8",
+  "🌱 رعاية أفضل تبدأ بمعلومة صحيحة واختيار مسار الخدمة المناسب.\\n\\nRAFIQ | رفيق ينظم طلبات الرعاية المنزلية ويتابعها وفق إجراءات المنصة.\\n\\n📲 انضموا: https://t.me/+a7CDblNyGkw1Yjg8",
+  "🤝 رفيق معكم خطوة بخطوة: من السؤال، إلى تحديد الخدمة المطلوبة، إلى متابعة الطلب وفق مسار المراجعة.\\n\\nللانضمام إلى مجتمع RAFIQ: https://t.me/+a7CDblNyGkw1Yjg8",
+  "📢 مجتمع RAFIQ يكبر بكم.\\n\\nتابعوا الإعلانات والتحديثات المتعلقة بالرعاية المنزلية وشاركونا مع من يحتاج إلى هذه الخدمات.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
+  "📌 ماذا يقدم رفيق؟\\n\\n👴 رعاية كبار السن\\n🏠 رعاية المرضى داخل المنزل\\n👩‍⚕️ التمريض المنزلي\\n🦿 العلاج الفيزيائي المنزلي\\n\\nللمتابعة والانضمام: https://t.me/+a7CDblNyGkw1Yjg8",
+  "👩‍⚕️ لمقدمي الخدمات الصحية والرعاية المنزلية: رفيق يتيح استقبال طلبات الانتساب ومراجعة الملفات ضمن مسار منظم.\\n\\nممرض/ة، مقدم/ة رعاية، أو معالج/ة فيزيائي/ة؟ تابعوا RAFIQ: https://t.me/+a7CDblNyGkw1Yjg8",
+  "🏠 للعائلات: لا تبقوا وحدكم أمام احتياجات الرعاية المنزلية.\\n\\nاكتبوا طلبكم بوضوح ليتم التعامل معه وفق الخدمة المطلوبة ومسار المراجعة المناسب.\\n\\n💚 انضموا: https://t.me/+a7CDblNyGkw1Yjg8",
+  "🩺 للممرضين ومقدمي الرعاية والمعالجين الفيزيائيين: إذا كنتم ترغبون بالانضمام إلى شبكة رفيق، تابعوا خطوات الانتساب الرسمية.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
+  "🌟 RAFIQ منصة تجمع العائلات وطلبات الرعاية المنزلية ومقدمي الخدمات ضمن مسار منظم.\\n\\nتابعوا المجتمع لتصلكم الإعلانات والتحديثات الجديدة.\\n\\n📲 https://t.me/+a7CDblNyGkw1Yjg8",
+  "🚀 هل تريد الانضمام كمقدم رعاية؟\\n\\nابدأ بالتعرّف إلى رفيق وخدماته، ثم تابع إجراءات الانتساب الرسمية عبر المنصة.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
+  "👩‍⚕️ ممرض/ة؟ 🦿 معالج/ة فيزيائي/ة؟ 🤝 مقدم/ة رعاية؟\\n\\nرفيق يرحب بطلبات الانتساب ويعمل على مراجعة الملفات وفق الإجراءات المعتمدة.\\n\\nابدأ من هنا: https://t.me/+a7CDblNyGkw1Yjg8",
+  "💚 تحتاج عائلتكم إلى رعاية منزلية؟\\n\\nتعرّفوا إلى خدمات رفيق وابدؤوا طلبكم بالمعلومات الأساسية ليتم توجيهكم إلى المسار المناسب.\\n\\n📲 https://t.me/+a7CDblNyGkw1Yjg8",
+  "🔔 خطوة واحدة قد تكون بداية الطريق المناسب للرعاية.\\n\\nتابعوا RAFIQ | رفيق لمعرفة الخدمات وتقديم الطلبات ومتابعة الإعلانات الجديدة.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
+  "🇱🇧 دعوة لكل من يهتم بالرعاية المنزلية في لبنان: عائلات، ممرضون، مقدمو رعاية، ومعالجون فيزيائيون.\\n\\nكونوا جزءًا من مجتمع RAFIQ.\\n\\n💚 https://t.me/+a7CDblNyGkw1Yjg8"
+];
+let lastTelegramMarketingSlot = "";
+const telegramMarketingTick = async () => {
+  if(process.env.TELEGRAM_MARKETING_ENABLED !== "true" || !telegramConfigured()) return;
+  const target = TELEGRAM_MARKETING_TARGET();
+  if(!target) return;
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Beirut",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(now);
+  const get=(type:string)=>parts.find(p=>p.type===type)?.value || "";
+  const date=get("year")+"-"+get("month")+"-"+get("day");
+  const minute=get("hour")+":"+get("minute");
+  if(minute!=="11:00" && minute!=="19:00") return;
+  const slot=date+"T"+minute;
+  if(lastTelegramMarketingSlot===slot) return;
+  const baseDate=Date.UTC(2026,9,8);
+  const dayIndex=Math.max(0,Math.floor((Date.UTC(Number(get("year")),Number(get("month"))-1,Number(get("day")))-baseDate)/86400000));
+  const slotIndex=minute==="11:00"?0:1;
+  const adIndex=(dayIndex*2+slotIndex)%TELEGRAM_MARKETING_ADS.length;
+  const key="rafig-marketing-"+slot;
+  try{
+    const existing=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?announcement_key=eq."+encodeURIComponent(key)+"&recipient_id=eq."+encodeURIComponent(target)+"&select=status&limit=1");
+    const previous=Array.isArray(existing.body)?existing.body[0]:null;
+    if(previous?.status==="sent"){lastTelegramMarketingSlot=slot;return;}
+    await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:key,recipient_id:target,status:"pending",error_message:null})});
+    const outbound=await telegramSendText(target,telegramSigned(TELEGRAM_MARKETING_ADS[adIndex]));
+    const messageId=outbound?.result?.message_id??null;
+    await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?announcement_key=eq."+encodeURIComponent(key)+"&recipient_id=eq."+encodeURIComponent(target),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"sent",provider_message_id:messageId,sent_at:new Date().toISOString(),updated_at:new Date().toISOString(),error_message:null})});
+    lastTelegramMarketingSlot=slot;
+    console.log(JSON.stringify({event:"rafig_telegram_marketing_sent",slot,adIndex,target,messageId}));
+  }catch(error){console.error(JSON.stringify({event:"rafig_telegram_marketing_failed",slot,adIndex,target,error:String(error).slice(0,300)}));}
+};
+
 const registerTelegramWebhookOnStartup = async () => {
   if (!telegramConfigured()) return;
   let base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"); while(base.endsWith("/")) base=base.slice(0,-1);
@@ -910,7 +959,7 @@ const app=new Elysia()
 ;
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
-void registerTelegramWebhookOnStartup();
+void registerTelegramWebhookOnStartup();\nsetInterval(() => { void telegramMarketingTick(); }, 30_000);\nvoid telegramMarketingTick();
 setTimeout(() => {
   if(process.env.TELEGRAM_BROADCAST_ON_START!=="true") return;
   void broadcastTelegramAnnouncement(TELEGRAM_ONBOARDING_KEY, TELEGRAM_ONBOARDING_MESSAGE, TELEGRAM_ANNOUNCEMENT_CUTOFF)
