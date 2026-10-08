@@ -17,7 +17,11 @@ const callTelegram = async (method: string, body: Record<string, unknown>) => {
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok || result?.ok !== true) {
-    throw new Error(`Telegram API error (${response.status})`);
+    const error = new Error(`Telegram API error (${response.status}): ${String(result?.description ?? "unknown error").slice(0,180)}`) as Error & { telegramStatus?: number; retryAfter?: number; telegramDescription?: string };
+    error.telegramStatus = response.status;
+    error.retryAfter = Number(result?.parameters?.retry_after ?? 0) || undefined;
+    error.telegramDescription = typeof result?.description === "string" ? result.description : undefined;
+    throw error;
   }
   return result;
 };
@@ -67,9 +71,10 @@ export const verifyTelegramWebhookSecret = (request: Request) => {
   return request.headers.get("x-telegram-bot-api-secret-token") === expected;
 };
 
-export const telegramSendPhoto = async (chatId: string | number, photo: string, caption?: string) =>
+export const telegramSendPhoto = async (chatId: string | number, photo: string, caption?: string, replyMarkup?: Record<string, unknown>) =>
   callTelegram("sendPhoto", {
     chat_id: chatId,
     photo,
     ...(caption ? { caption: signedText(caption) } : {}),
+    ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
   });
