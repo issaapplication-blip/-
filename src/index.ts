@@ -996,7 +996,7 @@ setInterval(() => { void telegramMarketingTick(); }, 30_000);
 void telegramMarketingTick();
 if(process.env.TELEGRAM_SPECIALTY_PUBLISH_ON_START==="true" && process.env.TELEGRAM_SPECIALTY_PUBLISH_TOKEN){
   setTimeout(()=>{
-    const base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\\/$/,"");
+    const base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"");
     const token=encodeURIComponent(String(process.env.TELEGRAM_SPECIALTY_PUBLISH_TOKEN));
     fetch(base+"/api/telegram/publish-specialty-now/"+token)
       .then(async r=>console.log(JSON.stringify({event:"rafig_telegram_specialty_publish_on_start",status:r.status,body:(await r.text()).slice(0,500)})))
