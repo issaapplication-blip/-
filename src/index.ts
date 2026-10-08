@@ -794,9 +794,9 @@ const app=new Elysia()
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
   }
 })
-.get("/api/telegram/publish-specialty-now",async({query,set})=>{
+.get("/api/telegram/publish-specialty-now/:token",async({params,set})=>{
   const expected=String(process.env.TELEGRAM_SPECIALTY_PUBLISH_TOKEN||"").trim();
-  const supplied=String((query as any)?.token||"").trim();
+  const supplied=String((params as any)?.token||"").trim();
   if(!expected || !supplied || supplied!==expected){set.status=404;return{ok:false};}
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
   const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
