@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>إكمال ملف RAFIQ | رفيق</title>
+<style>
+body{margin:0;background:#f3f8f5;color:#17372d;font-family:Arial,Tahoma,sans-serif}
+main{max-width:760px;margin:30px auto;padding:18px}.card{background:#fff;border:1px solid #dbe9e2;border-radius:20px;padding:22px;box-shadow:0 8px 28px #14463212}
+h1{color:#087f58}.field{margin:14px 0}label{display:block;font-weight:800;margin-bottom:6px}textarea,input[type=file]{width:100%;box-sizing:border-box;padding:11px;border:1px solid #cddfd7;border-radius:12px;background:#fff}button{border:0;border-radius:12px;padding:12px 18px;background:#087f58;color:#fff;font-weight:900;cursor:pointer}.muted{color:#61736c}.ok{padding:12px;border-radius:12px;background:#eef8f2;margin-top:14px}.err{padding:12px;border-radius:12px;background:#fff0f0;color:#9b2222;margin-top:14px}
+</style>
+</head>
+<body><main><section class="card">
+<h1>إكمال ملف RAFIQ | رفيق</h1>
+<p id="intro" class="muted">جارٍ تحميل طلبك...</p>
+<form id="form" hidden>
+<div class="field"><label for="note">المعلومات أو الملاحظات المطلوبة</label><textarea id="note" rows="6" placeholder="اكتب المعلومات الناقصة أو أي توضيح طلبته الإدارة"></textarea></div>
+<div class="field"><label for="files">إرفاق الملفات المطلوبة</label><input id="files" type="file" multiple></div>
+<button type="submit">إرسال الاستكمال</button>
+</form>
+<div id="msg"></div>
+</section></main>
+<script>
+(function(){
+ const token=new URLSearchParams(location.search).get("token")||"",form=document.getElementById("form"),intro=document.getElementById("intro"),msg=document.getElementById("msg");
+ const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ if(!token){intro.textContent="رابط الإكمال غير صالح.";return}
+ fetch("/api/intake/complete?token="+encodeURIComponent(token)).then(r=>r.json()).then(data=>{
+   if(!data.ok)throw new Error(data.error||"تعذر تحميل الطلب");
+   intro.innerHTML="الطلب رقم <b>"+esc(data.application_number)+"</b> — "+esc(data.applicant_name||"")+"<br>الحالة الحالية: <b>قيد المراجعة</b>";
+   form.hidden=false;
+ }).catch(e=>intro.textContent=e.message);
+ form.addEventListener("submit",async e=>{
+   e.preventDefault();msg.textContent="جارٍ الإرسال...";
+   const fd=new FormData();fd.append("token",token);fd.append("note",document.getElementById("note").value);
+   for(const f of document.getElementById("files").files)fd.append("files",f);
+   const r=await fetch("/api/intake/complete",{method:"POST",body:fd});const data=await r.json().catch(()=>({}));
+   if(!r.ok||!data.ok){msg.className="err";msg.textContent=data.error||"تعذر إرسال الاستكمال";return}
+   form.hidden=true;msg.className="ok";msg.textContent="تم استلام الاستكمال والملفات بنجاح. ستقوم إدارة RAFIQ بمراجعتها.";
+ });
+})();
+</script>
+</body></html>
