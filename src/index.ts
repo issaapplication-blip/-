@@ -359,10 +359,16 @@ const TELEGRAM_MARKETING_ADS = [
   "🇱🇧 دعوة لكل من يهتم بالرعاية المنزلية في لبنان: عائلات، ممرضون، مقدمو رعاية، ومعالجون فيزيائيون.\\n\\nكونوا جزءًا من مجتمع RAFIQ.\\n\\n💚 https://t.me/+a7CDblNyGkw1Yjg8"
 ];
 let lastTelegramMarketingSlot = "";
+const supabaseBroadcastPending=async(key:string,recipientId:string)=>supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:key,recipient_id:recipientId,status:"pending",error_message:null})});
 const telegramMarketingTick = async () => {
   if(process.env.TELEGRAM_MARKETING_ENABLED !== "true" || !telegramConfigured()) return;
   const target = TELEGRAM_MARKETING_TARGET();
-  if(!target) return;
+  const discovered=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?is_active=eq.true&select=chat_id");
+  const targets=Array.from(new Set([
+    ...(target?[target]:[]),
+    ...(Array.isArray(discovered.body)?discovered.body.map((x:any)=>String(x.chat_id)).filter(Boolean):[])
+  ]));
+  if(!targets.length) return;
   const now = new Date();
   const utcMonth=now.getUTCMonth()+1;
   const utcYear=now.getUTCFullYear();
@@ -384,15 +390,25 @@ const telegramMarketingTick = async () => {
   const adIndex=(dayIndex*2+slotIndex)%TELEGRAM_MARKETING_ADS.length;
   const key="rafig-marketing-"+slot;
   try{
-    const existing=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?announcement_key=eq."+encodeURIComponent(key)+"&recipient_id=eq."+encodeURIComponent(target)+"&select=status&limit=1");
-    const previous=Array.isArray(existing.body)?existing.body[0]:null;
-    if(previous?.status==="sent"){lastTelegramMarketingSlot=slot;return;}
-    await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:key,recipient_id:target,status:"pending",error_message:null})});
-    const outbound=await telegramSendText(target,telegramSigned(TELEGRAM_MARKETING_ADS[adIndex]));
-    const messageId=outbound?.result?.message_id??null;
-    await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?announcement_key=eq."+encodeURIComponent(key)+"&recipient_id=eq."+encodeURIComponent(target),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"sent",provider_message_id:messageId,sent_at:new Date().toISOString(),updated_at:new Date().toISOString(),error_message:null})});
+    let sentTargets=0;
+    for(const targetId of targets){
+      try{
+        const existing=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?announcement_key=eq."+encodeURIComponent(key)+"&recipient_id=eq."+encodeURIComponent(targetId)+"&select=status&limit=1");
+        const previous=Array.isArray(existing.body)?existing.body[0]:null;
+        if(previous?.status==="sent") continue;
+        await supabaseBroadcastPending(key,targetId);
+        const outbound=await telegramBroadcastOne(targetId,TELEGRAM_MARKETING_ADS[adIndex]);
+        const messageId=outbound?.result?.message_id??null;
+        await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?announcement_key=eq."+encodeURIComponent(key)+"&recipient_id=eq."+encodeURIComponent(targetId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"sent",provider_message_id:messageId,sent_at:new Date().toISOString(),updated_at:new Date().toISOString(),error_message:null})});
+        sentTargets++;
+      }catch(error:any){
+        await supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?announcement_key=eq."+encodeURIComponent(key)+"&recipient_id=eq."+encodeURIComponent(targetId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"failed",error_message:String(error?.telegramDescription||error?.message||error).slice(0,500),updated_at:new Date().toISOString()})}).catch(()=>{});
+        console.error(JSON.stringify({event:"rafig_telegram_marketing_target_failed",slot,adIndex,target:targetId,error:String(error).slice(0,300)}));
+      }
+      await sleep(50);
+    }
     lastTelegramMarketingSlot=slot;
-    console.log(JSON.stringify({event:"rafig_telegram_marketing_sent",slot,adIndex,target,messageId}));
+    console.log(JSON.stringify({event:"rafig_telegram_marketing_sent",slot,adIndex,targets:targets.length,sentTargets}));
   }catch(error){console.error(JSON.stringify({event:"rafig_telegram_marketing_failed",slot,adIndex,target,error:String(error).slice(0,300)}));}
 };
 
