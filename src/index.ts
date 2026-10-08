@@ -301,8 +301,15 @@ const telegramMarketingTick = async () => {
   const target = TELEGRAM_MARKETING_TARGET();
   if(!target) return;
   const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Beirut",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(now);
-  const get=(type:string)=>parts.find(p=>p.type===type)?.value || "";
+  const utcMonth=now.getUTCMonth()+1;
+  const utcYear=now.getUTCFullYear();
+  const utcDate=now.getUTCDate();
+  const lastSunday=(year:number,month:number)=>{ const d=new Date(Date.UTC(year,month,0)); return d.getUTCDate()-d.getUTCDay(); };
+  const dstStart=new Date(Date.UTC(utcYear,2,lastSunday(utcYear,3),1,0,0));
+  const dstEnd=new Date(Date.UTC(utcYear,9,lastSunday(utcYear,10),1,0,0));
+  const beirutOffsetHours=(now>=dstStart && now<dstEnd)?3:2;
+  const beirutNow=new Date(now.getTime()+beirutOffsetHours*60*60*1000);
+  const get=(type:string)=>type==="year"?String(beirutNow.getUTCFullYear()):type==="month"?String(beirutNow.getUTCMonth()+1).padStart(2,"0"):type==="day"?String(beirutNow.getUTCDate()).padStart(2,"0"):type==="hour"?String(beirutNow.getUTCHours()).padStart(2,"0"):String(beirutNow.getUTCMinutes()).padStart(2,"0");
   const date=get("year")+"-"+get("month")+"-"+get("day");
   const minute=get("hour")+":"+get("minute");
   if(minute!=="11:00" && minute!=="19:00") return;
