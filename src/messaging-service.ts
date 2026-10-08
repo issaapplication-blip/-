@@ -139,5 +139,4 @@ export async function sendMessage(user:MessageUser,text:string,media:MessageMedi
   return{ok:false,channel:null,error:reason};
 }
 
-export const messageFooter=()=>withRafiqFooter("");
 export { RAFIQ_CONFIG };
