@@ -5,7 +5,8 @@ export type ManagerDeps = {
   rpc: (fn: string, args: Record<string, unknown>) => Promise<ManagerRpcResult>;
   send: (chatId: string | number, text: string) => Promise<unknown>;
   photoUrl?: (storagePath: string) => Promise<string | null>;
-  sendPhoto?: (chatId: string | number, url: string, caption?: string) => Promise<unknown>;
+  sendPhoto?: (chatId: string | number, url: string, caption?: string, replyMarkup?: Record<string, unknown>) => Promise<unknown>;
+  broadcast?: (text: string, testOnly: boolean) => Promise<{sent:number;failed:number;blocked:number;targets:number}>;
 };
 
 const categoryAliases: Record<string,string> = {
@@ -63,7 +64,22 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
   if(input.chatType !== "private" || !deps.managerChatIds.includes(chatId) || !input.text) return false;
   const command=commandOf(input.text); if(!command) return false;
   try {
-    if(command.name==="manager" || command.name==="help"){ await deps.send(input.chatId,helpText()); return true; }
+    if(command.name==="manager" || command.name==="help"){ await deps.send(input.chatId,helpText()); return true; }    if(command.name==="broadcast" || command.name==="broadcast_test"){
+      if(!deps.broadcast){ await deps.send(input.chatId,"⚠️ نظام البث غير متاح حاليًا."); return true; }
+      const custom=command.args.join(" ").trim();
+      const body=custom || "🇱🇧 RAFIQ | رفيق\n\nنصل بالحب والأمان لرعاية العائلة.\n\n🌐 https://rafiq-o6qd.onrender.com\n🤖 https://t.me/RAFIQ_Care_Bot\n📢 https://t.me/+a7CDblNyGkw1Yjg8";
+      const report=await deps.broadcast(body,command.name==="broadcast_test");
+      await deps.send(input.chatId,[
+        command.name==="broadcast_test" ? "🧪 نتيجة بث تجريبي للمدير" : "📣 تقرير البث",
+        "",
+        "🟢 المرسل: "+report.sent,
+        "🔴 الفاشل: "+report.failed,
+        "⛔ المحظورون: "+report.blocked,
+        "📢 القنوات/المجموعات المستهدفة: "+report.targets
+      ].join("\n"));
+      return true;
+    }
+
     if(command.name==="publish_ads"){
       const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
