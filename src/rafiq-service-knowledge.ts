@@ -1,11 +1,12 @@
+import { RAFIQ_CONFIG } from "./rafiq-config";
 /* RAFIQ | رفيق — centralized family-facing service knowledge */
 // Telegram FAQ routing is intentionally deterministic for common customer questions.
-export const RAFIQ_TELEGRAM_BOT = "https://t.me/RAFIQ_Care_Bot";
-export const RAFIQ_TELEGRAM_CHANNEL = "https://t.me/+a7CDblNyGkw1Yjg8";
-export const RAFIQ_WEBSITE = "https://rafiq-o6qd.onrender.com";
-export const RAFIQ_WHATSAPP = "https://wa.me/96181506299";
-export const RAFIQ_WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
-export const RAFIQ_WHATSAPP_NUMBER = "+961 81 506 299";
+export const RAFIQ_TELEGRAM_BOT = RAFIQ_CONFIG.telegramBotUrl;
+export const RAFIQ_TELEGRAM_CHANNEL = RAFIQ_CONFIG.telegramGroupUrl;
+export const RAFIQ_WEBSITE = RAFIQ_CONFIG.platformUrl;
+export const RAFIQ_WHATSAPP = RAFIQ_CONFIG.whatsappUrl;
+export const RAFIQ_WHATSAPP_CHANNEL = RAFIQ_CONFIG.whatsappChannelUrl;
+export const RAFIQ_WHATSAPP_NUMBER = RAFIQ_CONFIG.whatsappNumber;
 
 export const RAFIQ_SERVICE_KNOWLEDGE = `
 PUBLIC SERVICE KNOWLEDGE — use these facts consistently and do not invent missing facts.
