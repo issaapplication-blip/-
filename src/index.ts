@@ -794,6 +794,31 @@ const app=new Elysia()
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
   }
 })
+.get("/api/telegram/publish-specialty-now",async({query,set})=>{
+  const expected=String(process.env.TELEGRAM_SPECIALTY_PUBLISH_TOKEN||"").trim();
+  const supplied=String((query as any)?.token||"").trim();
+  if(!expected || !supplied || supplied!==expected){set.status=404;return{ok:false};}
+  if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
+  const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
+  if(!target){set.status=503;return{ok:false,error:"marketing target missing"}}
+  const site=RAFIQ_WEBSITE,bot=RAFIQ_TELEGRAM_BOT,group=RAFIQ_TELEGRAM_CHANNEL,wa=RAFIQ_WHATSAPP_CHANNEL_URL;
+  const footer="\\n\\n🌐 المنصة: "+site+"\\n🤖 بوت Telegram: "+bot+"\\n📢 مجموعة Telegram: "+group+"\\n📱 قناة WhatsApp: "+wa;
+  const ads=[
+    "👩‍⚕️ RAFIQ | رفيق — للممرضين والممرضات\\n\\nإذا كنت ممرضًا أو ممرضة وتعمل في الرعاية المنزلية، ندعوك للانضمام إلى RAFIQ وتقديم طلب الانتساب، ليتم تنظيم ملفك ومراجعته ضمن إجراءات المنصة.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
+    "🤝 RAFIQ | رفيق — لمقدمي الرعاية\\n\\nإذا كنت مقدم رعاية وتملك خبرة في رعاية كبار السن أو المرضى، ندعوك للتسجيل وتقديم طلب الانضمام إلى RAFIQ لتكون جزءًا من شبكة الرعاية المنزلية.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
+    "🧑‍🦽 RAFIQ | رفيق — للمعالجين الفيزيائيين\\n\\nإذا كنت معالجًا أو معالجة فيزيائية وتقدم العلاج الفيزيائي المنزلي، ندعوك إلى تقديم طلب الانضمام إلى RAFIQ والتعرّف إلى إجراءات الانتساب.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
+    "🧪 RAFIQ | رفيق — للمختبرات الطبية\\n\\nإلى أصحاب ومديري المختبرات الطبية: ندعو مؤسستكم للانضمام إلى شبكة RAFIQ. تواصلوا معنا للتعرّف إلى آلية التعاون واستكمال إجراءات العقد الخاصة بالمختبر، لتصبح خدماتكم أقرب إلى العائلات التي تحتاج إليها.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
+    "🩻 RAFIQ | رفيق — لمراكز التصوير الطبي\\n\\nإلى أصحاب ومديري مراكز التصوير الطبي: ندعوكم للانضمام إلى شبكة RAFIQ والتعاون معنا. تواصلوا معنا للتعرّف إلى شروط التعاون واستكمال إجراءات العقد الخاصة بالمركز.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
+    "🩺 RAFIQ | رفيق — لمراكز بيع وتجهيز المعدات الطبية\\n\\nإلى شركات ومراكز بيع وتجهيز المعدات الطبية: ندعوكم للانضمام إلى شبكة RAFIQ والتعاون معنا لتسهيل وصول العائلات إلى المعدات الطبية التي تحتاجها. تواصلوا معنا للتعرّف إلى آلية التعاون واستكمال إجراءات العقد الخاصة بجهتكم.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer
+  ];
+  let sent=0;
+  for(const ad of ads){
+    await telegramSendText(target,telegramSigned(ad));
+    sent++;
+    await new Promise(resolve=>setTimeout(resolve,3200));
+  }
+  return{ok:true,sent,total:ads.length};
+})
 .get("/api/telegram/status",async({set})=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,configured:false}}
   try{const info=await telegramGetWebhookInfo();return{ok:true,configured:true,webhook:info?.result??null,autoReply:true}}catch{set.status=502;return{ok:false,configured:true,error:"Telegram API unavailable"}}
