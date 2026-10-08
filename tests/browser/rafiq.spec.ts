@@ -3,10 +3,10 @@ const BASE=process.env.BASE_URL||'https://rafiq-o6qd.onrender.com';
 const pages=['/','/app.html','/services.html','/caregivers.html','/guide.html','/nurses.html','/physiotherapists.html','/families.html','/laboratories.html','/radiology.html','/medical-equipment.html','/admin.html'];
 for(const p of pages){
  test(`loads ${p}`,async({page})=>{
-   const errors:string[]=[]; page.on('console',m=>{if(m.type()==='error')errors.push(m.text())}); page.on('pageerror',e=>errors.push(e.message));
+   const errors:string[]=[]; const missing:string[]=[]; page.on('console',m=>{if(m.type()==='error')errors.push(m.text())}); page.on('pageerror',e=>errors.push(e.message)); page.on('response',r=>{if(r.status()>=400)missing.push(r.status()+' '+r.url())});
    await page.goto(BASE+p,{waitUntil:'domcontentloaded',timeout:30000});
    await expect(page.locator('body')).toBeVisible();
-   expect(errors,errors.join('\n')).toEqual([]);
+   expect(missing,missing.join('\n')).toEqual([]); expect(errors,errors.join('\n')).toEqual([]);
  });
 }
 test('registration category links expose expected forms',async({page})=>{
