@@ -82,3 +82,33 @@ export async function kapsoSendRecipient(recipient: string, body: string) {
   }
   return result;
 }
+
+
+export async function kapsoSendImage(
+  destination: string | { to?: string; recipient?: string },
+  imageUrl: string,
+  caption?: string,
+) {
+  if (!kapsoConfigured()) throw new Error("Kapso configuration is incomplete");
+  if (!imageUrl) throw new Error("Kapso image URL is missing");
+  const phoneNumberId = kapsoPhoneNumberId();
+  const target = typeof destination === "string" ? { to: destination } : destination;
+  if (!target.to && !target.recipient) throw new Error("Kapso recipient is missing");
+  const response = await fetch(
+    KAPSO_BASE_URL + "/" + phoneNumberId + "/messages",
+    {
+      method: "POST",
+      headers: kapsoHeaders(),
+      signal: AbortSignal.timeout(15000),
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        ...(target.to ? { recipient_type: "individual", to: target.to } : { recipient: target.recipient }),
+        type: "image",
+        image: { link: imageUrl, ...(caption ? { caption } : {}) },
+      }),
+    },
+  );
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("Kapso WhatsApp image API error (" + response.status + ")");
+  return result;
+}
