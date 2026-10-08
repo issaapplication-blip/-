@@ -807,6 +807,48 @@ const app=new Elysia()
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
   }
 })
+.get("/api/intake/complete",async({query,set})=>{
+  const token=String(query?.token??"").trim();
+  if(!token){set.status=400;return{ok:false,error:"invalid completion token"}}
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token)))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const r=await supabaseServerRest("/rest/v1/application_intakes?upload_token_hash=eq."+encodeURIComponent(hash)+"&upload_token_expires_at=gt."+encodeURIComponent(new Date().toISOString())+"&status=eq.review&select=id,application_number,applicant_name,status&limit=1");
+  const row=Array.isArray(r.body)?r.body[0]:null;
+  if(!r.response.ok||!row){set.status=404;return{ok:false,error:"رابط الإكمال غير صالح أو منتهي الصلاحية"}}
+  return{ok:true,application_number:row.application_number,applicant_name:row.applicant_name,status:row.status};
+})
+.post("/api/intake/complete",async({request,set})=>{
+  const form=await request.formData().catch(()=>null);
+  if(!form){set.status=400;return{ok:false,error:"invalid form"}}
+  const token=String(form.get("token")??"").trim();
+  if(!token){set.status=400;return{ok:false,error:"invalid completion token"}}
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token)))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const r=await supabaseServerRest("/rest/v1/application_intakes?upload_token_hash=eq."+encodeURIComponent(hash)+"&upload_token_expires_at=gt."+encodeURIComponent(new Date().toISOString())+"&status=eq.review&select=id,application_number,applicant_name&limit=1");
+  const intake=Array.isArray(r.body)?r.body[0]:null;
+  if(!r.response.ok||!intake){set.status=404;return{ok:false,error:"رابط الإكمال غير صالح أو منتهي الصلاحية"}}
+  const note=String(form.get("note")??"").trim().slice(0,5000);
+  const files=form.getAll("files").filter(v=>v instanceof File) as File[];
+  if(files.length>10){set.status=400;return{ok:false,error:"يمكن إرفاق 10 ملفات كحد أقصى"}}
+  if(files.some(f=>f.size>6*1024*1024)){set.status=413;return{ok:false,error:"الحد الأقصى لحجم الملف الواحد 6MB"}}
+  if(note){
+    const current=await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id)+"&select=payload&limit=1");
+    const payload=Array.isArray(current.body)?(current.body[0]?.payload??{}):{};
+    await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({payload:{...(payload&&typeof payload==="object"?payload:{}),completion_note:note,completion_submitted_at:new Date().toISOString()},updated_at:new Date().toISOString()})});
+  }
+  let uploaded=0;
+  for(const file of files){
+    const safeName=String(file.name||"file").replace(/[^A-Za-z0-9._-]/g,"_").slice(-120)||"file";
+    const path="intakes/"+String(intake.id)+"/completion-"+crypto.randomUUID()+"-"+safeName;
+    const bytes=await file.arrayBuffer();
+    const sr=await fetch(SUPABASE_URL+"/storage/v1/object/private_documents/"+path,{method:"POST",headers:{apikey:SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+SUPABASE_SERVICE_ROLE_KEY,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},body:bytes});
+    if(!sr.ok){console.error(JSON.stringify({event:"rafig_completion_upload_failed",intakeId:intake.id,file:safeName,status:sr.status}));continue}
+    const ir=await supabaseServerRest("/rest/v1/application_intake_files",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({intake_id:intake.id,storage_path:path,file_name:file.name,mime_type:file.type||null,file_size:file.size,verification_status:"pending",document_category:"completion"} )});
+    if(ir.response.ok)uploaded++;
+  }
+  const admins=await supabaseServerRest("/rest/v1/profiles?role=eq.admin&status=eq.active&select=id");
+  const adminRows=Array.isArray(admins.body)?admins.body:[];
+  if(adminRows.length)await supabaseServerRest("/rest/v1/notifications",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify(adminRows.map((a:any)=>({user_id:a.id,title:"استكمال ملف RAFIQ",message:"تم استكمال الطلب رقم "+String(intake.application_number)+" وإرسال "+String(uploaded)+" ملف/ملفات.",type:"application_completion"}))}).catch(()=>{});
+  return{ok:true,status:"submitted",uploaded};
+})
 .get("/api/barcode/qr/:code",async({params,set})=>{
   const code=String(params.code??"").trim();
   if(!code){set.status=400;return new Response("invalid code",{status:400})}
@@ -850,6 +892,7 @@ const app=new Elysia()
 .get("/admin",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/admin/",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/admin.html",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
+.get("/complete.html",()=>fileResponse("public/complete.html","text/html; charset=utf-8","no-store"))
 .get("/admin.js",()=>fileResponse("public/admin.js","application/javascript","no-cache"))
 .get("/app.js",()=>fileResponse("public/app.js","application/javascript","no-cache"))
 .get("/install-pwa.js",()=>fileResponse("public/install-pwa.js","application/javascript","no-cache")).get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache")).get("/js/rafiq-agent.js",()=>fileResponse("public/js/rafiq-agent.js","application/javascript","no-cache")).get("/js/rafiq-kb.js",()=>fileResponse("public/js/rafiq-kb.js","application/javascript","no-cache")).get("/js/rafiq-welcome.js",()=>fileResponse("public/js/rafiq-welcome.js","application/javascript","no-cache")).get("/assets/rafig-logo.png",()=>fileResponse("public/assets/rafig-logo.png","image/png","no-cache"))
