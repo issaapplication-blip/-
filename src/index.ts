@@ -330,13 +330,51 @@ const broadcastTelegramAnnouncement = async (announcementKey: string, body: stri
   }
   return {announcementKey, targets:targets.length, sent, skipped, failed};
 };
-const telegramCommandReply = (command: string) => {
+const telegramCommandReply = (command: string, language="ar") => {
+  const translations:any={
+    ar:{
+      start:"أهلًا بك في رفيق | RAFIQ 🇱🇧\\nأنا مساعد رفيق للرعاية المنزلية. يمكنك السؤال عن الخدمات أو بدء طلب.\\n\\n/services للخدمات\\n/request لطلب رعاية\\n/help للمساعدة\\n/contact للتواصل",
+      services:"خدمات رفيق: رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.",
+      request:"سنبدأ طلبك خطوة بخطوة. اختر الخدمة أو اكتب تفاصيل حاجتك.",
+      help:"اكتب سؤالك كما تتحدث مع فريق رفيق. إذا احتاج الأمر قرارًا إداريًا أو معلومات حساسة، سيتولى فريق رفيق المتابعة.",
+      contact:"للتواصل مع إدارة رفيق: +961 81 506 299"
+    },
+    en:{
+      start:"Welcome to RAFIQ | رفيق 🇱🇧\\nI am RAFIQ's home-care assistant. Ask about our services or start a request.\\n\\n/services Services\\n/request Care request\\n/help Help\\n/contact Contact",
+      services:"RAFIQ services: elderly care, in-home patient care, home nursing, and home physiotherapy.",
+      request:"We will build your care request step by step. Choose a service or describe what you need.",
+      help:"Ask your question naturally. If it requires an administrative decision or sensitive information, the RAFIQ team will handle it.",
+      contact:"RAFIQ administration: +961 81 506 299"
+    },
+    fr:{
+      start:"Bienvenue chez RAFIQ | رفيق 🇱🇧\\nJe suis l’assistant de soins à domicile de RAFIQ. Demandez nos services ou commencez une demande.",
+      services:"Services RAFIQ : soins aux personnes âgées, soins à domicile des patients, soins infirmiers à domicile et physiothérapie à domicile.",
+      request:"Nous allons construire votre demande étape par étape. Choisissez un service ou décrivez votre besoin.",
+      help:"Posez votre question naturellement. Les décisions administratives et informations sensibles sont traitées par l’équipe RAFIQ.",
+      contact:"Administration RAFIQ : +961 81 506 299"
+    },
+    it:{
+      start:"Benvenuto in RAFIQ | رفيق 🇱🇧\\nSono l’assistente per l’assistenza domiciliare RAFIQ. Chiedi dei servizi o avvia una richiesta.",
+      services:"Servizi RAFIQ: assistenza agli anziani, assistenza domiciliare ai pazienti, infermieristica domiciliare e fisioterapia domiciliare.",
+      request:"Costruiremo la richiesta passo dopo passo. Scegli un servizio o descrivi ciò di cui hai bisogno.",
+      help:"Fai la tua domanda naturalmente. Le decisioni amministrative e le informazioni sensibili vengono gestite dal team RAFIQ.",
+      contact:"Amministrazione RAFIQ: +961 81 506 299"
+    },
+    de:{
+      start:"Willkommen bei RAFIQ | رفيق 🇱🇧\\nIch bin der Assistent für häusliche Pflege von RAFIQ. Fragen Sie nach unseren Leistungen oder starten Sie eine Anfrage.",
+      services:"RAFIQ-Leistungen: Seniorenbetreuung, häusliche Patientenbetreuung, häusliche Krankenpflege und Physiotherapie zu Hause.",
+      request:"Wir erstellen Ihre Pflegeanfrage Schritt für Schritt. Wählen Sie einen Service oder beschreiben Sie Ihren Bedarf.",
+      help:"Stellen Sie Ihre Frage natürlich. Administrative Entscheidungen und sensible Informationen werden vom RAFIQ-Team bearbeitet.",
+      contact:"RAFIQ-Verwaltung: +961 81 506 299"
+    }
+  };
+  const tr=translations[language]||translations.ar;
   const c = command.trim().toLowerCase().split(" ")[0];
-  if (c === "/start") return ["أهلًا بك في رفيق | RAFIQ 🇱🇧","أنا مساعد رفيق للرعاية المنزلية. أخبرني بطلبك بكلماتك الطبيعية، وسأطرح عليك الأسئلة اللازمة خطوة بخطوة.","للخدمات: /services","لتقديم طلب: /request","للمساعدة: /help","للتواصل مع الإدارة: /contact"].join("\n\n");
-  if (c === "/services") return ["خدمات رفيق تشمل: 👴 رعاية كبار السن، 🏠 رعاية المرضى داخل المنزل، 👩‍⚕️ التمريض المنزلي، 🦿 العلاج الفيزيائي المنزلي.","اكتب ما تحتاجه وسأساعدك في تحديد الخدمة المناسبة."].join("\n\n");
-  if (c === "/request") return "بكل سرور. سنبني الطلب معًا خطوة بخطوة. ابدأ بإخباري: هل الطلب لمسن أم لمريض؟ وفي أي مدينة؟";
-  if (c === "/help") return "يمكنك كتابة طلبك كما تتحدث مع شخص من فريق رفيق. سأفهم التفاصيل وأسألك فقط عن المعلومات الناقصة. إذا احتاج الأمر قرارًا إداريًا، سأحوّله للفريق وأعطيك رقم WhatsApp الرسمي: +961 81 506 299.";
-  if (c === "/contact") return ["للمتابعة المباشرة مع إدارة رفيق عبر WhatsApp: +961 81 506 299","https://wa.me/96181506299"].join("\n");
+  if (c === "/start") return tr.start;
+  if (c === "/services") return tr.services;
+  if (c === "/request") return tr.request;
+  if (c === "/help") return tr.help;
+  if (c === "/contact") return tr.contact;
   if (c === "/cv") return cvMenuText();
   return "";
 };
@@ -917,7 +955,7 @@ const app=new Elysia()
       ]});
       return{ok:true,status:"request_started",request_id:requestId,message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
-    const commandReply=telegramCommandReply(textBody);
+    const commandReply=telegramCommandReply(textBody,language);
     if(commandReply){
       const welcomeOnStart=command==="/start";
       const outbound=await reply(welcomeOnStart?TELEGRAM_WELCOME:commandReply);
