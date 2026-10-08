@@ -959,7 +959,9 @@ const app=new Elysia()
 ;
 app.listen(port);
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
-void registerTelegramWebhookOnStartup();\nsetInterval(() => { void telegramMarketingTick(); }, 30_000);\nvoid telegramMarketingTick();
+void registerTelegramWebhookOnStartup();
+setInterval(() => { void telegramMarketingTick(); }, 30_000);
+void telegramMarketingTick();
 setTimeout(() => {
   if(process.env.TELEGRAM_BROADCAST_ON_START!=="true") return;
   void broadcastTelegramAnnouncement(TELEGRAM_ONBOARDING_KEY, TELEGRAM_ONBOARDING_MESSAGE, TELEGRAM_ANNOUNCEMENT_CUTOFF)
