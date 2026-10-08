@@ -125,9 +125,9 @@ function formatDate(v){try{return new Date(v).toLocaleString('ar-LB')}catch{retu
 async function isAdmin(){
   const {data:{user},error}=await db.auth.getUser();
   if(error||!user)return null;
-  const {data:profile,error:pe}=await db.from('profiles').select('id,email,role,status').eq('id',user.id).single();
-  if(pe||!profile||profile.role!=='admin'||profile.status!=='active'){await db.auth.signOut();return null;}
-  return {user,profile};
+  const {data:isAdminFlag,error:ae}=await db.rpc('is_admin');
+  if(ae||isAdminFlag!==true){await db.auth.signOut();return null;}
+  return {user,profile:{id:user.id,email:user.email||'' ,role:'admin',status:'active'}};
 }
 
 async function loadCounts(){
