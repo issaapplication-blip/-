@@ -26,3 +26,18 @@ test('official communication links',async({page})=>{
  expect(hrefs.some(x=>x.includes('t.me/RAFIQ_Care_Bot'))).toBeTruthy();
  expect(hrefs.some(x=>x.includes('whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K'))).toBeTruthy();
 });
+
+test('REAL TEST production public intake and Request ID',async({page,browserName})=>{
+  test.skip(browserName!=='chromium','Run one destructive TEST flow only on Chromium');
+  const marker='TEST-RAFIQ-E2E-'+Date.now();
+  await page.goto(BASE+'/app.html?role=family',{waitUntil:'domcontentloaded',timeout:30000});
+  await expect(page.locator('#application')).toBeVisible();
+  await page.locator('input[name="family_name"]').fill(marker);
+  await page.locator('input[name="phone"]').fill('+96100000000');
+  await page.locator('input[name="patient_name"]').fill('TEST patient');
+  await page.locator('#consent').check();
+  await page.getByRole('button',{name:'إرسال الطلب للمراجعة'}).click();
+  await expect(page.locator('#appMsg')).toContainText(/تم استلام|رقم الطلب|Request/i,{timeout:30000});
+  const body=await page.locator('#appMsg').innerText();
+  console.log('REAL_E2E_TEST_RESULT '+JSON.stringify({marker,body}));
+});
