@@ -3,8 +3,11 @@ import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
-import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
+import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
+import { sendMessage } from "./messaging-service";
+import { RAFIQ_CONFIG } from "./rafiq-config";
+import QRCode from "qrcode";
 import { handleManagerCommand, parseManagerChatIds } from "./telegram-manager";
 import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER, rafiqRequiresHumanReply } from "./rafiq-service-knowledge";
 
@@ -640,6 +643,16 @@ const app=new Elysia()
       conversationId=createdRow?.id??null;
     }
 
+    const contactPhone=typeof message?.contact?.phone_number==="string"?message.contact.phone_number.trim():"";
+    if(contactPhone){
+      const normalizedContact=contactPhone.replace(/\\D/g,"");
+      await supabaseServerRest("/rest/v1/rafiq_telegram_identities?on_conflict=telegram_user_id",{
+        method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify({telegram_user_id:String(message?.from?.id??""),chat_id:String(chatId),username:username||null,phone:normalizedContact,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,last_seen_at:new Date().toISOString()})
+      });
+      await reply("✅ تم ربط رقم هاتفك بحساب Telegram في RAFIQ. عند الحاجة سنستخدم Telegram كقناة احتياطية بعد WhatsApp.");
+      return{ok:true,status:"telegram_phone_linked",conversation_id:conversationId};
+    }
     const orders=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?chat_id=eq."+encodeURIComponent(externalConversationId)+"&order_status=not.in.(completed,cancelled)&select=*&order=updated_at.desc&limit=1");
     const activeOrder=Array.isArray(orders.body)?orders.body[0]:null;
 
@@ -736,7 +749,7 @@ const app=new Elysia()
     const commandReply=telegramCommandReply(textBody);
     if(commandReply){
       const welcomeOnStart=textBody.toLowerCase().split(" ")[0]==="/start";
-      const outbound=await reply(welcomeOnStart?TELEGRAM_WELCOME:commandReply);
+      const outbound=await reply(welcomeOnStart?TELEGRAM_WELCOME:commandReply);\n      if(welcomeOnStart && message?.chat?.type==="private") await telegramSendContactRequest(chatId).catch(()=>{});
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
 
@@ -793,6 +806,74 @@ const app=new Elysia()
     console.error(JSON.stringify({event:"rafig_telegram_webhook_failed",error:String(error).slice(0,500)}));
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
   }
+})
+.get("/api/barcode/qr/:code",async({params,set})=>{
+  const code=String(params.code??"").trim();
+  if(!code){set.status=400;return new Response("invalid code",{status:400})}
+  const lookup=await supabaseServerRest("/rest/v1/issued_barcodes?code=eq."+encodeURIComponent(code)+"&status=eq.active&select=code&limit=1");
+  if(!lookup.response.ok||!Array.isArray(lookup.body)||!lookup.body.length){set.status=404;return new Response("not found",{status:404})}
+  const png=await QRCode.toBuffer(code,{type:"png",width:600,margin:2});
+  return new Response(png,{status:200,headers:{"Content-Type":"image/png","Cache-Control":"private, max-age=300"}});
+})
+.post("/api/admin/send-approved-welcome",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request); if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const applicationId=typeof input?.applicationId==="string"?input.applicationId.trim():"";
+  if(!/^[0-9a-f-]{36}$/i.test(applicationId)){set.status=400;return{ok:false,error:"invalid application id"}}
+  const ir=await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(applicationId)+"&select=id,application_number,applicant_name,application_type,phone&limit=1");
+  const intake=Array.isArray(ir.body)?ir.body[0]:null;
+  if(!ir.response.ok||!intake){set.status=404;return{ok:false,error:"application not found"}}
+  const br=await supabaseServerRest("/rest/v1/issued_barcodes?intake_id=eq."+encodeURIComponent(applicationId)+"&status=eq.active&select=code,membership_number&limit=1");
+  const barcode=Array.isArray(br.body)?br.body[0]:null;
+  if(!br.response.ok||!barcode?.code){set.status=409;return{ok:false,error:"active barcode not found"}}
+  const qrUrl=(process.env.PUBLIC_BASE_URL??RAFIQ_CONFIG.platformUrl).replace(/\/$/,"")+"/api/barcode/qr/"+encodeURIComponent(String(barcode.code));
+  const result=await sendMessage({phone:intake.phone,intakeId:intake.id,applicationId:intake.id},[
+    "مرحباً "+String(intake.applicant_name||"")+" 🌿",
+    "تم قبول طلبك في منصة RAFIQ | رفيق. ✅",
+    "رقم طلبك: "+String(intake.application_number??"—"),
+    "رقم عضويتك: "+String(barcode.membership_number??"—"),
+    "الباركود مرفق بالصورة."
+  ].join("\n"),{qrUrl,caption:"مرحباً "+String(intake.applicant_name||"")+" 🌿\nتم قبول طلبك في منصة RAFIQ | رفيق. ✅\nرقم الطلب: "+String(intake.application_number??"—")+"\nرقم العضوية: "+String(barcode.membership_number??"—")+"\nالباركود مرفق."},supabaseServerRest);
+  if(!result.ok){set.status=502;return{ok:false,error:result.error||"all messaging channels failed"}}
+  await supabaseServerRest("/rest/v1/whatsapp_outbox?intake_id=eq."+encodeURIComponent(applicationId)+"&status=eq.pending",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"sent",sent_at:new Date().toISOString(),provider_message_id:result.providerMessageId??null,error_message:null})}).catch(()=>{});
+  return{ok:true,status:result.channel+"_sent",channel:result.channel,messageId:result.providerMessageId??null,barcodeUrl:qrUrl};
+})
+.post("/api/admin/send-completion-request",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request); if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const applicationId=typeof input?.applicationId==="string"?input.applicationId.trim():"";
+  const notes=typeof input?.notes==="string"?input.notes.trim().slice(0,1000):"";
+  if(!/^[0-9a-f-]{36}$/i.test(applicationId)){set.status=400;return{ok:false,error:"invalid application id"}}
+  const ir=await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(applicationId)+"&select=id,application_number,applicant_name,phone,status,upload_token_hash,upload_token_expires_at&limit=1");
+  const intake=Array.isArray(ir.body)?ir.body[0]:null;
+  if(!ir.response.ok||!intake){set.status=404;return{ok:false,error:"application not found"}}
+  const token=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(applicationId)+":"+Date.now()+":"+crypto.randomUUID())))).map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,48);
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token)))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const expires=new Date(Date.now()+7*24*60*60*1000).toISOString();
+  await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(applicationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({upload_token_hash:hash,upload_token_expires_at:expires,status:"review",updated_at:new Date().toISOString()})});
+  const completeUrl=(process.env.PUBLIC_BASE_URL??RAFIQ_CONFIG.platformUrl).replace(/\/$/,"")+"/complete.html?token="+encodeURIComponent(token);
+  const result=await sendMessage({phone:intake.phone,intakeId:intake.id,applicationId:intake.id},[
+    "مرحباً "+String(intake.applicant_name||"")+" 🌿",
+    "طلبك في منصة RAFIQ | رفيق ما زال قيد المراجعة.",
+    "يرجى إكمال الملف أو إرسال المعلومات/الملفات الناقصة عبر الرابط التالي:",
+    completeUrl,
+    notes?"ملاحظة الإدارة: "+notes:""
+  ].filter(Boolean).join("\n\n"),null,supabaseServerRest);
+  if(!result.ok){set.status=502;return{ok:false,error:result.error||"all messaging channels failed",completionUrl}}
+  return{ok:true,status:result.channel+"_sent",channel:result.channel,completionUrl};
+})
+.post("/api/admin/delete-intake",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request); if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const id=typeof input?.applicationId==="string"?input.applicationId.trim():"";
+  if(!/^[0-9a-f-]{36}$/i.test(id)){set.status=400;return{ok:false,error:"invalid application id"}}
+  const rpc=await supabaseServerRest("/rest/v1/rpc/admin_delete_application_intake",{method:"POST",body:JSON.stringify({p_intake_id:id})});
+  if(!rpc.response.ok){set.status=502;return{ok:false,error:"could not delete application"}}
+  const paths=Array.isArray(rpc.body?.deleted_file_paths)?rpc.body.deleted_file_paths.filter(Boolean):[];
+  for(const path of paths){
+    await fetch(SUPABASE_URL+"/storage/v1/object/private_documents/"+path,{method:"DELETE",headers:{apikey:SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+SUPABASE_SERVICE_ROLE_KEY}}).catch(()=>{});
+  }
+  return{ok:true,status:"deleted",deletedFiles:paths.length};
 })
 .get("/api/telegram/status",async({set})=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,configured:false}}
