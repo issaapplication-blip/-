@@ -1031,7 +1031,7 @@ const forwardPublicIntake=async({request,set}:any)=>{
     const body=await upstream.json().catch(()=>({ok:false,error:"invalid upstream response"})); set.status=upstream.status; return body;
   }catch(error){console.error(JSON.stringify({event:"rafig_public_intake_edge_proxy_failed",error:String(error).slice(0,240)}));set.status=502;return{ok:false,error:"تعذر حفظ الطلب الآن. حاول مرة أخرى."}}
 }
-.post("/api/public/institution-intake",forwardPublicIntake)
+app.post("/api/public/institution-intake",forwardPublicIntake)
 .post("/api/public/intake",forwardPublicIntake)
 .get("/api/intake/complete",async({query,set})=>{
   const token=String(query?.token??"").trim();
