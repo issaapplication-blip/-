@@ -639,6 +639,11 @@ const app=new Elysia()
     );
     if (managerHandled) return { ok: true, status: "manager_command_handled" };
 
+    // Backward-compatible manager gate: the owner is allowed by Telegram username
+    // (default @MHDISSA980) even when TELEGRAM_MANAGER_CHAT_IDS is not configured.
+    const legacyAdminHandled = await telegramAdminCommand(message);
+    if (legacyAdminHandled) return { ok: true, status: "legacy_admin_command_handled", message_id: legacyAdminHandled?.result?.message_id ?? null };
+
     if(textBody && rafiqRequiresHumanReply(textBody)){
       const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,reason:"human_reply_required",status:"open"};
       if(conversationId) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_human_reply_required",status:"open",payload})}).catch(()=>{});
