@@ -198,12 +198,23 @@ function openRequest(id){
   const whatsapp=String(x.payload?.whatsapp_phone||x.payload?.whatsapp||x.phone||'—');
   const docs=files.map(f=>'<div class="doc"><strong>'+esc(f.file_name)+'</strong><div class="small">'+esc(f.document_category||'مستند')+' · '+esc(f.mime_type||'')+' · '+Math.round(Number(f.file_size||0)/1024)+' KB · الحالة: '+esc(statusLabel(f.verification_status))+'</div><div class="actions"><button class="btn alt" data-modal-open="'+esc(f.storage_path)+'">فتح</button><button class="btn alt" data-modal-download="'+esc(f.storage_path)+'" data-name="'+esc(f.file_name)+'">تحميل</button><button class="btn" data-modal-doc-status="approved" data-doc-id="'+esc(f.id)+'">اعتماد</button><button class="btn danger" data-modal-doc-status="rejected" data-doc-id="'+esc(f.id)+'">رفض</button></div></div>').join('')||'<p>لا توجد ملفات مرفوعة لهذا الطلب.</p>';
   $('modalTitle').textContent='طلب #'+x.application_number+' — '+(x.application_type||'');
-  $('modalBody').innerHTML='<div class="detail-grid"><div class="detail"><b>المتقدم</b><br>'+esc(x.applicant_name||'—')+'</div><div class="detail"><b>الهاتف الشخصي</b><br><span dir="ltr">'+esc(x.phone||'—')+'</span></div><div class="detail"><b>واتساب</b><br><span dir="ltr">'+esc(whatsapp)+'</span></div><div class="detail"><b>البريد الإلكتروني</b><br>'+esc(email)+'</div><div class="detail"><b>المنطقة</b><br>'+esc(x.area||'—')+'</div><div class="detail"><b>الحالة</b><br>'+esc(statusLabel(x.status))+'</div><div class="detail"><b>المصدر</b><br>'+esc(x.source||'—')+'</div><div class="detail"><b>التاريخ</b><br>'+esc(formatDate(x.created_at))+'</div></div><h3>بيانات الطلب</h3><div class="detail-grid">'+pairs+'</div><h3>الملفات</h3>'+docs+'<div class="actions" style="margin-top:14px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn" data-review="approved">موافقة</button><button class="btn danger" data-review="rejected">رفض</button></div>';
+  $('modalBody').innerHTML='<div class="detail-grid"><div class="detail"><b>المتقدم</b><br>'+esc(x.applicant_name||'—')+'</div><div class="detail"><b>الهاتف الشخصي</b><br><span dir="ltr">'+esc(x.phone||'—')+'</span></div><div class="detail"><b>واتساب</b><br><span dir="ltr">'+esc(whatsapp)+'</span></div><div class="detail"><b>البريد الإلكتروني</b><br>'+esc(email)+'</div><div class="detail"><b>المنطقة</b><br>'+esc(x.area||'—')+'</div><div class="detail"><b>الحالة</b><br>'+esc(statusLabel(x.status))+'</div><div class="detail"><b>المصدر</b><br>'+esc(x.source||'—')+'</div><div class="detail"><b>التاريخ</b><br>'+esc(formatDate(x.created_at))+'</div></div><h3>بيانات الطلب</h3><div class="detail-grid">'+pairs+'</div><h3>الملفات</h3>'+docs+'<div class="actions" style="margin-top:14px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn" data-review="approved">موافقة</button><button class="btn danger" data-review="rejected">رفض</button><button class="btn alt" data-delete-intake="1">حذف نهائي</button></div>';
   $('modal').classList.remove('hidden');
   $('modalBody').querySelectorAll('[data-modal-open]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.modalOpen,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح الملف: '+(e?.message||'خطأ غير معروف'))}});
   $('modalBody').querySelectorAll('[data-modal-download]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.modalDownload,b.dataset.name)}catch(e){showMsg('تعذر تحميل الملف: '+(e?.message||'خطأ غير معروف'))}});
   $('modalBody').querySelectorAll('[data-modal-doc-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.modalDocStatus,docId=b.dataset.docId;if(st==='rejected'){const row=allFiles.find(f=>f.id===docId);if(row?.storage_path){const sr=await db.storage.from('private_documents').remove([row.storage_path]);if(sr.error){showMsg('تعذر حذف الملف من التخزين: '+sr.error.message);return}}const {error}=await db.from('application_intake_files').delete().eq('id',docId);if(error){showMsg('تعذر حذف سجل الملف: '+error.message);return}showMsg('تم رفض الملف وحذفه نهائيًا من المنصة.',true);await loadAll();openRequest(id);return}const {error}=await db.from('application_intake_files').update({verification_status:st}).eq('id',docId);if(error){showMsg('تعذر تحديث حالة الملف: '+error.message);return}await loadAll();openRequest(id)});
   $('modalBody').querySelectorAll('[data-review]').forEach(b=>b.onclick=async()=>reviewRequest(x.id,b.dataset.review));
+  $('modalBody').querySelectorAll('[data-delete-intake]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('سيتم حذف الطلب وملفاته نهائيًا من لوحة المدير. متابعة؟'))return;
+    try{
+      const session=(await db.auth.getSession()).data.session;
+      if(!session?.access_token)throw new Error('جلسة المدير غير متاحة');
+      const resp=await fetch('/api/admin/delete-intake',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({applicationId:id})});
+      const result=await resp.json().catch(()=>({}));
+      if(!resp.ok)throw new Error(result?.error||'تعذر حذف الطلب');
+      $('modal').classList.add('hidden');await loadAll();showMsg('تم حذف الطلب وملفاته نهائيًا.',true);
+    }catch(e){showMsg(String(e?.message||e));}
+  });
 }
 
 async function reviewRequest(id,status){
@@ -298,10 +309,17 @@ function setLive(ok){
   const el=$('liveStatus');el.textContent=ok?'● اتصال حي':'● وضع التحديث الدوري';el.className='live '+(ok?'ok':'bad');
 }
 
+function notifyNewApplication(){
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(Ctx){const ctx=new Ctx(),o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=880;g.gain.value=.06;o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.16);setTimeout(()=>ctx.close(),300);}
+  }catch(_){}
+  if('Notification' in window && Notification.permission==='granted')new Notification('RAFIQ — طلب جديد',{body:'وصل طلب جديد إلى لوحة المدير.'});
+}
 function subscribeLive(){
   if(liveChannel)db.removeChannel(liveChannel);
   let channel=db.channel('rafig-manager-live-v1');
-  let handler=()=>{loadAll().catch(()=>{})};
+  let handler=(payload)=>{loadAll().catch(()=>{});if(payload?.eventType==='INSERT' && payload?.table==='application_intakes')notifyNewApplication();};
   channel.on('postgres_changes',{event:'*',schema:'public',table:'application_intakes'},handler);
   channel.on('postgres_changes',{event:'*',schema:'public',table:'application_intake_files'},handler);
   channel.on('postgres_changes',{event:'*',schema:'public',table:'applications'},handler);
@@ -316,7 +334,7 @@ async function enterDashboard(){
   if(!gate){$('dashboard').classList.add('hidden');$('requestsSection').classList.add('hidden');$('documentsSection').classList.add('hidden');$('auth').classList.remove('hidden');showAuthError('يرجى الدخول بحساب المدير المفعّل.');return}
   $('who').textContent='المدير: '+(gate.profile.email||gate.user.email||'');
   $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
-  await loadAll();subscribeLive();
+  await loadAll();subscribeLive();if('Notification' in window && Notification.permission==='default')Notification.requestPermission().catch(()=>{});
   clearInterval(refreshTimer);refreshTimer=setInterval(()=>loadAll().catch(()=>{}),30000);
 }
 
