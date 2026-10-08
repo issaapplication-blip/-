@@ -26,8 +26,13 @@
 const $=x=>document.getElementById(x);
 const show=(id,on)=>$(id)?.classList.toggle('hidden',!on);
 const report=(id,t,ok=false)=>{const el=$(id);if(el)el.innerHTML='<div class="'+(ok?'ok':'err')+'">'+t+'</div>'};
-function resetRequired(){
-  document.querySelectorAll('#form [required]').forEach(x=>x.required=x.id==='consent'||['first_name','last_name','phone','family_name','patient_name'].includes(x.name));
+function resetRequired(role){
+  const person=role!=='family', family=role==='family';
+  document.querySelectorAll('#personFields input,#personFields select,#personFields textarea').forEach(x=>{x.disabled=!person});
+  document.querySelectorAll('#familyFields input,#familyFields select,#familyFields textarea').forEach(x=>{x.disabled=!family});
+  document.querySelectorAll('#personFields [required]').forEach(x=>x.required=person&&['first_name','last_name','phone'].includes(x.name));
+  document.querySelectorAll('#familyFields [required]').forEach(x=>x.required=family&&['family_name','phone','patient_name'].includes(x.name));
+  $('consent').required=true;
 }
 document.querySelectorAll('.choose').forEach(b=>b.onclick=()=>{
   const r=b.dataset.role;
@@ -36,7 +41,7 @@ document.querySelectorAll('.choose').forEach(b=>b.onclick=()=>{
   show('familyFields',r==='family');
   show('personFields',r!=='family');
   $('title').textContent=r==='caregiver'?'🤝 طلب مقدم/ة رعاية':r==='nurse'?'👩‍⚕️ طلب ممرض/ة':r==='physiotherapist'?'🧑‍🦽 طلب معالج/ة فيزيائي/ة':'👨‍👩‍👧 طلب رعاية عائلية';
-  resetRequired();
+  resetRequired(r);
   $('application').scrollIntoView({behavior:'smooth'});
 });
 $('form').onsubmit=async e=>{
