@@ -69,6 +69,8 @@ $('form').onsubmit=async e=>{
     });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);else paint();
+  const requestedRole=new URLSearchParams(location.search).get("role");
+  if(requestedRole){const target=document.querySelector('.choose[data-role="'+CSS.escape(requestedRole)+'"]');if(target){setTimeout(()=>target.click(),0)}}
 })();
 </script></script><script>
 /* RAFIQ logo guard: if the SVG fails to load, show a text wordmark instead. */
