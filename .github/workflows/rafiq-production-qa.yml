@@ -1,0 +1,38 @@
+name: RAFIQ production QA
+on:
+  push:
+    branches: [rafiq-next-generation]
+  workflow_dispatch:
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Production load test
+        run: k6 run --summary-export tests/load/results/production-summary.json tests/load/rafiq-load.js
+        env:
+          BASE_URL: https://rafiq-o6qd.onrender.com
+      - name: Upload load results
+        uses: actions/upload-artifact@v4
+        with:
+          name: rafiq-load-results
+          path: tests/load/results/production-summary.json
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: npm init -y && npm install --no-save @playwright/test
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test tests/browser/rafiq.spec.ts --config=tests/browser/playwright.config.ts
+        env:
+          BASE_URL: https://rafiq-o6qd.onrender.com
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rafiq-browser-results
+          path: tests/browser/playwright-report

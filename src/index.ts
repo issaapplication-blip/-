@@ -1130,7 +1130,9 @@ const app=new Elysia()
   if(adminRows.length){
     await supabaseServerRest("/rest/v1/notifications",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify(adminRows.map((a:any)=>({user_id:a.id,title:"طلب جديد من منصة RAFIQ",message:"تم استلام طلب جديد رقم "+String(intake.application_number)+" — "+applicantName,type:"new_public_intake"})))}).catch(()=>{});
   }
-  return{ok:true,status:"received",application_number:intake.application_number,uploaded};
+  const requestId="RAFIQ-REQ-"+String(intake.application_number).padStart(6,"0");
+  await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({payload:{...(intake.payload&&typeof intake.payload==="object"?intake.payload:{}),request_id:requestId}})}).catch(()=>{});
+  return{ok:true,status:"received",request_id:requestId,application_number:intake.application_number,uploaded};
 })
 .get("/api/intake/complete",async({query,set})=>{
   const token=String(query?.token??"").trim();
