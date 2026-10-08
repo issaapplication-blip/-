@@ -811,7 +811,7 @@ const app=new Elysia()
 .post("/api/public/intake",async({request,set})=>{
   const now=Date.now();
   const ip=(request.headers.get("x-forwarded-for")||request.headers.get("x-real-ip")||"public").split(",")[0].trim();
-  const last=(globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__||(globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__=new Map<string,number>();
+  const rateStore=(globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__; const last:Map<string,number>=rateStore || new Map<string,number>(); (globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__=last;
   const previous=last.get(ip)||0;
   if(now-previous<15000){set.status=429;return{ok:false,error:"يرجى الانتظار قليلًا ثم إعادة إرسال الطلب"}}
   last.set(ip,now);
