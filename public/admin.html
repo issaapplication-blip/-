@@ -85,9 +85,11 @@ th{background:#f7fbf9;color:#087f58}
 
 <section class="card hidden" id="documentsSection">
 <h2>📎 الملفات الحديثة</h2>
-<p class="small">تظهر هنا الملفات المرتبطة بالطلبات الحالية فقط. أي ملف يُرفض يُحذف من سجل المنصة ولا يعود للظهور.</p>
+<p class="small">تظهر الملفات المرتبطة بالطلبات مع حالتها. الرفض يحفظ السجل ولا يحذف الملف.</p>
 <div id="fileList"></div>
 </section>
+<section class="card hidden" id="rejectedSection"><h2>❌ المرفوضون — أرشيف محفوظ</h2><p class="small">الطلبات المرفوضة محفوظة في السجل ولا تعود إلى قائمة المراجعة النشطة.</p><div id="rejectedList"></div></section>
+<section class="card hidden" id="institutionSection"><h2>🏥 المختبرات والأشعة والمعدات الطبية</h2><p class="small">طلبات تسجيل الجهات الصحية محفوظة مستقلة عن ملفات الأفراد والعائلات، مع قرار إداري مستقل وملفاتها الخاصة.</p><div id="institutionList"></div></section>
 <section class="card hidden" id="completionSection">
 <h2>🟡 طلبات تحتاج استكمال الملفات</h2>
 <p class="small">هذه الطلبات لم تكتمل ملفاتها بعد وتحتاج متابعة المدير. لا تُعتبر مقبولة حتى استكمال المستندات ومراجعتها.</p>
@@ -114,7 +116,7 @@ const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let allRequests=[]; let allFiles=[]; let legacyDocuments=[]; let acceptedMembers=[]; let liveChannel=null; let showPendingOnly=false; let refreshTimer=null;
+let allRequests=[]; let allFiles=[]; let legacyDocuments=[]; let acceptedMembers=[]; let institutionRequests=[]; let liveChannel=null; let showPendingOnly=false; let refreshTimer=null;
 
 function showAuthError(text){$('authMsg').innerHTML='<div class="err">'+esc(text)+'</div>'}
 function showMsg(text,ok=false){$('dashMsg').innerHTML='<div class="'+(ok?'ok':'err')+'">'+esc(text)+'</div>'}
@@ -144,16 +146,16 @@ async function loadCounts(){
 async function loadRequests(){
   const {data,error}=await db.from('application_intakes').select('id,application_number,application_type,applicant_name,phone,area,status,payload,agent_reply,admin_decision_notes,source,created_at,updated_at').order('created_at',{ascending:false}).limit(500);
   if(error){showMsg('تعذر تحميل الطلبات: '+error.message);return}
-  allRequests=(data||[]).filter(x=>x.status!=='rejected');
+  allRequests=data||[];
   renderRequests();
 }
 
 async function loadFiles(){
   const {data,error}=await db.from('application_intake_files').select('id,intake_id,storage_path,file_name,mime_type,file_size,verification_status,created_at,document_category').order('created_at',{ascending:false}).limit(500);
   if(error){$('fileList').innerHTML='<div class="err">تعذر تحميل الملفات: '+esc(error.message)+'</div>';return}
-  allFiles=(data||[]).filter(x=>x.verification_status!=='rejected');
+  allFiles=data||[];
   const legacy=await db.from('documents').select('id,user_id,document_type,storage_path,file_name,mime_type,file_size,verification_status,created_at').order('created_at',{ascending:false}).limit(500);
-  legacyDocuments=(legacy.data||[]).filter(d=>d.verification_status!=='rejected');
+  legacyDocuments=legacy.data||[];
   const appLookup=await db.from('applications').select('user_id,application_number,application_type,status').limit(500);
   const appByUser=new Map((appLookup.data||[]).map(a=>[String(a.user_id),a]));
   const intakeHtml=allFiles.map(f=>{
@@ -169,7 +171,7 @@ async function loadFiles(){
 }
 
 function renderRequests(){
-  const rows=allRequests.filter(x=>!showPendingOnly||['pending','review'].includes(x.status)).map(x=>'<tr><td>'+esc(x.application_number)+'</td><td><strong>'+esc(x.applicant_name||'—')+'</strong></td><td>'+esc(x.application_type)+'</td><td dir="ltr">'+esc(x.phone||'—')+'</td><td>'+esc(x.area||'—')+'</td><td><span class="badge '+statusClass(x.status)+'">'+esc(statusLabel(x.status))+'</span></td><td>'+esc(formatDate(x.created_at))+'</td><td><button class="btn gold" data-view="'+esc(x.id)+'">عرض</button></td></tr>').join('');
+  const rows=allRequests.filter(x=>x.status!=='rejected'&&(!showPendingOnly||['pending','review'].includes(x.status))).map(x=>'<tr><td>'+esc(x.application_number)+'</td><td><strong>'+esc(x.applicant_name||'—')+'</strong></td><td>'+esc(x.application_type)+'</td><td dir="ltr">'+esc(x.phone||'—')+'</td><td>'+esc(x.area||'—')+'</td><td><span class="badge '+statusClass(x.status)+'">'+esc(statusLabel(x.status))+'</span></td><td>'+esc(formatDate(x.created_at))+'</td><td><button class="btn gold" data-view="'+esc(x.id)+'">عرض</button></td></tr>').join('');
   $('requestRows').innerHTML=rows||'<tr><td colspan="8">لا توجد طلبات ضمن الفلتر الحالي.</td></tr>';
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>openRequest(b.dataset.view)));
 }
@@ -184,10 +186,10 @@ function bindFileButtons(){
   document.querySelectorAll('[data-view-by-number]').forEach(b=>{b.onclick=()=>{const row=allRequests.find(x=>String(x.application_number)===String(b.dataset.viewByNumber));if(row)openRequest(row.id);else showMsg('تعذر العثور على الطلب المرتبط بهذا الملف.')}}});
   document.querySelectorAll('[data-open-file]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.openFile,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح الملف: '+(e?.message||'خطأ غير معروف'))}});
   document.querySelectorAll('[data-download-file]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.downloadFile,b.dataset.downloadName)}catch(e){showMsg('تعذر تحميل الملف: '+(e?.message||'خطأ غير معروف'))}});
-  document.querySelectorAll('[data-file-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.fileStatus,id=b.dataset.fileId;if(st==='rejected'){const row=allFiles.find(f=>f.id===id);if(row?.storage_path){const sr=await db.storage.from('private_documents').remove([row.storage_path]);if(sr.error){showMsg('تعذر حذف الملف من التخزين: '+sr.error.message);return}}const {error}=await db.from('application_intake_files').delete().eq('id',id);if(error){showMsg('تعذر حذف سجل الملف: '+error.message);return}showMsg('تم رفض الملف وحذفه نهائيًا من المنصة.',true);await loadAll();return}const {error}=await db.from('application_intake_files').update({verification_status:st}).eq('id',id);if(error){showMsg('تعذر تحديث حالة الملف: '+error.message);return}showMsg('تم تحديث حالة الملف.',true);await loadAll()});
+  document.querySelectorAll('[data-file-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.fileStatus,id=b.dataset.fileId;if(st==='rejected'){const {error}=await db.from('application_intake_files').update({verification_status:'rejected'}).eq('id',id);if(error){showMsg('تعذر حفظ رفض الملف: '+error.message);return}showMsg('تم حفظ رفض الملف في الأرشيف.',true);await loadAll();return}const {error}=await db.from('application_intake_files').update({verification_status:st}).eq('id',id);if(error){showMsg('تعذر تحديث حالة الملف: '+error.message);return}showMsg('تم تحديث حالة الملف.',true);await loadAll()});
   document.querySelectorAll('[data-open-legacy]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.openLegacy,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح المستند القديم: '+(e?.message||'خطأ غير معروف'))}});
   document.querySelectorAll('[data-download-legacy]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.downloadLegacy,b.dataset.name)}catch(e){showMsg('تعذر تحميل المستند القديم: '+(e?.message||'خطأ غير معروف'))}});
-  document.querySelectorAll('[data-legacy-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.legacyStatus,id=b.dataset.legacyId;if(st==='rejected'){const row=legacyDocuments.find(d=>d.id===id);if(row?.storage_path){const sr=await db.storage.from('private_documents').remove([row.storage_path]);if(sr.error){showMsg('تعذر حذف المستند من التخزين: '+sr.error.message);return}}const {error}=await db.from('documents').delete().eq('id',id);if(error){showMsg('تعذر حذف سجل المستند: '+error.message);return}showMsg('تم رفض المستند وحذفه نهائيًا من المنصة.',true);await loadAll();return}const {error}=await db.from('documents').update({verification_status:st}).eq('id',id);if(error){showMsg('تعذر تحديث حالة المستند: '+error.message);return}showMsg('تم تحديث حالة المستند.',true);await loadAll()});
+  document.querySelectorAll('[data-legacy-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.legacyStatus,id=b.dataset.legacyId;if(st==='rejected'){const {error}=await db.from('documents').update({verification_status:'rejected'}).eq('id',id);if(error){showMsg('تعذر حفظ رفض المستند: '+error.message);return}showMsg('تم حفظ رفض المستند في الأرشيف.',true);await loadAll();return}const {error}=await db.from('documents').update({verification_status:st}).eq('id',id);if(error){showMsg('تعذر تحديث حالة المستند: '+error.message);return}showMsg('تم تحديث حالة المستند.',true);await loadAll()});
 }
 
 function openRequest(id){
@@ -198,23 +200,12 @@ function openRequest(id){
   const whatsapp=String(x.payload?.whatsapp_phone||x.payload?.whatsapp||x.phone||'—');
   const docs=files.map(f=>'<div class="doc"><strong>'+esc(f.file_name)+'</strong><div class="small">'+esc(f.document_category||'مستند')+' · '+esc(f.mime_type||'')+' · '+Math.round(Number(f.file_size||0)/1024)+' KB · الحالة: '+esc(statusLabel(f.verification_status))+'</div><div class="actions"><button class="btn alt" data-modal-open="'+esc(f.storage_path)+'">فتح</button><button class="btn alt" data-modal-download="'+esc(f.storage_path)+'" data-name="'+esc(f.file_name)+'">تحميل</button><button class="btn" data-modal-doc-status="approved" data-doc-id="'+esc(f.id)+'">اعتماد</button><button class="btn danger" data-modal-doc-status="rejected" data-doc-id="'+esc(f.id)+'">رفض</button></div></div>').join('')||'<p>لا توجد ملفات مرفوعة لهذا الطلب.</p>';
   $('modalTitle').textContent='طلب #'+x.application_number+' — '+(x.application_type||'');
-  $('modalBody').innerHTML='<div class="detail-grid"><div class="detail"><b>المتقدم</b><br>'+esc(x.applicant_name||'—')+'</div><div class="detail"><b>الهاتف الشخصي</b><br><span dir="ltr">'+esc(x.phone||'—')+'</span></div><div class="detail"><b>واتساب</b><br><span dir="ltr">'+esc(whatsapp)+'</span></div><div class="detail"><b>البريد الإلكتروني</b><br>'+esc(email)+'</div><div class="detail"><b>المنطقة</b><br>'+esc(x.area||'—')+'</div><div class="detail"><b>الحالة</b><br>'+esc(statusLabel(x.status))+'</div><div class="detail"><b>المصدر</b><br>'+esc(x.source||'—')+'</div><div class="detail"><b>التاريخ</b><br>'+esc(formatDate(x.created_at))+'</div></div><h3>بيانات الطلب</h3><div class="detail-grid">'+pairs+'</div><h3>الملفات</h3>'+docs+'<div class="actions" style="margin-top:14px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn" data-review="approved">موافقة</button><button class="btn danger" data-review="rejected">رفض</button><button class="btn alt" data-delete-intake="1">حذف نهائي</button></div>';
+  $('modalBody').innerHTML='<div class="detail-grid"><div class="detail"><b>المتقدم</b><br>'+esc(x.applicant_name||'—')+'</div><div class="detail"><b>الهاتف الشخصي</b><br><span dir="ltr">'+esc(x.phone||'—')+'</span></div><div class="detail"><b>واتساب</b><br><span dir="ltr">'+esc(whatsapp)+'</span></div><div class="detail"><b>البريد الإلكتروني</b><br>'+esc(email)+'</div><div class="detail"><b>المنطقة</b><br>'+esc(x.area||'—')+'</div><div class="detail"><b>الحالة</b><br>'+esc(statusLabel(x.status))+'</div><div class="detail"><b>المصدر</b><br>'+esc(x.source||'—')+'</div><div class="detail"><b>التاريخ</b><br>'+esc(formatDate(x.created_at))+'</div></div><h3>بيانات الطلب</h3><div class="detail-grid">'+pairs+'</div><h3>الملفات</h3>'+docs+'<div class="actions" style="margin-top:14px"><button class="btn gold" data-review="review">قيد المراجعة</button><button class="btn" data-review="approved">موافقة</button><button class="btn danger" data-review="rejected">رفض وحفظ في الأرشيف</button></div>';
   $('modal').classList.remove('hidden');
   $('modalBody').querySelectorAll('[data-modal-open]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.modalOpen,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح الملف: '+(e?.message||'خطأ غير معروف'))}});
   $('modalBody').querySelectorAll('[data-modal-download]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.modalDownload,b.dataset.name)}catch(e){showMsg('تعذر تحميل الملف: '+(e?.message||'خطأ غير معروف'))}});
-  $('modalBody').querySelectorAll('[data-modal-doc-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.modalDocStatus,docId=b.dataset.docId;if(st==='rejected'){const row=allFiles.find(f=>f.id===docId);if(row?.storage_path){const sr=await db.storage.from('private_documents').remove([row.storage_path]);if(sr.error){showMsg('تعذر حذف الملف من التخزين: '+sr.error.message);return}}const {error}=await db.from('application_intake_files').delete().eq('id',docId);if(error){showMsg('تعذر حذف سجل الملف: '+error.message);return}showMsg('تم رفض الملف وحذفه نهائيًا من المنصة.',true);await loadAll();openRequest(id);return}const {error}=await db.from('application_intake_files').update({verification_status:st}).eq('id',docId);if(error){showMsg('تعذر تحديث حالة الملف: '+error.message);return}await loadAll();openRequest(id)});
+  $('modalBody').querySelectorAll('[data-modal-doc-status]').forEach(b=>b.onclick=async()=>{const st=b.dataset.modalDocStatus,docId=b.dataset.docId;if(st==='rejected'){const {error}=await db.from('application_intake_files').update({verification_status:'rejected'}).eq('id',docId);if(error){showMsg('تعذر حفظ رفض الملف: '+error.message);return}showMsg('تم حفظ رفض الملف في الأرشيف.',true);await loadAll();openRequest(id);return}const {error}=await db.from('application_intake_files').update({verification_status:st}).eq('id',docId);if(error){showMsg('تعذر تحديث حالة الملف: '+error.message);return}await loadAll();openRequest(id)});
   $('modalBody').querySelectorAll('[data-review]').forEach(b=>b.onclick=async()=>reviewRequest(x.id,b.dataset.review));
-  $('modalBody').querySelectorAll('[data-delete-intake]').forEach(b=>b.onclick=async()=>{
-    if(!confirm('سيتم حذف الطلب وملفاته نهائيًا من لوحة المدير. متابعة؟'))return;
-    try{
-      const session=(await db.auth.getSession()).data.session;
-      if(!session?.access_token)throw new Error('جلسة المدير غير متاحة');
-      const resp=await fetch('/api/admin/delete-intake',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({applicationId:id})});
-      const result=await resp.json().catch(()=>({}));
-      if(!resp.ok)throw new Error(result?.error||'تعذر حذف الطلب');
-      $('modal').classList.add('hidden');await loadAll();showMsg('تم حذف الطلب وملفاته نهائيًا.',true);
-    }catch(e){showMsg(String(e?.message||e));}
-  });
 }
 
 async function reviewRequest(id,status){
@@ -277,6 +268,35 @@ async function reviewRequest(id,status){
   }
   if(status!=='approved' && status!=='review')showMsg('تم تسجيل قرار المدير بنجاح.',true);
 }
+async function loadRejected(){
+  const rows=allRequests.filter(x=>x.status==='rejected');
+  $('rejectedList').innerHTML=rows.length?rows.map(x=>'<div class="doc"><strong>طلب #'+esc(x.application_number)+' — '+esc(x.applicant_name||'—')+'</strong><div class="small">'+esc(x.application_type||'')+' · '+esc(x.area||'—')+' · '+esc(formatDate(x.decided_at||x.updated_at||x.created_at))+'</div><div class="small">'+esc(x.admin_decision_notes||'لا توجد ملاحظات قرار.')+'</div></div>').join(''):'<p class="small">لا توجد طلبات مرفوضة.</p>';
+}
+function institutionTypeLabel(t){return ({laboratory:'🧪 مختبرات طبية',radiology_center:'🩻 مراكز الأشعة والتصوير',medical_equipment_center:'🦽 مراكز المعدات الطبية'})[t]||t}
+async function loadInstitutions(){
+  const [ir,fr]=await Promise.all([
+    db.from('institution_intakes').select('*').order('created_at',{ascending:false}).limit(500),
+    db.from('institution_intake_files').select('id,institution_intake_id,storage_path,file_name,mime_type,file_size,verification_status,document_category,created_at').order('created_at',{ascending:false}).limit(1000)
+  ]);
+  if(ir.error){$('institutionList').innerHTML='<div class="err">تعذر تحميل ملفات الجهات: '+esc(ir.error.message)+'</div>';return}
+  if(fr.error){$('institutionList').innerHTML='<div class="err">تعذر تحميل مستندات الجهات: '+esc(fr.error.message)+'</div>';return}
+  institutionRequests=ir.data||[];
+  const files=fr.data||[];
+  const groups=['laboratory','radiology_center','medical_equipment_center'];
+  $('institutionList').innerHTML=groups.map(type=>{
+    const rows=institutionRequests.filter(x=>x.institution_type===type);
+    return '<div class="card" style="background:#f8fbf9"><h3>'+institutionTypeLabel(type)+' <span class="badge">'+rows.length+'</span></h3>'+
+      (rows.length?rows.map(x=>{
+        const fs=files.filter(f=>f.institution_intake_id===x.id);
+        const fileHtml=fs.length?fs.map(f=>'<div class="doc"><strong>'+esc(f.file_name)+'</strong><div class="small">'+esc(f.document_category||'مستند')+' · '+esc(f.verification_status)+' · '+Math.round(Number(f.file_size||0)/1024)+' KB</div><div class="actions"><button class="btn alt" data-inst-open="'+esc(f.storage_path)+'">فتح</button><button class="btn alt" data-inst-download="'+esc(f.storage_path)+'" data-name="'+esc(f.file_name)+'">تحميل</button><button class="btn" data-inst-file-status="approved" data-inst-file-id="'+esc(f.id)+'">اعتماد الملف</button><button class="btn danger" data-inst-file-status="rejected" data-inst-file-id="'+esc(f.id)+'">رفض الملف</button></div></div>').join(''):'<p class="small">لا توجد ملفات.</p>';
+        return '<div class="doc"><strong>'+esc(x.institution_name)+'</strong><div class="small">رقم الطلب: '+esc(x.request_id)+' · المسؤول: '+esc(x.contact_name)+' · الهاتف: '+esc(x.phone)+' · '+esc(x.governorate||'')+' / '+esc(x.district||'')+' / '+esc(x.locality||'')+'</div><div class="small">الحالة: <span class="badge '+statusClass(x.status)+'">'+esc(statusLabel(x.status))+'</span> · تاريخ: '+esc(formatDate(x.created_at))+'</div><div class="detail-grid" style="margin-top:8px"><div class="detail"><b>الترخيص</b><br>'+esc(x.license_number||'—')+'</div><div class="detail"><b>الخدمات</b><br>'+esc(x.services||'—')+'</div></div><h4>الملفات</h4>'+fileHtml+'<div class="actions" style="margin-top:10px"><button class="btn gold" data-inst-status="review" data-inst-id="'+esc(x.id)+'">قيد الدراسة</button><button class="btn" data-inst-status="approved" data-inst-id="'+esc(x.id)+'">قبول</button><button class="btn danger" data-inst-status="rejected" data-inst-id="'+esc(x.id)+'">رفض وحفظ</button></div></div>';
+      }).join(''):'<p class="small">لا توجد ملفات.</p>')+'</div>';
+  }).join('');
+  document.querySelectorAll('[data-inst-open]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.instOpen,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح الملف: '+(e?.message||'خطأ غير معروف'))}});
+  document.querySelectorAll('[data-inst-download]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.instDownload,b.dataset.name)}catch(e){showMsg('تعذر تحميل الملف: '+(e?.message||'خطأ غير معروف'))}});
+  document.querySelectorAll('[data-inst-status]').forEach(b=>b.onclick=async()=>{const notes=prompt(b.dataset.instStatus==='rejected'?'سبب الرفض (اختياري):':'ملاحظات المدير (اختياري):')||null;const {error}=await db.rpc('admin_institution_review',{p_institution_id:b.dataset.instId,p_status:b.dataset.instStatus,p_notes:notes});if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}showMsg('تم حفظ قرار الجهة.',true);await loadInstitutions()});
+  document.querySelectorAll('[data-inst-file-status]').forEach(b=>b.onclick=async()=>{const {error}=await db.from('institution_intake_files').update({verification_status:b.dataset.instFileStatus,updated_at:new Date().toISOString()}).eq('id',b.dataset.instFileId);if(error){showMsg('تعذر تحديث الملف: '+error.message);return}showMsg('تم حفظ حالة الملف.',true);await loadInstitutions()});
+}
 async function loadCompletion(){
   const rows=allRequests.filter(x=>x.status==='review');
   $('completionList').innerHTML=rows.length?rows.map(x=>'<div class="doc"><strong>طلب #'+esc(x.application_number)+' — '+esc(x.applicant_name||'—')+'</strong><div class="small">'+esc(x.application_type||'')+' · المنطقة: '+esc(x.area||'—')+' · آخر تحديث: '+esc(formatDate(x.updated_at||x.created_at))+'</div><div class="actions" style="margin-top:7px"><button class="btn gold" data-completion-view="'+esc(x.id)+'">فتح ومراجعة النواقص</button></div></div>').join(''):'<p class="small">لا توجد طلبات حالياً تحتاج استكمالاً.</p>';
@@ -301,7 +321,7 @@ async function loadAccepted(){
   }).join('');
 }
 async function loadAll(){
-  await Promise.all([loadCounts(),loadRequests(),loadFiles(),loadCompletion(),loadAccepted()]);
+  await Promise.all([loadCounts(),loadRequests(),loadFiles(),loadRejected(),loadInstitutions(),loadCompletion(),loadAccepted()]);
   $('lastUpdate').textContent='آخر تحديث: '+new Date().toLocaleString('ar-LB');
 }
 
@@ -333,7 +353,7 @@ async function enterDashboard(){
   const gate=await isAdmin();
   if(!gate){$('dashboard').classList.add('hidden');$('requestsSection').classList.add('hidden');$('documentsSection').classList.add('hidden');$('auth').classList.remove('hidden');showAuthError('يرجى الدخول بحساب المدير المفعّل.');return}
   $('who').textContent='المدير: '+(gate.profile.email||gate.user.email||'');
-  $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
+  $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('rejectedSection').classList.remove('hidden');$('institutionSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
   await loadAll();subscribeLive();if('Notification' in window && Notification.permission==='default')Notification.requestPermission().catch(()=>{});
   clearInterval(refreshTimer);refreshTimer=setInterval(()=>loadAll().catch(()=>{}),30000);
 }
