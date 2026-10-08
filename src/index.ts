@@ -1018,123 +1018,21 @@ const app=new Elysia()
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
   }
 })
-.post("/api/public/institution-intake",async({request,set})=>{
-  const contentLength=Number(request.headers.get("content-length")||0);
-  if(contentLength>18*1024*1024){set.status=413;return{ok:false,error:"حجم الطلب يتجاوز الحد المسموح"}}
-  const form=await request.formData().catch(()=>null);
-  if(!form){set.status=400;return{ok:false,error:"invalid form"}}
-  const institutionType=String(form.get("institution_type")||"").trim();
-  const allowedTypes=new Set(["laboratory","radiology_center","medical_equipment_center"]);
-  if(!allowedTypes.has(institutionType)){set.status=400;return{ok:false,error:"نوع الجهة غير معروف"}}
-  const institutionName=String(form.get("institution_name")||"").trim();
-  const contactName=String(form.get("contact_name")||"").trim();
-  const phone=String(form.get("phone")||"").trim();
-  if(!institutionName||!contactName||!phone){set.status=400;return{ok:false,error:"اسم الجهة واسم المسؤول ورقم الهاتف مطلوبة"}}
-  const files=form.getAll("files").filter((v):v is File=>v instanceof File&&v.size>0);
-  if(files.length>10){set.status=400;return{ok:false,error:"يمكن إرفاق 10 ملفات كحد أقصى"}}
-  if(files.some(f=>f.size>8*1024*1024)){set.status=413;return{ok:false,error:"الحد الأقصى لحجم الملف الواحد 8MB"}}
-  const payload:any={};
-  for(const [key,value] of form.entries()){
-    if(value instanceof File||key==="institution_type")continue;
-    payload[key]=String(value).slice(0,5000);
-  }
-  payload.institution_type=institutionType;
-  payload.submitted_at=new Date().toISOString();
-  const created=await supabaseServerRest("/rest/v1/institution_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({
-    institution_type:institutionType,institution_name:institutionName.slice(0,250),contact_name:contactName.slice(0,200),
-    phone:phone.slice(0,40),email:String(form.get("email")||"").slice(0,250)||null,
-    address:String(form.get("address")||"").slice(0,500)||null,
-    governorate:String(form.get("governorate")||"").slice(0,120)||null,
-    district:String(form.get("district")||"").slice(0,120)||null,
-    locality:String(form.get("locality")||"").slice(0,160)||null,
-    license_number:String(form.get("license_number")||"").slice(0,160)||null,
-    services:String(form.get("services")||"").slice(0,4000)||null,
-    notes:String(form.get("notes")||"").slice(0,4000)||null,
-    payload,status:"pending",source:"platform"
-  })});
-  if(!created.response.ok){console.error(JSON.stringify({event:"rafig_institution_intake_create_failed",status:created.response.status}));set.status=502;return{ok:false,error:"تعذر حفظ الطلب الآن. حاول مرة أخرى."}}
-  const intake=Array.isArray(created.body)?created.body[0]:created.body;
-  let uploaded=0;
-  for(const file of files){
-    const safeName=String(file.name||"file").replace(/[^A-Za-z0-9._-]/g,"_").slice(-120)||"file";
-    const path="institutions/"+String(intake.id)+"/"+crypto.randomUUID()+"-"+safeName;
-    const sr=await fetch(SUPABASE_URL+"/storage/v1/object/private_documents/"+path,{method:"POST",headers:{apikey:SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+SUPABASE_SERVICE_ROLE_KEY,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},body:await file.arrayBuffer()});
-    if(!sr.ok){console.error(JSON.stringify({event:"rafig_institution_upload_failed",institutionId:intake.id,status:sr.status}));continue}
-    const ir=await supabaseServerRest("/rest/v1/institution_intake_files",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({institution_intake_id:intake.id,storage_path:path,file_name:file.name,mime_type:file.type||null,file_size:file.size,verification_status:"pending",document_category:"institution_registration"})});
-    if(ir.response.ok)uploaded++;
-  }
-  const admins=await supabaseServerRest("/rest/v1/profiles?role=eq.admin&status=eq.active&select=id");
-  const adminRows=Array.isArray(admins.body)?admins.body:[];
-  if(adminRows.length)await supabaseServerRest("/rest/v1/notifications",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify(adminRows.map((a:any)=>({user_id:a.id,title:"طلب تسجيل جهة صحية جديد",message:"تم استلام طلب تسجيل "+institutionName+" برقم "+String(intake.request_id),type:"new_institution_intake"})))}).catch(()=>{});
-  return{ok:true,status:"received",request_id:intake.request_id,uploaded};
-})
-.post("/api/public/intake",async({request,set})=>{
+const forwardPublicIntake=async({request,set}:any)=>{
   const now=Date.now();
   const ip=(request.headers.get("x-forwarded-for")||request.headers.get("x-real-ip")||"public").split(",")[0].trim();
-  const rateStore=(globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__; const last:Map<string,number>=rateStore || new Map<string,number>(); (globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__=last;
-  const previous=last.get(ip)||0;
-  if(now-previous<PUBLIC_INTAKE_RATE_LIMIT_MS){set.status=429;return{ok:false,error:"يرجى الانتظار قليلًا ثم إعادة إرسال الطلب"}}
-  if(last.size>=PUBLIC_INTAKE_RATE_MAX_KEYS && !last.has(ip)){
-    const oldest=last.keys().next().value;
-    if(oldest)last.delete(oldest);
-  }
-  last.set(ip,now);
-  const contentLength=Number(request.headers.get("content-length")||0);
-  if(contentLength>MAX_PUBLIC_INTAKE_BODY){set.status=413;return{ok:false,error:"حجم الطلب يتجاوز الحد المسموح"}}
-  const form=await request.formData().catch(()=>null);
-  if(!form){set.status=400;return{ok:false,error:"invalid form"}}
-  const role=String(form.get("role")||"").trim();
-  const allowed=new Set(["caregiver","nurse","physiotherapist","family"]);
-  if(!allowed.has(role)){set.status=400;return{ok:false,error:"نوع الطلب غير معروف"}}
-  const first=String(form.get("first_name")||"").trim();
-  const lastName=String(form.get("last_name")||"").trim();
-  const familyName=String(form.get("family_name")||"").trim();
-  const patientName=String(form.get("patient_name")||"").trim();
-  const applicantName=(role==="family"?familyName:((first+" "+lastName).trim()))||patientName;
-  const phone=String(form.get("phone")||"").trim();
-  if(!applicantName||!phone){set.status=400;return{ok:false,error:"الاسم ورقم الهاتف مطلوبان"}}
-  const fileEntries=form.getAll("cv").concat(form.getAll("profile_photo")).filter((v):v is File=>v instanceof File && v.size>0);
-  if(fileEntries.length>2){set.status=400;return{ok:false,error:"عدد الملفات المسموح به غير صالح"}}
-  for(const file of fileEntries){
-    const max=file.name===String(form.get("profile_photo")?.name||"")?5*1024*1024:10*1024*1024;
-    if(file.size>max){set.status=413;return{ok:false,error:"حجم أحد الملفات يتجاوز الحد المسموح"}}
-  }
-  const payload:any={};
-  for(const [key,value] of form.entries()){
-    if(value instanceof File||key==="consent"||key==="role")continue;
-    payload[key]=String(value).slice(0,5000);
-  }
-  payload.role=role;
-  payload.submitted_without_account=true;
-  payload.submitted_at=new Date().toISOString();
-  const applicationType=({family:"طلب رعاية عائلية",caregiver:"انتساب مقدم رعاية",nurse:"انتساب ممرض/ة",physiotherapist:"انتساب معالج فيزيائي"} as Record<string,string>)[role];
-  const area=String(form.get(role==="family"?"care_location":"preferred_location")||"").trim();
-  const created=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:applicationType,applicant_name:applicantName.slice(0,200),phone:phone.slice(0,40),area:area.slice(0,250),status:"review",payload,source:"platform"})});
-  if(!created.response.ok){
-    console.error(JSON.stringify({event:"rafig_public_intake_create_failed",status:created.response.status,body:String(created.body).slice(0,300)}));
-    set.status=502;return{ok:false,error:"تعذر حفظ الطلب الآن. حاول مرة أخرى."}
-  }
-  const intake=Array.isArray(created.body)?created.body[0]:created.body;
-  let uploaded=0;
-  for(const file of fileEntries){
-    const safeName=String(file.name||"file").replace(/[^A-Za-z0-9._-]/g,"_").slice(-120)||"file";
-    const category=file===form.get("cv")?"cv":"profile_photo";
-    const path="intakes/"+String(intake.id)+"/"+crypto.randomUUID()+"-"+safeName;
-    const bytes=await file.arrayBuffer();
-    const sr=await fetch(SUPABASE_URL+"/storage/v1/object/private_documents/"+path,{method:"POST",headers:{apikey:SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+SUPABASE_SERVICE_ROLE_KEY,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},body:bytes});
-    if(!sr.ok){console.error(JSON.stringify({event:"rafig_public_intake_upload_failed",intakeId:intake.id,file:safeName,status:sr.status}));continue}
-    const ir=await supabaseServerRest("/rest/v1/application_intake_files",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({intake_id:intake.id,storage_path:path,file_name:file.name,mime_type:file.type||null,file_size:file.size,verification_status:"pending",document_category:category})});
-    if(ir.response.ok)uploaded++;
-  }
-  const admins=await supabaseServerRest("/rest/v1/profiles?role=eq.admin&status=eq.active&select=id");
-  const adminRows=Array.isArray(admins.body)?admins.body:[];
-  if(adminRows.length){
-    await supabaseServerRest("/rest/v1/notifications",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify(adminRows.map((a:any)=>({user_id:a.id,title:"طلب جديد من منصة RAFIQ",message:"تم استلام طلب جديد رقم "+String(intake.application_number)+" — "+applicantName,type:"new_public_intake"})))}).catch(()=>{});
-  }
-  const requestId="RAFIQ-REQ-"+String(intake.application_number).padStart(6,"0");
-  await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({payload:{...(intake.payload&&typeof intake.payload==="object"?intake.payload:{}),request_id:requestId}})}).catch(()=>{});
-  return{ok:true,status:"received",request_id:requestId,application_number:intake.application_number,uploaded};
-})
+  const rateStore=(globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__; const last:Map<string,number>=rateStore||new Map<string,number>(); (globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__=last;
+  const previous=last.get(ip)||0; if(now-previous<PUBLIC_INTAKE_RATE_LIMIT_MS){set.status=429;return{ok:false,error:"يرجى الانتظار قليلًا ثم إعادة إرسال الطلب"}} last.set(ip,now);
+  const contentLength=Number(request.headers.get("content-length")||0); if(contentLength>MAX_PUBLIC_INTAKE_BODY){set.status=413;return{ok:false,error:"حجم الطلب يتجاوز الحد المسموح"}}
+  const key=(process.env.SUPABASE_PUBLISHABLE_KEY||process.env.SUPABASE_ANON_KEY||"").trim(); if(!key){set.status=503;return{ok:false,error:"public intake configuration unavailable"}}
+  const contentType=request.headers.get("content-type")||"application/octet-stream";
+  try{
+    const upstream=await fetch(SUPABASE_URL+"/functions/v1/public-intake",{method:"POST",headers:{"Authorization":"Bearer "+key,"apikey":key,"Content-Type":contentType},body:await request.arrayBuffer()});
+    const body=await upstream.json().catch(()=>({ok:false,error:"invalid upstream response"})); set.status=upstream.status; return body;
+  }catch(error){console.error(JSON.stringify({event:"rafig_public_intake_edge_proxy_failed",error:String(error).slice(0,240)}));set.status=502;return{ok:false,error:"تعذر حفظ الطلب الآن. حاول مرة أخرى."}}
+}
+.post("/api/public/institution-intake",forwardPublicIntake)
+.post("/api/public/intake",forwardPublicIntake)
 .get("/api/intake/complete",async({query,set})=>{
   const token=String(query?.token??"").trim();
   if(!token){set.status=400;return{ok:false,error:"invalid completion token"}}
