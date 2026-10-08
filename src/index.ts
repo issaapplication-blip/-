@@ -643,6 +643,8 @@ const app=new Elysia()
       conversationId=createdRow?.id??null;
     }
 
+    const reply=async(body:string)=>{const outbound=await telegramSendText(chatId,telegramSigned(body));if(conversationId)await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:body,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});return outbound;};
+
     const contactPhone=typeof message?.contact?.phone_number==="string"?message.contact.phone_number.trim():"";
     if(contactPhone){
       const normalizedContact=contactPhone.replace(/\\D/g,"");
@@ -655,8 +657,6 @@ const app=new Elysia()
     }
     const orders=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?chat_id=eq."+encodeURIComponent(externalConversationId)+"&order_status=not.in.(completed,cancelled)&select=*&order=updated_at.desc&limit=1");
     const activeOrder=Array.isArray(orders.body)?orders.body[0]:null;
-
-    const reply=async(body:string)=>{const outbound=await telegramSendText(chatId,telegramSigned(body));if(conversationId)await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:body,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});return outbound;};
 
     const managerChatIds = parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
     const managerHandled = await handleManagerCommand(
