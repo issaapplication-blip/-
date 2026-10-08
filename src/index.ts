@@ -847,7 +847,18 @@ const app=new Elysia()
   }
   const admins=await supabaseServerRest("/rest/v1/profiles?role=eq.admin&status=eq.active&select=id");
   const adminRows=Array.isArray(admins.body)?admins.body:[];
-  if(adminRows.length)await supabaseServerRest("/rest/v1/notifications",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify(adminRows.map((a:any)=>({user_id:a.id,title:"استكمال ملف RAFIQ",message:"تم استكمال الطلب رقم "+String(intake.application_number)+" وإرسال "+String(uploaded)+" ملف/ملفات.",type:"application_completion"}))}).catch(()=>{});
+  if(adminRows.length){
+    await supabaseServerRest("/rest/v1/notifications",{
+      method:"POST",
+      headers:{"Prefer":"return=minimal"},
+      body:JSON.stringify(adminRows.map((a:any)=>({
+        user_id:a.id,
+        title:"استكمال ملف RAFIQ",
+        message:"تم استكمال الطلب رقم "+String(intake.application_number)+" وإرسال "+String(uploaded)+" ملف/ملفات.",
+        type:"application_completion"
+      })))
+    }).catch(()=>{});
+  }
   return{ok:true,status:"submitted",uploaded};
 })
 .get("/api/barcode/qr/:code",async({params,set})=>{
