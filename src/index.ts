@@ -51,7 +51,7 @@ const telegramLanguage = (message:any) => {
   if(code.startsWith("it")) return "it";
   if(code.startsWith("de")) return "de";
   const t=String(message?.text??"");
-  if(/\\b(hello|hi|what|how|services|request|help|contact)\\b/i.test(t)) return "en";
+  if(/\b(hello|hi|what|how|services|request|help|contact)\b/i.test(t)) return "en";
   if(/[أ-ي]/.test(t)) return "ar";
   return "ar";
 };
@@ -877,7 +877,7 @@ const app=new Elysia()
 
     const language=telegramLanguage(message);
     if(message?.chat?.type==="private"){
-      const cmd=textBody.toLowerCase().split(/\\s+/)[0];
+      const cmd=textBody.toLowerCase().split(/\s+/)[0];
       if(cmd==="/start" || cmd==="/subscribe"){
         await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({
           chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),username:username||null,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,
@@ -892,7 +892,7 @@ const app=new Elysia()
 
     if(!textBody)return{ok:true,status:"ignored_non_text"};
 
-    const command=textBody.toLowerCase().split(/\\s+/)[0];
+    const command=textBody.toLowerCase().split(/\s+/)[0];
     if(command==="/subscribe"){
       const outbound=await reply("✅ تم تفعيل اشتراكك في إعلانات رفيق من جديد.");
       return{ok:true,status:"telegram_subscribed",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
