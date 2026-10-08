@@ -25,11 +25,19 @@ const callTelegram = async (method: string, body: Record<string, unknown>) => {
 const RAFIQ_TELEGRAM_SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
 const signedText = (text: string) => text.includes(RAFIQ_TELEGRAM_SIGNATURE) ? text : `${text}\n\n${RAFIQ_TELEGRAM_SIGNATURE}`;
 
-export const telegramSendText = async (chatId: string | number, text: string) =>
+export const telegramSendText = async (chatId: string | number, text: string, replyMarkup?: Record<string, unknown>) =>
   callTelegram("sendMessage", {
     chat_id: chatId,
     text: signedText(text),
     disable_web_page_preview: true,
+    ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+  });
+
+export const telegramSendContactRequest = async (chatId: string | number) =>
+  telegramSendText(chatId, "لربط حساب Telegram برقم هاتفك في RAFIQ، اضغط الزر أدناه ثم شارك رقمك مع البوت.", {
+    keyboard: [[{ text: "📱 مشاركة رقم الهاتف", request_contact: true }]],
+    resize_keyboard: true,
+    one_time_keyboard: true,
   });
 
 export const telegramSendDocument = async (chatId: string | number, documentFileId: string, caption?: string) =>
