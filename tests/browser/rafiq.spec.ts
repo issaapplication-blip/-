@@ -33,7 +33,7 @@ test('REAL TEST production public intake and Request ID',async({page,browserName
   await page.goto(BASE+'/app.html?role=family',{waitUntil:'domcontentloaded',timeout:30000});
   await expect(page.locator('#application')).toBeVisible();
   await page.locator('input[name="family_name"]').fill(marker);
-  await page.locator('input[name="phone"]').fill('+96100000000');
+  await page.locator('#familyFields input[name="phone"]').fill('+96100000000');
   await page.locator('input[name="patient_name"]').fill('TEST patient');
   await page.locator('#consent').check();
   await page.getByRole('button',{name:'إرسال الطلب للمراجعة'}).click();
