@@ -672,6 +672,52 @@ const app=new Elysia()
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
   if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
   const update=await request.json().catch(()=>null) as any;
+  const callback=update?.callback_query;
+  if(callback?.id){
+    const callbackChatId=callback?.message?.chat?.id;
+    const data=String(callback?.data??"");
+    await telegramAnswerCallbackQuery(String(callback.id)).catch(()=>{});
+    if(callbackChatId){
+      const sessionQ=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(callbackChatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
+      const session=Array.isArray(sessionQ.body)?sessionQ.body[0]:null;
+      if(data.startsWith("svc:")){
+        const label:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
+        const key=data.slice(4);
+        await telegramSendText(callbackChatId,telegramSigned(label[key]||"الخدمة غير معروفة."),{inline_keyboard:[
+          [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
+          [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
+          [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
+          [{text:"منطقة أخرى",callback_data:"reqarea:other"}]
+        ]});
+        return{ok:true,status:"callback_service_menu"};
+      }
+      if(data.startsWith("reqsvc:") && session){
+        const key=data.slice(7);
+        const service:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
+        await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({service_type:service[key]||key,updated_at:new Date().toISOString()})});
+        await telegramSendText(callbackChatId,telegramSigned("ممتاز. اختر المنطقة:"),{inline_keyboard:[
+          [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
+          [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
+          [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
+          [{text:"منطقة أخرى",callback_data:"reqarea:other"}]
+        ]});
+        return{ok:true,status:"request_service_selected"};
+      }
+      if(data.startsWith("reqarea:") && session){
+        const area=data.slice(8);
+        const finalArea=area==="other"?"منطقة أخرى":area;
+        await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({area:finalArea,status:"submitted",updated_at:new Date().toISOString()})});
+        const payload={request_id:session.request_id,telegram_chat_id:String(callbackChatId),telegram_user_id:session.telegram_user_id,language:session.language,service_type:session.service_type,area:finalArea,source:"telegram"};
+        const created=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:"طلب Telegram — "+String(callbackChatId),phone:null,area:finalArea,status:"review",payload,source:"telegram",agent_reply:"تم إنشاء طلب رعاية من Telegram وينتظر مراجعة الإدارة."})});
+        if(!created.response.ok)throw new Error("could not create Telegram care request");
+        const intake=Array.isArray(created.body)?created.body[0]:created.body;
+        await telegramSendText(callbackChatId,telegramSigned("✅ تم تسجيل طلب الرعاية.\n\nRequest ID: "+session.request_id+"\nرقم الطلب في RAFIQ: "+String(intake?.application_number??"—")+"\n\nستراجعه إدارة رفيق وتتابعه معكم."),{inline_keyboard:[[{text:"📞 التواصل مع الإدارة",url:RAFIQ_WHATSAPP}]]});
+        return{ok:true,status:"request_submitted",request_id:session.request_id,application_number:intake?.application_number??null};
+      }
+    }
+    return{ok:true,status:"callback_ignored"};
+  }
+
   const channelPost=update?.channel_post;
   if(channelPost?.chat?.id){
     const cp=channelPost.chat;
@@ -771,6 +817,7 @@ const app=new Elysia()
           return r.body?.signedURL ?? r.body?.signedUrl ?? null;
         },
         sendPhoto: (c, url, caption) => telegramSendPhoto(c, url, caption),
+        broadcast: telegramBroadcast,
       },
     );
     if (managerHandled) return { ok: true, status: "manager_command_handled" };
