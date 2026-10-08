@@ -59,6 +59,9 @@ export const telegramSetWebhook = async (url: string, secretToken?: string) =>
     drop_pending_updates: false,
   });
 
+export const telegramAnswerCallbackQuery = async (callbackQueryId: string, text?: string) =>
+  callTelegram("answerCallbackQuery", { callback_query_id: callbackQueryId, ...(text ? { text } : {}) });
+
 export const telegramDeleteWebhook = async () =>
   callTelegram("deleteWebhook", { drop_pending_updates: false });
 
