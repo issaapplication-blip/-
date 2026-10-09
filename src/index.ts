@@ -993,6 +993,22 @@ const app=new Elysia()
       }
     }
 
+    // Natural-language help should start a structured care intake, even when the AI provider has no credits.
+    if(message?.chat?.type==="private" && /(?:\\bhelp\\b|need help|assistance|\\bplease help\\b|مساعدة|ساعدني|ساعدونا|بدي ساعد|بدي مساعدة|اريد المساعدة|أريد المساعدة|أحتاج مساعدة|احتاج مساعدة|طلبت المساعدة|طلب مساعدة|محتاج مساعدة)/i.test(textBody)){
+      const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
+      const started=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
+      if(!started.response.ok){
+        console.error(JSON.stringify({event:"rafig_telegram_natural_help_session_failed",status:started.response.status}));
+        await reply("أهلًا بك في رفيق 🌿 أستطيع مساعدتك في رعاية كبار السن، رعاية المرضى، التمريض المنزلي أو العلاج الفيزيائي. تعذّر بدء الطلب آليًا الآن؛ جرّب /request أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
+        return{ok:true,status:"natural_help_session_failed"};
+      }
+      await telegramSendText(chatId,telegramSigned("أهلًا بك في رفيق 🌿 أنا هنا لمساعدتك. لنبدأ طلب الرعاية خطوة بخطوة.\nرقم الطلب: "+requestId+"\n\nما الخدمة التي تحتاجها؟"),{inline_keyboard:[
+        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
+        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
+      ]});
+      return{ok:true,status:"natural_help_intake_started",request_id:requestId};
+    }
+
     const commandReply=telegramCommandReply(textBody,language);
     if(commandReply){
       const welcomeOnStart=command==="/start";
