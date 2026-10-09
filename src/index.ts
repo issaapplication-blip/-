@@ -1053,7 +1053,7 @@ const app=new Elysia()
       return{ok:true,status:"agent_unavailable",conversation_id:conversationId};
     }
 
-    const likelyGeneralQuestion=/(?:[?؟]|\\b(?:what|how|why|when|where|who|which|can you|could you|please explain|tell me|price|cost|help)\\b|شو|كيف|ليش|وين|متى|هل|ماذا|ما هي|كم|pourquoi|comment|où|quand|combien|che cosa|come|perché|dove|quanto|warum|wie|wo|wann|wieviel)/i.test(textBody);
+    const likelyGeneralQuestion=/(?:[?؟]|\b(?:what|how|why|when|where|who|which|can you|could you|please explain|tell me|price|cost|help)\b|شو|كيف|ليش|وين|متى|هل|ماذا|ما هي|كم|pourquoi|comment|où|quand|combien|che cosa|come|perché|dove|quanto|warum|wie|wo|wann|wieviel)/i.test(textBody);
     if(activeOrder && (likelyGeneralQuestion || Boolean(result.intake?.service_type))) {
       const outbound=await reply(result.reply);
       return{ok:true,status:"agent_answered_during_cv_order",message_id:outbound?.result?.message_id??null,conversation_id:conversationId,model:result.model};
