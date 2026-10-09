@@ -654,7 +654,10 @@ const app=new Elysia()
   const row=Array.isArray(r.body)?r.body[0]:null;
   const q=await supabaseServerRest("/rest/v1/whatsapp_pending_approvals?reason=eq.telegram_admin_escalation&status=eq.open&order=created_at.desc&select=id,reason,status,payload,created_at&limit=20");
   const escalations=Array.isArray(q.body)?q.body:[];
-  return{ok:true,channels:{telegram:"active",whatsapp:"disabled"},lastTelegramReceivedAt:row?.last_telegram_received_at??lastTelegramReceivedAt,lastAgentError:row?.last_agent_error??lastTelegramAgentError,whatsappEnabled:whatsappChannelEnabled(),escalations};
+  const webhookInfo=telegramConfigured()?await telegramGetWebhookInfo().catch(()=>null):null;
+  const webhookUrl=String(webhookInfo?.result?.url??"");
+  const telegramStatus=telegramConfigured()&&webhookUrl.includes("/api/telegram/webhook")?"active":"needs_attention";
+  return{ok:true,channels:{telegram:telegramStatus,whatsapp:"disabled"},telegramWebhook:{configured:telegramConfigured(),urlMatches:telegramStatus==="active",lastError:typeof webhookInfo?.result?.last_error_message==="string"?webhookInfo.result.last_error_message:null},lastTelegramReceivedAt:row?.last_telegram_received_at??lastTelegramReceivedAt,lastAgentError:row?.last_agent_error??lastTelegramAgentError,whatsappEnabled:whatsappChannelEnabled(),escalations};
 })
 .get("/api/admin/telegram-cv/orders",async({request,set})=>{
   const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
