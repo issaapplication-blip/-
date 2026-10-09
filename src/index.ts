@@ -1023,6 +1023,41 @@ const app=new Elysia()
       return{ok:true,status:"cv_started",order_id:order?.id??null};
     }
 
+    const activeRequestSessionResult=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(chatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
+    const activeRequestSession=Array.isArray(activeRequestSessionResult.body)?activeRequestSessionResult.body[0]:null;
+    const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
+    const cvStep=activeOrder?(activeOrder.order_status==="payment_review"?"payment under review":activeOrder.order_status==="awaiting_payment"?"awaiting payment":!activeOrder.full_name?"CV applicant name":!activeOrder.target_job?"target job":!activeOrder.experience?"experience":activeOrder.extra_language===null||activeOrder.extra_language===undefined?"additional CV language":!activeOrder.old_cv_file_id?"existing CV file":"CV order details"):"";
+    const agentContext="TELEGRAM PRIMARY AGENT | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+"\nChannel: Telegram is the only enabled customer-facing agent channel at this time. Do not direct customers to WhatsApp; if human action is required, say RAFIQ administration will review it and record a structured escalation."+(activeOrder?"\nActive CV order state: "+cvStep+". If the customer asks an unrelated question or describes a home-care need, answer that message normally; do not treat it as a CV field value.":"");
+    let result:any;
+    let escalation={required:false,reason:null as string|null};
+    try {
+      const instructions=await loadTelegramAgentInstructions();
+      const sessionService=String(activeRequestSession?.service_type??"");
+      const sessionServiceKey=sessionService.includes("كبار السن")?"elderly_home_care":sessionService.includes("المرضى")?"patient_home_care":sessionService.includes("التمريض")?"home_nursing":sessionService.includes("الفيزيائي")?"home_physiotherapy":(["elderly_home_care","patient_home_care","home_nursing","home_physiotherapy"].includes(sessionService)?sessionService:null);
+      const sessionArea=String(activeRequestSession?.area??"");
+      const sessionContext=activeRequestSession?"\nExisting optional request shortcut: selected service="+(sessionService||"not selected")+"; selected area="+(sessionArea||"not selected")+"; prior case detail="+String(activeRequestSession.case_type??"")+"; schedule="+String(activeRequestSession.schedule??"")+"; notes="+String(activeRequestSession.notes??""):"";
+      result=await draftTelegramAgentTurn(textBody,language,agentContext+sessionContext,instructions);
+      if(!result.intake.service_type && sessionServiceKey)result.intake.service_type=sessionServiceKey;
+      if(!result.intake.area && sessionArea && sessionArea!=="منطقة أخرى")result.intake.area=sessionArea;
+      if(!result.intake.case_summary && activeRequestSession?.case_type)result.intake.case_summary=String(activeRequestSession.case_type);
+      escalation=result.escalation;
+      lastTelegramAgentError=null;
+      await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_agent_error:null,updated_at:new Date().toISOString()})}).catch(()=>{});
+    } catch(agentError) {
+      const safeError=String(agentError).slice(0,500);
+      lastTelegramAgentError=safeError;
+      console.error(JSON.stringify({event:"rafig_telegram_agent_failed",channel:"telegram",chatId:String(chatId),error:safeError,receivedAt:lastTelegramReceivedAt}));
+      await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_agent_error:safeError,updated_at:new Date().toISOString()})}).catch(()=>{});
+      const apology=language==="en"?"Sorry, RAFIQ’s agent is temporarily unavailable and could not process your message. No new request was saved. Please try again shortly.":language==="fr"?"Désolé, l’agent RAFIQ est temporairement indisponible et n’a pas pu traiter votre message. Aucune nouvelle demande n’a été enregistrée. Veuillez réessayer plus tard.":language==="it"?"Ci dispiace, l’agente RAFIQ è temporaneamente indisponibile e non ha potuto elaborare il messaggio. Non è stata salvata alcuna nuova richiesta. Riprova tra poco.":language==="de"?"Entschuldigung, der RAFIQ-Agent ist vorübergehend nicht verfügbar und konnte Ihre Nachricht nicht bearbeiten. Es wurde keine neue Anfrage gespeichert. Bitte versuchen Sie es später erneut.":"عذرًا، واجه وكيل رفيق عطلًا مؤقتًا ولم أتمكن من معالجة رسالتك الآن. لم يتم تسجيل طلب جديد. يرجى المحاولة بعد قليل.";
+      await reply(apology);
+      return{ok:true,status:"agent_unavailable",conversation_id:conversationId};
+    }
+
+    const likelyGeneralQuestion=/(?:[?؟]|\\b(?:what|how|why|when|where|who|which|can you|could you|please explain|tell me|price|cost|help)\\b|شو|كيف|ليش|وين|متى|هل|ماذا|ما هي|كم|pourquoi|comment|où|quand|combien|che cosa|come|perché|dove|quanto|warum|wie|wo|wann|wieviel)/i.test(textBody);
+    if(activeOrder && (likelyGeneralQuestion || Boolean(result.intake?.service_type))) {
+      const outbound=await reply(result.reply);
+      return{ok:true,status:"agent_answered_during_cv_order",message_id:outbound?.result?.message_id??null,conversation_id:conversationId,model:result.model};
+    }
     if(activeOrder){
       if(activeOrder.order_status==="payment_review"){
         await reply("⏳ إثبات الدفع وصل إلى إدارة رفيق وهو قيد المراجعة. لا حاجة لإرسال دفعة أخرى الآن.");
@@ -1053,34 +1088,6 @@ const app=new Elysia()
       return{ok:true,status:"cv_step_updated",order_id:activeOrder.id};
     }
 
-    const activeRequestSessionResult=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(chatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
-    const activeRequestSession=Array.isArray(activeRequestSessionResult.body)?activeRequestSessionResult.body[0]:null;
-    const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
-    const agentContext="TELEGRAM PRIMARY AGENT | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+"\nChannel: Telegram is the only enabled customer-facing agent channel at this time. Do not direct customers to WhatsApp; if human action is required, say RAFIQ administration will review it and record a structured escalation.";
-    let result:any;
-    let escalation={required:false,reason:null as string|null};
-    try {
-      const instructions=await loadTelegramAgentInstructions();
-      const sessionService=String(activeRequestSession?.service_type??"");
-      const sessionServiceKey=sessionService.includes("كبار السن")?"elderly_home_care":sessionService.includes("المرضى")?"patient_home_care":sessionService.includes("التمريض")?"home_nursing":sessionService.includes("الفيزيائي")?"home_physiotherapy":(["elderly_home_care","patient_home_care","home_nursing","home_physiotherapy"].includes(sessionService)?sessionService:null);
-      const sessionArea=String(activeRequestSession?.area??"");
-      const sessionContext=activeRequestSession?"\nExisting optional request shortcut: selected service="+(sessionService||"not selected")+"; selected area="+(sessionArea||"not selected")+"; prior case detail="+String(activeRequestSession.case_type??"")+"; schedule="+String(activeRequestSession.schedule??"")+"; notes="+String(activeRequestSession.notes??""):"";
-      result=await draftTelegramAgentTurn(textBody,language,agentContext+sessionContext,instructions);
-      if(!result.intake.service_type && sessionServiceKey)result.intake.service_type=sessionServiceKey;
-      if(!result.intake.area && sessionArea && sessionArea!=="منطقة أخرى")result.intake.area=sessionArea;
-      if(!result.intake.case_summary && activeRequestSession?.case_type)result.intake.case_summary=String(activeRequestSession.case_type);
-      escalation=result.escalation;
-      lastTelegramAgentError=null;
-      await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_agent_error:null,updated_at:new Date().toISOString()})}).catch(()=>{});
-    } catch(agentError) {
-      const safeError=String(agentError).slice(0,500);
-      lastTelegramAgentError=safeError;
-      console.error(JSON.stringify({event:"rafig_telegram_agent_failed",channel:"telegram",chatId:String(chatId),error:safeError,receivedAt:lastTelegramReceivedAt}));
-      await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_agent_error:safeError,updated_at:new Date().toISOString()})}).catch(()=>{});
-      const apology=language==="en"?"Sorry, RAFIQ’s agent is temporarily unavailable and could not process your message. No new request was saved. Please try again shortly.":language==="fr"?"Désolé, l’agent RAFIQ est temporairement indisponible et n’a pas pu traiter votre message. Aucune nouvelle demande n’a été enregistrée. Veuillez réessayer plus tard.":language==="it"?"Ci dispiace, l’agente RAFIQ è temporaneamente indisponibile e non ha potuto elaborare il messaggio. Non è stata salvata alcuna nuova richiesta. Riprova tra poco.":language==="de"?"Entschuldigung, der RAFIQ-Agent ist vorübergehend nicht verfügbar und konnte Ihre Nachricht nicht bearbeiten. Es wurde keine neue Anfrage gespeichert. Bitte versuchen Sie es später erneut.":"عذرًا، واجه وكيل رفيق عطلًا مؤقتًا ولم أتمكن من معالجة رسالتك الآن. لم يتم تسجيل طلب جديد. يرجى المحاولة بعد قليل.";
-      await reply(apology);
-      return{ok:true,status:"agent_unavailable",conversation_id:conversationId};
-    }
 
     let requestId:string|null=null;
     let applicationNumber:number|null=null;
