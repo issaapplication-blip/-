@@ -1088,7 +1088,10 @@ const app=new Elysia()
     const idLine=language==="en"?"Request ID: ":language==="fr"?"Numéro de demande : ":language==="it"?"ID richiesta: ":language==="de"?"Anfragenummer: ":"رقم الطلب: ";
     const serviceLabels:Record<string,string>={elderly_home_care:"رعاية كبار السن",patient_home_care:"رعاية المرضى",home_nursing:"التمريض المنزلي",home_physiotherapy:"العلاج الفيزيائي المنزلي"};
     const hasCompleteIntake=Boolean(result.intake?.ready_to_submit && result.intake.service_type && result.intake.area && result.intake.case_summary && result.intake.contact_preference);
-    if(hasCompleteIntake) {
+    const previousSavedRequestId=nextContext.map((item:any)=>String(item?.text??"")).reverse().map((value:string)=>value.match(/RFQ-TG-[A-Z0-9-]+/i)?.[0]??null).find(Boolean)??null;
+    const startsNewRequest=/(?:another request|new request|new case|different person|another family member|طلب جديد|طلب آخر|حالة أخرى|شخص آخر|حالة جديدة)/i.test(textBody);
+    const shouldCreateIntake=hasCompleteIntake&&(!previousSavedRequestId||Boolean(activeRequestSession)||startsNewRequest);
+    if(shouldCreateIntake) {
       requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
       const intakePayload={request_id:requestId,channel:"telegram",telegram_chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),username,sender_name:senderName,service_type:result.intake.service_type,service_label:serviceLabels[result.intake.service_type]||result.intake.service_type,area:result.intake.area,case_summary:result.intake.case_summary,contact_preference:result.intake.contact_preference,contact_value:result.intake.contact_value,escalation};
       const createdIntake=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:senderName||"طلب رعاية عبر Telegram",phone:result.intake.contact_value,area:result.intake.area,status:"review",payload:intakePayload,source:"telegram",agent_reply:result.reply})});
