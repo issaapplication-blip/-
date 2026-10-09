@@ -1063,7 +1063,8 @@ const app=new Elysia()
       lastTelegramAgentError=safeError;
       console.error(JSON.stringify({event:"rafig_telegram_agent_failed",channel:"telegram",chatId:String(chatId),error:safeError,receivedAt:lastTelegramReceivedAt}));
       await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_agent_error:safeError,updated_at:new Date().toISOString()})}).catch(()=>{});
-      await reply("عذرًا، واجه وكيل رفيق عطلًا مؤقتًا ولم أتمكن من معالجة رسالتك الآن. لم يتم تسجيل طلب جديد. يرجى المحاولة بعد قليل.");
+      const apology=language==="en"?"Sorry, RAFIQ’s agent is temporarily unavailable and could not process your message. No new request was saved. Please try again shortly.":language==="fr"?"Désolé, l’agent RAFIQ est temporairement indisponible et n’a pas pu traiter votre message. Aucune nouvelle demande n’a été enregistrée. Veuillez réessayer plus tard.":language==="it"?"Ci dispiace, l’agente RAFIQ è temporaneamente indisponibile e non ha potuto elaborare il messaggio. Non è stata salvata alcuna nuova richiesta. Riprova tra poco.":language==="de"?"Entschuldigung, der RAFIQ-Agent ist vorübergehend nicht verfügbar und konnte Ihre Nachricht nicht bearbeiten. Es wurde keine neue Anfrage gespeichert. Bitte versuchen Sie es später erneut.":"عذرًا، واجه وكيل رفيق عطلًا مؤقتًا ولم أتمكن من معالجة رسالتك الآن. لم يتم تسجيل طلب جديد. يرجى المحاولة بعد قليل.";
+      await reply(apology);
       return{ok:true,status:"agent_unavailable",conversation_id:conversationId};
     }
 
@@ -1076,6 +1077,7 @@ const app=new Elysia()
       if(!createdIntake.response.ok) {
         console.error(JSON.stringify({event:"rafig_telegram_intake_save_failed",requestId,status:createdIntake.response.status}));
         requestId=null;
+        result.reply += "\n\n"+(language==="en"?"Sorry, the system could not save your request. Please try again shortly.":language==="fr"?"Désolé, le système n’a pas pu enregistrer votre demande. Veuillez réessayer plus tard.":language==="it"?"Il sistema non è riuscito a salvare la richiesta. Riprova più tardi.":language==="de"?"Die Anfrage konnte nicht gespeichert werden. Bitte versuchen Sie es später erneut.":"عذرًا، لم يتمكن النظام من حفظ طلبك. يرجى المحاولة لاحقًا.");
       } else {
         const intakeRow=Array.isArray(createdIntake.body)?createdIntake.body[0]:createdIntake.body;
         if(escalation.required && conversationId)await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload:{...intakePayload,application_number:intakeRow?.application_number??null,escalation_reason:escalation.reason}})}).catch(error=>console.error(JSON.stringify({event:"rafig_telegram_escalation_persist_failed",requestId,error:String(error).slice(0,200)})));
