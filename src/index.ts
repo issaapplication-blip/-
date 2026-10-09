@@ -63,13 +63,17 @@ const isTelegramBlockedError=(error:any)=>{
   return Number(error?.telegramStatus)===403 && /(blocked|deactivated|chat not found|forbidden|user is deactivated)/i.test(s);
 };
 const telegramBroadcastOne=async(recipientId:string,text:string)=>{
-  for(let attempt=0;attempt<3;attempt++){
+  for(let attempt=0;attempt<5;attempt++){
     try{
       return await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
     }catch(error:any){
-      const retryAfter=Number(error?.retryAfter||0);
-      if(retryAfter>0){ await sleep(Math.min(retryAfter*1000,10000)); continue; }
-      if(Number(error?.telegramStatus)===429){ await sleep(Math.min(1000*(attempt+1),5000)); continue; }
+      const retryAfter=Number(error?.retryAfter||error?.parameters?.retry_after||0);
+      const status=Number(error?.telegramStatus||error?.status||0);
+      if(status===429 || retryAfter>0){
+        const delay=retryAfter>0?Math.min(retryAfter*1000,60000):Math.min(1000*(attempt+1),10000);
+        await sleep(delay);
+        continue;
+      }
       throw error;
     }
   }
@@ -776,7 +780,8 @@ const app=new Elysia()
   const channelPost=update?.channel_post;
   if(channelPost?.chat?.id){
     const cp=channelPost.chat;
-    if(["group","supergroup","channel"].includes(String(cp.type))){
+    const configuredBroadcastTargets=new Set([String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim(),...(process.env.TELEGRAM_BROADCAST_CHAT_IDS||"").split(",").map((v:string)=>v.trim()).filter(Boolean)]);
+    if(["group","supergroup","channel"].includes(String(cp.type)) && configuredBroadcastTargets.has(String(cp.id))){
       await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({chat_id:String(cp.id),chat_type:String(cp.type),title:cp.title??null,username:cp.username??null,is_active:true,last_seen_at:new Date().toISOString()})}).catch(()=>{});
     }
     console.log(JSON.stringify({event:"rafig_telegram_channel_seen",chatId:String(cp.id),title:cp.title??null,username:cp.username??null}));
@@ -785,7 +790,8 @@ const app=new Elysia()
   const message=update?.message;
   const chatId=message?.chat?.id;
   if(!chatId)return{ok:true,status:"ignored_no_chat"};
-  if(["group","supergroup","channel"].includes(String(message?.chat?.type))){
+  const configuredBroadcastTargets=new Set([String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim(),...(process.env.TELEGRAM_BROADCAST_CHAT_IDS||"").split(",").map((v:string)=>v.trim()).filter(Boolean)]);
+  if(["group","supergroup","channel"].includes(String(message?.chat?.type)) && configuredBroadcastTargets.has(String(chatId))){
     await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({chat_id:String(chatId),chat_type:String(message.chat.type),title:message.chat.title??null,username:message.chat.username??null,is_active:true,last_seen_at:new Date().toISOString()})}).catch(()=>{});
   }
   const externalConversationId=String(chatId);
@@ -813,16 +819,7 @@ const app=new Elysia()
 
     const reply=async(body:string)=>{const outbound=await telegramSendText(chatId,telegramSigned(body));if(conversationId)await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:body,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});return outbound;};
 
-    const contactPhone=typeof message?.contact?.phone_number==="string"?message.contact.phone_number.trim():"";
-    if(contactPhone){
-      const normalizedContact=contactPhone.replace(/\\D/g,"");
-      await supabaseServerRest("/rest/v1/rafiq_telegram_identities?on_conflict=telegram_user_id",{
-        method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
-        body:JSON.stringify({telegram_user_id:String(message?.from?.id??""),chat_id:String(chatId),username:username||null,phone:normalizedContact,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,last_seen_at:new Date().toISOString()})
-      });
-      await reply("✅ تم ربط رقم هاتفك بحساب Telegram في RAFIQ. عند الحاجة سنستخدم Telegram كقناة احتياطية بعد WhatsApp.");
-      return{ok:true,status:"telegram_phone_linked",conversation_id:conversationId};
-    }
+    // Telegram broadcasts do not request, read, or store contact phone numbers.
     const orders=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?chat_id=eq."+encodeURIComponent(externalConversationId)+"&order_status=not.in.(completed,cancelled)&select=*&order=updated_at.desc&limit=1");
     const activeOrder=Array.isArray(orders.body)?orders.body[0]:null;
 
@@ -960,7 +957,6 @@ const app=new Elysia()
     if(commandReply){
       const welcomeOnStart=command==="/start";
       const outbound=await reply(welcomeOnStart?telegramCommandReply("/start",language):commandReply);
-      if(welcomeOnStart && message?.chat?.type==="private") await telegramSendContactRequest(chatId).catch(()=>{});
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
 
