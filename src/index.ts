@@ -1057,8 +1057,7 @@ const app=new Elysia()
           chat_id:String(chatId),
           telegram_user_id:String(message?.from?.id??""),
           language,
-          status:"collecting",
-          initial_message:textBody.slice(0,1000)
+          status:"collecting"
         })
       });
       if (!created.response.ok) {
