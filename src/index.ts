@@ -1,6 +1,5 @@
 import { Elysia } from "elysia";
-import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
-import { draftAgentReply, draftInstitutionOutreach } from "./agent";
+import { draftAgentReply, draftInstitutionOutreach, draftTelegramAgentTurn } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
@@ -15,6 +14,15 @@ const port = Number(process.env.PORT ?? 3000);
 const startedAt = new Date().toISOString();
 let lastKapsoWebhookAt: string | null = null;
 let lastKapsoWebhookEvent: string | null = null;
+let lastTelegramReceivedAt: string | null = null;
+let lastTelegramAgentError: string | null = null;
+const whatsappChannelEnabled = () => process.env.RAFIQ_CHANNEL_WHATSAPP_ENABLED === "true";
+const DEFAULT_TELEGRAM_AGENT_INSTRUCTIONS = "You are RAFIQ | رفيق, a warm professional home-care agent in Lebanon. Reply in the customer’s language: Arabic, English, French, Italian, or German. Explain elderly home care, patient home care, home nursing, and home physiotherapy accurately. Do not diagnose, prescribe, or replace clinicians. Never promise unverified prices, schedules, availability, approvals, or provider assignments. Never request payment-card details or financial credentials. Collect service type, area, situation/needs, and contact preference naturally. Escalate administrative decisions to RAFIQ administration. Be transparent and never claim a request is saved until the system confirms it.";
+const loadTelegramAgentInstructions = async () => {
+  const r = await supabaseServerRest("/rest/v1/platform_settings?id=eq.true&select=agent_instructions&limit=1");
+  const row = Array.isArray(r.body) ? r.body[0] : null;
+  return typeof row?.agent_instructions === "string" && row.agent_instructions.trim() ? row.agent_instructions.trim().slice(0,12000) : DEFAULT_TELEGRAM_AGENT_INSTRUCTIONS;
+};
 const AGENT_DEFAULT_MODEL = "gpt-5.6-sol";
 const effectiveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
@@ -102,7 +110,7 @@ const telegramBroadcast=async(text:string,testOnly=false)=>{
 };
 
 const forwardWhatsAppToTelegramManager=async(message:any,identity:any,body:string)=>{
-  if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING!=="true")return;
+  if(!whatsappChannelEnabled() || process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING!=="true")return;
   const managerChatIds=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
   if(!managerChatIds.length){console.warn(JSON.stringify({event:"rafig_whatsapp_to_telegram_no_manager_ids"}));return;}
   const messageType=typeof message?.type==="string"?message.type:"text";
@@ -167,6 +175,7 @@ const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)retur
 const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
 const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
 const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessageCore=async(message:any,conversation:any={})=>{
+  if(!whatsappChannelEnabled())return{id:String(message?.id??"unknown"),status:"whatsapp_channel_disabled"};
   const identity=kapsoIdentity(message,conversation);
   const forbiddenDigits="70600157";
   if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
@@ -204,6 +213,7 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
     return{id:String(message.id??""),status:"draft_failed"};
   }
 };const processMetaMessageCore=async(message:any)=>{
+  if(!whatsappChannelEnabled())return{id:"disabled",status:"whatsapp_channel_disabled"};
   const identity={phone:typeof message?.from==="string"?message.from:""};
   const forbiddenDigits="70600157";
   if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
@@ -622,6 +632,28 @@ const telegramAdminCommand=async(message:any)=>{
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)for(const [k,v] of Object.entries(securityHeaders))response.headers.set(k,v)})
 .get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
+.get("/api/admin/agent/settings",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  const r=await supabaseRest("/rest/v1/platform_settings?id=eq.true&select=agent_instructions&limit=1",admin.token);
+  if(!r.response.ok){set.status=502;return{ok:false,error:"could not load agent settings"}}
+  const row=Array.isArray(r.body)?r.body[0]:null;
+  return{ok:true,instructions:typeof row?.agent_instructions==="string"?row.agent_instructions:DEFAULT_TELEGRAM_AGENT_INSTRUCTIONS};
+})
+.patch("/api/admin/agent/settings",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const instructions=typeof input?.instructions==="string"?input.instructions.trim():"";
+  if(instructions.length<100||instructions.length>12000){set.status=400;return{ok:false,error:"instructions must be 100–12000 characters"}}
+  const r=await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({agent_instructions:instructions,updated_at:new Date().toISOString()})});
+  if(!r.response.ok){set.status=502;return{ok:false,error:"could not save agent settings; apply the reviewed additive migration first"}}
+  return{ok:true,saved:true};
+})
+.get("/api/admin/agent/status",async({request,set})=>{
+  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
+  const r=await supabaseRest("/rest/v1/platform_settings?id=eq.true&select=last_telegram_received_at,last_agent_error&limit=1",admin.token);
+  const row=Array.isArray(r.body)?r.body[0]:null;
+  return{ok:true,channels:{telegram:"active",whatsapp:"disabled"},lastTelegramReceivedAt:row?.last_telegram_received_at??lastTelegramReceivedAt,lastAgentError:row?.last_agent_error??lastTelegramAgentError,whatsappEnabled:whatsappChannelEnabled()};
+})
 .get("/api/admin/telegram-cv/orders",async({request,set})=>{
   const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
   const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?order_status=not.in.(completed,cancelled)&order=updated_at.desc&select=*",admin.token);
@@ -675,6 +707,7 @@ const app=new Elysia()
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-hub-signature-256");
   if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  if(!whatsappChannelEnabled()){set.status=200;return{ok:true,status:"whatsapp_channel_disabled"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   if(payload?.object!=="whatsapp_business_account"){set.status=200;return{ok:true,status:"ignored_non_whatsapp_object"}}
   const messages=extractIncomingMessages(payload);
@@ -727,6 +760,10 @@ const app=new Elysia()
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
   if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
   const update=await request.json().catch(()=>null) as any;
+  if(update?.message?.chat?.id && typeof update?.message?.text==="string") {
+    lastTelegramReceivedAt=new Date().toISOString();
+    await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_telegram_received_at:lastTelegramReceivedAt,updated_at:lastTelegramReceivedAt})}).catch(()=>{});
+  }
   const callback=update?.callback_query;
   if(callback?.id){
     const callbackChatId=callback?.message?.chat?.id;
@@ -962,53 +999,6 @@ const app=new Elysia()
       ]});
       return{ok:true,status:"request_started",request_id:requestId,message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
-    if(message?.chat?.type==="private" && textBody && !textBody.startsWith("/")){
-      const requestSessions=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(chatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
-      const requestSession=Array.isArray(requestSessions.body)?requestSessions.body[0]:null;
-      if(requestSession){
-        const sessionUrl="/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(requestSession.id));
-        if(!requestSession.case_type){
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:textBody.slice(0,500),updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not save Telegram request case type");
-          await reply("شكرًا لك 🌿\n\n2/3: ما نظام الرعاية المطلوب؟ مثلًا: نهارًا، ليلًا، مبيت، أو ساعات محددة.");
-          return{ok:true,status:"request_case_type_saved",request_id:requestSession.request_id};
-        }
-        if(!requestSession.schedule){
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({schedule:textBody.slice(0,500),updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not save Telegram request schedule");
-          await reply("وصلتني التفاصيل. 🌿\n\n3/3: ما أهم المساعدة المطلوبة؟ اذكر باختصار ما يحتاجه الشخص يوميًا، وأي حاجة تمريضية أو علاج فيزيائي إن وجدت.");
-          return{ok:true,status:"request_schedule_saved",request_id:requestSession.request_id};
-        }
-        if(!requestSession.notes){
-          const details=textBody.slice(0,2000);
-          const payload={request_id:requestSession.request_id,telegram_chat_id:String(chatId),telegram_user_id:requestSession.telegram_user_id,language:requestSession.language,service_type:requestSession.service_type,area:requestSession.area,case_type:requestSession.case_type,schedule:requestSession.schedule,care_needs:details,source:"telegram"};
-          const created=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:"طلب Telegram — "+String(chatId),phone:null,area:requestSession.area,status:"review",payload,source:"telegram",agent_reply:"طلب رعاية Telegram مكتمل مبدئيًا وينتظر مراجعة الإدارة."})});
-          if(!created.response.ok)throw new Error("could not create Telegram care request");
-          const intake=Array.isArray(created.body)?created.body[0]:created.body;
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({notes:details,status:"submitted",updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not complete Telegram request session");
-          await reply("✅ اكتملت المعلومات الأساسية وسُجّل طلب الرعاية للمراجعة.\n\nالخدمة: "+String(requestSession.service_type||"—")+"\nالمنطقة: "+String(requestSession.area||"—")+"\nنوع الحالة والعمر: "+String(requestSession.case_type)+"\nالدوام: "+String(requestSession.schedule)+"\nالاحتياجات: "+details+"\n\nRequest ID: "+String(requestSession.request_id)+"\nرقم الطلب في RAFIQ: "+String(intake?.application_number??"—")+"\n\nستراجعه إدارة رفيق وتتواصل معكم عبر Telegram. إذا احتجنا رقم هاتف للتنسيق سنطلبه منك لاحقًا.");
-          return{ok:true,status:"request_submitted",request_id:requestSession.request_id,application_number:intake?.application_number??null};
-        }
-      }
-    }
-
-    // Natural-language help should start a structured care intake, even when the AI provider has no credits.
-    if(message?.chat?.type==="private" && /(?:\\bhelp\\b|need help|assistance|\\bplease help\\b|مساعدة|ساعدني|ساعدونا|بدي ساعد|بدي مساعدة|اريد المساعدة|أريد المساعدة|أحتاج مساعدة|احتاج مساعدة|طلبت المساعدة|طلب مساعدة|محتاج مساعدة)/i.test(textBody)){
-      const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      const started=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
-      if(!started.response.ok){
-        console.error(JSON.stringify({event:"rafig_telegram_natural_help_session_failed",status:started.response.status}));
-        await reply("أهلًا بك في رفيق 🌿 أستطيع مساعدتك في رعاية كبار السن، رعاية المرضى، التمريض المنزلي أو العلاج الفيزيائي. تعذّر بدء الطلب آليًا الآن؛ جرّب /request أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
-        return{ok:true,status:"natural_help_session_failed"};
-      }
-      await telegramSendText(chatId,telegramSigned("أهلًا بك في رفيق 🌿 أنا هنا لمساعدتك. لنبدأ طلب الرعاية خطوة بخطوة.\nرقم الطلب: "+requestId+"\n\nما الخدمة التي تحتاجها؟"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return{ok:true,status:"natural_help_intake_started",request_id:requestId};
-    }
-
     const commandReply=telegramCommandReply(textBody,language);
     if(commandReply){
       const welcomeOnStart=command==="/start";
@@ -1058,53 +1048,45 @@ const app=new Elysia()
       return{ok:true,status:"cv_step_updated",order_id:activeOrder.id};
     }
 
-    // Natural-language care intake: let Telegram behave like the WhatsApp care assistant.
-    // Do not intercept general questions (e.g. "what services do you offer?"); only start intake
-    // when the person expresses a concrete need for home care.
-    const naturalCareRequest = message?.chat?.type === "private" && !textBody.startsWith("/") &&
-      /(?:بدي|بدنا|اريد|أريد|أحتاج|احتاج|محتاج|محتاجة|نحتاج|ابحث عن|نبحث عن|بحاجة إلى|بحاجه الى|طلب رعاية|ممرض(?:ة)?|ممرضة|ممرض|رعاية لكبير سن|رعاية لوالد|رعاية لوالدتي|رعاية لوالدي|رعاية لأبي|رعاية لأمي|رعاية لجدي|رعاية لجدتي|مريض بالبيت|علاج فيزيائي|need (?:a |an )?(?:nurse|caregiver|home care|home nursing|physiotherapy)|looking for (?:care|a nurse|a caregiver)|need help for (?:my|the) (?:father|mother|parent|grandmother|grandfather)|home care for|besoin de soins|cherche (?:une infirmière|un aide-soignant|des soins)|ho bisogno di (?:assistenza|un infermiere|una badante)|suche (?:eine Pflegekraft|häusliche Pflege))/i.test(textBody);
-    if (naturalCareRequest) {
-      const requestId = "RFQ-TG-" + new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14) + "-" + crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      const created = await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions", {
-        method:"POST",
-        headers:{"Prefer":"return=representation"},
-        body:JSON.stringify({
-          request_id:requestId,
-          chat_id:String(chatId),
-          telegram_user_id:String(message?.from?.id??""),
-          language,
-          status:"collecting"
-        })
-      });
-      if (!created.response.ok) {
-        console.error(JSON.stringify({event:"rafig_telegram_natural_intake_create_failed",status:created.response.status}));
-        await reply("أرغب بمساعدتك 🌿 لكن تعذّر فتح طلبك الآن. أرسل /request للمحاولة مجددًا، أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
-        return {ok:true,status:"natural_intake_create_failed"};
-      }
-      await telegramSendText(chatId,telegramSigned("أكيد، رفيق معك 🌿\nسأتابع طلبك خطوة بخطوة.\n\nاختر الخدمة الأقرب إلى حاجتك:"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return {ok:true,status:"natural_care_intake_started",request_id:requestId};
+    const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
+    const agentContext="TELEGRAM PRIMARY AGENT | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+"\nChannel: Telegram is the only enabled customer-facing agent channel at this time. Do not direct customers to WhatsApp; if human action is required, say RAFIQ administration will review it and record a structured escalation.";
+    let result:any;
+    let escalation={required:false,reason:null as string|null};
+    try {
+      const instructions=await loadTelegramAgentInstructions();
+      result=await draftTelegramAgentTurn(textBody,language,agentContext,instructions);
+      escalation=result.escalation;
+      lastTelegramAgentError=null;
+      await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_agent_error:null,updated_at:new Date().toISOString()})}).catch(()=>{});
+    } catch(agentError) {
+      const safeError=String(agentError).slice(0,500);
+      lastTelegramAgentError=safeError;
+      console.error(JSON.stringify({event:"rafig_telegram_agent_failed",channel:"telegram",chatId:String(chatId),error:safeError,receivedAt:lastTelegramReceivedAt}));
+      await supabaseServerRest("/rest/v1/platform_settings?id=eq.true",{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({last_agent_error:safeError,updated_at:new Date().toISOString()})}).catch(()=>{});
+      await reply("عذرًا، واجه وكيل رفيق عطلًا مؤقتًا ولم أتمكن من معالجة رسالتك الآن. لم يتم تسجيل طلب جديد. يرجى المحاولة بعد قليل.");
+      return{ok:true,status:"agent_unavailable",conversation_id:conversationId};
     }
 
-    const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
-    let result;
-    const knowledgeReply=answerRafiqKnowledge(textBody);
-    if(knowledgeReply){
-      result={reply:knowledgeReply,model:"rafiq-knowledge-base"};
-    }else{
-      try{result=await draftAgentReply(textBody,language,"TELEGRAM ACTIVE CASE | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+" | POLICY: Reply in clear natural Arabic. Understand meaning, answer first, ask at most ONE useful next question. Never repeat information already supplied. For human/admin action, clearly provide WhatsApp +961 81 506 299. Never claim payment, approval, transfer, booking or availability without confirmation.")}
-      catch(agentError){
-        console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));
-        result={reply:rafiqFallback(textBody,conversationHistory),model:"rafig-local-fallback"};
+    let requestId:string|null=null;
+    if(result.intake?.ready_to_submit && result.intake.service_type && result.intake.area && result.intake.case_summary && result.intake.contact_preference) {
+      requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
+      const serviceLabels:Record<string,string>={elderly_home_care:"رعاية كبار السن",patient_home_care:"رعاية المرضى",home_nursing:"التمريض المنزلي",home_physiotherapy:"العلاج الفيزيائي المنزلي"};
+      const intakePayload={request_id:requestId,channel:"telegram",telegram_chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),username,sender_name:senderName,service_type:result.intake.service_type,service_label:serviceLabels[result.intake.service_type]||result.intake.service_type,area:result.intake.area,case_summary:result.intake.case_summary,contact_preference:result.intake.contact_preference,contact_value:result.intake.contact_value,escalation};
+      const createdIntake=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:senderName||"طلب رعاية عبر Telegram",phone:result.intake.contact_value,area:result.intake.area,status:"review",payload:intakePayload,source:"telegram",agent_reply:result.reply})});
+      if(!createdIntake.response.ok) {
+        console.error(JSON.stringify({event:"rafig_telegram_intake_save_failed",requestId,status:createdIntake.response.status}));
+        requestId=null;
+      } else {
+        const intakeRow=Array.isArray(createdIntake.body)?createdIntake.body[0]:createdIntake.body;
+        if(escalation.required && conversationId)await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload:{...intakePayload,application_number:intakeRow?.application_number??null,escalation_reason:escalation.reason}})}).catch(error=>console.error(JSON.stringify({event:"rafig_telegram_escalation_persist_failed",requestId,error:String(error).slice(0,200)})));
+        const idLine=language==="en"?"Request ID: ":language==="fr"?"Numéro de demande : ":language==="it"?"ID richiesta: ":language==="de"?"Anfragenummer: ":"رقم الطلب: ";
+        result.reply += "\n\n✅ "+(language==="en"?"Your request has been saved for RAFIQ administration review.":language==="fr"?"Votre demande a été enregistrée pour examen par l’administration RAFIQ.":language==="it"?"La richiesta è stata registrata per la revisione dell’amministrazione RAFIQ.":language==="de"?"Ihre Anfrage wurde zur Prüfung durch die RAFIQ-Verwaltung gespeichert.":"تم حفظ طلبك لمراجعته من إدارة رفيق.")+"\n"+idLine+requestId;
       }
     }
-    const escalation=result.reply.includes("WhatsApp")||result.reply.includes("واتساب")||result.reply.includes("الإدارة")||result.reply.includes("ادارة رفيق")||result.reply.includes("قرار إداري")||result.reply.includes("تواصل مع فريق رفيق");
-    const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,escalation};
-    if(escalation && conversationId)await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
+    const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,request_id:requestId,escalation:escalation.required,escalation_reason:escalation.reason};
+    if(escalation.required && !requestId && conversationId)await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(error=>console.error(JSON.stringify({event:"rafig_telegram_escalation_persist_failed",error:String(error).slice(0,200)})));
     const outbound=await reply(result.reply);
-    return{ok:true,status:escalation?"auto_replied_and_escalated":"auto_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
+    return{ok:true,status:escalation.required?"auto_replied_and_escalated":requestId?"request_submitted":"auto_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId,request_id:requestId,model:result.model};
   }catch(error){
     console.error(JSON.stringify({event:"rafig_telegram_webhook_failed",error:String(error).slice(0,500)}));
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
@@ -1188,30 +1170,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
   return new Response(png,{status:200,headers:{"Content-Type":"image/png","Cache-Control":"private, max-age=300"}});
 })
 
-.post("/api/kapso/send-text",async({request,set})=>{if(process.env.KAPSO_ENABLED!=="true"){set.status=503;return{ok:false,error:"Kapso sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096||input?.humanApproved!==true){set.status=input?.humanApproved===true?400:409;return{ok:false,error:input?.humanApproved===true?"invalid recipient or message":"human approval required"}}try{const result=await kapsoSendText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"Kapso WhatsApp API request failed"}}})
-.get("/api/whatsapp/webhook",({query,set})=>{const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=process.env.META_VERIFY_TOKEN;if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;set.status=403;return{ok:false,error:"webhook verification failed"}})
-.post("/api/whatsapp/webhook",async({request,set})=>{
-  const raw=await request.text();
-  if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
-  const signature=request.headers.get("x-hub-signature-256");
-  if(process.env.META_APP_SECRET){
-    if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
-  }
-  let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
-  if(String(payload?.object??"")!=="whatsapp_business_account"){set.status=200;return{ok:true,status:"ignored_non_whatsapp_object"}}
-  const messages=extractIncomingMessages(payload);
-  if(!messages.length){set.status=200;return{ok:true,status:"received_no_messages"}}
-  if(process.env.KAPSO_ENABLED==="true"){
-    console.log(JSON.stringify({event:"rafig_meta_webhook_received_kapso_primary",messageCount:messages.length}));
-    set.status=200;return{ok:true,status:"received_kapso_primary",messageCount:messages.length};
-  }
-  const results=[];
-  for(const message of messages){
-    const identity={phone:message.from,bsuid:"",username:""};
-    results.push(await processKapsoMessage(message,identity));
-  }
-  return{ok:true,status:"processed",results};
-})
+.post("/api/kapso/send-text",async({request,set})=>{if(!whatsappChannelEnabled()){set.status=503;return{ok:false,error:"WhatsApp channel is temporarily disabled"}}if(process.env.KAPSO_ENABLED!=="true"){set.status=503;return{ok:false,error:"Kapso sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096||input?.humanApproved!==true){set.status=input?.humanApproved===true?400:409;return{ok:false,error:input?.humanApproved===true?"invalid recipient or message":"human approval required"}}try{const result=await kapsoSendText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"Kapso WhatsApp API request failed"}}})
 .post("/api/agent/chat",async({request,set})=>{const started=Date.now();console.log(JSON.stringify({event:"rafig_agent_chat_received"}));let input:any;try{input=await request.json()}catch{set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_json"}));return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>4000){set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_message"}));return{ok:false,error:"invalid message"}}try{const result=await draftInboundReply(message);console.log(JSON.stringify({event:"rafig_agent_chat_completed",model:result.model,durationMs:Date.now()-started}));return{ok:true,reply:result.reply,model:result.model}}catch(error){console.error(JSON.stringify({event:"rafig_agent_chat_failed",error:String(error).slice(0,160),durationMs:Date.now()-started}));return{ok:true,reply:rafiqFallback(message),model:"rafig-local-fallback"}}})
 .post("/api/agent/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>8000){set.status=400;return{ok:false,error:"invalid message"}}try{const result=await draftAgentReply(message,typeof input?.language==="string"?input.language:undefined);return{ok:true,draft:result.reply,model:result.model,humanApprovalRequired:true}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/agent/outreach-draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const target=input?.target;if(target!=="laboratory"&&target!=="medical_equipment_supplier"&&target!=="radiology_center"){set.status=400;return{ok:false,error:"invalid outreach target"}}const institutionName=typeof input?.institutionName==="string"?input.institutionName.trim():"",language=typeof input?.language==="string"?input.language.trim():"";if(institutionName.length>200||language.length>40){set.status=400;return{ok:false,error:"invalid input"}}try{const result=await draftInstitutionOutreach(target,institutionName,language||undefined);return{ok:true,target,institutionName:institutionName||null,draft:result.reply,model:result.model,humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
