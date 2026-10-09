@@ -381,7 +381,7 @@ async function loadAgentOperations(){
     $('telegramChannelStatus').textContent=status?.channels?.telegram==='active'?'🟢 نشط':'🟡 غير مؤكد';
     $('whatsappChannelStatus').textContent=status?.whatsappEnabled===true?'🟢 نشط':'🟡 معطّل مؤقتًا';
     $('lastTelegramReceived').textContent=status?.lastTelegramReceivedAt?formatDate(status.lastTelegramReceivedAt):'لم تُسجّل رسالة بعد';
-    $('lastAgentError').textContent=status?.lastAgentError?('آخر خطأ للوكيل: '+status.lastAgentError):'آخر خطأ للوكيل: لا يوجد خطأ محفوظ.';
+    const operationalErrors=[status?.telegramWebhook?.lastError?('خطأ Webhook Telegram: '+status.telegramWebhook.lastError):'',status?.lastAgentError?('آخر خطأ للوكيل: '+status.lastAgentError):''].filter(Boolean); $('lastAgentError').textContent=operationalErrors.length?operationalErrors.join(' | '):'لا يوجد خطأ محفوظ للوكيل أو Webhook Telegram.';
     const escalations=Array.isArray(status?.escalations)?status.escalations:[];
     $('agentEscalations').innerHTML=escalations.length?escalations.map(item=>{
       const p=item?.payload||{};
