@@ -736,15 +736,24 @@ const app=new Elysia()
       const sessionQ=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(callbackChatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
       const session=Array.isArray(sessionQ.body)?sessionQ.body[0]:null;
       if(data.startsWith("svc:")){
-        const label:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
+        const service:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
         const key=data.slice(4);
-        await telegramSendText(callbackChatId,telegramSigned(label[key]||"الخدمة غير معروفة."),{inline_keyboard:[
+        const selectedService=service[key];
+        if(!selectedService){set.status=400;return{ok:false,error:"unknown service"}}
+        const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
+        const createdSession=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(callbackChatId),telegram_user_id:String(callback?.from?.id??""),language:telegramLanguage(callback?.message??{}),status:"collecting",service_type:selectedService})});
+        if(!createdSession.response.ok){
+          console.error(JSON.stringify({event:"rafig_telegram_request_session_create_failed",status:createdSession.response.status}));
+          await telegramSendText(callbackChatId,telegramSigned("تعذّر حفظ طلبك الآن. أرسل /request لنبدأ طلبًا جديدًا."));
+          return{ok:true,status:"request_session_create_failed"};
+        }
+        await telegramSendText(callbackChatId,telegramSigned("📝 تم اختيار الخدمة: "+selectedService+"\nرقم الطلب: "+requestId+"\n\nممتاز 🌿 حتى نتابع طلبك بالشكل الصحيح، في أي مدينة أو منطقة تحتاج إلى الخدمة؟"),{inline_keyboard:[
           [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
           [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
           [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
           [{text:"منطقة أخرى",callback_data:"reqarea:other"}]
         ]});
-        return{ok:true,status:"callback_service_menu"};
+        return{ok:true,status:"callback_service_selected",request_id:requestId};
       }
       if(data.startsWith("reqsvc:") && session){
         const key=data.slice(7);
