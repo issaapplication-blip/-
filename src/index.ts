@@ -1096,7 +1096,7 @@ const app=new Elysia()
       } else {
         const intakeRow=Array.isArray(createdIntake.body)?createdIntake.body[0]:createdIntake.body;
         applicationNumber=Number(intakeRow?.application_number)||null;
-        if(activeRequestSession?.id)await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(activeRequestSession.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:result.intake.case_summary,schedule:result.intake.contact_preference,notes:result.intake.case_summary,status:"submitted",updated_at:new Date().toISOString()})}).catch(error=>console.error(JSON.stringify({event:"rafig_telegram_request_session_finalize_failed",requestId,error:String(error).slice(0,180)})));
+        if(activeRequestSession?.id)await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(activeRequestSession.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:result.intake.case_summary,notes:result.intake.case_summary,status:"submitted",updated_at:new Date().toISOString()})}).catch(error=>console.error(JSON.stringify({event:"rafig_telegram_request_session_finalize_failed",requestId,error:String(error).slice(0,180)})));
         result.reply += "\n\n✅ "+(language==="en"?"Your request has been saved for RAFIQ administration review.":language==="fr"?"Votre demande a été enregistrée pour examen par l’administration RAFIQ.":language==="it"?"La richiesta è stata registrata per la revisione dell’amministrazione RAFIQ.":language==="de"?"Ihre Anfrage wurde zur Prüfung durch die RAFIQ-Verwaltung gespeichert.":"تم حفظ طلبك لمراجعته من إدارة رفيق.")+"\n"+idLine+requestId;
         if(escalation.required && conversationId) {
           const approval=await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload:{...intakePayload,application_number:applicationNumber,escalation_reason:escalation.reason}})});
@@ -1105,7 +1105,7 @@ const app=new Elysia()
         }
       }
     }
-    if(activeRequestSession?.id && !hasCompleteIntake)await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(activeRequestSession.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:result.intake.case_summary,schedule:result.intake.contact_preference,notes:result.intake.case_summary,updated_at:new Date().toISOString()})}).catch(()=>{});
+    if(activeRequestSession?.id && !hasCompleteIntake)await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(activeRequestSession.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:result.intake.case_summary,notes:result.intake.case_summary,updated_at:new Date().toISOString()})}).catch(()=>{});
     if(escalation.required && !requestId) {
       requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
       const escalationPayload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,request_id:requestId,escalation:true,escalation_reason:escalation.reason};
