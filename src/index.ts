@@ -1052,7 +1052,7 @@ const app=new Elysia()
 
     const activeRequestSessionResult=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(chatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
     const activeRequestSession=Array.isArray(activeRequestSessionResult.body)?activeRequestSessionResult.body[0]:null;
-    const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\\n");
+    const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
     const agentContext="TELEGRAM PRIMARY AGENT | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+"\nChannel: Telegram is the only enabled customer-facing agent channel at this time. Do not direct customers to WhatsApp; if human action is required, say RAFIQ administration will review it and record a structured escalation.";
     let result:any;
     let escalation={required:false,reason:null as string|null};
