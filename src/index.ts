@@ -994,7 +994,7 @@ const app=new Elysia()
     }
 
     // Natural-language help should start a structured care intake, even when the AI provider has no credits.
-    if(message?.chat?.type==="private" && /(?:\\bhelp\\b|need help|assistance|\\bplease help\\b|مساعدة|ساعدني|ساعدونا|بدي ساعد|بدي مساعدة|اريد المساعدة|أريد المساعدة|أحتاج مساعدة|احتاج مساعدة|طلبت المساعدة|طلب مساعدة|محتاج مساعدة)/i.test(textBody)){
+    if(message?.chat?.type==="private" && /(?:\bhelp\b|need help|assistance|\bplease help\b|\bneed (?:a )?(?:nurse|caregiver|care|home care|elderly care|physiotherapy)\b|\b(?:home nursing|elderly care|patient care|physiotherapy)\b|care for (?:my|the) (?:mother|father|parent|grandmother|grandfather)|(?:my|the) (?:mother|father|parent|grandmother|grandfather) needs care|مساعدة|ساعدني|ساعدونا|بدي ساعد|بدي مساعدة|اريد المساعدة|أريد المساعدة|أحتاج مساعدة|احتاج مساعدة|طلبت المساعدة|طلب مساعدة|محتاج مساعدة|بدي ممرضة|بدي ممرض|بدي رعاية|بدي تمريض|ممرضة ل|ممرض ل|رعاية ل(?:أمي|امي|أبي|ابي|والدتي|والدي)|تمريض منزلي|علاج فيزيائي|رعاية كبار السن|رعاية مريض)/i.test(textBody)){
       const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
       const started=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
       if(!started.response.ok){
