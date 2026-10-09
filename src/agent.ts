@@ -217,7 +217,7 @@ const extractResponseText = (payload: any) => {
   return parts.join("\n").trim();
 };
 
-const callAgent = async (input: string) => {
+const callAgent = async (input: string, instructionsOverride?: string, responseSchema?: Record<string, unknown>) => {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OpenAI server configuration is incomplete");
 
@@ -231,9 +231,10 @@ const callAgent = async (input: string) => {
     signal: AbortSignal.timeout(25000),
     body: JSON.stringify({
       model,
-      instructions: SYSTEM_PROMPT,
+      instructions: instructionsOverride ?? SYSTEM_PROMPT,
       input,
-      max_output_tokens: 1200,
+      max_output_tokens: 1400,
+      ...(responseSchema ? { text: { format: { type: "json_schema", name: "rafig_telegram_turn", strict: true, schema: responseSchema } } } : {}),
     }),
   });
 
@@ -269,6 +270,81 @@ export const draftAgentReply = async (message: string, languageHint?: string, co
   const context = languageHint ? `Preferred language hint: ${languageHint}` : "Infer the customer language from the message.";
   const history = conversationContext?.trim() ? `\n\nConversation context (use only to continue the current customer request):\n${conversationContext.trim()}` : "";
   return callAgent(`${context}${history}\n\nCustomer message:\n${message}`);
+};
+
+export type TelegramAgentTurn = {
+  reply: string;
+  escalation: { required: boolean; reason: string | null };
+  intake: {
+    service_type: string | null;
+    area: string | null;
+    case_summary: string | null;
+    contact_preference: string | null;
+    contact_value: string | null;
+    ready_to_submit: boolean;
+  };
+};
+
+export const draftTelegramAgentTurn = async (
+  message: string,
+  languageHint: string | undefined,
+  conversationContext: string,
+  adminInstructions: string,
+): Promise<{ reply: string; model: string; escalation: { required: boolean; reason: string | null }; intake: TelegramAgentTurn["intake"] }> => {
+  const instructions = [
+    SYSTEM_PROMPT,
+    "TELEGRAM PRIMARY CHANNEL OPERATING SETTINGS:",
+    adminInstructions,
+    "For each turn, return ONLY the required JSON object. The reply must be a natural conversational answer in the customer's language (Arabic, English, French, Italian, or German).",
+    "Return escalation.required=true only when a human RAFIQ administrator must decide or verify something; give a concise reason in escalation.reason. Do not infer escalation from words like WhatsApp or administration.",
+    "Populate intake fields only from facts the customer actually gave in this conversation. service_type must be one of elderly_home_care, patient_home_care, home_nursing, home_physiotherapy, or null. area is the Lebanese city/area or null. case_summary is a concise customer-provided description or null. contact_preference is telegram, phone, or null. contact_value is the customer-provided phone number or null; never invent it.",
+    "ready_to_submit may be true only when service_type, area, case_summary, and a usable contact_preference are known. If the contact method is Telegram, contact_value may be null. Do not ask for payment-card details or financial credentials. If required intake details are missing, ask one short next question and keep ready_to_submit=false.",
+    "Never claim a request was saved or escalated unless the application explicitly confirms it. The application will persist a ready intake after your response."
+  ].join("\n");
+  const schema = {
+    type: "object",
+    additionalProperties: false,
+    required: ["reply", "escalation", "intake"],
+    properties: {
+      reply: { type: "string" },
+      escalation: {
+        type: "object", additionalProperties: false, required: ["required", "reason"],
+        properties: { required: { type: "boolean" }, reason: { type: ["string", "null"] } },
+      },
+      intake: {
+        type: "object", additionalProperties: false,
+        required: ["service_type", "area", "case_summary", "contact_preference", "contact_value", "ready_to_submit"],
+        properties: {
+          service_type: { type: ["string", "null"], enum: ["elderly_home_care", "patient_home_care", "home_nursing", "home_physiotherapy", null] },
+          area: { type: ["string", "null"] },
+          case_summary: { type: ["string", "null"] },
+          contact_preference: { type: ["string", "null"], enum: ["telegram", "phone", null] },
+          contact_value: { type: ["string", "null"] },
+          ready_to_submit: { type: "boolean" },
+        },
+      },
+    },
+  };
+  const context = languageHint ? "Preferred language hint: " + languageHint : "Infer the customer's language from the latest message.";
+  const raw = await callAgent(context + "\n\nConversation memory (newest at the end):\n" + conversationContext + "\n\nLatest customer message:\n" + message, instructions, schema);
+  let parsed: any;
+  try { parsed = JSON.parse(raw.reply); } catch { throw new Error("Telegram agent returned invalid structured JSON"); }
+  if (typeof parsed?.reply !== "string" || !parsed.reply.trim() || typeof parsed?.escalation?.required !== "boolean" || !parsed?.intake) {
+    throw new Error("Telegram agent returned an incomplete structured response");
+  }
+  return {
+    reply: parsed.reply.trim(),
+    model: raw.model,
+    escalation: { required: parsed.escalation.required, reason: typeof parsed.escalation.reason === "string" ? parsed.escalation.reason.slice(0, 500) : null },
+    intake: {
+      service_type: parsed.intake.service_type ?? null,
+      area: typeof parsed.intake.area === "string" ? parsed.intake.area.slice(0, 250) : null,
+      case_summary: typeof parsed.intake.case_summary === "string" ? parsed.intake.case_summary.slice(0, 2000) : null,
+      contact_preference: parsed.intake.contact_preference ?? null,
+      contact_value: typeof parsed.intake.contact_value === "string" ? parsed.intake.contact_value.slice(0, 100) : null,
+      ready_to_submit: parsed.intake.ready_to_submit === true,
+    },
+  };
 };
 
 export const draftInstitutionOutreach = async (
