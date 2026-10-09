@@ -240,8 +240,14 @@ const callAgent = async (input: string, instructionsOverride?: string, responseS
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    console.error(JSON.stringify({ event: "rafig.agent", status: "provider_error", providerStatus: response.status, providerError: payload?.error?.message || payload?.error?.type || payload?.message || "unknown" }));
-    throw new Error("OpenAI agent request failed");
+    const providerMessage = String(payload?.error?.message || payload?.error?.type || payload?.message || "unknown").slice(0, 300);
+    console.error(JSON.stringify({ event: "rafig.agent", status: "provider_error", providerStatus: response.status, providerType: String(payload?.error?.type ?? ""), providerCode: String(payload?.error?.code ?? ""), providerError: providerMessage }));
+    if (response.status === 429 && /no credits|insufficient_quota|billing/i.test(providerMessage)) {
+      throw new Error("OpenAI API HTTP 429: account has no credits remaining; restore API billing or configure an alternative provider");
+    }
+    if (response.status === 401) throw new Error("OpenAI API HTTP 401: API key rejected");
+    if (response.status === 403) throw new Error("OpenAI API HTTP 403: project/model access denied");
+    throw new Error("OpenAI API HTTP " + response.status + ": " + providerMessage);
   }
 
   const reply = extractResponseText(payload);
@@ -298,7 +304,7 @@ export const draftTelegramAgentTurn = async (
     "For each turn, return ONLY the required JSON object. The reply must be a natural conversational answer in the customer's language (Arabic, English, French, Italian, or German).",
     "Return escalation.required=true only when a human RAFIQ administrator must decide or verify something; give a concise reason in escalation.reason. Do not infer escalation from words like WhatsApp or administration.",
     "Populate intake fields only from facts the customer actually gave in this conversation. service_type must be one of elderly_home_care, patient_home_care, home_nursing, home_physiotherapy, or null. area is the Lebanese city/area or null. case_summary is a concise customer-provided description or null. contact_preference is telegram, phone, or null. contact_value is the customer-provided phone number or null; never invent it.",
-    "ready_to_submit may be true only when service_type, area, case_summary, and a usable contact_preference are known. If the contact method is Telegram, contact_value may be null. Do not ask for payment-card details or financial credentials. If required intake details are missing, ask one short next question and keep ready_to_submit=false.",
+    "The customer is already speaking to RAFIQ on Telegram, so use contact_preference=telegram by default unless they explicitly prefer a phone call. ready_to_submit may be true only when service_type, area, case_summary, and a usable contact_preference are known. If the contact method is Telegram, contact_value may be null. Do not ask for payment-card details or financial credentials. If required intake details are missing, ask one short next question and keep ready_to_submit=false.",
     "Never claim a request was saved or escalated unless the application explicitly confirms it. The application will persist a ready intake after your response."
   ].join("\n");
   const schema = {
