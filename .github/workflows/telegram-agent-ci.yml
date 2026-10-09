@@ -1,0 +1,43 @@
+name: RAFIQ Telegram agent staging checks
+
+on:
+  push:
+    branches:
+      - staging/telegram-agent-primary
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Run mocked agent tests without network credentials
+        run: bun test src/agent.test.ts
+      - name: Bundle server without running it
+        run: bun build src/index.ts --target=bun --outdir=/tmp/rafig-build-check
+      - name: Check webhook route uniqueness and Telegram agent routing
+        shell: bash
+        run: |
+          test "$(grep -o 'get("/api/whatsapp/webhook"' src/index.ts | wc -l)" -eq 1
+          test "$(grep -o 'post("/api/whatsapp/webhook"' src/index.ts | wc -l)" -eq 1
+          grep -q 'draftTelegramAgentTurn(textBody' src/index.ts
+          ! grep -q 'const knowledgeReply=answerRafiqKnowledge(textBody)' src/index.ts
+          ! grep -q 'model:"rafig-local-fallback"' src/index.ts
+          grep -q 'RAFIQ_CHANNEL_WHATSAPP_ENABLED' src/index.ts
+          grep -q 'verifyTelegramWebhookSecret(request)' src/index.ts
+          grep -q 'command==="/request"' src/index.ts
+          grep -q 'command==="/services"' src/index.ts
+          grep -q 'callback_query' src/index.ts
+          grep -q '"callback_query"' src/telegram.ts
+      - name: Parse admin inline JavaScript without executing it
+        run: |
+          bun -e 'const html = await Bun.file("public/admin.html").text(); const start = html.indexOf("<script>"); const end = html.indexOf("</script>", start); if (start < 0 || end < 0) throw new Error("admin inline script not found"); new Function(html.slice(start + 8, end));'
