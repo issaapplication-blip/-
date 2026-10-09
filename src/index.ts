@@ -84,7 +84,8 @@ const telegramBroadcast=async(text:string,testOnly=false)=>{
   const rows=await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?is_subscribed=eq.true&select=chat_id");
   const subscribers=Array.isArray(rows.body)?rows.body.map((x:any)=>String(x.chat_id)).filter(Boolean):[];
   const targets=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?is_active=eq.true&select=chat_id,chat_type");
-  const targetIds=Array.isArray(targets.body)?targets.body.map((x:any)=>String(x.chat_id)).filter(Boolean):[];
+  const configuredTargets=new Set([String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim(),...(process.env.TELEGRAM_BROADCAST_CHAT_IDS||"").split(",").map((v:string)=>v.trim()).filter(Boolean)]);
+  const targetIds=Array.isArray(targets.body)?targets.body.map((x:any)=>String(x.chat_id)).filter((id:string)=>configuredTargets.has(id)):[];
   const recipients=testOnly ? [String(parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS)[0]||"")].filter(Boolean) : Array.from(new Set([...subscribers,...targetIds]));
   let sent=0,failed=0,blocked=0;
   for(let i=0;i<recipients.length;i++){
@@ -407,9 +408,10 @@ const telegramMarketingTick = async () => {
   if(process.env.TELEGRAM_MARKETING_ENABLED !== "true" || !telegramConfigured()) return;
   const target = TELEGRAM_MARKETING_TARGET();
   const discovered=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?is_active=eq.true&select=chat_id");
+  const configuredTargets=new Set([target,...(process.env.TELEGRAM_BROADCAST_CHAT_IDS||"").split(",").map((v:string)=>v.trim()).filter(Boolean)].filter(Boolean));
   const targets=Array.from(new Set([
     ...(target?[target]:[]),
-    ...(Array.isArray(discovered.body)?discovered.body.map((x:any)=>String(x.chat_id)).filter(Boolean):[])
+    ...(Array.isArray(discovered.body)?discovered.body.map((x:any)=>String(x.chat_id)).filter((id:string)=>configuredTargets.has(id)):[])
   ]));
   if(!targets.length) return;
   const now = new Date();
@@ -742,7 +744,15 @@ const app=new Elysia()
       if(data.startsWith("svc:")){
         const label:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
         const key=data.slice(4);
-        await telegramSendText(callbackChatId,telegramSigned(label[key]||"الخدمة غير معروفة."),{inline_keyboard:[
+        let activeSession=session;
+        if(!activeSession){
+          const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
+          const createdSession=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(callbackChatId),telegram_user_id:String(callback?.from?.id??""),language:telegramLanguage(callback?.message??{}),service_type:label[key]||key,status:"collecting"})});
+          activeSession=Array.isArray(createdSession.body)?createdSession.body[0]:createdSession.body;
+        }else{
+          await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(activeSession.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({service_type:label[key]||key,updated_at:new Date().toISOString()})});
+        }
+        await telegramSendText(callbackChatId,telegramSigned((label[key]||"الخدمة غير معروفة.")+(activeSession?.request_id?"\nرقم الطلب: "+activeSession.request_id:"")+"\n\nاختر المنطقة:"),{inline_keyboard:[
           [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
           [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
           [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
