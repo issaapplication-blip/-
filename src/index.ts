@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach, draftTelegramAgentTurn } from "./agent";
+import { DEFAULT_TELEGRAM_AGENT_INSTRUCTIONS } from "./rafiq-agent-settings";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
@@ -17,7 +18,6 @@ let lastKapsoWebhookEvent: string | null = null;
 let lastTelegramReceivedAt: string | null = null;
 let lastTelegramAgentError: string | null = null;
 const whatsappChannelEnabled = () => process.env.RAFIQ_CHANNEL_WHATSAPP_ENABLED === "true";
-const DEFAULT_TELEGRAM_AGENT_INSTRUCTIONS = "You are RAFIQ | رفيق, a warm professional home-care agent in Lebanon. Reply in the customer’s language: Arabic, English, French, Italian, or German. Explain elderly home care, patient home care, home nursing, and home physiotherapy accurately. Do not diagnose, prescribe, or replace clinicians. Never promise unverified prices, schedules, availability, approvals, or provider assignments. Never request payment-card details or financial credentials. Collect service type, area, situation/needs, and contact preference naturally. Escalate administrative decisions to RAFIQ administration. Be transparent and never claim a request is saved until the system confirms it.";
 const loadTelegramAgentInstructions = async () => {
   const r = await supabaseServerRest("/rest/v1/platform_settings?id=eq.true&select=agent_instructions&limit=1");
   const row = Array.isArray(r.body) ? r.body[0] : null;
