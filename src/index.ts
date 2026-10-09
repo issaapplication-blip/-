@@ -337,7 +337,7 @@ const telegramCommandReply = (command: string, language="ar") => {
       start:"أهلًا بك في رفيق | RAFIQ 🇱🇧\\nأنا مساعد رفيق للرعاية المنزلية. يمكنك السؤال عن الخدمات أو بدء طلب.\\n\\n/services للخدمات\\n/request لطلب رعاية\\n/help للمساعدة\\n/contact للتواصل",
       services:"خدمات رفيق: رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.",
       request:"سنبدأ طلبك خطوة بخطوة. اختر الخدمة أو اكتب تفاصيل حاجتك.",
-      help:"اكتب سؤالك كما تتحدث مع فريق رفيق. إذا احتاج الأمر قرارًا إداريًا أو معلومات حساسة، سيتولى فريق رفيق المتابعة.",
+      help:"أهلًا بك 🌿 يمكنك كتابة طلبك مباشرة، مثل: أحتاج ممرضة لوالدتي، أو أريد رعاية لكبير سن. سأساعدك خطوة بخطوة في اختيار الخدمة والمنطقة والتفاصيل.\n\nللبدء اضغط /request، ولعرض الخدمات اضغط /services. القرارات الإدارية والمعلومات الحساسة يتابعها فريق رفيق.",
       contact:"للتواصل مع إدارة رفيق: +961 81 506 299"
     },
     en:{
@@ -1040,6 +1040,37 @@ const app=new Elysia()
       if(!upd.response.ok)throw new Error("could not update CV order");
       if(prompt)await reply(prompt);
       return{ok:true,status:"cv_step_updated",order_id:activeOrder.id};
+    }
+
+    // Natural-language care intake: let Telegram behave like the WhatsApp care assistant.
+    // Do not intercept general questions (e.g. "what services do you offer?"); only start intake
+    // when the person expresses a concrete need for home care.
+    const naturalCareRequest = message?.chat?.type === "private" && !textBody.startsWith("/") &&
+      /(?:بدي|بدنا|اريد|أريد|أحتاج|احتاج|محتاج|محتاجة|نحتاج|ابحث عن|نبحث عن|بحاجة إلى|بحاجه الى|طلب رعاية|ممرض(?:ة)?|ممرضة|ممرض|رعاية لكبير سن|رعاية لوالد|رعاية لوالدتي|رعاية لوالدي|رعاية لأبي|رعاية لأمي|رعاية لجدي|رعاية لجدتي|مريض بالبيت|علاج فيزيائي|need (?:a |an )?(?:nurse|caregiver|home care|home nursing|physiotherapy)|looking for (?:care|a nurse|a caregiver)|need help for (?:my|the) (?:father|mother|parent|grandmother|grandfather)|home care for|besoin de soins|cherche (?:une infirmière|un aide-soignant|des soins)|ho bisogno di (?:assistenza|un infermiere|una badante)|suche (?:eine Pflegekraft|häusliche Pflege))/i.test(textBody);
+    if (naturalCareRequest) {
+      const requestId = "RFQ-TG-" + new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14) + "-" + crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
+      const created = await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions", {
+        method:"POST",
+        headers:{"Prefer":"return=representation"},
+        body:JSON.stringify({
+          request_id:requestId,
+          chat_id:String(chatId),
+          telegram_user_id:String(message?.from?.id??""),
+          language,
+          status:"collecting",
+          initial_message:textBody.slice(0,1000)
+        })
+      });
+      if (!created.response.ok) {
+        console.error(JSON.stringify({event:"rafig_telegram_natural_intake_create_failed",status:created.response.status}));
+        await reply("أرغب بمساعدتك 🌿 لكن تعذّر فتح طلبك الآن. أرسل /request للمحاولة مجددًا، أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
+        return {ok:true,status:"natural_intake_create_failed"};
+      }
+      await telegramSendText(chatId,telegramSigned("أكيد، رفيق معك 🌿\nسأتابع طلبك خطوة بخطوة.\n\nاختر الخدمة الأقرب إلى حاجتك:"),{inline_keyboard:[
+        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
+        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
+      ]});
+      return {ok:true,status:"natural_care_intake_started",request_id:requestId};
     }
 
     const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
