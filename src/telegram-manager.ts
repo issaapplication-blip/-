@@ -34,7 +34,7 @@ function commandOf(text:string): {name:string,args:string[]} | null {
 function category(v?:string){ return v ? categoryAliases[v.trim().toLowerCase()] || null : null; }
 function folder(v?:string){ return v ? folderAliases[v.trim().toLowerCase()] || null : null; }
 function safeError(e:unknown){ return (e instanceof Error ? e.message : String(e || "")).slice(0,180); }
-function helpText(){ return ["🛡️ لوحة مدير RAFIQ — Telegram","","/folders — ملخص كل الملفات","/folder nurse accepted — قائمة فئة ومجلد","/folder caregiver review 20 — تحديد العدد","/member 12345 — بطاقة عضو برقم الطلب أو العضوية","/assign 12345 RFQ-CGV-01001 ملاحظة — إسناد مقدم رعاية لحالة","","الأوامر الإدارية لا تعمل إلا من محادثة المدير الخاصة."].join("\n"); }
+function helpText(){ return ["🛡️ لوحة مدير RAFIQ — Telegram","","/broadcast نص الإعلان — بث الإعلان للمشتركين مع صورة وزر رابط","/broadcast_test نص — اختبار البث لحساب المدير فقط","/folders — ملخص كل الملفات","/folder nurse accepted — قائمة فئة ومجلد","/folder caregiver review 20 — تحديد العدد","/member 12345 — بطاقة عضو برقم الطلب أو العضوية","/assign 12345 RFQ-CGV-01001 ملاحظة — إسناد مقدم رعاية لحالة","","أوامر المستخدمين: /start /services /request /help /contact /invite /stop /subscribe","","الأوامر الإدارية لا تعمل إلا من محادثة المدير الخاصة."].join("\n"); }
 export function formatCard(card:any):string {
   if(!card) return "❌ لم أجد هذا الطلب أو العضوية.";
   const social=Object.entries(card.social || {}).filter(function(x){return x[1];}).map(function(x){return String(x[0])+": "+String(x[1]);}).join(" | ");
