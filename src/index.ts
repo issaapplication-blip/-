@@ -1108,7 +1108,7 @@ const app=new Elysia()
         }
       }
     }
-    if(activeRequestSession?.id && !hasCompleteIntake)await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(activeRequestSession.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:result.intake.case_summary,notes:result.intake.case_summary,updated_at:new Date().toISOString()})}).catch(()=>{});
+    if(activeRequestSession?.id && !hasCompleteIntake){const sessionPatch:any={updated_at:new Date().toISOString()};if(result.intake.case_summary){sessionPatch.case_type=result.intake.case_summary;sessionPatch.notes=result.intake.case_summary;}if(result.intake.area && result.intake.area!=="منطقة أخرى")sessionPatch.area=result.intake.area;if(result.intake.service_type)sessionPatch.service_type=serviceLabels[result.intake.service_type]||result.intake.service_type;await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(activeRequestSession.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify(sessionPatch)}).catch(()=>{});}
     if(escalation.required && !requestId) {
       requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
       const escalationPayload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,request_id:requestId,escalation:true,escalation_reason:escalation.reason};
@@ -1275,6 +1275,7 @@ console.log(JSON.stringify({
   metaWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
   metaOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
   whatsappSendingEnabled:process.env.WHATSAPP_SENDING_ENABLED==="true",
+  whatsappChannelEnabled:whatsappChannelEnabled(),
   whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
   agentModel:effectiveAgentModel(),
   kapsoConfigured:kapsoConfigured(),
