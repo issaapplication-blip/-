@@ -78,7 +78,7 @@ th{background:#f7fbf9;color:#087f58}
 <p class="small" id="lastUpdate"></p>
 </section>
 
-<section class="card" id="agentOperationsPanel">
+<section class="card hidden" id="agentOperationsPanel">
 <h2>🤖 حالة وكيل RAFIQ والقنوات</h2>
 <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
   <div class="stat"><b id="telegramChannelStatus">—</b>Telegram — القناة الأساسية</div>
@@ -410,9 +410,9 @@ $('saveAgentInstructions').onclick=async()=>{
 $('refreshAgentStatus').onclick=()=>loadAgentOperations();
 async function enterDashboard(){
   const gate=await isAdmin();
-  if(!gate){$('dashboard').classList.add('hidden');$('requestsSection').classList.add('hidden');$('documentsSection').classList.add('hidden');$('auth').classList.remove('hidden');showAuthError('يرجى الدخول بحساب المدير المفعّل.');return}
+  if(!gate){$('agentOperationsPanel').classList.add('hidden');$('dashboard').classList.add('hidden');$('requestsSection').classList.add('hidden');$('documentsSection').classList.add('hidden');$('auth').classList.remove('hidden');showAuthError('يرجى الدخول بحساب المدير المفعّل.');return}
   $('who').textContent='المدير: '+(gate.profile.email||gate.user.email||'');
-  $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('rejectedSection').classList.remove('hidden');$('institutionSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
+  $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('agentOperationsPanel').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('rejectedSection').classList.remove('hidden');$('institutionSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
   await Promise.all([loadAll(),loadAgentOperations()]);subscribeLive();if('Notification' in window && Notification.permission==='default')Notification.requestPermission().catch(()=>{});
   clearInterval(refreshTimer);refreshTimer=setInterval(()=>loadAll().catch(()=>{}),30000);
 }
