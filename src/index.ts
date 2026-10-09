@@ -2,7 +2,6 @@ import { Elysia } from "elysia";
 import { draftAgentReply, draftInstitutionOutreach, draftTelegramAgentTurn } from "./agent";
 import { DEFAULT_TELEGRAM_AGENT_INSTRUCTIONS } from "./rafiq-agent-settings";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
-import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
 import { sendMessage } from "./messaging-service";
