@@ -45,7 +45,7 @@ const TELEGRAM_ONBOARDING_MESSAGE = [
   "ولمتابعة الإعلانات والأخبار والتحديثات:",
   "📢 قناة رفيق: " + RAFIQ_TELEGRAM_CHANNEL,
   "",
-  "إذا احتجتم إلى متابعة إدارية أو معلومات حساسة، يمكنكم التواصل مع إدارة رفيق عبر WhatsApp: +961 81 506 299",
+  "إذا احتجتم إلى متابعة إدارية أو معلومات حساسة، سيُسجّل طلبكم لمراجعة فريق رفيق، وستتم المتابعة عبر هذه المحادثة على Telegram.",
   "",
   "— فريق رفيق | RAFIQ 🇱🇧"
 ].join("\n");
@@ -138,12 +138,12 @@ const TELEGRAM_ANNOUNCEMENT = [
   "👩‍⚕️ التمريض المنزلي",
   "🦿 العلاج الفيزيائي المنزلي",
   "",
-  "هدفنا أن يكتب الأهل أسئلتهم بكلماتهم الطبيعية، فيجيبهم وكيل رفيق عن المعلومات العامة خطوة بخطوة، وعندما تصبح الحالة بحاجة إلى قرار أو معلومات حساسة تُحال إلى فريق رفيق عبر WhatsApp.",
+  "هدفنا أن يكتب الأهل أسئلتهم بكلماتهم الطبيعية، فيجيبهم وكيل رفيق خطوة بخطوة، وعندما تحتاج الحالة إلى قرار إداري تُسجّل للمراجعة من فريق رفيق.",
   "",
   "🤖 بوت Telegram: @RAFIQ_Care_Bot",
   "📢 قناة Telegram: " + RAFIQ_TELEGRAM_CHANNEL,
   "🌐 الموقع: " + RAFIQ_WEBSITE,
-  "📱 WhatsApp الرسمي: " + RAFIQ_WHATSAPP_NUMBER + " — " + RAFIQ_WHATSAPP
+  "📍 متابعة الطلبات الإدارية: عبر بوت رفيق على Telegram"
 ].join("\n");
 const draftInboundReply = async (message: string, senderPhone?: string) => {
   const key = senderPhone?.trim() || "unknown";
@@ -348,35 +348,35 @@ const telegramCommandReply = (command: string, language="ar") => {
       services:"خدمات رفيق: رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.",
       request:"سنبدأ طلبك خطوة بخطوة. اختر الخدمة أو اكتب تفاصيل حاجتك.",
       help:"أهلًا بك 🌿 يمكنك كتابة طلبك مباشرة، مثل: أحتاج ممرضة لوالدتي، أو أريد رعاية لكبير سن. سأساعدك خطوة بخطوة في اختيار الخدمة والمنطقة والتفاصيل.\n\nللبدء اضغط /request، ولعرض الخدمات اضغط /services. القرارات الإدارية والمعلومات الحساسة يتابعها فريق رفيق.",
-      contact:"للتواصل مع إدارة رفيق: +961 81 506 299"
+      contact:"ستتم متابعة أي طلب إداري عبر فريق رفيق من خلال هذه المحادثة على Telegram."
     },
     en:{
       start:"Welcome to RAFIQ | رفيق 🇱🇧\\nI am RAFIQ's home-care assistant. Ask about our services or start a request.\\n\\n/services Services\\n/request Care request\\n/help Help\\n/contact Contact",
       services:"RAFIQ services: elderly care, in-home patient care, home nursing, and home physiotherapy.",
       request:"We will build your care request step by step. Choose a service or describe what you need.",
       help:"Ask your question naturally. If it requires an administrative decision or sensitive information, the RAFIQ team will handle it.",
-      contact:"RAFIQ administration: +961 81 506 299"
+      contact:"For administrative follow-up, the RAFIQ team will respond through this Telegram conversation."
     },
     fr:{
       start:"Bienvenue chez RAFIQ | رفيق 🇱🇧\\nJe suis l’assistant de soins à domicile de RAFIQ. Demandez nos services ou commencez une demande.",
       services:"Services RAFIQ : soins aux personnes âgées, soins à domicile des patients, soins infirmiers à domicile et physiothérapie à domicile.",
       request:"Nous allons construire votre demande étape par étape. Choisissez un service ou décrivez votre besoin.",
       help:"Posez votre question naturellement. Les décisions administratives et informations sensibles sont traitées par l’équipe RAFIQ.",
-      contact:"Administration RAFIQ : +961 81 506 299"
+      contact:"Pour le suivi administratif, l’équipe RAFIQ répondra dans cette conversation Telegram."
     },
     it:{
       start:"Benvenuto in RAFIQ | رفيق 🇱🇧\\nSono l’assistente per l’assistenza domiciliare RAFIQ. Chiedi dei servizi o avvia una richiesta.",
       services:"Servizi RAFIQ: assistenza agli anziani, assistenza domiciliare ai pazienti, infermieristica domiciliare e fisioterapia domiciliare.",
       request:"Costruiremo la richiesta passo dopo passo. Scegli un servizio o descrivi ciò di cui hai bisogno.",
       help:"Fai la tua domanda naturalmente. Le decisioni amministrative e le informazioni sensibili vengono gestite dal team RAFIQ.",
-      contact:"Amministrazione RAFIQ: +961 81 506 299"
+      contact:"Per il seguito amministrativo, il team RAFIQ risponderà in questa conversazione Telegram."
     },
     de:{
       start:"Willkommen bei RAFIQ | رفيق 🇱🇧\\nIch bin der Assistent für häusliche Pflege von RAFIQ. Fragen Sie nach unseren Leistungen oder starten Sie eine Anfrage.",
       services:"RAFIQ-Leistungen: Seniorenbetreuung, häusliche Patientenbetreuung, häusliche Krankenpflege und Physiotherapie zu Hause.",
       request:"Wir erstellen Ihre Pflegeanfrage Schritt für Schritt. Wählen Sie einen Service oder beschreiben Sie Ihren Bedarf.",
       help:"Stellen Sie Ihre Frage natürlich. Administrative Entscheidungen und sensible Informationen werden vom RAFIQ-Team bearbeitet.",
-      contact:"RAFIQ-Verwaltung: +961 81 506 299"
+      contact:"Bei administrativen Anliegen antwortet das RAFIQ-Team in diesem Telegram-Chat."
     }
   };
   const tr=translations[language]||translations.ar;
@@ -634,7 +634,7 @@ const app=new Elysia()
 .get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
 .get("/api/admin/agent/settings",async({request,set})=>{
   const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
-  const r=await supabaseRest("/rest/v1/platform_settings?id=eq.true&select=agent_instructions&limit=1",admin.token);
+  const r=await supabaseServerRest("/rest/v1/platform_settings?id=eq.true&select=agent_instructions&limit=1");
   if(!r.response.ok){set.status=502;return{ok:false,error:"could not load agent settings"}}
   const row=Array.isArray(r.body)?r.body[0]:null;
   return{ok:true,instructions:typeof row?.agent_instructions==="string"?row.agent_instructions:DEFAULT_TELEGRAM_AGENT_INSTRUCTIONS};
@@ -650,7 +650,7 @@ const app=new Elysia()
 })
 .get("/api/admin/agent/status",async({request,set})=>{
   const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
-  const r=await supabaseRest("/rest/v1/platform_settings?id=eq.true&select=last_telegram_received_at,last_agent_error&limit=1",admin.token);
+  const r=await supabaseServerRest("/rest/v1/platform_settings?id=eq.true&select=last_telegram_received_at,last_agent_error&limit=1");
   const row=Array.isArray(r.body)?r.body[0]:null;
   return{ok:true,channels:{telegram:"active",whatsapp:"disabled"},lastTelegramReceivedAt:row?.last_telegram_received_at??lastTelegramReceivedAt,lastAgentError:row?.last_agent_error??lastTelegramAgentError,whatsappEnabled:whatsappChannelEnabled()};
 })
@@ -1177,7 +1177,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 .post("/api/agent/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>8000){set.status=400;return{ok:false,error:"invalid message"}}try{const result=await draftAgentReply(message,typeof input?.language==="string"?input.language:undefined);return{ok:true,draft:result.reply,model:result.model,humanApprovalRequired:true}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/agent/outreach-draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const target=input?.target;if(target!=="laboratory"&&target!=="medical_equipment_supplier"&&target!=="radiology_center"){set.status=400;return{ok:false,error:"invalid outreach target"}}const institutionName=typeof input?.institutionName==="string"?input.institutionName.trim():"",language=typeof input?.language==="string"?input.language.trim():"";if(institutionName.length>200||language.length>40){set.status=400;return{ok:false,error:"invalid input"}}try{const result=await draftInstitutionOutreach(target,institutionName,language||undefined);return{ok:true,target,institutionName:institutionName||null,draft:result.reply,model:result.model,humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/channel/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const topic=typeof input?.topic==="string"?input.topic.trim():"",language=typeof input?.language==="string"?input.language.trim():"ar";if(!topic||topic.length>4000||language.length>40){set.status=400;return{ok:false,error:"invalid topic or language"}}try{const result=await draftAgentReply(`Prepare a public WhatsApp Channel post for the official RAFIQ | رفيق channel.\nLanguage: ${language}\nTopic: ${topic}\nAudience: families, caregivers, nurses, healthcare institutions, laboratories, medical equipment suppliers, and radiology centers.\nThe post must be informative, professional, concise, and suitable for a public one-way channel. Do not claim that a partnership, booking, payment, referral, approval, or service has already happened unless explicitly stated in the topic. Do not expose private information. Return only the ready-to-review channel post.`);return{ok:true,draft:result.reply,model:result.model,channel:"RAFIQ official WhatsApp Channel",publishMode:"manual-admin",humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
-.post("/api/whatsapp/send-text",async({request,set})=>{if(process.env.WHATSAPP_SENDING_ENABLED!=="true"){set.status=503;return{ok:false,error:"WhatsApp sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096){set.status=400;return{ok:false,error:"invalid recipient or message"}}if(input?.humanApproved!==true){set.status=409;return{ok:false,error:"human approval required"}}try{const result=await sendWhatsAppText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"WhatsApp provider request failed"}}})
+.post("/api/whatsapp/send-text",async({request,set})=>{if(!whatsappChannelEnabled()){set.status=503;return{ok:false,error:"WhatsApp channel is temporarily disabled"}}if(process.env.WHATSAPP_SENDING_ENABLED!=="true"){set.status=503;return{ok:false,error:"WhatsApp sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096){set.status=400;return{ok:false,error:"invalid recipient or message"}}if(input?.humanApproved!==true){set.status=409;return{ok:false,error:"human approval required"}}try{const result=await sendWhatsAppText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"WhatsApp provider request failed"}}})
 .get("/",()=>fileResponse("public/index.html","text/html; charset=utf-8","no-store"))
 .get("/agent.html",()=>fileResponse("public/agent.html","text/html; charset=utf-8","no-store"))
 .get("/admin",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
