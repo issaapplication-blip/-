@@ -1103,7 +1103,7 @@ const app=new Elysia()
         escalationSaved=approval.response.ok;
         if(!approval.response.ok)console.error(JSON.stringify({event:"rafig_telegram_escalation_persist_failed",requestId,status:approval.response.status}));
       }
-      if(escalationSaved)result.reply += "\n\n"+(language==="en"?"I’ve recorded this for RAFIQ administration review. ":"Cette demande a été enregistrée pour examen par l’administration RAFIQ. ":language==="it"?"Ho registrato la richiesta per la revisione dell’amministrazione RAFIQ. ":language==="de"?"Ich habe dies zur Prüfung durch die RAFIQ-Verwaltung erfasst. ":"سجّلت طلب المتابعة لمراجعة إدارة رفيق. ")+idLine+requestId;
+      if(escalationSaved)result.reply += "\n\n"+(language==="en"?"I’ve recorded this for RAFIQ administration review. ":language==="fr"?"Cette demande a été enregistrée pour examen par l’administration RAFIQ. ":language==="it"?"Ho registrato la richiesta per la revisione dell’amministrazione RAFIQ. ":language==="de"?"Ich habe dies zur Prüfung durch die RAFIQ-Verwaltung erfasst. ":"سجّلت طلب المتابعة لمراجعة إدارة رفيق. ")+idLine+requestId;
     }
     const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,request_id:requestId,application_number:applicationNumber,escalation:escalation.required,escalation_reason:escalation.reason};
     const outbound=await reply(result.reply);
