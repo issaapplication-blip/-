@@ -1061,7 +1061,7 @@ const app=new Elysia()
       const sessionService=String(activeRequestSession?.service_type??"");
       const sessionServiceKey=sessionService.includes("كبار السن")?"elderly_home_care":sessionService.includes("المرضى")?"patient_home_care":sessionService.includes("التمريض")?"home_nursing":sessionService.includes("الفيزيائي")?"home_physiotherapy":(["elderly_home_care","patient_home_care","home_nursing","home_physiotherapy"].includes(sessionService)?sessionService:null);
       const sessionArea=String(activeRequestSession?.area??"");
-      const sessionContext=activeRequestSession?"\\nExisting optional request shortcut: selected service="+(sessionService||"not selected")+"; selected area="+(sessionArea||"not selected")+"; prior case detail="+String(activeRequestSession.case_type??"")+"; schedule="+String(activeRequestSession.schedule??"")+"; notes="+String(activeRequestSession.notes??""):"";
+      const sessionContext=activeRequestSession?"\nExisting optional request shortcut: selected service="+(sessionService||"not selected")+"; selected area="+(sessionArea||"not selected")+"; prior case detail="+String(activeRequestSession.case_type??"")+"; schedule="+String(activeRequestSession.schedule??"")+"; notes="+String(activeRequestSession.notes??""):"";
       result=await draftTelegramAgentTurn(textBody,language,agentContext+sessionContext,instructions);
       if(!result.intake.service_type && sessionServiceKey)result.intake.service_type=sessionServiceKey;
       if(!result.intake.area && sessionArea && sessionArea!=="منطقة أخرى")result.intake.area=sessionArea;
