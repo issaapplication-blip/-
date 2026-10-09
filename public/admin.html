@@ -78,6 +78,21 @@ th{background:#f7fbf9;color:#087f58}
 <p class="small" id="lastUpdate"></p>
 </section>
 
+<section class="card" id="agentOperationsPanel">
+<h2>🤖 حالة وكيل RAFIQ والقنوات</h2>
+<div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+  <div class="stat"><b id="telegramChannelStatus">—</b>Telegram — القناة الأساسية</div>
+  <div class="stat"><b id="whatsappChannelStatus">—</b>WhatsApp — معطّل مؤقتًا</div>
+</div>
+<p><strong>آخر رسالة Telegram:</strong> <span id="lastTelegramReceived">لم تُسجّل بعد</span></p>
+<div id="lastAgentError" class="notice">آخر خطأ للوكيل: لا توجد بيانات بعد.</div>
+<h3>إعدادات تعليمات الوكيل</h3>
+<p class="small">هذه التعليمات مركزية ومحفوظة في إعدادات المنصة. عدّلها بحذر؛ لا تضف مفاتيح أو رموزًا سرية أو بيانات خاصة.</p>
+<textarea id="agentInstructions" rows="10" maxlength="12000" style="display:block;width:100%;padding:12px;border:1px solid #cbdad3;border-radius:10px;font:inherit"></textarea>
+<div class="actions" style="margin-top:10px"><button class="btn" id="saveAgentInstructions">💾 حفظ تعليمات الوكيل</button><button class="btn alt" id="refreshAgentStatus">🔄 تحديث حالة القنوات</button></div>
+<div id="agentSettingsMsg" class="small"></div>
+</section>
+
 <section class="card hidden" id="requestsSection">
 <div class="actions" style="justify-content:space-between"><div><h2 style="margin:0">📋 جميع الطلبات</h2><p class="small">الطلبات الجديدة تظهر تلقائيًا عند وصولها. يمكنك فتح التفاصيل ومراجعة الملفات ثم تسجيل القرار.</p></div><button class="btn alt" id="showPending">عرض المعلّقة فقط</button></div>
 <div class="table-wrap"><table><thead><tr><th>#</th><th>المتقدم</th><th>نوع الطلب</th><th>الهاتف</th><th>المنطقة</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="requestRows"></tbody></table></div>
@@ -348,18 +363,57 @@ function subscribeLive(){
   channel.subscribe((status)=>setLive(status==='SUBSCRIBED'));
 }
 
+async function agentAdminFetch(path,options={}){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session?.access_token)throw new Error('انتهت جلسة المدير؛ سجّل الدخول مجددًا.');
+  const headers={...(options.headers||{}),Authorization:'Bearer '+session.access_token};
+  if(options.body)headers['Content-Type']='application/json';
+  const response=await fetch(path,{...options,headers});
+  const body=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(body?.error||('HTTP '+response.status));
+  return body;
+}
+async function loadAgentOperations(){
+  const statusBox=$('agentSettingsMsg');
+  try{
+    const status=await agentAdminFetch('/api/admin/agent/status');
+    $('telegramChannelStatus').textContent=status?.channels?.telegram==='active'?'🟢 نشط':'🟡 غير مؤكد';
+    $('whatsappChannelStatus').textContent=status?.whatsappEnabled===true?'🟢 نشط':'🟡 معطّل مؤقتًا';
+    $('lastTelegramReceived').textContent=status?.lastTelegramReceivedAt?formatDate(status.lastTelegramReceivedAt):'لم تُسجّل رسالة بعد';
+    $('lastAgentError').textContent=status?.lastAgentError?('آخر خطأ للوكيل: '+status.lastAgentError):'آخر خطأ للوكيل: لا يوجد خطأ محفوظ.';
+  }catch(error){
+    $('telegramChannelStatus').textContent='🟡';
+    $('whatsappChannelStatus').textContent='🟡';
+    $('lastAgentError').textContent='تعذر تحميل حالة القنوات: '+String(error.message||error);
+  }
+  try{
+    const settings=await agentAdminFetch('/api/admin/agent/settings');
+    if(document.activeElement!==$('agentInstructions'))$('agentInstructions').value=settings.instructions||'';
+  }catch(error){
+    statusBox.textContent='تعذر تحميل إعدادات الوكيل: '+String(error.message||error)+' — قد يلزم تطبيق ترحيل قاعدة البيانات بعد الموافقة.';
+  }
+}
+$('saveAgentInstructions').onclick=async()=>{
+  const message=$('agentSettingsMsg');
+  try{
+    await agentAdminFetch('/api/admin/agent/settings',{method:'PATCH',body:JSON.stringify({instructions:$('agentInstructions').value})});
+    message.textContent='تم حفظ تعليمات الوكيل بنجاح.';
+    await loadAgentOperations();
+  }catch(error){message.textContent='تعذر الحفظ: '+String(error.message||error)}
+};
+$('refreshAgentStatus').onclick=()=>loadAgentOperations();
 async function enterDashboard(){
   const gate=await isAdmin();
   if(!gate){$('dashboard').classList.add('hidden');$('requestsSection').classList.add('hidden');$('documentsSection').classList.add('hidden');$('auth').classList.remove('hidden');showAuthError('يرجى الدخول بحساب المدير المفعّل.');return}
   $('who').textContent='المدير: '+(gate.profile.email||gate.user.email||'');
   $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('rejectedSection').classList.remove('hidden');$('institutionSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
-  await loadAll();subscribeLive();if('Notification' in window && Notification.permission==='default')Notification.requestPermission().catch(()=>{});
+  await Promise.all([loadAll(),loadAgentOperations()]);subscribeLive();if('Notification' in window && Notification.permission==='default')Notification.requestPermission().catch(()=>{});
   clearInterval(refreshTimer);refreshTimer=setInterval(()=>loadAll().catch(()=>{}),30000);
 }
 
 $('login').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;const {error}=await db.auth.signInWithPassword({email,password});if(error){showAuthError(error.message||'تعذر تسجيل الدخول');return}await enterDashboard()};
 $('logout').onclick=async()=>{if(liveChannel)await db.removeChannel(liveChannel);clearInterval(refreshTimer);await db.auth.signOut();location.reload()};
-$('refresh').onclick=()=>loadAll();
+$('refresh').onclick=()=>{loadAll();loadAgentOperations()};
 $('showPending').onclick=()=>{showPendingOnly=!showPendingOnly;$('showPending').textContent=showPendingOnly?'عرض جميع الطلبات':'عرض المعلّقة فقط';renderRequests()};
 $('closeModal').onclick=()=>$('modal').classList.add('hidden');
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').classList.add('hidden')});
