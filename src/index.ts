@@ -770,13 +770,10 @@ const app=new Elysia()
       if(data.startsWith("reqarea:") && session){
         const area=data.slice(8);
         const finalArea=area==="other"?"منطقة أخرى":area;
-        await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({area:finalArea,status:"submitted",updated_at:new Date().toISOString()})});
-        const payload={request_id:session.request_id,telegram_chat_id:String(callbackChatId),telegram_user_id:session.telegram_user_id,language:session.language,service_type:session.service_type,area:finalArea,source:"telegram"};
-        const created=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:"طلب Telegram — "+String(callbackChatId),phone:null,area:finalArea,status:"review",payload,source:"telegram",agent_reply:"تم إنشاء طلب رعاية من Telegram وينتظر مراجعة الإدارة."})});
-        if(!created.response.ok)throw new Error("could not create Telegram care request");
-        const intake=Array.isArray(created.body)?created.body[0]:created.body;
-        await telegramSendText(callbackChatId,telegramSigned("✅ تم تسجيل طلب الرعاية.\n\nRequest ID: "+session.request_id+"\nرقم الطلب في RAFIQ: "+String(intake?.application_number??"—")+"\n\nستراجعه إدارة رفيق وتتابعه معكم."),{inline_keyboard:[[{text:"📞 التواصل مع الإدارة",url:RAFIQ_WHATSAPP}]]});
-        return{ok:true,status:"request_submitted",request_id:session.request_id,application_number:intake?.application_number??null};
+        const savedArea=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({area:finalArea,updated_at:new Date().toISOString()})});
+        if(!savedArea.response.ok)throw new Error("could not save Telegram request area");
+        await telegramSendText(callbackChatId,telegramSigned("📍 تم تحديد المنطقة: "+finalArea+"\n\nحتى لا نسجل طلبًا ناقصًا، أجب عن هذه الأسئلة القصيرة خطوة بخطوة.\n\n1/3: هل الطلب لمسن أم لمريض؟ وكم عمره تقريبًا؟"));
+        return{ok:true,status:"request_area_saved",request_id:session.request_id};
       }
     }
     return{ok:true,status:"callback_ignored"};
@@ -965,6 +962,37 @@ const app=new Elysia()
       ]});
       return{ok:true,status:"request_started",request_id:requestId,message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
+    if(message?.chat?.type==="private" && textBody && !textBody.startsWith("/")){
+      const requestSessions=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(chatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
+      const requestSession=Array.isArray(requestSessions.body)?requestSessions.body[0]:null;
+      if(requestSession){
+        const sessionUrl="/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(requestSession.id));
+        if(!requestSession.case_type){
+          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:textBody.slice(0,500),updated_at:new Date().toISOString()})});
+          if(!saved.response.ok)throw new Error("could not save Telegram request case type");
+          await reply("شكرًا لك 🌿\n\n2/3: ما نظام الرعاية المطلوب؟ مثلًا: نهارًا، ليلًا، مبيت، أو ساعات محددة.");
+          return{ok:true,status:"request_case_type_saved",request_id:requestSession.request_id};
+        }
+        if(!requestSession.schedule){
+          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({schedule:textBody.slice(0,500),updated_at:new Date().toISOString()})});
+          if(!saved.response.ok)throw new Error("could not save Telegram request schedule");
+          await reply("وصلتني التفاصيل. 🌿\n\n3/3: ما أهم المساعدة المطلوبة؟ اذكر باختصار ما يحتاجه الشخص يوميًا، وأي حاجة تمريضية أو علاج فيزيائي إن وجدت.");
+          return{ok:true,status:"request_schedule_saved",request_id:requestSession.request_id};
+        }
+        if(!requestSession.notes){
+          const details=textBody.slice(0,2000);
+          const payload={request_id:requestSession.request_id,telegram_chat_id:String(chatId),telegram_user_id:requestSession.telegram_user_id,language:requestSession.language,service_type:requestSession.service_type,area:requestSession.area,case_type:requestSession.case_type,schedule:requestSession.schedule,care_needs:details,source:"telegram"};
+          const created=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:"طلب Telegram — "+String(chatId),phone:null,area:requestSession.area,status:"review",payload,source:"telegram",agent_reply:"طلب رعاية Telegram مكتمل مبدئيًا وينتظر مراجعة الإدارة."})});
+          if(!created.response.ok)throw new Error("could not create Telegram care request");
+          const intake=Array.isArray(created.body)?created.body[0]:created.body;
+          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({notes:details,status:"submitted",updated_at:new Date().toISOString()})});
+          if(!saved.response.ok)throw new Error("could not complete Telegram request session");
+          await reply("✅ اكتملت المعلومات الأساسية وسُجّل طلب الرعاية للمراجعة.\n\nالخدمة: "+String(requestSession.service_type||"—")+"\nالمنطقة: "+String(requestSession.area||"—")+"\nنوع الحالة والعمر: "+String(requestSession.case_type)+"\nالدوام: "+String(requestSession.schedule)+"\nالاحتياجات: "+details+"\n\nRequest ID: "+String(requestSession.request_id)+"\nرقم الطلب في RAFIQ: "+String(intake?.application_number??"—")+"\n\nستراجعه إدارة رفيق وتتواصل معكم عبر Telegram. إذا احتجنا رقم هاتف للتنسيق سنطلبه منك لاحقًا.");
+          return{ok:true,status:"request_submitted",request_id:requestSession.request_id,application_number:intake?.application_number??null};
+        }
+      }
+    }
+
     const commandReply=telegramCommandReply(textBody,language);
     if(commandReply){
       const welcomeOnStart=command==="/start";
