@@ -86,6 +86,7 @@ th{background:#f7fbf9;color:#087f58}
 </div>
 <p><strong>آخر رسالة Telegram:</strong> <span id="lastTelegramReceived">لم تُسجّل بعد</span></p>
 <div id="lastAgentError" class="notice">آخر خطأ للوكيل: لا توجد بيانات بعد.</div>
+<h3>التصعيدات الإدارية المفتوحة</h3><div id="agentEscalations"><p class="small">لا توجد بيانات بعد.</p></div>
 <h3>إعدادات تعليمات الوكيل</h3>
 <p class="small">هذه التعليمات مركزية ومحفوظة في إعدادات المنصة. عدّلها بحذر؛ لا تضف مفاتيح أو رموزًا سرية أو بيانات خاصة.</p>
 <textarea id="agentInstructions" rows="10" maxlength="12000" style="display:block;width:100%;padding:12px;border:1px solid #cbdad3;border-radius:10px;font:inherit"></textarea>
@@ -381,6 +382,11 @@ async function loadAgentOperations(){
     $('whatsappChannelStatus').textContent=status?.whatsappEnabled===true?'🟢 نشط':'🟡 معطّل مؤقتًا';
     $('lastTelegramReceived').textContent=status?.lastTelegramReceivedAt?formatDate(status.lastTelegramReceivedAt):'لم تُسجّل رسالة بعد';
     $('lastAgentError').textContent=status?.lastAgentError?('آخر خطأ للوكيل: '+status.lastAgentError):'آخر خطأ للوكيل: لا يوجد خطأ محفوظ.';
+    const escalations=Array.isArray(status?.escalations)?status.escalations:[];
+    $('agentEscalations').innerHTML=escalations.length?escalations.map(item=>{
+      const p=item?.payload||{};
+      return '<div class="doc"><strong>'+esc(p.request_id||'طلب متابعة إداري')+'</strong><div class="small">السبب: '+esc(p.escalation_reason||p.reason||'بحاجة إلى مراجعة الإدارة')+' · '+esc(formatDate(item.created_at))+'</div><div>'+esc(p.incoming_text||p.case_summary||'')+'</div></div>';
+    }).join(''):'<p class="small">لا توجد تصعيدات إدارية مفتوحة.</p>';
   }catch(error){
     $('telegramChannelStatus').textContent='🟡';
     $('whatsappChannelStatus').textContent='🟡';
