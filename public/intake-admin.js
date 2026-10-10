@@ -36,7 +36,7 @@
     let request=sb2.from('application_intakes').select('*',{count:'exact'}).eq('is_test',false).order('created_at',{ascending:false}).range(intakePage*INTAKE_PAGE_SIZE,(intakePage+1)*INTAKE_PAGE_SIZE-1);
     if(oldStatus) request=request.eq('status',oldStatus);
     if(query){
-      const safe=query.replace(/[,%()]/g,' ').trim();
+      const safe=query.replace(/[^\\p{L}\\p{N}\\s+@_-]/gu,' ').trim();
       if(safe) request=request.or('applicant_name.ilike.%'+safe+'%,phone.ilike.%'+safe+'%,area.ilike.%'+safe+'%,application_type.ilike.%'+safe+'%'+( /^\\d+$/.test(safe)?',application_number.eq.'+safe:''));
     }
     const {data,error,count}=await request;
