@@ -579,14 +579,14 @@ const telegramAdminReject=async(ref:string,note:string)=>{
   if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"rejected",updated_at:new Date().toISOString()})});
   return intake;
 };
-const telegramAdminMenu=()=>["🔐 <b>لوحة مدير RAFIQ عبر Telegram</b>","","📂 /pending — قيد المراجعة","🤝 /caregivers — مقدمو الرعاية","👩‍⚕️ /nurses — الممرضون/الممرضات","🧑‍🦽 /physios — المعالجون الفيزيائيون","❌ /rejected — المرفوضون","✅ /approved — المقبولون","🔎 /candidate 108 — ملف متقدم","✔️ /approve 108 — قبول وإصدار الرقم والباركود","✖️ /reject 108 السبب — رفض الطلب","🗂️ /cases — حالات الرعاية المفتوحة","ℹ️ /help — المساعدة"].join("\n");
+const telegramAdminMenu=()=>["🔐 <b>لوحة مدير RAFIQ عبر Telegram</b>","","📂 /pending — قيد المراجعة","🤝 /caregivers — مقدمو الرعاية","👩‍⚕️ /nurses — الممرضون/الممرضات","🧑‍🦽 /physios — المعالجون الفيزيائيون","❌ /rejected — المرفوضون","✅ /approved — المقبولون","🔎 /candidate 108 — ملف متقدم","✔️ /approve 108 — قبول وإصدار الرقم والباركود","✖️ /reject 108 السبب — رفض الطلب","🗂️ /cases — حالات الرعاية المفتوحة","📊 /compare <رقم الحالة> — مقارنة المرشحين","ℹ️ /help — المساعدة"].join("\n");
 const telegramAdminCommand=async(message:any)=>{
   if(!telegramAdminAllowed(message))return null;
   const chatId=message.chat.id;
   const textBody=typeof message?.text==="string"?message.text.trim():"";
   const parts=textBody.split(/\s+/);
   const cmd=String(parts[0]??"").toLowerCase();
-  if(!["/admin","/pending","/caregivers","/nurses","/physios","/rejected","/approved","/candidate","/approve","/reject","/cases","/help"].includes(cmd))return null;
+  if(!["/admin","/pending","/caregivers","/nurses","/physios","/rejected","/approved","/candidate","/approve","/reject","/cases","/compare","/help"].includes(cmd))return null;
   if(cmd==="/admin"||cmd==="/help")return telegramSendText(chatId,telegramAdminSigned(telegramAdminMenu()));
   if(cmd==="/candidate"){
     const intake=await telegramAdminIntake(parts[1]??""); if(!intake)return telegramSendText(chatId,telegramAdminSigned("❌ لم أجد هذا الطلب."));
@@ -616,6 +616,37 @@ const telegramAdminCommand=async(message:any)=>{
     const r=await supabaseServerRest("/rest/v1/care_requests?status=in.(pending,review,matching)&order=created_at.desc&select=id,request_number,service_type,required_provider_type,status,created_at&limit=30");
     const rows=Array.isArray(r.body)?r.body:[];
     return telegramSendText(chatId,telegramAdminSigned(rows.length?rows.map((x:any)=>"• الحالة #"+(x.request_number||x.id)+" — "+(x.service_type||"—")+" — "+(x.required_provider_type||"—")+" — "+x.status).join("\n"):"لا توجد حالات مفتوحة حاليًا."));
+  }
+  if(cmd==="/compare"){
+    const ref=String(parts[1]??"").trim();
+    if(!ref || !/^[A-Za-z0-9_-]{1,80}$/.test(ref))return telegramSendText(chatId,telegramAdminSigned("الصيغة: /compare <رقم الحالة>"));
+    let casePath="/rest/v1/care_requests?request_number=eq."+encodeURIComponent(ref)+"&select=id,request_number,service_type,schedule,live_in,required_services,preferred_gender,preferred_languages,contract_type,complexity_level,requires_licensed_nurse,required_provider_type,required_skills,notes,status&limit=1";
+    if(/^[0-9a-f-]{36}$/i.test(ref))casePath="/rest/v1/care_requests?id=eq."+encodeURIComponent(ref)+"&select=id,request_number,service_type,schedule,live_in,required_services,preferred_gender,preferred_languages,contract_type,complexity_level,requires_licensed_nurse,required_provider_type,required_skills,notes,status&limit=1";
+    const caseResult=await supabaseServerRest(casePath);
+    const careCase=Array.isArray(caseResult.body)?caseResult.body[0]:null;
+    if(!caseResult.response.ok || !careCase)return telegramSendText(chatId,telegramAdminSigned("❌ لم أجد حالة رعاية بهذا الرقم."));
+    const providerResult=await supabaseServerRest("/rest/v1/rafiq_provider_registry?status=eq.approved&select=member_number,member_type,full_name,area,specialty,qualification,experience,languages,services,availability&order=approved_at.asc&limit=100");
+    if(!providerResult.response.ok)return telegramSendText(chatId,telegramAdminSigned("⚠️ تعذر تحميل ملفات مقدمي الخدمة للمقارنة."));
+    const providers=Array.isArray(providerResult.body)?providerResult.body:[];
+    const caseType=String(careCase.required_provider_type??"").toLowerCase();
+    const eligible=providers.filter((p:any)=>{
+      const t=String(p.member_type??"").toLowerCase();
+      if(careCase.requires_licensed_nurse && t!=="nurse")return false;
+      if(caseType && !caseType.includes("any") && !caseType.includes("مقدم") && !caseType.includes("care") && !caseType.includes(t) && !(caseType.includes("nurse")&&t==="nurse") && !(caseType.includes("physio")&&t==="physiotherapist"))return false;
+      return true;
+    });
+    if(!eligible.length)return telegramSendText(chatId,telegramAdminSigned("📊 لا يوجد حاليًا مقدم خدمة مقبول ومسجل يطابق نوع الحالة. لم يتم إسناد أي شخص."));
+    const context=[
+      "You are RAFIQ's internal candidate comparison assistant. This is a private manager-only decision-support report.",
+      "Compare only the supplied records. Never invent qualifications, licenses, availability, or experience. Mark missing data as unknown.",
+      "Rank candidates only against the case's service type, required skills, schedule/shift, live-in requirement, complexity, location, language, and licensed-nurse requirement.",
+      "Give a transparent 0-100 fit score with a brief reason for each score. Recommend at most two candidates for manager review, explain risks/data gaps, and explicitly state that no assignment or approval has been made. Never make a clinical diagnosis or decide treatment.",
+      "CARE CASE: "+JSON.stringify(careCase),
+      "APPROVED CANDIDATES ONLY: "+JSON.stringify(eligible)
+    ].join("\n");
+    const report=await draftAgentReply("Prepare a concise Arabic candidate-comparison report for this care case. Do not address the family; this is for the RAFIQ manager.",undefined,context);
+    const prefix="📊 تقرير مقارنة أولي — الحالة "+String(careCase.request_number??ref)+"\n\n";
+    return telegramSendText(chatId,telegramAdminSigned((prefix+(report?.reply??"تعذر إنشاء التقرير؛ راجع الملفات يدويًا." )+"\n\n⚠️ التقرير للمراجعة فقط؛ القرار النهائي للمدير، ولم يتم إسناد أي مقدم خدمة.").slice(0,3900)));
   }
   return null;
 };
