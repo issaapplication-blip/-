@@ -1,0 +1,34 @@
+name: RAFIQ bandwidth optimization checks
+
+on:
+  push:
+    branches: [optimization/reduce-render-egress-2026-10-10]
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/index.ts"
+      - "public/sw.js"
+      - ".github/workflows/rafiq-bandwidth-check.yml"
+
+jobs:
+  static-build-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Compile server TypeScript without starting the service
+        run: bun build src/index.ts --target=bun --outdir=/tmp/rafig-build-check
+      - name: Check service worker syntax
+        run: node --check public/sw.js
+      - name: Verify bandwidth safeguards are present
+        run: |
+          set -euo pipefail
+          grep -F 'public, max-age=86400, stale-while-revalidate=604800' src/index.ts
+          grep -F 'telegramBroadcastPhotoFileId=largestPhoto.file_id' src/index.ts
+          grep -F 'rafig-v84-20261010' public/sw.js
+          grep -F 'cache: isStaticImage ? "default" : "no-store"' public/sw.js
