@@ -499,7 +499,7 @@ const telegramAdminIntake=async(ref:string)=>{
   const clean=String(ref??"").trim();
   if(!clean)return null;
   let url="";
-  if(/^\d+$/.test(clean)url="/rest/v1/application_intakes?application_number=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
+  if(/^\d+$/.test(clean))url="/rest/v1/application_intakes?application_number=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
   else if(/^[0-9a-f-]{36}$/i.test(clean))url="/rest/v1/application_intakes?id=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
   else return null;
   const r=await supabaseServerRest(url);
