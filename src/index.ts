@@ -632,7 +632,12 @@ const telegramAdminCommand=async(message:any)=>{
     const eligible=providers.filter((p:any)=>{
       const t=String(p.member_type??"").toLowerCase();
       if(careCase.requires_licensed_nurse && t!=="nurse")return false;
-      if(caseType && !caseType.includes("any") && !caseType.includes("مقدم") && !caseType.includes("care") && !caseType.includes(t) && !(caseType.includes("nurse")&&t==="nurse") && !(caseType.includes("physio")&&t==="physiotherapist"))return false;
+      const wantsNurse=/(nurse|ممرض|تمريض)/i.test(caseType);
+      const wantsPhysio=/(physio|فيزيائي|علاج فيزيائي)/i.test(caseType);
+      const wantsCaregiver=/(caregiver|مقدم رعاية|مقدم الرعاية)/i.test(caseType);
+      if(wantsNurse && t!=="nurse")return false;
+      if(wantsPhysio && t!=="physiotherapist")return false;
+      if(wantsCaregiver && t!=="caregiver")return false;
       return true;
     });
     if(!eligible.length)return telegramSendText(chatId,telegramAdminSigned("📊 لا يوجد حاليًا مقدم خدمة مقبول ومسجل يطابق نوع الحالة. لم يتم إسناد أي شخص."));
