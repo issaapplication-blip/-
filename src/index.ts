@@ -62,10 +62,20 @@ const isTelegramBlockedError=(error:any)=>{
   const s=String(error?.telegramDescription||error?.message||"").toLowerCase();
   return Number(error?.telegramStatus)===403 && /(blocked|deactivated|chat not found|forbidden|user is deactivated)/i.test(s);
 };
+let telegramBroadcastPhotoFileId: string | null = null;
 const telegramBroadcastOne=async(recipientId:string,text:string)=>{
   for(let attempt=0;attempt<3;attempt++){
     try{
-      return await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
+      if(telegramBroadcastPhotoFileId){
+        return await telegramSendPhoto(recipientId,telegramBroadcastPhotoFileId,text,TELEGRAM_BROADCAST_BUTTON);
+      }
+      const outbound=await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
+      const photos=outbound?.result?.photo;
+      const largestPhoto=Array.isArray(photos)?photos[photos.length-1]:null;
+      if(typeof largestPhoto?.file_id==="string" && largestPhoto.file_id){
+        telegramBroadcastPhotoFileId=largestPhoto.file_id;
+      }
+      return outbound;
     }catch(error:any){
       const retryAfter=Number(error?.retryAfter||0);
       if(retryAfter>0){ await sleep(Math.min(retryAfter*1000,10000)); continue; }
