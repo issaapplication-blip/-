@@ -3,6 +3,7 @@ import { draftTelegramAgentTurn } from "./agent";
 
 const originalFetch = globalThis.fetch;
 const originalApiKey = process.env.OPENAI_API_KEY;
+const originalGeminiKey = process.env.GEMINI_API_KEY;
 const validTurn = {
   reply: "I can help with RAFIQ's home-care services. Which area are you in?",
   escalation: { required: false, reason: null },
@@ -20,28 +21,33 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
   if (originalApiKey === undefined) delete process.env.OPENAI_API_KEY;
   else process.env.OPENAI_API_KEY = originalApiKey;
+  if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
+  else process.env.GEMINI_API_KEY = originalGeminiKey;
 });
 
-const mockResponsesApi = (turn: unknown, inspect?: (request: any) => void) => {
-  globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+const mockGeminiApi = (turn: unknown, inspect?: (request: any, init?: RequestInit) => void) => {
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? "{}"));
-    inspect?.(body);
-    return new Response(JSON.stringify({ output_text: JSON.stringify(turn) }), {
+    inspect?.({ url: String(input), ...body }, init);
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(turn) }] } }] }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   }) as typeof fetch;
-  process.env.OPENAI_API_KEY = "test-only-not-a-real-key";
+  process.env.GEMINI_API_KEY = "test-only-not-a-real-key";
+  delete process.env.OPENAI_API_KEY;
 };
 
 test("knowledge question goes through the structured model response, not the knowledge shortcut", async () => {
   let requestBody: any;
-  mockResponsesApi(validTurn, body => { requestBody = body; });
+  mockGeminiApi(validTurn, body => { requestBody = body; });
   const result = await draftTelegramAgentTurn("What services does RAFIQ provide?", "en", "Customer: hello", "Editable admin settings");
   expect(result.model).not.toBe("rafiq-knowledge-base");
   expect(result.model).not.toBe("rafig-local-fallback");
   expect(result.reply).toContain("home-care");
-  expect(requestBody.text.format.type).toBe("json_schema");
+  expect(requestBody.generationConfig.responseMimeType).toBe("application/json");
+  expect(requestBody.generationConfig.responseSchema.properties.reply.type).toBe("string");
+  expect(requestBody.url).toContain("generativelanguage.googleapis.com");
   expect(requestBody.instructions).toContain("Editable admin settings");
 });
 
@@ -51,7 +57,7 @@ test("ambiguous French conversation preserves history and language", async () =>
     reply: "Bien sûr. Pour quelle ville ou région avez-vous besoin de soins ?",
   };
   let requestBody: any;
-  mockResponsesApi(turn, body => { requestBody = body; });
+  mockGeminiApi(turn, body => { requestBody = body; });
   const result = await draftTelegramAgentTurn(
     "J’ai besoin d’aide pour ma mère.",
     "fr",
@@ -77,7 +83,7 @@ test("complete intake and escalation are returned as structured fields", async (
       ready_to_submit: true,
     },
   };
-  mockResponsesApi(turn);
+  mockGeminiApi(turn);
   const result = await draftTelegramAgentTurn("My father needs night care in Tripoli.", "en", "Customer: My father is 82.", "Test instructions");
   expect(result.intake.ready_to_submit).toBe(true);
   expect(result.intake.service_type).toBe("elderly_home_care");
@@ -85,11 +91,24 @@ test("complete intake and escalation are returned as structured fields", async (
   expect(result.escalation.reason).toContain("Administrator");
 });
 
-test("provider quota failure is surfaced honestly and classified", async () => {
+test("Gemini free-tier quota failure is surfaced honestly and classified", async () => {
   globalThis.fetch = (async () => new Response(JSON.stringify({
     error: { message: "You have no credits remaining.", type: "insufficient_quota", code: "insufficient_quota" },
   }), { status: 429, headers: { "Content-Type": "application/json" } })) as typeof fetch;
-  process.env.OPENAI_API_KEY = "test-only-not-a-real-key";
+  process.env.GEMINI_API_KEY = "test-only-not-a-real-key";
+  delete process.env.OPENAI_API_KEY;
   await expect(draftTelegramAgentTurn("Help", "en", "Customer: Help", "Test instructions"))
-    .rejects.toThrow("HTTP 429: account has no credits remaining");
+    .rejects.toThrow("Gemini API HTTP 429: free-tier quota or rate limit reached");
+});
+
+
+test("direct contact details are redacted before external model requests", async () => {
+  let requestBody: any;
+  mockGeminiApi(validTurn, body => { requestBody = body; });
+  await draftTelegramAgentTurn("My name is Example Person and my number is +961 81 506 299; email me at person@example.com", "en", "Customer: my phone is +961 70 123 456", "Test instructions");
+  expect(JSON.stringify(requestBody)).not.toContain("+961 81 506 299");
+  expect(JSON.stringify(requestBody)).not.toContain("+961 70 123 456");
+  expect(JSON.stringify(requestBody)).not.toContain("person@example.com");
+  expect(JSON.stringify(requestBody)).toContain("[PHONE REDACTED]");
+  expect(JSON.stringify(requestBody)).toContain("[EMAIL REDACTED]");
 });
