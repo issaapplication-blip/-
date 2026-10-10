@@ -62,10 +62,20 @@ const isTelegramBlockedError=(error:any)=>{
   const s=String(error?.telegramDescription||error?.message||"").toLowerCase();
   return Number(error?.telegramStatus)===403 && /(blocked|deactivated|chat not found|forbidden|user is deactivated)/i.test(s);
 };
+let telegramBroadcastPhotoFileId: string | null = null;
 const telegramBroadcastOne=async(recipientId:string,text:string)=>{
   for(let attempt=0;attempt<3;attempt++){
     try{
-      return await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
+      if(telegramBroadcastPhotoFileId){
+        return await telegramSendPhoto(recipientId,telegramBroadcastPhotoFileId,text,TELEGRAM_BROADCAST_BUTTON);
+      }
+      const outbound=await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
+      const photos=outbound?.result?.photo;
+      const largestPhoto=Array.isArray(photos)?photos[photos.length-1]:null;
+      if(typeof largestPhoto?.file_id==="string" && largestPhoto.file_id){
+        telegramBroadcastPhotoFileId=largestPhoto.file_id;
+      }
+      return outbound;
     }catch(error:any){
       const retryAfter=Number(error?.retryAfter||0);
       if(retryAfter>0){ await sleep(Math.min(retryAfter*1000,10000)); continue; }
@@ -1261,7 +1271,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 .get("/complete.html",()=>fileResponse("public/complete.html","text/html; charset=utf-8","no-store"))
 .get("/admin.js",()=>fileResponse("public/admin.js","application/javascript","no-cache"))
 .get("/app.js",()=>fileResponse("public/app.js","application/javascript","no-cache"))
-.get("/install-pwa.js",()=>fileResponse("public/install-pwa.js","application/javascript","no-cache")).get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache")).get("/js/rafiq-agent.js",()=>fileResponse("public/js/rafiq-agent.js","application/javascript","no-cache")).get("/js/rafiq-kb.js",()=>fileResponse("public/js/rafiq-kb.js","application/javascript","no-cache")).get("/js/rafiq-welcome.js",()=>fileResponse("public/js/rafiq-welcome.js","application/javascript","no-cache")).get("/assets/rafig-logo.png",()=>fileResponse("public/assets/rafig-logo.png","image/png","no-cache"))
+.get("/install-pwa.js",()=>fileResponse("public/install-pwa.js","application/javascript","no-cache")).get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache")).get("/js/rafiq-agent.js",()=>fileResponse("public/js/rafiq-agent.js","application/javascript","no-cache")).get("/js/rafiq-kb.js",()=>fileResponse("public/js/rafiq-kb.js","application/javascript","no-cache")).get("/js/rafiq-welcome.js",()=>fileResponse("public/js/rafiq-welcome.js","application/javascript","no-cache")).get("/assets/rafig-logo.png",()=>fileResponse("public/assets/rafig-logo.png","image/png","public, max-age=86400, stale-while-revalidate=604800"))
 .get("/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
 .get("/js/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
 .get("/js/locales/ar.js",()=>fileResponse("public/js/locales/ar.js","application/javascript","no-cache"))
@@ -1273,7 +1283,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 .get("/intake-admin.js",()=>fileResponse("public/intake-admin.js","application/javascript","no-cache")).get("/institution-form.js",()=>fileResponse("public/institution-form.js","application/javascript","no-cache"))
 .get("/manifest.webmanifest",()=>fileResponse("public/manifest.webmanifest","application/manifest+json"))
 .get("/sitemap.xml",()=>fileResponse("public/sitemap.xml","application/xml; charset=utf-8","no-store"))
-.get("/*",async({request,set})=>{const pathname=new URL(request.url).pathname;if(pathname==="/"||pathname.startsWith("/api/")){set.status=404;return{ok:false,error:"not found"}}let decoded="";try{decoded=decodeURIComponent(pathname)}catch{set.status=400;return{ok:false,error:"invalid path"}}if(!decoded.startsWith("/")||decoded.includes("..")||!/^[A-Za-z0-9._~!$&'()*+,;=:@%\\/-]+$/.test(decoded)){set.status=404;return{ok:false,error:"not found"}}const ext=decoded.split(".").pop()?.toLowerCase()??"";const mime:Record<string,string>={js:"application/javascript; charset=utf-8",css:"text/css; charset=utf-8",json:"application/json; charset=utf-8",webmanifest:"application/manifest+json",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",svg:"image/svg+xml",ico:"image/x-icon",txt:"text/plain; charset=utf-8",xml:"application/xml; charset=utf-8",woff:"font/woff",woff2:"font/woff2",map:"application/json; charset=utf-8"};if(!mime[ext]){set.status=404;return{ok:false,error:"not found"}}return fileResponse("public"+decoded,mime[ext],"no-cache")})
+.get("/*",async({request,set})=>{const pathname=new URL(request.url).pathname;if(pathname==="/"||pathname.startsWith("/api/")){set.status=404;return{ok:false,error:"not found"}}let decoded="";try{decoded=decodeURIComponent(pathname)}catch{set.status=400;return{ok:false,error:"invalid path"}}if(!decoded.startsWith("/")||decoded.includes("..")||!/^[A-Za-z0-9._~!$&'()*+,;=:@%\\/-]+$/.test(decoded)){set.status=404;return{ok:false,error:"not found"}}const ext=decoded.split(".").pop()?.toLowerCase()??"";const mime:Record<string,string>={js:"application/javascript; charset=utf-8",css:"text/css; charset=utf-8",json:"application/json; charset=utf-8",webmanifest:"application/manifest+json",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",svg:"image/svg+xml",ico:"image/x-icon",txt:"text/plain; charset=utf-8",xml:"application/xml; charset=utf-8",woff:"font/woff",woff2:"font/woff2",map:"application/json; charset=utf-8"};if(!mime[ext]){set.status=404;return{ok:false,error:"not found"}}const cachePolicy=/\.(?:png|jpe?g|webp|svg|ico)$/i.test(decoded)?"public, max-age=86400, stale-while-revalidate=604800":"no-cache";return fileResponse("public"+decoded,mime[ext],cachePolicy)})
 .get("/:page",({params,set})=>{const page=String(params.page??"");if(!/^[a-z0-9-]+\.html$/i.test(page)||page==="admin.html"){set.status=404;return{ok:false,error:"not found"}}return fileResponse(`public/${page}`,"text/html; charset=utf-8","no-store")})
 .get("/robots.txt",()=>new Response("User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /admin.js\nDisallow: /intake-admin.js\nSitemap: https://rafiq-o6qd.onrender.com/sitemap.xml",{headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
 .get("/sw.js",()=>fileResponse("public/sw.js","application/javascript","no-cache"))
