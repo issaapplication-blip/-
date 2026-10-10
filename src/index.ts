@@ -499,8 +499,8 @@ const telegramAdminIntake=async(ref:string)=>{
   const clean=String(ref??"").trim();
   if(!clean)return null;
   let url="";
-  if(/^\d+$/.test(clean))url="/rest/v1/application_intakes?application_number=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
-  else if(/^[0-9a-f-]{36}$/i.test(clean))url="/rest/v1/application_intakes?id=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
+  if(/^\d+$/.test(clean))url="/rest/v1/application_intakes?application_number=eq."+encodeURIComponent(clean)+"&is_test=eq.false&select=*&limit=1";
+  else if(/^[0-9a-f-]{36}$/i.test(clean))url="/rest/v1/application_intakes?id=eq."+encodeURIComponent(clean)+"&is_test=eq.false&select=*&limit=1";
   else return null;
   const r=await supabaseServerRest(url);
   return r.response.ok&&Array.isArray(r.body)&&r.body[0]?r.body[0]:null;
@@ -536,7 +536,7 @@ const telegramAdminFormatIntake=async(intake:any)=>{
 };
 const telegramAdminList=async(statuses:string[],type?:string)=>{
   const or=statuses.map(s=>"status.eq."+encodeURIComponent(s)).join(",");
-  const r=await supabaseServerRest("/rest/v1/application_intakes?or=("+or+")&order=created_at.desc&select=id,application_number,application_type,applicant_name,phone,area,status,created_at&limit=50");
+  const r=await supabaseServerRest("/rest/v1/application_intakes?or=("+or+")&order=created_at.desc&is_test=eq.false&select=id,application_number,application_type,applicant_name,phone,area,status,created_at&limit=50");
   const rows=Array.isArray(r.body)?r.body:[];
   return type?rows.filter((x:any)=>telegramMemberType(x.application_type)===type):rows;
 };
