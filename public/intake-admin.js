@@ -24,17 +24,38 @@
       </div>`;
     box.querySelector('#refreshRafiqCounters')?.addEventListener('click',loadAdminExtras);
   }
+  let intakePage=0;
+  const INTAKE_PAGE_SIZE=50;
   async function loadPublicIntakes(){
     const {data:{session}}=await sb2.auth.getSession(); if(!session)return;
     let box=document.getElementById('publicIntakes');
-    if(!box){box=document.createElement('section');box.id='publicIntakes';box.className='dashboard';box.style.marginTop='0'}
-    const {data,error}=await sb2.from('application_intakes').select('*').order('created_at',{ascending:false});
-    if(error){box.innerHTML='<div class="error">تعذر تحميل طلبات الانتساب الجديدة: '+esc(error.message)+'</div>';return;}
-    const rows=(data||[]).map(x=>`<tr><td><b>${esc(x.application_number)}</b></td><td>${esc(x.applicant_name)}</td><td>${esc(x.application_type)}</td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.area)}</td><td><span class="status ${esc(x.status)}">${esc(x.status)}</span></td><td>${new Date(x.created_at).toLocaleString('ar-LB')}</td><td><button class="btn gold" data-intake="${esc(x.id)}">عرض</button></td></tr>`).join('');
-    box.innerHTML='<div class="topbar"><div><h2 style="margin:0">طلبات الانتساب الجديدة من المنصة</h2><small style="color:var(--muted)">تشمل مقدمي الرعاية والممرضين والمعالجين وطلبات CV. افتح الطلب لرؤية البيانات والملفات الخاصة ثم اتخذ قرار القبول أو الرفض.</small></div><button id="refreshIntakes" class="btn ghost">↻ تحديث</button></div>'+(rows?'<div class="table-wrap"><table class="table"><thead><tr><th>رقم الطلب</th><th>المتقدم</th><th>النوع</th><th>الهاتف</th><th>المنطقة</th><th>الحالة</th><th>التاريخ</th><th>التفاصيل</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="loading">لا توجد طلبات جديدة محفوظة حتى الآن.</div>');
+    if(!box){box=document.createElement('section');box.id='publicIntakes';box.className='dashboard';box.style.marginTop='0';document.getElementById('dashboard').after(box);}
+    const oldQuery=box.querySelector('#intakeSearch')?.value||'';
+    const oldStatus=box.querySelector('#intakeStatus')?.value||'';
+    const query=oldQuery.trim();
+    let request=sb2.from('application_intakes').select('*',{count:'exact'}).eq('is_test',false).order('created_at',{ascending:false}).range(intakePage*INTAKE_PAGE_SIZE,(intakePage+1)*INTAKE_PAGE_SIZE-1);
+    if(oldStatus) request=request.eq('status',oldStatus);
+    if(query){
+      const safe=query.replace(/[,%()]/g,' ').trim();
+      if(safe) request=request.or('applicant_name.ilike.%'+safe+'%,phone.ilike.%'+safe+'%,area.ilike.%'+safe+'%,application_type.ilike.%'+safe+'%'+( /^\\d+$/.test(safe)?',application_number.eq.'+safe:''));
+    }
+    const {data,error,count}=await request;
+    if(error){box.innerHTML='<div class="error">تعذر تحميل الطلبات: '+esc(error.message)+'. تأكد من تطبيق ترحيل جاهزية الطلبات.</div>';return;}
+    const pageRows=data||[];
+    const rows=pageRows.map(x=>`<tr><td><b>${esc(x.application_number)}</b></td><td>${esc(x.applicant_name)}</td><td>${esc(x.application_type)}</td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.area)}</td><td><span class="status ${esc(x.status)}">${esc(x.status)}</span></td><td>${new Date(x.created_at).toLocaleString('ar-LB')}</td><td><button class="btn gold" data-intake="${esc(x.id)}">عرض</button></td></tr>`).join('');
+    const pages=Math.max(1,Math.ceil((count||0)/INTAKE_PAGE_SIZE));
+    box.innerHTML='<div class="topbar"><div><h2 style="margin:0">طلبات الانتساب الجديدة من المنصة</h2><small style="color:var(--muted)">الاختبار مستبعد من العرض. بحث وفلترة وترقيم صفحات؛ 50 طلبًا في الصفحة.</small></div><button id="refreshIntakes" class="btn ghost">↻ تحديث</button></div>'+
+      '<div class="actions" style="margin:12px 0;gap:8px;flex-wrap:wrap"><input id="intakeSearch" aria-label="بحث الطلبات" placeholder="بحث بالاسم أو الهاتف أو المنطقة أو رقم الطلب" value="'+esc(oldQuery)+'" style="min-width:240px;flex:1"><select id="intakeStatus" aria-label="فلترة حسب الحالة"><option value="">كل الحالات</option><option value="pending">قيد الدراسة</option><option value="review">قيد المراجعة</option><option value="approved">مقبول</option><option value="rejected">مرفوض</option></select><button id="intakeSearchBtn" class="btn primary">بحث</button></div>'+
+      (rows?'<div class="table-wrap"><table class="table"><thead><tr><th>رقم الطلب</th><th>المتقدم</th><th>النوع</th><th>الهاتف</th><th>المنطقة</th><th>الحالة</th><th>التاريخ</th><th>التفاصيل</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="loading">لا توجد طلبات في هذه الصفحة أو بهذه الفلاتر.</div>')+
+      '<div class="actions" style="align-items:center;justify-content:space-between;margin-top:12px"><span>إجمالي النتائج: '+(count||0)+' · الصفحة '+(intakePage+1)+' من '+pages+'</span><div class="actions"><button id="intakePrev" class="btn ghost" '+(intakePage===0?'disabled':'')+'>السابق</button><button id="intakeNext" class="btn ghost" '+(intakePage+1>=pages?'disabled':'')+'>التالي</button></div></div>';
     box.querySelector('#refreshIntakes')?.addEventListener('click',()=>{loadAdminExtras();loadPublicIntakes()});
+    box.querySelector('#intakeSearchBtn')?.addEventListener('click',()=>{intakePage=0;loadPublicIntakes()});
+    box.querySelector('#intakeSearch')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();intakePage=0;loadPublicIntakes()}});
+    box.querySelector('#intakeStatus')?.addEventListener('change',()=>{intakePage=0;loadPublicIntakes()});
+    box.querySelector('#intakePrev')?.addEventListener('click',()=>{if(intakePage>0){intakePage--;loadPublicIntakes()}});
+    box.querySelector('#intakeNext')?.addEventListener('click',()=>{if((intakePage+1)*INTAKE_PAGE_SIZE<(count||0)){intakePage++;loadPublicIntakes()}});
     box.querySelectorAll('[data-intake]').forEach(btn=>btn.addEventListener('click',async()=>{
-      const x=data.find(v=>v.id===btn.dataset.intake);if(!x)return;
+      const x=pageRows.find(v=>v.id===btn.dataset.intake);if(!x)return;
       const payload=Object.entries(x.payload||{}).map(([k,v])=>`<div class="detail"><b>${esc(k)}</b>${esc(typeof v==='object'?JSON.stringify(v):v)}</div>`).join('');
       const {data:files}=await sb2.from('application_intake_files').select('*').eq('intake_id',x.id).order('created_at',{ascending:false});
       const docs=(files||[]).map(f=>`<div class="doc"><b>${esc(f.file_name)}</b><br><small>${esc(f.document_category||'')} · ${esc(f.mime_type||'')} · ${Math.round((f.file_size||0)/1024)} KB · الحالة: ${esc(f.verification_status||'pending')}</small><div class="actions"><button class="btn ghost" data-file="${esc(f.storage_path)}">فتح المستند</button><button class="btn ghost" data-download="${esc(f.storage_path)}" data-name="${esc(f.file_name)}">تحميل</button><button class="btn primary" data-doc-status="approved" data-doc-id="${esc(f.id)}">اعتماد الملف</button><button class="btn danger" data-doc-status="rejected" data-doc-id="${esc(f.id)}">رفض الملف</button></div></div>`).join('')||'لا توجد مستندات مرفوعة.';
@@ -50,8 +71,8 @@
         const {error}=await sb2.from('application_intake_files').update({verification_status:b.dataset.docStatus}).eq('id',b.dataset.docId).select('id,verification_status').single();
         if(error){alert('تعذر تحديث حالة الملف: '+error.message);return}
         await sb2.from('audit_logs').insert({action:'intake_file_status_'+b.dataset.docStatus,table_name:'application_intake_files',record_id:b.dataset.docId,user_id:(await sb2.auth.getUser()).data.user.id});
-        const f=(files||[]).find(v=>v.id===b.dataset.docId); if(f)f.verification_status=b.dataset.docStatus;
-        b.parentElement?.parentElement?.querySelector('small')?.replaceChildren(document.createTextNode((b.parentElement.parentElement.querySelector('small')?.textContent||'').replace(/الحالة: [^ ]+$/,'الحالة: '+b.dataset.docStatus)));
+        const f=(files||[]).find(v=>v.id===b.dataset.docId);if(f)f.verification_status=b.dataset.docStatus;
+        const small=b.parentElement?.parentElement?.querySelector('small');if(small)small.textContent=small.textContent.replace(/الحالة: [^ ]+$/,'الحالة: '+b.dataset.docStatus);
       }));
       document.getElementById('modalBody').querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',async()=>{
         let result,error;
