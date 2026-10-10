@@ -48,7 +48,7 @@ test("knowledge question goes through the structured model response, not the kno
   expect(requestBody.generationConfig.responseMimeType).toBe("application/json");
   expect(requestBody.generationConfig.responseSchema.properties.reply.type).toBe("string");
   expect(requestBody.url).toContain("generativelanguage.googleapis.com");
-  expect(requestBody.instructions).toContain("Editable admin settings");
+  expect(requestBody.systemInstruction.parts[0].text).toContain("Editable admin settings");
 });
 
 test("ambiguous French conversation preserves history and language", async () => {
@@ -65,9 +65,10 @@ test("ambiguous French conversation preserves history and language", async () =>
     "Test instructions",
   );
   expect(result.reply).toContain("ville");
-  expect(requestBody.input).toContain("Ma mère a 82 ans");
-  expect(requestBody.input).toContain("Latest customer message:");
-  expect(requestBody.input).toContain("Preferred language hint: fr");
+  const sentPrompt = requestBody.contents[0].parts[0].text;
+  expect(sentPrompt).toContain("Ma mère a 82 ans");
+  expect(sentPrompt).toContain("Latest customer message:");
+  expect(sentPrompt).toContain("Preferred language hint: fr");
 });
 
 test("complete intake and escalation are returned as structured fields", async () => {
