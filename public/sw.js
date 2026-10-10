@@ -6,7 +6,7 @@ self.addEventListener("message", function (e) {
   if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-var CACHE = "rafig-v83-20261008";
+var CACHE = "rafig-v84-20261010";
 var ASSETS = [
   "/",
   "/index.html",
@@ -86,8 +86,10 @@ self.addEventListener("fetch", function (e) {
   }
 
   // assets: network first, cache as fallback
+  // Reuse the browser HTTP cache for static images to avoid repeated full downloads.
+  var isStaticImage = /\.(?:png|jpe?g|webp|svg|ico)$/i.test(url.pathname);
   e.respondWith(
-    fetch(req, { cache: "no-store" }).then(function (res) {
+    fetch(req, { cache: isStaticImage ? "default" : "no-store" }).then(function (res) {
       if (res && res.ok) {
         var copy = res.clone();
         caches.open(CACHE).then(function (k) {
