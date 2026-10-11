@@ -1,0 +1,36 @@
+name: RAFIQ isolated agent test build
+
+on:
+  push:
+    branches:
+      - staging/agent-coolify-test-20261011
+  pull_request:
+    branches:
+      - staging/telegram-agent-primary
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.0
+      - name: Install dependencies
+        run: bun install
+      - name: Run mocked Gemini and privacy-redaction tests
+        run: bun test src/agent.test.ts
+      - name: Bundle the server without starting it
+        run: bun build src/index.ts --target=bun --outdir=/tmp/rafig-agent-staging-build
+      - name: Build the staging Docker image without publishing it
+        run: docker build --tag rafiq-agent-staging:ci .
+      - name: Check staging protections
+        shell: bash
+        run: |
+          grep -q 'const RAFIQ_STAGING_ONLY = true' src/index.ts
+          grep -q 'x-rafiq-staging-token' src/index.ts
+          grep -q 'if (RAFIQ_STAGING_ONLY || !telegramConfigured()) return;' src/index.ts
+          grep -q 'if(RAFIQ_STAGING_ONLY || process.env.TELEGRAM_MARKETING_ENABLED !== "true"' src/index.ts
