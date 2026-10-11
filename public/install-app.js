@@ -15,8 +15,6 @@
   function hide(){
     buttons().forEach(function(b){b.hidden=true;});
     hints().forEach(function(h){h.hidden=true;});
-    var apk=document.querySelectorAll("[data-rafiq-apk]");
-    apk.forEach(function(a){a.hidden=true;});
   }
   function ensureHint(){
     var h=document.querySelector("[data-rafiq-install-hint],#installHint");
@@ -38,23 +36,9 @@
     showInstallButton();
     showHint("على iPhone/iPad: اضغط مشاركة ⬆︎ ثم «إضافة إلى الشاشة الرئيسية» ثم «إضافة».");
   }
-  async function apkFallback(){
-    var candidates=["/rafig.apk","/downloads/rafig.apk"];
-    for(var i=0;i<candidates.length;i++){
-      try{
-        var r=await fetch(candidates[i],{method:"HEAD",cache:"no-store"});
-        if(r.ok){
-          var links=document.querySelectorAll("[data-rafiq-apk]");
-          if(!links.length){
-            var a=document.createElement("a");a.href=candidates[i];a.download="RAFIQ.apk";a.textContent="📦 تنزيل RAFIQ APK";a.setAttribute("data-rafiq-apk","");
-            a.style.cssText="display:inline-flex;align-items:center;justify-content:center;margin:6px;padding:10px 15px;border-radius:12px;background:#edf6f2;color:#087f58;font-weight:900;text-decoration:none";
-            (document.querySelector("[data-rafiq-install-container]")||document.body).appendChild(a);
-          }else links.forEach(function(a){a.href=candidates[i];a.hidden=false;});
-          return true;
-        }
-      }catch(_){}
-    }
-    return false;
+  function browserInstructions(){
+    showInstallButton();
+    showHint("لإضافة رفيق إلى جهازك: افتح قائمة المتصفح ⋮ ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». إذا لم يظهر الخيار، حدّث الصفحة وافتح الرابط عبر HTTPS في متصفح يدعم PWA.");
   }
   async function install(){
     if(installed()){hide();return;}
@@ -65,14 +49,12 @@
         var choice=await prompt.userChoice;
         if(choice&&choice.outcome==="accepted"){hide();return;}
       }catch(_){}
-      await apkFallback();
+      if(isIos){iosInstructions();return;}
+      browserInstructions();
       return;
     }
     if(isIos){iosInstructions();return;}
-    var apk=await apkFallback();
-    if(!apk){
-      showHint("التثبيت المباشر غير متاح من هذا المتصفح الآن. افتح RAFIQ في Chrome أو Edge عبر HTTPS ثم اضغط «تثبيت»."); 
-    }
+    browserInstructions();
   }
 
   window.addEventListener("beforeinstallprompt",function(e){
@@ -104,9 +86,12 @@
   function boot(){
     bind();
     if(installed()){hide();return;}
-    if(isIos){showInstallButton();showHint("على iPhone/iPad: مشاركة ⬆︎ ← إضافة إلى الشاشة الرئيسية ← إضافة.");return;}
-    /* On Chromium, the button remains hidden until beforeinstallprompt fires. */
-    buttons().forEach(function(b){b.hidden=true;});
+    if(isIos){iosInstructions();return;}
+    /* Keep the action visible even when the browser withholds beforeinstallprompt. */
+    showInstallButton();
+    if(!deferredPrompt){
+      showHint("يمكن تثبيت رفيق كتطبيق ويب. اضغط هنا ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية» من قائمة المتصفح.");
+    }
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 
