@@ -255,9 +255,9 @@ const callGeminiAgent = async (input: string) => {
   // Best-effort removal of direct identifiers before forwarding a customer's
   // text to a free-tier external model. This is not medical-data anonymization.
   const safeInput = input
-    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[EMAIL REDACTED]")
-    .replace(/(?:\\+?\\d[\\d\\s().-]{7,}\\d)/g, "[PHONE REDACTED]")
-    .replace(/(?:my name is|patient name is|je m'appelle|mi chiamo|ich heiße|اسمي|اسم المريض|اسم المريضة)\\s+[^\\n,.!?؛،]{1,60}/giu, "[NAME REDACTED]");
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[EMAIL REDACTED]")
+    .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g, "[PHONE REDACTED]")
+    .replace(/(?:my name is|patient name is|je m'appelle|mi chiamo|ich heiße|اسمي|اسم المريض|اسم المريضة)\s+[^\n,.;:!?؛،]{1,60}/giu, "[NAME REDACTED]");
 
   const model = (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
