@@ -214,6 +214,11 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
     if(inbound?.duplicate)return{id:String(message?.id??"unknown"),status:"duplicate_ignored"};
     console.log(JSON.stringify({event:"rafig_meta_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
     await forwardWhatsAppToTelegramManager(message,identity,body);
+    // Default business rule: inbound WhatsApp is forwarded for manual manager review. Do not call an external model or send an outbound WhatsApp reply unless both explicit switches are enabled.
+    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY!=="true"||process.env.WHATSAPP_SENDING_ENABLED!=="true"){
+      await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
+      return{id:String(message.id??""),status:"forwarded_to_telegram_manager"};
+    }
     const result=await draftInboundReply(body,identity.phone);
     if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
       try{
