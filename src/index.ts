@@ -162,7 +162,7 @@ const MAX_WEBHOOK_BODY = 512_000;
 const MAX_PUBLIC_INTAKE_BODY = 18 * 1024 * 1024;
 const PUBLIC_INTAKE_RATE_LIMIT_MS = 15_000;
 const PUBLIC_INTAKE_RATE_MAX_KEYS = 10_000;
-const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Resource-Policy":"same-origin","Content-Security-Policy":"default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https://images.pexels.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://qmuxaehrahfsnabyjens.supabase.co https://graph.facebook.com https://api.kapso.ai","Cache-Control":"no-store"};
+const securityHeaders = {"Strict-Transport-Security":"max-age=31536000; includeSubDomains","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Resource-Policy":"same-origin","Content-Security-Policy":"default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https://images.pexels.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://qmuxaehrahfsnabyjens.supabase.co https://graph.facebook.com https://api.kapso.ai","Cache-Control":"no-store"};
 const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0};
 const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
 const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
@@ -499,8 +499,8 @@ const telegramAdminIntake=async(ref:string)=>{
   const clean=String(ref??"").trim();
   if(!clean)return null;
   let url="";
-  if(/^\d+$/.test(clean))url="/rest/v1/application_intakes?application_number=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
-  else if(/^[0-9a-f-]{36}$/i.test(clean))url="/rest/v1/application_intakes?id=eq."+encodeURIComponent(clean)+"&select=*&limit=1";
+  if(/^\d+$/.test(clean))url="/rest/v1/application_intakes?application_number=eq."+encodeURIComponent(clean)+"&is_test=eq.false&select=*&limit=1";
+  else if(/^[0-9a-f-]{36}$/i.test(clean))url="/rest/v1/application_intakes?id=eq."+encodeURIComponent(clean)+"&is_test=eq.false&select=*&limit=1";
   else return null;
   const r=await supabaseServerRest(url);
   return r.response.ok&&Array.isArray(r.body)&&r.body[0]?r.body[0]:null;
@@ -536,7 +536,7 @@ const telegramAdminFormatIntake=async(intake:any)=>{
 };
 const telegramAdminList=async(statuses:string[],type?:string)=>{
   const or=statuses.map(s=>"status.eq."+encodeURIComponent(s)).join(",");
-  const r=await supabaseServerRest("/rest/v1/application_intakes?or=("+or+")&order=created_at.desc&select=id,application_number,application_type,applicant_name,phone,area,status,created_at&limit=50");
+  const r=await supabaseServerRest("/rest/v1/application_intakes?or=("+or+")&order=created_at.desc&is_test=eq.false&select=id,application_number,application_type,applicant_name,phone,area,status,created_at&limit=50");
   const rows=Array.isArray(r.body)?r.body:[];
   return type?rows.filter((x:any)=>telegramMemberType(x.application_type)===type):rows;
 };
