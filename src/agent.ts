@@ -289,9 +289,45 @@ const callGeminiAgent = async (input: string) => {
   return { reply, model, provider: "gemini" as const };
 };
 
+const callOllamaAgent = async (input: string) => {
+  const baseUrl = (process.env.RAFIQ_OLLAMA_URL ?? "http://127.0.0.1:11434").trim().replace(/\/+$/, "");
+  const model = (process.env.RAFIQ_OLLAMA_MODEL ?? "qwen3:4b").trim() || "qwen3:4b";
+  const response = await fetch(baseUrl + "/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(180000),
+    body: JSON.stringify({
+      model,
+      system: SYSTEM_PROMPT,
+      prompt: input,
+      stream: false,
+      keep_alive: "5m",
+      options: { temperature: 0.35, num_predict: 1400 },
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.error(JSON.stringify({
+      event: "rafig.agent",
+      provider: "ollama",
+      status: "provider_error",
+      providerStatus: response.status,
+      providerError: String(payload?.error ?? "unknown").slice(0, 240),
+    }));
+    throw new Error("Local Ollama agent request failed");
+  }
+
+  // Some Qwen3 variants return a thinking section; do not expose it.
+  const reply = String(payload?.response ?? "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  if (!reply) throw new Error("Local Ollama agent returned no text");
+  return { reply, model: "ollama:" + model, provider: "ollama" as const };
+};
+
 const callAgent = async (input: string) => {
   const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "openai").trim().toLowerCase();
   if (provider === "gemini") return callGeminiAgent(input);
+  if (provider === "ollama") return callOllamaAgent(input);
   if (provider !== "openai") throw new Error("Unsupported RAFIQ agent provider");
   return callOpenAIAgent(input);
 };
