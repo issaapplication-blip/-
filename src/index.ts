@@ -457,10 +457,17 @@ const telegramMarketingTick = async () => {
 };
 
 const registerTelegramWebhookOnStartup = async () => {
-  if (!telegramConfigured()) return;
-  let base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"); while(base.endsWith("/")) base=base.slice(0,-1);
+  // New hosts must be health-checked before changing the live bot's webhook.
+  if (process.env.RAFIQ_TELEGRAM_WEBHOOK_AUTOCONFIG !== "true" || !telegramConfigured()) return;
+  const configuredBase = (process.env.PUBLIC_BASE_URL ?? "").trim();
+  const webhookSecret = telegramWebhookSecret();
+  if (!configuredBase.startsWith("https://") || !webhookSecret || configuredBase.includes("rafiq-o6qd.onrender.com")) {
+    console.error(JSON.stringify({event:"rafig_telegram_webhook_registration_blocked",reason:"valid PUBLIC_BASE_URL and TELEGRAM_WEBHOOK_SECRET are required"}));
+    return;
+  }
+  let base=configuredBase; while(base.endsWith("/")) base=base.slice(0,-1);
   try {
-    await telegramSetWebhook(base+"/api/telegram/webhook?v=3",telegramWebhookSecret()||undefined);
+    await telegramSetWebhook(base+"/api/telegram/webhook?v=3",webhookSecret);
     console.log(JSON.stringify({event:"rafig_telegram_webhook_registered",url:base+"/api/telegram/webhook"}));
   } catch (error) {
     console.error(JSON.stringify({event:"rafig_telegram_webhook_registration_failed",error:String(error).slice(0,200)}));
