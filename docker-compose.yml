@@ -1,3 +1,5 @@
+name: rafiq
+
 services:
   app:
     build:
