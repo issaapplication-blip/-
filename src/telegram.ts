@@ -70,7 +70,8 @@ export const telegramGetWebhookInfo = async () =>
 
 export const verifyTelegramWebhookSecret = (request: Request) => {
   const expected = telegramWebhookSecret();
-  if (!expected) return true;
+  // Fail closed: never accept unsigned Telegram webhooks when the secret is missing.
+  if (!expected) return false;
   return request.headers.get("x-telegram-bot-api-secret-token") === expected;
 };
 
