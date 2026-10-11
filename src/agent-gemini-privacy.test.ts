@@ -36,7 +36,8 @@ test("redacts direct phone, email, and explicitly named contact identifiers befo
     false,
   );
 
-  const sent = JSON.stringify(sentBody);
+  // The system prompt intentionally contains RAFIQ official contact details. Test only the customer contents being sent to the model.
+  const sent = JSON.stringify(sentBody.contents);
   expect(sent).not.toContain("Example Person");
   expect(sent).not.toContain("+961 81 506 299");
   expect(sent).not.toContain("person@example.com");
