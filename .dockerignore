@@ -1,0 +1,26 @@
+.git/
+.github/
+node_modules/
+coverage/
+test-results/
+playwright-report/
+.DS_Store
+
+.env
+.env.*
+!.env.example
+secrets/
+private/
+backups/
+*.pem
+*.key
+*.crt
+*.log
+*.zip
+
+# Staging test runs one inline page only; do not copy the live site's pages/assets.
+public/
+assets/
+uploads/
+storage/
+طلبات/
