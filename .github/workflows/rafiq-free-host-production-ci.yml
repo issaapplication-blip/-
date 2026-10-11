@@ -1,0 +1,36 @@
+name: RAFIQ full-app free-host build checks
+on:
+  push:
+    branches:
+      - deploy/rafiq-free-host-20261011
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.0
+      - name: Install dependencies
+        run: bun install
+      - name: Test Gemini identifier-redaction path
+        run: bun test src/agent-gemini-privacy.test.ts
+      - name: Compile full application without starting it
+        run: bun build src/index.ts --target=bun --outdir=/tmp/rafig-production-free-host
+      - name: Build full production Docker image
+        run: docker build --tag rafiq-production-free-host:ci .
+      - name: Verify conservative WhatsApp and broadcast defaults
+        shell: bash
+        run: |
+          grep -q 'ENV KAPSO_ENABLED=false' Dockerfile
+          grep -q 'ENV WHATSAPP_SENDING_ENABLED=false' Dockerfile
+          grep -q 'ENV RAFIQ_WHATSAPP_AUTO_REPLY=false' Dockerfile
+          grep -q 'ENV RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING=true' Dockerfile
+          grep -q 'forwarded_to_telegram_manager' src/index.ts
+          grep -q 'safeInput' src/agent.ts
