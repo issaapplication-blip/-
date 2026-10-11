@@ -217,7 +217,7 @@ const extractResponseText = (payload: any) => {
   return parts.join("\n").trim();
 };
 
-const callAgent = async (input: string) => {
+const callOpenAIAgent = async (input: string) => {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OpenAI server configuration is incomplete");
 
@@ -239,13 +239,54 @@ const callAgent = async (input: string) => {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    console.error(JSON.stringify({ event: "rafig.agent", status: "provider_error", providerStatus: response.status, providerError: payload?.error?.message || payload?.error?.type || payload?.message || "unknown" }));
+    console.error(JSON.stringify({ event: "rafig.agent", provider: "openai", status: "provider_error", providerStatus: response.status, providerError: payload?.error?.message || payload?.error?.type || payload?.message || "unknown" }));
     throw new Error("OpenAI agent request failed");
   }
 
   const reply = extractResponseText(payload);
   if (!reply) throw new Error("OpenAI agent returned no text");
-  return { reply, model };
+  return { reply, model, provider: "openai" as const };
+};
+
+const callGeminiAgent = async (input: string) => {
+  const apiKey = (process.env.GEMINI_API_KEY ?? "").trim();
+  if (!apiKey) throw new Error("Gemini server configuration is incomplete");
+
+  const model = (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    method: "POST",
+    headers: {
+      "x-goog-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    signal: AbortSignal.timeout(25000),
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ role: "user", parts: [{ text: input }] }],
+      generationConfig: { maxOutputTokens: 1200 },
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.error(JSON.stringify({ event: "rafig.agent", provider: "gemini", status: "provider_error", providerStatus: response.status, providerError: payload?.error?.message || payload?.error?.status || "unknown" }));
+    throw new Error("Gemini agent request failed");
+  }
+
+  const reply = (payload?.candidates?.[0]?.content?.parts ?? [])
+    .map((part: any) => typeof part?.text === "string" ? part.text : "")
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+  if (!reply) throw new Error("Gemini agent returned no text");
+  return { reply, model, provider: "gemini" as const };
+};
+
+const callAgent = async (input: string) => {
+  const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "openai").trim().toLowerCase();
+  if (provider === "gemini") return callGeminiAgent(input);
+  if (provider !== "openai") throw new Error("Unsupported RAFIQ agent provider");
+  return callOpenAIAgent(input);
 };
 
 const CARE_TRIGGER_RE = /(?:رعاية|مسن|رعاية منزلية|تمريض|ممرض|ممرضة|مريض|مرضى|علاج فيزيائي|مبيت|مستشفى|جلطة|kareh|nurse|caregiver|physio)/i;
