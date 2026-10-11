@@ -252,7 +252,7 @@ const callGeminiAgent = async (input: string) => {
   const apiKey = (process.env.GEMINI_API_KEY ?? "").trim();
   if (!apiKey) throw new Error("Gemini server configuration is incomplete");
 
-  const model = (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-2.5-flash").trim();
+  const model = (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
     headers: {
