@@ -1,0 +1,24 @@
+# Source control and CI
+.git/
+.github/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+.cache/
+.DS_Store
+
+# Secrets and local configuration (never bake these into the image)
+.env
+.env.*
+!.env.example
+secrets/
+private/
+*.pem
+*.key
+*.crt
+*.log
+
+# Do not package uploaded/submitted applicant documents or backup archives
+طلبات/
+*.zip
