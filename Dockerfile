@@ -5,21 +5,21 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install
 
-# The production site and public assets are intentionally included.
-# .dockerignore removes local secrets, applicant files, archives, and uploads.
 COPY . .
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV RAFIQ_AGENT_PROVIDER=gemini
-ENV RAFIQ_GEMINI_MODEL=gemini-3.6-flash
-
-# Safe default channel policy: inbound WhatsApp only; manager replies manually.
+ENV RAFIQ_AGENT_PROVIDER=ollama
+ENV RAFIQ_OLLAMA_URL=http://ollama:11434
+ENV RAFIQ_OLLAMA_MODEL=qwen3:4b
+ENV RAFIQ_TELEGRAM_WEBHOOK_AUTOCONFIG=false
 ENV KAPSO_ENABLED=false
+ENV KAPSO_WEBHOOK_AUTOCONFIG=false
 ENV WHATSAPP_SENDING_ENABLED=false
 ENV RAFIQ_WHATSAPP_AUTO_REPLY=false
 ENV RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING=true
 ENV TELEGRAM_BROADCAST_ON_START=false
+ENV TELEGRAM_MARKETING_ENABLED=false
 
 EXPOSE 3000
 CMD ["bun", "src/index.ts"]
