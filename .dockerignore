@@ -1,0 +1,24 @@
+.git/
+.github/
+node_modules/
+coverage/
+test-results/
+playwright-report/
+.DS_Store
+
+.env
+.env.*
+!.env.example
+secrets/
+private/
+backups/
+*.pem
+*.key
+*.crt
+*.log
+*.zip
+
+# Applicant uploads are kept in the controlled data store, not in the image.
+uploads/
+storage/
+طلبات/
