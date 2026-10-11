@@ -301,6 +301,7 @@ const callOllamaAgent = async (input: string) => {
       system: SYSTEM_PROMPT,
       prompt: input,
       stream: false,
+      think: false,
       keep_alive: "5m",
       options: { temperature: 0.35, num_predict: 1400 },
     }),
