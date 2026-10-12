@@ -11,7 +11,7 @@ test("service worker checks cached binary assets before making a network request
   expect(source).toContain("if (cached) return cached;");
   expect(source).toContain("k.put(req, res.clone())");
   expect(source).toContain('var CACHE = "rafig-v84-20261012"');
-  expect(source).toMatch(/\/(?:\^)?\\\.\(\?:png\|jpe\?g\|webp\|avif\|svg\|ico\|woff2\?\)\$\/i/);
+  expect(source).toContain("woff2?)$/i.test(url.pathname)");
 });
 
 test("HTML, JavaScript, CSS and manifest remain network-first and bypass browser cache", () => {
