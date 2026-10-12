@@ -7,22 +7,23 @@ const source = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8")
 function setupWorker() {
   const handlers = new Map<string, (event: any) => void>();
   const store = new Map<string, Response>();
+  const networkOptions: Array<RequestInit | undefined> = [];
   let networkCalls = 0;
-  const cache = {
-    match: async (request: Request | string) => {
-      const key = typeof request === "string" ? new URL(request, "https://rafig.test").href : request.url;
-      const value = store.get(key);
-      return value ? value.clone() : undefined;
-    },
-    put: async (request: Request | string, response: Response) => {
-      const key = typeof request === "string" ? new URL(request, "https://rafig.test").href : request.url;
-      store.set(key, response.clone());
-    },
-    add: async () => undefined
+  const keyFor = (request: Request | string) => {
+    const url = typeof request === "string" ? new URL(request, "https://rafig.test") : new URL(request.url);
+    return url.origin + url.pathname + url.search;
   };
   const cachesMock = {
-    open: async () => cache,
-    match: cache.match,
+    open: async () => ({
+      put: async (request: Request | string, response: Response) => {
+        store.set(keyFor(request), response.clone());
+      },
+      add: async () => undefined
+    }),
+    match: async (request: Request | string) => {
+      const value = store.get(keyFor(request));
+      return value ? value.clone() : undefined;
+    },
     keys: async () => ["rafig-v84-20261012"],
     delete: async () => true
   };
@@ -38,14 +39,16 @@ function setupWorker() {
     URL,
     Request,
     Response,
-    fetch: async (_request: Request, _options?: RequestInit) => {
+    fetch: async (_request: Request, options?: RequestInit) => {
       networkCalls++;
+      networkOptions.push(options);
       return new Response("network-"+networkCalls, { status: 200, headers: {"Content-Type":"image/png"} });
     }
   };
   vm.runInNewContext(source, context);
   return {
     getNetworkCalls: () => networkCalls,
+    getNetworkOptions: () => networkOptions,
     async request(url: string) {
       const event: any = {
         request: new Request(url, { method: "GET" }),
@@ -71,4 +74,5 @@ test("HTML, JS, CSS and manifest remain network-first with no-store", async () =
     await worker.request("https://rafig.test"+path);
   }
   expect(worker.getNetworkCalls()).toBe(4);
+  expect(worker.getNetworkOptions().every((options) => options?.cache === "no-store")).toBe(true);
 });
