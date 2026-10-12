@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - deploy/rafiq-free-host-20261011
+      - fix/static-image-caching-20261012
   pull_request:
     branches:
       - main
+      - deploy/rafiq-free-host-20261011
 permissions:
   contents: read
 jobs:
@@ -23,6 +25,10 @@ jobs:
         run: bun test src/agent-ollama.test.ts
       - name: Test Gemini privacy redaction
         run: bun test src/agent-gemini-privacy.test.ts
+      - name: Test static asset cache headers
+        run: bun test src/static-cache.test.ts
+      - name: Test service-worker cache behavior
+        run: bun test src/sw-cache.test.ts
       - name: Compile full application without starting it
         run: bun build src/index.ts --target=bun --outdir=/tmp/rafig-production-free-host
       - name: Validate Compose configuration

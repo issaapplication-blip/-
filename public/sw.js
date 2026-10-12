@@ -6,7 +6,7 @@ self.addEventListener("message", function (e) {
   if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-var CACHE = "rafig-v83-20261008";
+var CACHE = "rafig-v84-20261012";
 var ASSETS = [
   "/",
   "/index.html",
@@ -85,7 +85,28 @@ self.addEventListener("fetch", function (e) {
     return;
   }
 
-  // assets: network first, cache as fallback
+  // Large public binary assets: cache first to avoid re-downloading logos, icons and fonts.
+  // If an asset changes at the same URL, bump CACHE so installed clients refresh it.
+  if (/\.(?:png|jpe?g|webp|avif|svg|ico|woff2?)$/i.test(url.pathname)) {
+    e.respondWith(
+      caches.match(req).then(function (cached) {
+        if (cached) return cached;
+        return fetch(req).then(function (res) {
+          if (!res || !res.ok) return res;
+          return caches.open(CACHE).then(function (k) {
+            return k.put(req, res.clone()).then(function () { return res; });
+          });
+        }).catch(function () {
+          return caches.match(req).then(function (cachedFallback) {
+            return cachedFallback || new Response("unavailable", { status: 503 });
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  // HTML, JavaScript, CSS, JSON and manifest stay network-first so releases update immediately.
   e.respondWith(
     fetch(req, { cache: "no-store" }).then(function (res) {
       if (res && res.ok) {
