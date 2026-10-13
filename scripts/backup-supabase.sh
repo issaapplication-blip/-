@@ -9,8 +9,8 @@ for bin in pg_dump pg_restore openssl tar python3; do command -v "$bin" >/dev/nu
 [[ -f scripts/backup-storage.py ]] || { echo "Run this from repository root; scripts/backup-storage.py is missing." >&2; exit 2; }
 BACKUP_ROOT=./backups
 BUCKETS=private_documents
-if [[ -n "$RAFIQ_BACKUP_ROOT" ]]; then BACKUP_ROOT="$RAFIQ_BACKUP_ROOT"; fi
-if [[ -n "$SUPABASE_STORAGE_BUCKETS" ]]; then BUCKETS="$SUPABASE_STORAGE_BUCKETS"; fi
+if env | grep -q '^RAFIQ_BACKUP_ROOT='; then BACKUP_ROOT="$RAFIQ_BACKUP_ROOT"; fi
+if env | grep -q '^SUPABASE_STORAGE_BUCKETS='; then BUCKETS="$SUPABASE_STORAGE_BUCKETS"; fi
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$BACKUP_ROOT"; chmod 700 "$BACKUP_ROOT"
 WORK=$(mktemp -d)
