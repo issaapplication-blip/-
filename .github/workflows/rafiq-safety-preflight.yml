@@ -6,12 +6,16 @@ on:
       - "safety/**"
     paths:
       - "scripts/backup-supabase.sh"
+      - "scripts/backup-render-postgres.sh"
       - "docs/RAFIQ-SAFE-MIGRATION.md"
+      - ".gitignore"
       - ".github/workflows/rafiq-safety-preflight.yml"
   pull_request:
     paths:
       - "scripts/backup-supabase.sh"
+      - "scripts/backup-render-postgres.sh"
       - "docs/RAFIQ-SAFE-MIGRATION.md"
+      - ".gitignore"
       - ".github/workflows/rafiq-safety-preflight.yml"
 
 permissions:
@@ -23,9 +27,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check backup script syntax
-        run: bash -n scripts/backup-supabase.sh
-      - name: Check required safety guards
+        run: |
+          bash -n scripts/backup-supabase.sh
+          bash -n scripts/backup-render-postgres.sh
+      - name: Check Supabase backup safety guards
         run: |
           grep -q 'BACKUP_CONFIRM_TARGET' scripts/backup-supabase.sh
           grep -q 'pg_restore --list' scripts/backup-supabase.sh
           grep -q 'openssl enc -aes-256-cbc' scripts/backup-supabase.sh
+      - name: Check Render backup safety guards
+        run: |
+          grep -q 'BACKUP_CONFIRM_TARGET' scripts/backup-render-postgres.sh
+          grep -q 'pg_restore --list' scripts/backup-render-postgres.sh
+          grep -q 'openssl enc -aes-256-cbc' scripts/backup-render-postgres.sh
+      - name: Ensure local backups are ignored
+        run: |
+          grep -q '^private-backups/$' .gitignore
+          grep -q '\*.dump' .gitignore
+          grep -q '\*.dump.enc' .gitignore
