@@ -252,6 +252,13 @@ const callGeminiAgent = async (input: string) => {
   const apiKey = (process.env.GEMINI_API_KEY ?? "").trim();
   if (!apiKey) throw new Error("Gemini server configuration is incomplete");
 
+  // Best-effort removal of direct identifiers before forwarding a customer's
+  // text to a free-tier external model. This is not medical-data anonymization.
+  const safeInput = input
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[EMAIL REDACTED]")
+    .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g, "[PHONE REDACTED]")
+    .replace(/(?:my name is|patient name is|je m'appelle|mi chiamo|ich heiße|اسمي|اسم المريض|اسم المريضة)\s+[^\n,.;:!?؛،]{1,60}/giu, "[NAME REDACTED]");
+
   const model = (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
@@ -262,7 +269,7 @@ const callGeminiAgent = async (input: string) => {
     signal: AbortSignal.timeout(25000),
     body: JSON.stringify({
       system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: [{ role: "user", parts: [{ text: input }] }],
+      contents: [{ role: "user", parts: [{ text: safeInput }] }],
       generationConfig: { maxOutputTokens: 1200 },
     }),
   });
@@ -282,9 +289,46 @@ const callGeminiAgent = async (input: string) => {
   return { reply, model, provider: "gemini" as const };
 };
 
+const callOllamaAgent = async (input: string) => {
+  const baseUrl = (process.env.RAFIQ_OLLAMA_URL ?? "http://127.0.0.1:11434").trim().replace(/\/+$/, "");
+  const model = (process.env.RAFIQ_OLLAMA_MODEL ?? "qwen3:4b").trim() || "qwen3:4b";
+  const response = await fetch(baseUrl + "/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(180000),
+    body: JSON.stringify({
+      model,
+      system: SYSTEM_PROMPT,
+      prompt: input,
+      stream: false,
+      think: false,
+      keep_alive: "5m",
+      options: { temperature: 0.35, num_predict: 1400 },
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.error(JSON.stringify({
+      event: "rafig.agent",
+      provider: "ollama",
+      status: "provider_error",
+      providerStatus: response.status,
+      providerError: String(payload?.error ?? "unknown").slice(0, 240),
+    }));
+    throw new Error("Local Ollama agent request failed");
+  }
+
+  // Some Qwen3 variants return a thinking section; do not expose it.
+  const reply = String(payload?.response ?? "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  if (!reply) throw new Error("Local Ollama agent returned no text");
+  return { reply, model: "ollama:" + model, provider: "ollama" as const };
+};
+
 const callAgent = async (input: string) => {
   const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "openai").trim().toLowerCase();
   if (provider === "gemini") return callGeminiAgent(input);
+  if (provider === "ollama") return callOllamaAgent(input);
   if (provider !== "openai") throw new Error("Unsupported RAFIQ agent provider");
   return callOpenAIAgent(input);
 };

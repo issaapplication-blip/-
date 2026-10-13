@@ -1,0 +1,30 @@
+name: RAFIQ safety tools checks
+
+on:
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "public/_headers"
+      - "docs/SAFE-MIGRATION-RUNBOOK.md"
+      - ".github/workflows/safety-tools-check.yml"
+  push:
+    branches:
+      - "safety/backup-cloudflare-telegram-20261014"
+    paths:
+      - "scripts/**"
+      - "public/_headers"
+      - "docs/SAFE-MIGRATION-RUNBOOK.md"
+      - ".github/workflows/safety-tools-check.yml"
+
+jobs:
+  lint-safety-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check shell syntax
+        run: bash -n scripts/backup-supabase.sh scripts/restore-backup-local.sh scripts/telegram-webhook-smoke.sh
+      - name: Check Python syntax
+        run: python -m py_compile scripts/backup-storage.py

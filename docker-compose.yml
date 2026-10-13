@@ -1,0 +1,83 @@
+name: rafiq
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: "production"
+      PORT: "3000"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
+      SUPABASE_URL: "${SUPABASE_URL:-https://qmuxaehrahfsnabyjens.supabase.co}"
+      SUPABASE_ANON_KEY: "${SUPABASE_ANON_KEY:-}"
+      SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY:-}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_WEBHOOK_SECRET: "${TELEGRAM_WEBHOOK_SECRET:-}"
+      TELEGRAM_MANAGER_CHAT_IDS: "${TELEGRAM_MANAGER_CHAT_IDS:-}"
+      RAFIQ_TELEGRAM_ADMIN_CHAT_IDS: "${RAFIQ_TELEGRAM_ADMIN_CHAT_IDS:-}"
+      RAFIQ_TELEGRAM_ADMIN_USERNAMES: "${RAFIQ_TELEGRAM_ADMIN_USERNAMES:-MHDISSA980}"
+      RAFIQ_AGENT_PROVIDER: "ollama"
+      RAFIQ_OLLAMA_URL: "http://ollama:11434"
+      RAFIQ_OLLAMA_MODEL: "qwen3:4b"
+      RAFIQ_TELEGRAM_WEBHOOK_AUTOCONFIG: "${RAFIQ_TELEGRAM_WEBHOOK_AUTOCONFIG:-false}"
+      META_VERIFY_TOKEN: "${META_VERIFY_TOKEN:-}"
+      META_APP_SECRET: "${META_APP_SECRET:-}"
+      META_GRAPH_API_VERSION: "${META_GRAPH_API_VERSION:-v23.0}"
+      KAPSO_ENABLED: "false"
+      KAPSO_WEBHOOK_AUTOCONFIG: "false"
+      WHATSAPP_SENDING_ENABLED: "false"
+      RAFIQ_WHATSAPP_AUTO_REPLY: "false"
+      RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING: "true"
+      TELEGRAM_BROADCAST_ON_START: "false"
+      TELEGRAM_MARKETING_ENABLED: "false"
+    depends_on:
+      ollama-model-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 8s
+      retries: 5
+      start_period: 30s
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    expose:
+      - "11434"
+    environment:
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_KEEP_ALIVE: "5m"
+      OLLAMA_NUM_PARALLEL: "1"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  ollama-model-init:
+    image: ollama/ollama:latest
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+    entrypoint: ["/bin/sh", "-c"]
+    command: "ollama pull qwen3:4b"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:
