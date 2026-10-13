@@ -1,0 +1,31 @@
+name: RAFIQ safety preflight
+
+on:
+  push:
+    branches:
+      - "safety/**"
+    paths:
+      - "scripts/backup-supabase.sh"
+      - "docs/RAFIQ-SAFE-MIGRATION.md"
+      - ".github/workflows/rafiq-safety-preflight.yml"
+  pull_request:
+    paths:
+      - "scripts/backup-supabase.sh"
+      - "docs/RAFIQ-SAFE-MIGRATION.md"
+      - ".github/workflows/rafiq-safety-preflight.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  shell-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check backup script syntax
+        run: bash -n scripts/backup-supabase.sh
+      - name: Check required safety guards
+        run: |
+          grep -q 'BACKUP_CONFIRM_TARGET' scripts/backup-supabase.sh
+          grep -q 'pg_restore --list' scripts/backup-supabase.sh
+          grep -q 'openssl enc -aes-256-cbc' scripts/backup-supabase.sh
