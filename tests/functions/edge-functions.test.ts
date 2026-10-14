@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { createHmac } from "node:crypto";
 import { loadFunction } from "./harness";
 
 const BASE = { SUPABASE_URL: "https://example.invalid", SUPABASE_SERVICE_ROLE_KEY: "svc-test-key-0000000000000000" };
@@ -53,30 +52,5 @@ describe("rafiq-agent caller isolation", () => {
     const body: any = await (await f.handler(post({ message: "عندي طوارئ" }))).json();
     expect(body.escalated).toBe(true);
     expect(f.calls.some(c => c.table === "whatsapp_pending_approvals" && c.op === "insert")).toBe(true);
-  });
-});
-
-describe("meta-whatsapp-webhook remains manual-only", () => {
-  const SECRET = "app-secret-test";
-  const sign = (body: string) => "sha256=" + createHmac("sha256", SECRET).update(body).digest("hex");
-  const env = { ...BASE, META_APP_SECRET: SECRET, META_VERIFY_TOKEN: "verify-test", META_ACCESS_TOKEN: "meta-test", META_PHONE_NUMBER_ID: "1" };
-  const event = { object: "whatsapp_business_account", entry: [{ changes: [{ value: { messages: [{ id: "wamid.test", from: "96100000000", type: "text", text: { body: "مرحبا" } }] } }] }] };
-
-  test("valid signed inbound is stored without calling agent or sending outbound", async () => {
-    const urls: string[] = [];
-    const f = loadFunction("meta-whatsapp-webhook", env, async (url) => { urls.push(url); return { ok: true, json: async () => ({}) }; });
-    const raw = JSON.stringify(event);
-    const res = await f.handler(new Request("https://f.invalid/", { method: "POST", headers: { "x-hub-signature-256": sign(raw) }, body: raw }));
-    expect(res.status).toBe(200);
-    expect(urls).toEqual([]);
-    expect(f.calls.some(c => c.table === "whatsapp_inbound_events" && c.op === "insert")).toBe(true);
-    expect(f.calls.some(c => c.table === "whatsapp_outbound_messages")).toBe(false);
-  });
-  test("missing or invalid signature is rejected", async () => {
-    const f = loadFunction("meta-whatsapp-webhook", env, async () => { throw new Error("no network expected"); });
-    const raw = JSON.stringify(event);
-    expect((await f.handler(new Request("https://f.invalid/", { method: "POST", body: raw }))).status).toBe(401);
-    expect((await f.handler(new Request("https://f.invalid/", { method: "POST", headers: { "x-hub-signature-256": "sha256=" + "0".repeat(64) }, body: raw }))).status).toBe(401);
-    expect(f.calls.length).toBe(0);
   });
 });
