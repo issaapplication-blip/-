@@ -18,8 +18,8 @@ BEGIN
     'whatsapp_webhook_events'
   ] LOOP
     EXECUTE format(
-      'CREATE POLICY service_role_only_access ON public.%I FOR ALL TO service_role USING (true) WITH CHECK (true)',
-      tbl
+      'DROP POLICY IF EXISTS service_role_only_access ON public.%I; CREATE POLICY service_role_only_access ON public.%I FOR ALL TO service_role USING (true) WITH CHECK (true)',
+      tbl, tbl
     );
   END LOOP;
 END
@@ -34,13 +34,14 @@ REVOKE EXECUTE ON FUNCTION public.admin_set_provider_status(uuid, text, text, te
 GRANT EXECUTE ON FUNCTION public.admin_set_provider_status(uuid, text, text, text) TO authenticated, service_role;
 
 -- Atomic per-chat rolling-window limiter for the Telegram webhook.
-CREATE TABLE public.telegram_webhook_rate_limits (
+CREATE TABLE IF NOT EXISTS public.telegram_webhook_rate_limits (
   chat_id text PRIMARY KEY,
   window_started_at timestamptz NOT NULL DEFAULT now(),
   request_count integer NOT NULL DEFAULT 0 CHECK (request_count >= 0),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.telegram_webhook_rate_limits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS service_role_only_access ON public.telegram_webhook_rate_limits;
 CREATE POLICY service_role_only_access ON public.telegram_webhook_rate_limits
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
