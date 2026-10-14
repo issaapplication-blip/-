@@ -44,9 +44,9 @@ for here, dirs, files in os.walk(root):
             with open(path,"w",encoding="utf-8",newline="") as f: f.write(updated)
         if "rafiq-o6qd.onrender.com" in updated:
             raise SystemExit("Suspended Render URL remains in static asset: "+os.path.relpath(path,root))
-open(os.path.join(root,"_routes.json"),"w",encoding="utf-8") as f:
+with open(os.path.join(root,"_routes.json"),"w",encoding="utf-8") as f:
     f.write('{"version":1,"include":["/api/*"],"exclude":[]}')
-open(os.path.join(root,"_headers"),"w",encoding="utf-8") as f:
+with open(os.path.join(root,"_headers"),"w",encoding="utf-8") as f:
     f.write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  X-Frame-Options: SAMEORIGIN\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Cache-Control: no-store\n\n/assets/*\n  Cache-Control: public, max-age=86400, stale-while-revalidate=604800\n")
 print(f"Cloudflare Pages static bundle created at {root}; replaced {replaced} suspended-host URLs.")
 PY
