@@ -36,6 +36,12 @@ test("Telegram requests are stored only after a real session write and never pro
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
   expect(source).toContain("function redactPhones");
+  expect(source).toContain(String.raw\`.replace(/(?:\+?961[\s().-]*\`);
+  expect(source).toContain(String.raw\`.replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b\`);
+  const lebanonNumber = /(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g;
+  const internationalNumber = /\b(?:\+?\d[\d\s().-]{7,}\d)\b/g;
+  expect("Contact +961 81 506 299 now".replace(lebanonNumber, "[رقم محجوب]")).not.toContain("81 506 299");
+  expect("Call +39 333 123 4567".replace(internationalNumber, "[رقم محجوب]")).not.toContain("333 123 4567");
   expect(source).toContain("api.cloudflare.com/client/v4/accounts/");
   expect(source).not.toContain("generativelanguage.googleapis.com");
   expect(source).not.toContain("api.openai.com");
