@@ -454,10 +454,25 @@ const telegramMarketingTick = async () => {
 };
 
 const registerTelegramWebhookOnStartup = async () => {
+  // Do not let a resumed legacy Render service overwrite the Supabase Edge webhook.
+  // Re-register only after an explicit, deliberate environment opt-in.
+  if (process.env.RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK !== "true") {
+    console.log(JSON.stringify({event:"rafig_telegram_auto_registration_disabled"}));
+    return;
+  }
   if (!telegramConfigured()) return;
-  let base=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"); while(base.endsWith("/")) base=base.slice(0,-1);
+  let base=(process.env.PUBLIC_BASE_URL??"").trim(); while(base.endsWith("/")) base=base.slice(0,-1);
+  if (!base || !base.startsWith("https://")) {
+    console.error(JSON.stringify({event:"rafig_telegram_webhook_registration_skipped",reason:"PUBLIC_BASE_URL must be set to the intended HTTPS origin"}));
+    return;
+  }
+  const secret=telegramWebhookSecret();
+  if (secret.length < 32) {
+    console.error(JSON.stringify({event:"rafig_telegram_webhook_registration_skipped",reason:"TELEGRAM_WEBHOOK_SECRET must be at least 32 characters"}));
+    return;
+  }
   try {
-    await telegramSetWebhook(base+"/api/telegram/webhook?v=3",telegramWebhookSecret()||undefined);
+    await telegramSetWebhook(base+"/api/telegram/webhook",secret);
     console.log(JSON.stringify({event:"rafig_telegram_webhook_registered",url:base+"/api/telegram/webhook"}));
   } catch (error) {
     console.error(JSON.stringify({event:"rafig_telegram_webhook_registration_failed",error:String(error).slice(0,200)}));
