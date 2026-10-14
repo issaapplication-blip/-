@@ -12,6 +12,10 @@ on:
       - 'src/http-cache-policy.test.ts'
       - 'ops/**'
       - '.github/workflows/rafiq-edge-function-tests.yml'
+      - 'supabase/functions/telegram-webhook/**'
+      - 'supabase/migrations/**'
+      - 'supabase/rollback/**'
+      - 'docs/recovery/**'
   push:
     branches: [main]
     paths:
