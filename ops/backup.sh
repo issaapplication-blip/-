@@ -6,11 +6,13 @@ PROJECT_REF="qmuxaehrahfsnabyjens"
 BACKUP_BASE="${RAFIQ_BACKUP_DIR:-$HOME/rafiq-secure-backups}"
 STAGE="preflight"
 WORK=""
+ARCHIVE=""
 fail() { echo "ERROR: $*" >&2; exit 1; }
 on_exit() {
   rc=$?
   if (( rc != 0 )); then
-    if [[ -n "$WORK" && -d "$WORK" ]]; then rm -rf "$WORK"; fi
+    if [[ -n "${WORK:-}" && -d "$WORK" ]]; then rm -rf -- "$WORK"; fi
+    if [[ -n "${ARCHIVE:-}" && -f "$ARCHIVE" ]]; then rm -f -- "$ARCHIVE" "${ARCHIVE}.sha256"; fi
     echo "RESULT=FAIL stage=$STAGE code=$rc" >&2
   fi
 }
@@ -160,11 +162,3 @@ trap - EXIT
 echo "BACKUP_CREATED=$ARCHIVE"
 echo "BACKUP_SHA256=$ARCHIVE_SHA"
 echo "NEXT=Run bash ops/verify.sh and send only its RESULT line."
-read -r -s -p 'Supabase DB URL: ' SUPABASE_DB_URL; printf '\n'
-read -r -s -p 'Supabase service-role key: ' SUPABASE_SERVICE_ROLE_KEY; printf '\n'
-export SUPABASE_DB_URL SUPABASE_SERVICE_ROLE_KEY
-export SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co'
-bash ops/backup.sh && bash ops/verify.sh
-rc=$?
-unset SUPABASE_DB_URL SUPABASE_SERVICE_ROLE_KEY
-exit "$rc"
