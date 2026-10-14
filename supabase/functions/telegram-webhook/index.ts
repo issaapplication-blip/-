@@ -100,11 +100,10 @@ function faq(text: string): string {
 
 function redactPhones(text: string): string {
   return text
-    .replace(/(?:\\+?961[\\s().-]*0?[\\s().-]*[1-9](?:[\\s().-]*\\d){6,7})/g, "[رقم محجوب]")
-    .replace(/\\b(?:\\+?\\d[\\d\\s().-]{7,}\\d)\\b/g, "[رقم محجوب]")
+    .replace(/(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g, "[رقم محجوب]")
+    .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "[رقم محجوب]")
     .slice(0, 1500);
 }
-
 async function generateFaqReply(text: string): Promise<string> {
   const known = faq(text);
   if (known) return known;
