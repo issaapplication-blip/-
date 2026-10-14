@@ -51,3 +51,11 @@ ARCHIVE_SHA="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
 trap - EXIT
 cleanup
 echo "RESULT=OK project=qmuxaehrahfsnabyjens archive=$(basename "$ARCHIVE") sha256=$ARCHIVE_SHA"
+read -r -s -p 'Supabase DB URL: ' SUPABASE_DB_URL; printf '\n'
+read -r -s -p 'Supabase service-role key: ' SUPABASE_SERVICE_ROLE_KEY; printf '\n'
+export SUPABASE_DB_URL SUPABASE_SERVICE_ROLE_KEY
+export SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co'
+bash ops/backup.sh && bash ops/verify.sh
+rc=$?
+unset SUPABASE_DB_URL SUPABASE_SERVICE_ROLE_KEY
+exit "$rc"
