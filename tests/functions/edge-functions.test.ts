@@ -25,6 +25,15 @@ describe("rafiq-agent caller isolation", () => {
     expect(upsert.args[0].external_conversation_id).toBe("meta:+96100000000");
     expect(upsert.args[0].customer_phone).toBe("+96100000000");
   });
+  test("public web caller can retain a UUID session but cannot choose a private channel", async () => {
+    const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
+    const sessionId = "8f2a1c44-1c72-4f95-8a65-9a8e3d91b0a1";
+    await f.handler(post({ message: "مرحبا", channel: "telegram", conversation_id: sessionId, phone: "+96100000000" }, { authorization: "Bearer anon-public-key" }));
+    const upsert = f.calls.find(c => c.op === "upsert")!;
+    expect(upsert.args[0].channel).toBe("web");
+    expect(upsert.args[0].external_conversation_id).toBe(sessionId);
+    expect(upsert.args[0].customer_phone).toBeNull();
+  });
   test("wrong service key is treated as public", async () => {
     const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
     await f.handler(post({ message: "مرحبا", channel: "whatsapp", conversation_id: "meta:1" }, { authorization: "Bearer " + BASE.SUPABASE_SERVICE_ROLE_KEY + "x" }));
