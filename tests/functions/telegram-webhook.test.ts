@@ -2,6 +2,9 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+const legacyIndex = readFileSync(resolve(import.meta.dir, "../../src/index.ts"), "utf8");
+const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram.ts"), "utf8");
+
 const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/telegram-webhook/index.ts"),
   "utf8",
@@ -36,4 +39,15 @@ test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never ena
   expect(source).toContain("api.cloudflare.com/client/v4/accounts/");
   expect(source).not.toContain("generativelanguage.googleapis.com");
   expect(source).not.toContain("api.openai.com");
+});
+
+test("legacy Render process cannot re-register the Telegram webhook unless explicitly opted in", () => {
+  expect(legacyIndex).toContain('RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK !== "true"');
+  expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
+});
+
+test("legacy Telegram webhook verifier fails closed when the secret is absent or short", () => {
+  expect(legacyTelegram).toContain("expected.length < 32");
+  expect(legacyTelegram).toContain("difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i)");
+  expect(legacyTelegram).not.toContain("if (!expected) return true");
 });
