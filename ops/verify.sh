@@ -51,3 +51,4 @@ ARCHIVE_SHA="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
 trap - EXIT
 cleanup
 echo "RESULT=OK project=qmuxaehrahfsnabyjens archive=$(basename "$ARCHIVE") sha256=$ARCHIVE_SHA"
+bash ops/backup.sh && bash ops/verify.sh
