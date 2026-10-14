@@ -12,6 +12,18 @@ const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 if (!supabaseUrl || !serviceKey) throw new Error("Supabase server configuration is incomplete");
 const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isServiceCaller(req: Request): boolean {
+  const authorization = req.headers.get("authorization") || "";
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  if (!SERVICE_KEY || token.length !== SERVICE_KEY.length) return false;
+  let diff = 0;
+  for (let i = 0; i < token.length; i++) diff |= token.charCodeAt(i) ^ SERVICE_KEY.charCodeAt(i);
+  return diff === 0;
+}
+
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type Conversation = { id: string; context: ChatMessage[]; language: string | null; escalation_state: string | null };
 
@@ -199,15 +211,21 @@ Deno.serve(async (req: Request) => {
     if (!message || message.length > 1500) {
       return Response.json({ error: "invalid_message", reply: "اكتب سؤالك بوضوح وبحد أقصى 1500 حرف." }, { status: 400, headers: jsonHeaders });
     }
+    // The gateway's verify_jwt accepts the public anon key too. Only the exact
+    // server-side service-role bearer may select a private channel, phone, or meta:* id.
+    const trusted = isServiceCaller(req);
     const channelRaw = typeof body.channel === "string" ? body.channel.trim().toLowerCase() : "web";
-    const channel = ["web", "telegram", "whatsapp"].includes(channelRaw) ? channelRaw : "web";
+    const requestedChannel = ["web", "telegram", "whatsapp"].includes(channelRaw) ? channelRaw : "web";
     const externalIdRaw = body.conversation_id ?? body.external_conversation_id;
-    const externalId = typeof externalIdRaw === "string" ? externalIdRaw.trim() : "";
-    const conversationId = externalId || crypto.randomUUID();
+    const requestedId = typeof externalIdRaw === "string" ? externalIdRaw.trim() : "";
+    const channel = trusted ? requestedChannel : "web";
+    const conversationId = trusted
+      ? (requestedId || crypto.randomUUID())
+      : (UUID_RE.test(requestedId) ? requestedId : crypto.randomUUID());
     if (conversationId.length > 200) {
       return Response.json({ error: "invalid_conversation_id" }, { status: 400, headers: jsonHeaders });
     }
-    const phone = typeof body.phone === "string" ? body.phone.slice(0, 40) : null;
+    const phone = trusted && typeof body.phone === "string" ? body.phone.slice(0, 40) : null;
     const language = typeof body.locale === "string" && body.locale.trim() ? body.locale.trim().slice(0, 12) : "ar";
 
     const existing = await getConversation(channel, conversationId);
