@@ -13,12 +13,15 @@ describe("Telegram update id validation", () => {
   });
 });
 
-describe("atomic claim result mapping", () => {
-  test("only claimed updates are processed", () => {
-    expect(classifyTelegramUpdateClaim("claimed")).toBe("claimed");
-    expect(classifyTelegramUpdateClaim("completed")).toBe("duplicate");
-    expect(classifyTelegramUpdateClaim("processing")).toBe("busy");
-    expect(classifyTelegramUpdateClaim("unexpected")).toBe("invalid");
-    expect(classifyTelegramUpdateClaim(null)).toBe("invalid");
+describe("atomic claim RPC response mapping", () => {
+  test("accepts the live PostgREST table-returning RPC shape", () => {
+    expect(classifyTelegramUpdateClaim([{claimed:true,current_status:"processing"}])).toBe("claimed");
+    expect(classifyTelegramUpdateClaim([{claimed:false,current_status:"completed"}])).toBe("duplicate");
+    expect(classifyTelegramUpdateClaim([{claimed:false,current_status:"processing"}])).toBe("busy");
+  });
+  test("rejects malformed or unknown claim results", () => {
+    for (const value of [undefined, null, "claimed", [], [{claimed:true,current_status:"failed"}], [{claimed:false,current_status:"unknown"}]]) {
+      expect(classifyTelegramUpdateClaim(value)).toBe("invalid");
+    }
   });
 });
