@@ -5,8 +5,16 @@ umask 077
 PROJECT_REF="qmuxaehrahfsnabyjens"
 BACKUP_BASE="${RAFIQ_BACKUP_DIR:-$HOME/rafiq-secure-backups}"
 STAGE="preflight"
+WORK=""
 fail() { echo "ERROR: $*" >&2; exit 1; }
-trap 'rc=$?; if (( rc != 0 )); then echo "RESULT=FAIL stage=$STAGE code=$rc" >&2; fi' EXIT
+on_exit() {
+  rc=$?
+  if (( rc != 0 )); then
+    if [[ -n "$WORK" && -d "$WORK" ]]; then rm -rf "$WORK"; fi
+    echo "RESULT=FAIL stage=$STAGE code=$rc" >&2
+  fi
+}
+trap on_exit EXIT
 
 [[ -n "${SUPABASE_DB_URL:-}" ]] || fail "Set SUPABASE_DB_URL locally from the correct Supabase project's Database connection dialog."
 [[ -n "${SUPABASE_URL:-}" ]] || fail "Set SUPABASE_URL locally to https://$PROJECT_REF.supabase.co."
