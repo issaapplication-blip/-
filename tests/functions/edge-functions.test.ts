@@ -45,7 +45,7 @@ describe("rafiq-agent caller isolation", () => {
     const body: any = await (await f.handler(post({ message: "كم السعر؟" }))).json();
     expect(calls).toBe(0);
     expect(body.mode).toBe("guided");
-    expect(body.reply).toContain("السعر النهائي");
+    expect(body.reply).toContain("التكلفة");
   });
   test("configured model is sent to provider", async () => {
     let sent: any;
@@ -60,6 +60,7 @@ describe("rafiq-agent caller isolation", () => {
     const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
     const body: any = await (await f.handler(post({ message: "عندي طوارئ" }))).json();
     expect(body.escalated).toBe(true);
+    expect(body.reply).toContain("حالة طارئة");
     expect(f.calls.some(c => c.table === "whatsapp_pending_approvals" && c.op === "insert")).toBe(true);
   });
 });
