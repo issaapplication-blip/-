@@ -24,3 +24,12 @@ Register the webhook only after the secrets are saved and a signed synthetic tes
 2. Redeploy the prior `telegram-webhook` version or remove the webhook registration.
 3. Run `20261014121820_rafiq_security_telegram_rollback.sql` to remove the policies and revoke/drop the rate-limit RPC; it deliberately preserves the rate-limit table and all its rows.
 4. Do not change `WHATSAPP_AUTOREPLY_ENABLED` as part of this rollback.
+
+
+## Optional Cloudflare Workers AI for Telegram
+The webhook defaults to guided FAQs until these optional Supabase Edge Function secrets are set:
+- `CLOUDFLARE_ACCOUNT_ID`: the Cloudflare account identifier.
+- `CLOUDFLARE_API_TOKEN`: a narrowly scoped token that can run Workers AI for this account; do not use an account-wide administrator token.
+- `CLOUDFLARE_AI_MODEL`: optional; default is `@cf/meta/llama-3.1-8b-instruct`.
+
+Cloudflare documents this model at https://developers.cloudflare.com/workers-ai/models/llama-3.1-8b-instruct/ and a 10,000-neuron/day Free allocation at https://developers.cloudflare.com/workers-ai/platform/pricing/. Cloudflare states it does not use Workers AI customer content to train or improve models/services unless explicit consent is provided: https://developers.cloudflare.com/workers-ai/platform/data-usage/. The webhook redacts phone numbers and sends only sanitized question text; it does not send chat IDs, Telegram user IDs, request sessions, or stored records. Without the two required secrets, the function remains on guided fallback.
