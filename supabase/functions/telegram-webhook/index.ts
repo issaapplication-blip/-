@@ -10,7 +10,7 @@ const MANAGER_CHAT_IDS = (Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
 const MAX_BODY_BYTES = 512 * 1024;
 const CLOUDFLARE_ACCOUNT_ID = (Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || "").trim();
 const CLOUDFLARE_API_TOKEN = (Deno.env.get("CLOUDFLARE_API_TOKEN") || "").trim();
-const CLOUDFLARE_AI_MODEL = (Deno.env.get("CLOUDFLARE_AI_MODEL") || "@cf/meta/llama-3.1-8b-instruct-fp8-fast").trim();
+const CLOUDFLARE_AI_MODEL = (Deno.env.get("CLOUDFLARE_AI_MODEL") || "@cf/meta/llama-3.1-8b-instruct").trim();
 const SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
