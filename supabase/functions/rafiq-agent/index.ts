@@ -65,7 +65,8 @@ async function createEscalation(conversationId: string | null, reason: string, p
 async function callOpenAI(message: string, context: Array<{role:string;content:string}>) {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) return null;
-  const model = Deno.env.get("RAFIQ_AGENT_MODEL") || Deno.env.get("OPENAI_MODEL") || "gpt-6-luna";
+  const model = Deno.env.get("RAFIQ_AGENT_MODEL") || Deno.env.get("OPENAI_MODEL");
+  if (!model) return null;
   const system = `أنت وكيل خدمة العملاء والاستقبال لمنصة RAFIQ | رفيق للرعاية المنزلية في لبنان.
 مهمتك فهم حاجة العميل، طرح السؤال التالي الضروري فقط، وتنظيم طلب الرعاية.
 الخدمات: رعاية المسنين، رعاية المرضى، التمريض المنزلي، العلاج الفيزيائي.
