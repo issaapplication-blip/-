@@ -70,8 +70,11 @@ export const telegramGetWebhookInfo = async () =>
 
 export const verifyTelegramWebhookSecret = (request: Request) => {
   const expected = telegramWebhookSecret();
-  if (!expected) return true;
-  return request.headers.get("x-telegram-bot-api-secret-token") === expected;
+  const provided = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
+  if (expected.length < 32 || !provided || expected.length !== provided.length) return false;
+  let difference = 0;
+  for (let i = 0; i < expected.length; i++) difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i);
+  return difference === 0;
 };
 
 export const telegramSendPhoto = async (chatId: string | number, photo: string, caption?: string, replyMarkup?: Record<string, unknown>) =>
