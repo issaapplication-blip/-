@@ -44,6 +44,7 @@ test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never ena
   expect("Contact +961 81 506 299 now".replace(lebanonNumber, "[رقم محجوب]")).not.toContain("81 506 299");
   expect("Call +39 333 123 4567".replace(internationalNumber, "[رقم محجوب]")).not.toContain("333 123 4567");
   expect(source).toContain("api.cloudflare.com/client/v4/accounts/");
+  expect(source).toContain("@cf/meta/llama-3.1-8b-instruct");
   expect(source).not.toContain("generativelanguage.googleapis.com");
   expect(source).not.toContain("api.openai.com");
 });
