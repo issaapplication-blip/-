@@ -5,11 +5,17 @@ on:
     paths:
       - 'supabase/functions/rafiq-agent/**'
       - 'tests/functions/**'
+      - 'src/index.ts'
+      - 'src/telegram-update-dedup.ts'
+      - 'src/telegram-update-dedup.test.ts'
   push:
     branches: [main]
     paths:
       - 'supabase/functions/rafiq-agent/**'
       - 'tests/functions/**'
+      - 'src/index.ts'
+      - 'src/telegram-update-dedup.ts'
+      - 'src/telegram-update-dedup.test.ts'
 
 permissions:
   contents: read
@@ -24,4 +30,6 @@ jobs:
         with:
           bun-version: latest
       - name: Run mocked, offline Supabase Edge Function tests
-        run: bun test tests/functions
+        run: |
+          bun test tests/functions
+          if [ -f src/telegram-update-dedup.test.ts ]; then bun test src/telegram-update-dedup.test.ts; fi
