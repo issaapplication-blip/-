@@ -18,8 +18,12 @@ BEGIN
     'whatsapp_webhook_events'
   ] LOOP
     EXECUTE format(
-      'DROP POLICY IF EXISTS service_role_only_access ON public.%I; CREATE POLICY service_role_only_access ON public.%I FOR ALL TO service_role USING (true) WITH CHECK (true)',
-      tbl, tbl
+      'DROP POLICY IF EXISTS service_role_only_access ON public.%I',
+      tbl
+    );
+    EXECUTE format(
+      'CREATE POLICY service_role_only_access ON public.%I FOR ALL TO service_role USING (true) WITH CHECK (true)',
+      tbl
     );
   END LOOP;
 END
