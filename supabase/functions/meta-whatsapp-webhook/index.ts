@@ -10,6 +10,8 @@ const cors = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db = createClient(SUPABASE_URL, SERVICE_KEY);
+// Fail closed: WhatsApp automated replies remain disabled unless explicitly enabled after review.
+const WHATSAPP_AUTOREPLY_ENABLED = Deno.env.get("RAFIQ_WHATSAPP_AUTOREPLY_ENABLED") === "true";
 
 const hex = (bytes: ArrayBuffer) =>
   Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
@@ -156,6 +158,16 @@ Deno.serve(async (req: Request) => {
       if (!msg.text) {
         await db.from("whatsapp_inbound_events")
           .update({ processing_status: "ignored", processed_at: new Date().toISOString() })
+          .eq("provider", "meta")
+          .eq("provider_message_id", msg.id);
+        continue;
+      }
+
+      // RAFIQ policy: WhatsApp outbound automation is paused. Persist inbound events for human review.
+      // Re-enable only by explicitly setting RAFIQ_WHATSAPP_AUTOREPLY_ENABLED=true after approval and staging tests.
+      if (!WHATSAPP_AUTOREPLY_ENABLED) {
+        await db.from("whatsapp_inbound_events")
+          .update({ error_message: "Automatic WhatsApp replies are disabled; pending manual review." })
           .eq("provider", "meta")
           .eq("provider_message_id", msg.id);
         continue;
