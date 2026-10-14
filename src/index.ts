@@ -1,3 +1,4 @@
+import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-update-dedup";
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
@@ -759,7 +760,32 @@ const app=new Elysia()
   const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
   return{ok:true,status:"processed",results};
 })
-.post("/api/telegram/webhook",async({request,set})=>{
+
+const claimTelegramUpdate = async (updateId:number) => {
+  const result = await supabaseServerRest("/rest/v1/rpc/claim_telegram_update", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({p_update_id:updateId,p_lease_seconds:120}),
+  });
+  if (!result.response.ok) throw new Error("telegram_update_claim_failed:"+result.response.status);
+  return result.body;
+};
+const finishTelegramUpdate = async (updateId:number,status:"completed"|"failed",errorMessage?:string) => {
+  const now = new Date().toISOString();
+  const result = await supabaseServerRest("/rest/v1/telegram_update_locks?update_id=eq."+String(updateId), {
+    method:"PATCH",
+    headers:{"Prefer":"return=minimal"},
+    body:JSON.stringify({
+      status,
+      error_message:status==="failed"?(errorMessage||"Telegram update processing failed").slice(0,500):null,
+      lease_until:null,
+      completed_at:status==="completed"?now:null,
+      updated_at:now,
+    }),
+  });
+  if (!result.response.ok) throw new Error("telegram_update_finish_failed:"+result.response.status);
+};
+const handleTelegramWebhook = async({request,set}:any)=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
   if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
   const update=await request.json().catch(()=>null) as any;
@@ -1144,6 +1170,33 @@ const app=new Elysia()
   }catch(error){
     console.error(JSON.stringify({event:"rafig_telegram_webhook_failed",error:String(error).slice(0,500)}));
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
+  }
+};
+.post("/api/telegram/webhook",async({request,set})=>{
+  if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
+  if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
+  const update=await request.clone().json().catch(()=>null) as any;
+  const updateId=parseTelegramUpdateId(update?.update_id);
+  if(updateId===null){set.status=400;return{ok:false,error:"invalid Telegram update_id"}}
+  let claim:string;
+  try {
+    claim=classifyTelegramUpdateClaim(await claimTelegramUpdate(updateId));
+  } catch(error) {
+    console.error(JSON.stringify({event:"rafig_telegram_update_claim_failed",updateId,error:String(error).slice(0,200)}));
+    set.status=503;
+    return{ok:false,error:"Telegram update protection is temporarily unavailable"};
+  }
+  if(claim==="duplicate"){set.status=200;return{ok:true,status:"duplicate_update_ignored"}}
+  if(claim==="busy"){set.status=503;return{ok:false,error:"Telegram update is already processing"}}
+  if(claim!=="claimed"){set.status=503;return{ok:false,error:"Telegram update claim returned an invalid state"}}
+  try {
+    const result=await handleTelegramWebhook({request,set});
+    const status=Number(set.status??200);
+    await finishTelegramUpdate(updateId,status>=500?"failed":"completed",status>=500?"Telegram handler returned HTTP "+status:undefined);
+    return result;
+  } catch(error) {
+    await finishTelegramUpdate(updateId,"failed",String(error)).catch(finishError=>console.error(JSON.stringify({event:"rafig_telegram_update_mark_failed",updateId,error:String(finishError).slice(0,200)})));
+    throw error;
   }
 })
 const forwardPublicIntake=async({request,set}:any)=>{
