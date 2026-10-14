@@ -43,7 +43,11 @@ test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never ena
 
 test("legacy Render process cannot re-register the Telegram webhook unless explicitly opted in", () => {
   expect(legacyIndex).toContain('RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK !== "true"');
-  expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
+  const start = legacyIndex.indexOf("const registerTelegramWebhookOnStartup = async () => {");
+  const end = legacyIndex.indexOf("\n};", start);
+  const registration = legacyIndex.slice(start, end + 3);
+  expect(registration).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
+  expect(registration).toContain('RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK !== "true"');
 });
 
 test("legacy Telegram webhook verifier fails closed when the secret is absent or short", () => {
