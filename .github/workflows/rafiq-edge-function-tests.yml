@@ -10,6 +10,8 @@ on:
       - 'src/telegram-update-dedup.test.ts'
       - 'src/http-cache-policy.ts'
       - 'src/http-cache-policy.test.ts'
+      - 'ops/**'
+      - '.github/workflows/rafiq-edge-function-tests.yml'
   push:
     branches: [main]
     paths:
@@ -33,6 +35,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+      - name: Validate backup script syntax
+        run: bash -n ops/backup.sh ops/verify.sh
       - name: Run mocked, offline Supabase Edge Function tests
         run: |
           bun test tests/functions
