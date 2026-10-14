@@ -18,6 +18,7 @@ describe("atomic claim RPC response mapping", () => {
     expect(classifyTelegramUpdateClaim([{claimed:true,current_status:"processing"}])).toBe("claimed");
     expect(classifyTelegramUpdateClaim([{claimed:false,current_status:"completed"}])).toBe("duplicate");
     expect(classifyTelegramUpdateClaim([{claimed:false,current_status:"processing"}])).toBe("busy");
+    expect(classifyTelegramUpdateClaim({claimed:true,current_status:"processing"})).toBe("claimed");
   });
   test("rejects malformed or unknown claim results", () => {
     for (const value of [undefined, null, "claimed", [], [{claimed:true,current_status:"failed"}], [{claimed:false,current_status:"unknown"}]]) {
