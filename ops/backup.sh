@@ -125,7 +125,7 @@ print(f"Storage backup complete: {len(manifest['buckets'])} buckets, {len(manife
 PY
 
 STAGE="integrity-manifest"
-export RAFIQ_WORK_DIR="$WORK"
+export RAFIQ_WORK_DIR="$WORK" STAMP
 python3 - <<'PY'
 import hashlib, json, os
 root = os.environ["RAFIQ_WORK_DIR"]
@@ -146,15 +146,6 @@ with open(os.path.join(root, "integrity.json"), "w", encoding="utf-8") as f:
 with open(os.path.join(root, "backup-info.json"), "w", encoding="utf-8") as f:
     json.dump({"project_ref":"qmuxaehrahfsnabyjens","created_at_utc":os.environ.get("STAMP",""),"format":"pg_dump custom + Storage objects","encrypted":"GPG AES-256"}, f)
 PY
-# Replace the empty timestamp field with the exact archive timestamp.
-python3 - "$WORK/backup-info.json" "$STAMP" <<'PY'
-import json,sys
-p,stamp=sys.argv[1:]
-with open(p,encoding="utf-8") as f: d=json.load(f)
-d["created_at_utc"]=stamp
-with open(p,"w",encoding="utf-8") as f: json.dump(d,f,separators=(",",":"))
-PY
-
 STAGE="encrypt"
 tar -C "$WORK" -cf - . | gpg --symmetric --cipher-algo AES256 --output "$ARCHIVE"
 [[ -s "$ARCHIVE" ]] || fail "Encrypted archive is empty."
