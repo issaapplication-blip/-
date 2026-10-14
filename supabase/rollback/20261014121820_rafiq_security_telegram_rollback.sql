@@ -18,7 +18,11 @@ DROP POLICY IF EXISTS service_role_only_access ON public.telegram_webhook_rate_l
 REVOKE EXECUTE ON FUNCTION public.consume_telegram_rate_limit(text, integer, integer) FROM PUBLIC, anon, authenticated, service_role;
 DROP FUNCTION IF EXISTS public.consume_telegram_rate_limit(text, integer, integer);
 
-GRANT EXECUTE ON FUNCTION public.manager_folder_counts() TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.admin_set_provider_status(uuid, text, text, text) TO anon, authenticated, service_role;
+-- Restore the pre-migration ACLs from 20261005120000_member_cards_folders_manager.sql
+-- and 20260913190000_admin_review_dashboard_access.sql. Never widen RPC access in rollback.
+REVOKE ALL ON FUNCTION public.manager_folder_counts() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.manager_folder_counts() TO service_role;
+REVOKE EXECUTE ON FUNCTION public.admin_set_provider_status(uuid, text, text, text) FROM anon;
+GRANT EXECUTE ON FUNCTION public.admin_set_provider_status(uuid, text, text, text) TO authenticated, service_role;
 
 COMMIT;
