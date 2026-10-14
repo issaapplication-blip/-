@@ -772,12 +772,12 @@ const claimTelegramUpdate = async (updateId:number) => {
 };
 const finishTelegramUpdate = async (updateId:number,status:"completed"|"failed",errorMessage?:string) => {
   const now = new Date().toISOString();
-  const result = await supabaseServerRest("/rest/v1/telegram_update_locks?update_id=eq."+String(updateId), {
+  const result = await supabaseServerRest("/rest/v1/telegram_update_receipts?update_id=eq."+String(updateId), {
     method:"PATCH",
     headers:{"Prefer":"return=minimal"},
     body:JSON.stringify({
       status,
-      error_message:status==="failed"?(errorMessage||"Telegram update processing failed").slice(0,500):null,
+      last_error:status==="failed"?(errorMessage||"Telegram update processing failed").slice(0,500):null,
       lease_until:null,
       completed_at:status==="completed"?now:null,
       updated_at:now,
