@@ -1,0 +1,27 @@
+name: RAFIQ edge function unit tests
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/rafiq-agent/**'
+      - 'tests/functions/**'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/rafiq-agent/**'
+      - 'tests/functions/**'
+
+permissions:
+  contents: read
+
+jobs:
+  edge-function-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Run mocked, offline Supabase Edge Function tests
+        run: bun test tests/functions
