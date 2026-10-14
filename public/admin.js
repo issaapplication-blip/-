@@ -20,13 +20,14 @@ async function ensureAdmin(){
  let p=null;
  const profileResult=await sb.from('profiles').select('id,email,role,status').eq('id',session.user.id).maybeSingle();
  if(profileResult.data)p=profileResult.data;
- const ownerByEmail=email==='issaapplication@gmail.com';
  let dbAdmin=false;
  try{
    const r=await sb.rpc('is_admin');
    dbAdmin=r.data===true;
  }catch(_){}
- const isAdmin=ownerByEmail||dbAdmin||p?.role==='admin';
+ // Never let an email address or editable client-side profile field grant admin UI access.
+ // The database RPC and every RLS-protected read/write remain the authority.
+ const isAdmin=dbAdmin===true&&p?.role==='admin'&&p?.status==='active';
  if(!isAdmin){
    await sb.auth.signOut();
    $('loginError').textContent='تم تسجيل الدخول، لكن هذا الحساب غير مفعّل كحساب إدارة.';

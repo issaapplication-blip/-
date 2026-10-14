@@ -11,11 +11,22 @@ on:
       - 'src/http-cache-policy.ts'
       - 'src/http-cache-policy.test.ts'
       - 'ops/**'
+      - 'functions/**'
+      - 'public/admin.js'
+      - 'wrangler.toml'
+      - 'supabase/functions/telegram-webhook/**'
+      - 'supabase/migrations/**'
+      - 'supabase/rollback/**'
+      - 'docs/recovery/**'
+      - 'ops/**'
       - '.github/workflows/rafiq-edge-function-tests.yml'
       - 'supabase/functions/telegram-webhook/**'
       - 'supabase/migrations/**'
       - 'supabase/rollback/**'
       - 'docs/recovery/**'
+      - 'functions/**'
+      - 'public/admin.js'
+      - 'wrangler.toml'
   push:
     branches: [main]
     paths:
@@ -41,6 +52,14 @@ jobs:
           bun-version: latest
       - name: Validate backup script syntax
         run: bash -n ops/backup.sh ops/verify.sh
+      - name: Validate Cloudflare Pages bundle
+        run: |
+          RAFIQ_PUBLIC_BASE_URL=https://rafiq-ci.pages.dev bash ops/build-cloudflare-pages.sh
+          test -f dist/index.html
+          test -f dist/admin.html
+          test -f dist/_routes.json
+          test ! -e dist/auto-reply.mjs
+          ! grep -R 'rafiq-o6qd.onrender.com' dist
       - name: Run mocked, offline Supabase Edge Function tests
         run: |
           bun test tests/functions
