@@ -40,7 +40,7 @@ const normalizeArabic = (value: string) => value
 
 const fallback = (message: string) => {
   const m = normalizeArabic(message);
-  if (/(طوارئ|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة|جلطة)/.test(m)) {
+  if (/(طوارئ|طواري|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة|جلطة)/.test(m)) {
     return "إذا كانت هناك حالة طارئة أو خطر فوري، اتصل فورًا بخدمات الطوارئ المحلية أو بالفريق الطبي المعالج. لا تؤخر الرعاية العاجلة بانتظار رفيق.";
   }
   if (/(ممرض|ممرضة|تمريض|حقن|ضماد|غيار|جرح)/.test(m)) {
@@ -240,7 +240,7 @@ Deno.serve(async (req: Request) => {
     ].slice(-12);
 
     const normalized = normalizeArabic(message);
-    const emergency = /(طوارئ|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(normalized);
+    const emergency = /(طوارئ|طواري|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(normalized);
     const needsHuman = emergency || /(ادارة|موظف|بشري|موافقة|اعتماد|شكوى|اريد شخص|اريد التحدث مع|كلموني|اتصلوا بي)/.test(normalized);
     const alreadyEscalated = existing?.escalation_state === "open";
     const escalationState = needsHuman ? "open" : (existing?.escalation_state || "none");
