@@ -1,10 +1,41 @@
 name: RAFIQ production QA
 on:
-  push:
-    branches: [rafiq-next-generation]
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Verified deployed HTTPS origin (Cloudflare Pages or approved test host; never Render)"
+        required: true
+        type: string
+permissions:
+  contents: read
 jobs:
+  validate-target:
+    runs-on: ubuntu-latest
+    outputs:
+      base_url: ${{ steps.target.outputs.base_url }}
+    steps:
+      - id: target
+        name: Validate explicitly supplied test target
+        shell: bash
+        env:
+          BASE_URL_INPUT: ${{ inputs.base_url }}
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import os
+          from urllib.parse import urlsplit
+          raw = os.environ.get("BASE_URL_INPUT", "").strip().rstrip("/")
+          u = urlsplit(raw)
+          if u.scheme != "https" or not u.netloc or u.path or u.query or u.fragment or u.username or u.password:
+              raise SystemExit("BASE_URL must be an HTTPS origin without path/query/credentials")
+          if "onrender.com" in u.netloc.lower():
+              raise SystemExit("Render is retired for RAFIQ; refusing to run tests against Render")
+          print("BASE_URL accepted as HTTPS origin:", u.netloc)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("base_url=" + raw + "\\n")
+          PY
   load:
+    needs: validate-target
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -13,13 +44,15 @@ jobs:
       - name: Production load test
         run: k6 run --summary-export tests/load/results/production-summary.json tests/load/rafiq-load.js
         env:
-          BASE_URL: https://rafiq-o6qd.onrender.com
+          BASE_URL: ${{ needs.validate-target.outputs.base_url }}
       - name: Upload load results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: rafiq-load-results
           path: tests/load/results/production-summary.json
   browser:
+    needs: validate-target
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -30,7 +63,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright test tests/browser/rafiq.spec.ts --config=tests/browser/playwright.config.ts
         env:
-          BASE_URL: https://rafiq-o6qd.onrender.com
+          BASE_URL: ${{ needs.validate-target.outputs.base_url }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
