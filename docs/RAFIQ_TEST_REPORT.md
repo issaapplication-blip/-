@@ -35,3 +35,6 @@ Source changes are migration preparation, not proof of a live deployment or prod
 - The follow-up CI run must pass the Docker build and live `/health` smoke test before the image is considered runnable.
 
 - Follow-up: plain `bun install --production` also failed under CI's frozen-lockfile behavior. Docker fallback now uses the explicit `--no-frozen-lockfile` option. Awaiting the next run; not yet verified.
+
+
+- Second CI run failed because Bun 1.3.10 still treated the lockfile as frozen even with `--no-frozen-lockfile`. The temporary validation image now installs from `package.json` without copying the stale lockfile; this is not the final reproducible build. Acceptance still requires the Docker health smoke test to pass and the lockfile to be refreshed afterward.
