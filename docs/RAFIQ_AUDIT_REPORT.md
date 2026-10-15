@@ -17,3 +17,11 @@ Audit date: 2026-10-15.
 - Existing Supabase schema/RLS and live Edge Function status need owner-authorized verification.
 - No live Telegram message test was run; no messages were sent.
 - Build/runtime tests must be executed by CI or target hosting before declaring production readiness.
+
+## Follow-up corrections on 2026-10-15
+- Confirmed the PWA already registers its Service Worker through `public/install-app.js`; no duplicate registration was added to `public/app.js`.
+- Confirmed icon files are in `public/` root (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`), not `public/assets/`; manifest uses the existing tracked paths.
+- Tightened `/health` output to a generic service status and ISO timestamp; it no longer exposes gateway-specific/internal webhook timing.
+- Explicitly bound Elysia to `0.0.0.0` and set Docker `HOST=0.0.0.0`.
+- Reduced the optional Hugging Face health workflow cadence to once every six hours.
+- Supabase checks remain blocked by connector permissions; no DDL or policy changes were applied.

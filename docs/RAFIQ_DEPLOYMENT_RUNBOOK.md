@@ -25,3 +25,9 @@
 - Keep WhatsApp sending and auto-replies disabled.
 - Scheduled health pings do not guarantee free-tier uptime or prevent all sleep behavior.
 - Record actual URLs, build identifiers, health checks and failures; never invent a deployment URL.
+
+## Source/runtime verification notes
+- Dockerfile sets `HOST=0.0.0.0` and `PORT=7860`.
+- Elysia uses `app.listen({ hostname: process.env.HOST ?? "0.0.0.0", port })`.
+- `GET /health` is a minimal status/timestamp endpoint and does not disclose user data or webhook receipt timestamps.
+- `public/install-app.js` is the existing single Service Worker registration owner; do not add a second registration in `app.js`.

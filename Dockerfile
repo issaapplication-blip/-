@@ -8,6 +8,7 @@ RUN bun install --frozen-lockfile --production
 COPY . .
 
 ENV PORT=7860
+ENV HOST=0.0.0.0
 ENV NODE_ENV=production
 ENV WHATSAPP_SENDING_ENABLED=false
 ENV RAFIQ_WHATSAPP_AUTO_REPLY=false

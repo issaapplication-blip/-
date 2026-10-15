@@ -674,7 +674,7 @@ const telegramAdminCommand=async(message:any)=>{
 };
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)applySecurityHeaders(response,securityHeaders)})
-.get("/health",()=>({ok:true,service:"rafig-whatsapp-gateway",startedAt,kapsoWebhookLastReceivedAt:lastKapsoWebhookAt}))
+.get("/health",()=>({status:"ok",service:"rafiq-backend",timestamp:new Date().toISOString()}))
 .get("/api/admin/telegram-cv/orders",async({request,set})=>{
   const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
   const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?order_status=not.in.(completed,cancelled)&order=updated_at.desc&select=*",admin.token);
@@ -1367,7 +1367,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 .get("/guide-elderly-home.html",()=>fileResponse("public/guide-elderly-home.html","text/html; charset=utf-8"))
 .get("/guide-after-hospital.html",()=>fileResponse("public/guide-after-hospital.html","text/html; charset=utf-8"))
 ;
-app.listen(port);
+app.listen({ hostname: process.env.HOST ?? "0.0.0.0", port });
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
 void registerTelegramWebhookOnStartup();
 setInterval(() => { void telegramMarketingTick(); }, 30_000);

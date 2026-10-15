@@ -20,3 +20,10 @@ Audit date: 2026-10-15.
 
 ## Result
 Source changes are migration preparation, not proof of a live deployment or production readiness. Acceptance requires the blocked checks above.
+
+## Follow-up source inspection
+- Confirmed the existing Service Worker registration owner is `public/install-app.js`; no duplicate registration was introduced.
+- Confirmed manifest icon paths point to tracked root-level public assets.
+- Source-level check confirms `/health` returns only status, service identifier and timestamp; Elysia listen options specify `0.0.0.0`.
+- GitHub Actions health-check cadence was changed to every six hours. This does not verify a workflow run or endpoint availability.
+- Docker build/runtime, HTTP checks, Supabase and Telegram live tests remain unexecuted.

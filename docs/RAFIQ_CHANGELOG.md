@@ -10,3 +10,10 @@
 - Removed `render.yaml` per the requested retirement of Render.
 - Added migration, inventory, integration, audit, deployment, test, and changelog reports.
 - No Supabase database changes; no webhook cutover; no customer messages sent.
+
+## 2026-10-15 — post-review hardening
+- Made health response minimal and privacy-safe.
+- Pinned Elysia listen hostname to `0.0.0.0`; Docker `HOST` defaults to the same.
+- Added manifest JSON to the existing Service Worker asset list.
+- Reduced optional health-check cadence to six hours.
+- Confirmed no duplicate Service Worker registration was added.

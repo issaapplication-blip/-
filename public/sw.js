@@ -23,6 +23,7 @@ var ASSETS = [
   "/home-nursing.html",
   "/physiotherapy.html",
   "/manifest.webmanifest",
+  "/manifest.json",
   "/install-app.js",
   "/install-pwa.js",
   "/i18n.js",
