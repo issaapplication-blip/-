@@ -26,3 +26,6 @@
 - Added a clearly logged production-install fallback in Dockerfile so CI can test whether the dependency graph still launches; this is a temporary workaround, not a claim that the lockfile is fixed.
 
 - The first fallback attempt remained frozen under CI. Switched to explicit `--no-frozen-lockfile` for the documented workaround and required another Docker smoke test.
+
+
+- Bun 1.3.10 rejected both frozen and explicit no-frozen install attempts against the stale lock. For a validation attempt only, Docker now installs from `package.json` without copying the stale lock into the image; a reproducible frozen-lockfile build remains a release requirement.
