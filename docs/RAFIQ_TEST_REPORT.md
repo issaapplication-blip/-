@@ -38,3 +38,34 @@ Source changes are migration preparation, not proof of a live deployment or prod
 
 
 - Second CI run failed because Bun 1.3.10 still treated the lockfile as frozen even with `--no-frozen-lockfile`. The temporary validation image now installs from `package.json` without copying the stale lockfile; this is not the final reproducible build. Acceptance still requires the Docker health smoke test to pass and the lockfile to be refreshed afterward.
+
+## Docker CI run 38778522812 — verified final result
+- Run URL: https://github.com/issaapplication-blip/-/actions/runs/38778522812
+- Final result: **FAILURE**. Job `edge-function-tests` failed in step `Build and smoke-test Hugging Face Docker runtime`.
+- The Docker image itself built successfully in this run. The container then exited before serving `http://127.0.0.1:17860/health`; the first request reported connection reset and later attempts could not connect. The smoke-test step exited with code 1.
+- Because the Docker step failed, Bun setup, Cloudflare bundle validation, and mocked Supabase Edge Function tests were skipped in this run. This run is not evidence that those tests passed.
+- The log did not include the container's own startup output, so the precise runtime exception is not established from this run alone.
+
+## CI diagnostic update
+- Commit: https://github.com/issaapplication-blip/-/commit/6453b5352525fa2cdb49b0c8116ad587705113db
+- Added a container-log dump to the cleanup handler so a future startup failure records the actual application error.
+- Pinned CI Bun to 1.3.10 to match the Docker base image.
+- Added a non-blocking frozen-lockfile validation step and made backup syntax, Cloudflare bundle, and offline test steps run even if Docker smoke testing fails. The lockfile validation is deliberately non-blocking while the current `bun.lock` mismatch is unresolved; a failure will remain visible in the job log.
+- These are workflow changes only. No test result is inferred from source inspection; the new run must complete before reporting results.
+
+## Deployment workflow safety review
+- Inspected the workflows present under `.github/workflows/`: `keep-alive.yml`, `rafig-pwa-icons.yml`, `rafiq-edge-function-tests.yml`, `rafiq-production-qa.yml`, and `rafiq-safety-preflight.yml`.
+- No automatic deployment workflow to Render or another hosting provider was found in this directory.
+- `keep-alive.yml` only issues an HTTPS health request to the configured Hugging Face URL and emits a warning for non-200 responses; it does not deploy.
+- `rafiq-production-qa.yml` is manually dispatched and rejects `onrender.com` targets.
+- `rafig-pwa-icons.yml` generates icon assets and pushes a commit on main when its configured source paths change; it is not a hosting deployment workflow.
+- No Render deployment, production test, outbound message, WhatsApp/Kapso/Meta activation, Supabase mutation, or Telegram webhook change was performed in this task.
+- The actual Hugging Face URL and source linkage are not verified. Cloudflare Pages is not deployed; only the CI bundle-build command is intended to validate the static output.
+
+## Current acceptance status
+- Docker image build: **PASS** in run 38778522812.
+- Docker runtime /health smoke test: **FAIL** in run 38778522812.
+- Bun tests and Cloudflare Pages bundle in run 38778522812: **SKIPPED** because the preceding Docker step failed.
+- `bun.lock` refresh: **NOT DONE**. No updated lockfile is committed. CI's frozen-lockfile validation must be reviewed, and the lockfile should only be updated by Bun 1.3.10 with a verified diff.
+- Supabase and current Telegram webhook remain unchanged.
+
