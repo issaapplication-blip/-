@@ -59,14 +59,27 @@ jobs:
         run: |
           set -Eeuo pipefail
           docker build --tag rafiq-backend:ci .
-          docker run --detach --rm --name rafiq-backend-ci --publish 127.0.0.1:17860:7860 \
-            --env PORT=7860 --env HOST=0.0.0.0 rafiq-backend:ci
+          # Keep the container after exit so diagnostics can be collected before removal.
+          docker rm -f rafiq-backend-ci >/dev/null 2>&1 || true
+          docker run --detach --name rafiq-backend-ci --publish 127.0.0.1:17860:7860 \
+            --env PORT=7860 --env HOST=0.0.0.0 --env NODE_ENV=production \
+            --env WHATSAPP_SENDING_ENABLED=false \
+            --env RAFIQ_WHATSAPP_AUTO_REPLY=false \
+            --env RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING=false \
+            --env RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false \
+            --env TELEGRAM_MARKETING_ENABLED=false \
+            --env TELEGRAM_BROADCAST_ON_START=false \
+            --env KAPSO_ENABLED=false \
+            rafiq-backend:ci
           cleanup() {
-            if docker inspect rafiq-backend-ci >/dev/null 2>&1; then
-              echo "--- RAFIQ container logs ---"
-              docker logs rafiq-backend-ci 2>&1 || true
-              docker stop rafiq-backend-ci >/dev/null 2>&1 || true
-            fi
+            echo "::group::RAFIQ container logs"
+            docker logs rafiq-backend-ci 2>&1 || true
+            echo "::endgroup::"
+            echo "::group::RAFIQ container inspect"
+            docker inspect rafiq-backend-ci --format '{{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' 2>&1 || true
+            echo "::endgroup::"
+            docker stop rafiq-backend-ci >/dev/null 2>&1 || true
+            docker rm -f rafiq-backend-ci >/dev/null 2>&1 || true
           }
           trap cleanup EXIT
           ready=0
@@ -75,9 +88,16 @@ jobs:
               ready=1
               break
             fi
+            if ! docker inspect --format '{{.State.Running}}' rafiq-backend-ci 2>/dev/null | grep -qx true; then
+              echo "Container exited before becoming ready."
+              exit 1
+            fi
             sleep 2
           done
-          test "$ready" -eq 1
+          if [ "$ready" -ne 1 ]; then
+            echo "Health check timed out after 60 seconds."
+            exit 1
+          fi
           python3 - <<'PY'
           import json
           with open("/tmp/rafiq-health.json", encoding="utf-8") as f:
