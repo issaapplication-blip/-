@@ -63,4 +63,15 @@ describe("rafiq-agent caller isolation", () => {
     expect(body.reply).toContain("حالة طارئة");
     expect(f.calls.some(c => c.table === "whatsapp_pending_approvals" && c.op === "insert")).toBe(true);
   });
+  test("trusted Telegram privacy_safe_only forces guided mode without provider calls", async () => {
+    let providerCalls = 0;
+    const f = loadFunction("rafiq-agent", {
+      ...BASE, OPENAI_API_KEY: "test-key", RAFIQ_AGENT_MODEL: "test-model", RAFIQ_AGENT_PROVIDER: "openai",
+    }, async () => { providerCalls++; throw new Error("provider must not be called in privacy-safe mode"); });
+    const body: any = await (await f.handler(post({
+      message: "سؤال غير معروف", channel: "telegram", conversation_id: "telegram:test-chat", privacy_safe_only: true,
+    }, { authorization: "Bearer " + BASE.SUPABASE_SERVICE_ROLE_KEY }))).json();
+    expect(providerCalls).toBe(0);
+    expect(body.mode).toBe("guided");
+  });
 });
