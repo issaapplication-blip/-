@@ -27,3 +27,9 @@ Source changes are migration preparation, not proof of a live deployment or prod
 - Source-level check confirms `/health` returns only status, service identifier and timestamp; Elysia listen options specify `0.0.0.0`.
 - GitHub Actions health-check cadence was changed to every six hours. This does not verify a workflow run or endpoint availability.
 - Docker build/runtime, HTTP checks, Supabase and Telegram live tests remain unexecuted.
+
+## Docker CI failure and remediation
+- Run: https://github.com/issaapplication-blip/-/actions/runs/38778200935
+- Result: failed before container startup at the frozen Bun install step because `bun.lock` does not match `package.json`.
+- Remediation committed: Dockerfile now emits an explicit warning and retries production dependency resolution without frozen mode. This is a temporary, documented workaround; the lockfile remains a reproducibility issue until refreshed.
+- The follow-up CI run must pass the Docker build and live `/health` smoke test before the image is considered runnable.

@@ -25,3 +25,6 @@ Audit date: 2026-10-15.
 - Explicitly bound Elysia to `0.0.0.0` and set Docker `HOST=0.0.0.0`.
 - Reduced the optional Hugging Face health workflow cadence to once every six hours.
 - Supabase checks remain blocked by connector permissions; no DDL or policy changes were applied.
+
+## CI-discovered dependency issue
+- GitHub Actions Docker build on commit `df499a494d32273327322eb545af274df326e673` failed at `bun install --frozen-lockfile --production` with: `lockfile had changes, but lockfile is frozen`. This establishes that `bun.lock` and `package.json` are currently out of sync. A documented production-only fallback was added to allow a validation build, but the lockfile should be regenerated and committed as a separate reproducibility fix once the resulting dependency graph is verified. Do not call the backend ready until the Docker smoke test passes.

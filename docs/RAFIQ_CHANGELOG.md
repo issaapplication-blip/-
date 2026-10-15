@@ -20,3 +20,7 @@
 
 ## 2026-10-15 — source-tree hygiene
 - Removed two accidental files whose paths were shell command sequences and whose contents were command text. The real scripts under `ops/` were preserved. This cleanup did not remove application code or database objects.
+
+## 2026-10-15 — dependency-lock mismatch response
+- CI proved `bun.lock` is out of sync with `package.json` under frozen install.
+- Added a clearly logged production-install fallback in Dockerfile so CI can test whether the dependency graph still launches; this is a temporary workaround, not a claim that the lockfile is fixed.
