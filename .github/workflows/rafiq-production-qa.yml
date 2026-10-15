@@ -32,7 +32,7 @@ jobs:
               raise SystemExit("Render is retired for RAFIQ; refusing to run tests against Render")
           print("BASE_URL accepted as HTTPS origin:", u.netloc)
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
-              f.write("base_url=" + raw + "\\n")
+              f.write("base_url=" + raw + "\n")
           PY
   load:
     needs: validate-target
