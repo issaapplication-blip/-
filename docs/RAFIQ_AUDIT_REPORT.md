@@ -31,3 +31,7 @@ Audit date: 2026-10-15.
 
 ## Second CI finding
 - The initial fallback `bun install --production` still failed because Bun's CI mode treated the lockfile as frozen. Updated the explicit fallback to `bun install --no-frozen-lockfile --production`, with a warning. The next Docker CI run is the acceptance check; if it still fails, stop and repair the lockfile itself instead of adding more fallbacks.
+
+
+## Third CI finding and temporary build path
+- Bun 1.3.10 rejected the attempted `--no-frozen-lockfile` fallback under CI as well. To avoid layering more unverified install flags, the validation Dockerfile now copies only `package.json` and installs dependencies without the stale lockfile. This is explicitly temporary and not reproducible: the backend must not be declared production-ready until `bun.lock` is regenerated with Bun 1.3.10, committed, and a frozen Docker build passes.
