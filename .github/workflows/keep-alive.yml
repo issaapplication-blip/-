@@ -1,15 +1,20 @@
-name: RAFIQ Hugging Face health check
+name: RAFIQ Keep-Alive
+
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: '0 */6 * * *'
   workflow_dispatch:
+
 jobs:
-  health:
+  ping:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Check Space health endpoint
+      - name: Ping RAFIQ health endpoint
         run: |
-          set -eu
-          curl --fail --silent --show-error --max-time 20 \
-            https://rafiq-lebanon-2026-rafiq-project-audit.hf.space/health
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 \
+            https://rafiq-lebanon-2026-rafiq-project-audit.hf.space/health || echo "000")
+          echo "Health status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::RAFIQ backend not responding with 200"
+          fi
