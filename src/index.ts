@@ -13,7 +13,7 @@ import QRCode from "qrcode";
 import { handleManagerCommand, parseManagerChatIds } from "./telegram-manager";
 import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER, rafiqRequiresHumanReply } from "./rafiq-service-knowledge";
 
-const port = Number(process.env.PORT ?? 3000);
+const port = Number(process.env.PORT ?? 7860);
 const startedAt = new Date().toISOString();
 let lastKapsoWebhookAt: string | null = null;
 let lastKapsoWebhookEvent: string | null = null;

@@ -1,0 +1,12 @@
+# RAFIQ changelog
+
+## 2026-10-15 — Hosting migration preparation
+- Added Dockerfile for Bun 1.3.10/Elysia on port 7860 with outbound messaging and webhook automation disabled by default.
+- Added Hugging Face Space README metadata and runtime instructions.
+- Changed backend default port from 3000 to 7860.
+- Added `public/manifest.json` using existing icon assets and updated manifest references in home/application HTML; preserved existing webmanifest and install controller.
+- Hardened Service Worker cache activation so it removes only RAFIQ-owned caches; excluded admin/agent/dashboard pages from precache and bypassed API/private routes.
+- Added a scheduled health-check workflow for the configured Hugging Face Space; this is a diagnostic ping, not a guarantee of continuous uptime.
+- Removed `render.yaml` per the requested retirement of Render.
+- Added migration, inventory, integration, audit, deployment, test, and changelog reports.
+- No Supabase database changes; no webhook cutover; no customer messages sent.

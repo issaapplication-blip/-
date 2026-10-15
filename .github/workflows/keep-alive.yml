@@ -1,0 +1,15 @@
+name: RAFIQ Hugging Face health check
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check Space health endpoint
+        run: |
+          set -eu
+          curl --fail --silent --show-error --max-time 20 \
+            https://rafiq-lebanon-2026-rafiq-project-audit.hf.space/health

@@ -6,15 +6,12 @@ self.addEventListener("message", function (e) {
   if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-var CACHE = "rafig-v83-20261008";
+var CACHE = "rafig-v84-20261015";
 var ASSETS = [
   "/",
   "/index.html",
-  "/dashboard.html",
   "/barcode.html",
-  "/agent.html",
   "/app.html",
-  "/admin.html",
   "/faq.html",
   "/services.html",
   "/caregivers.html",
@@ -54,8 +51,9 @@ self.addEventListener("install", function (e) {
 self.addEventListener("activate", function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
+      // Remove only RAFIQ-owned caches. Never clear unrelated apps on this origin.
       return Promise.all(keys.map(function (k) {
-        if (k !== CACHE) return caches.delete(k);
+        if (k !== CACHE && /^(rafig|rafiq)-/i.test(k)) return caches.delete(k);
         return null;
       }));
     }).then(function () { return self.clients.claim(); })
@@ -70,8 +68,19 @@ self.addEventListener("fetch", function (e) {
   try { url = new URL(req.url); } catch (err) { return; }
   if (url.origin !== self.location.origin) return;
 
-  // pages: network first, cache as offline fallback
+  // Never cache API responses or private/admin surfaces.
+  if (url.pathname.indexOf("/api/") === 0) return;
+  var privatePath = /^\/(?:admin(?:\.html|\/|\.js)?|agent\.html|dashboard\.html)(?:$|\/)/i.test(url.pathname);
+
   if (req.mode === "navigate") {
+    if (privatePath) {
+      e.respondWith(fetch(req, { cache: "no-store" }).catch(function () {
+        return new Response("RAFIQ is temporarily unavailable. Please reconnect to access this page.", {
+          status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+        });
+      }));
+      return;
+    }
     e.respondWith(
       fetch(req, { cache: "no-store" }).catch(function () {
         return caches.match("/index.html").then(function (c) {
@@ -85,7 +94,9 @@ self.addEventListener("fetch", function (e) {
     return;
   }
 
-  // assets: network first, cache as fallback
+  // Never cache scripts or responses used by private/admin screens.
+  if (privatePath) return;
+
   e.respondWith(
     fetch(req, { cache: "no-store" }).then(function (res) {
       if (res && res.ok) {
