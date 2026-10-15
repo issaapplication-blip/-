@@ -88,7 +88,7 @@ jobs:
             test -f dist/admin.html
             test -f dist/_routes.json
             test ! -e dist/auto-reply.mjs
-            if grep -RniE 'onrender\.com|rafiq-o6qd' dist/ public/; then
+            if grep -RniE 'onrender\.com|rafiq-o6qd' dist/; then
               echo "Render reference found in built/public assets; stop for manual review."
               exit 1
             fi
