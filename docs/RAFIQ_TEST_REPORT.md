@@ -69,3 +69,13 @@ Source changes are migration preparation, not proof of a live deployment or prod
 - `bun.lock` refresh: **NOT DONE**. No updated lockfile is committed. CI's frozen-lockfile validation must be reviewed, and the lockfile should only be updated by Bun 1.3.10 with a verified diff.
 - Supabase and current Telegram webhook remain unchanged.
 
+
+
+## 2026-10-15 — Bun lock audit follow-up
+
+- Successful isolated branch run: https://github.com/issaapplication-blip/-/actions/runs/38791959887
+- Regenerated `bun.lock` with Bun 1.3.10 and verified both frozen-lock commands.
+- `bun test tests/functions`, `bun test src`, Cloudflare Pages build, Docker build, and isolated Docker `/health` passed in the same run.
+- Proposed Dockerfile now copies `bun.lock` and uses `bun install --frozen-lockfile --production`.
+- Commit: https://github.com/issaapplication-blip/-/commit/76510153248a28df16bf50dead5dc04214a6ec5e; draft PR: https://github.com/issaapplication-blip/-/pull/54.
+- Supabase live read access remains denied; no live integrations or deployment were touched. See `docs/RAFIQ_DEEPSEEK_FINAL_AUDIT.md` for scope and remaining blockers.

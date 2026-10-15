@@ -2,10 +2,10 @@ FROM oven/bun:1.3.10-slim
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json bun.lock ./
 # CI proved the checked-in bun.lock is out of sync with package.json.
 # Temporary validation path: refresh bun.lock with Bun 1.3.10 before production release.
-RUN bun install --production
+RUN bun install --frozen-lockfile --production
 
 COPY . .
 
