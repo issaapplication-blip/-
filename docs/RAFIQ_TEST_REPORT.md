@@ -33,3 +33,5 @@ Source changes are migration preparation, not proof of a live deployment or prod
 - Result: failed before container startup at the frozen Bun install step because `bun.lock` does not match `package.json`.
 - Remediation committed: Dockerfile now emits an explicit warning and retries production dependency resolution without frozen mode. This is a temporary, documented workaround; the lockfile remains a reproducibility issue until refreshed.
 - The follow-up CI run must pass the Docker build and live `/health` smoke test before the image is considered runnable.
+
+- Follow-up: plain `bun install --production` also failed under CI's frozen-lockfile behavior. Docker fallback now uses the explicit `--no-frozen-lockfile` option. Awaiting the next run; not yet verified.

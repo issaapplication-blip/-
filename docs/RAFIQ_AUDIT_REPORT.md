@@ -28,3 +28,6 @@ Audit date: 2026-10-15.
 
 ## CI-discovered dependency issue
 - GitHub Actions Docker build on commit `df499a494d32273327322eb545af274df326e673` failed at `bun install --frozen-lockfile --production` with: `lockfile had changes, but lockfile is frozen`. This establishes that `bun.lock` and `package.json` are currently out of sync. A documented production-only fallback was added to allow a validation build, but the lockfile should be regenerated and committed as a separate reproducibility fix once the resulting dependency graph is verified. Do not call the backend ready until the Docker smoke test passes.
+
+## Second CI finding
+- The initial fallback `bun install --production` still failed because Bun's CI mode treated the lockfile as frozen. Updated the explicit fallback to `bun install --no-frozen-lockfile --production`, with a warning. The next Docker CI run is the acceptance check; if it still fails, stop and repair the lockfile itself instead of adding more fallbacks.
