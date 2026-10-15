@@ -1188,7 +1188,7 @@ const handleTelegramWebhook = async({request,set}:any)=>{
     set.status=500;return{ok:false,error:"Telegram message processing failed"};
   }
 };
-.post("/api/telegram/webhook",async({request,set})=>{
+app.post("/api/telegram/webhook",async({request,set})=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
   if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
   const update=await request.clone().json().catch(()=>null) as any;
