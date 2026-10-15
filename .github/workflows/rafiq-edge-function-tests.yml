@@ -37,6 +37,12 @@ on:
       - 'src/telegram-update-dedup.test.ts'
       - 'src/http-cache-policy.ts'
       - 'src/http-cache-policy.test.ts'
+      - 'Dockerfile'
+      - 'public/index.html'
+      - 'public/app.html'
+      - 'public/manifest.json'
+      - 'public/sw.js'
+      - '.github/workflows/rafiq-edge-function-tests.yml'
 
 permissions:
   contents: read
@@ -47,6 +53,33 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - name: Build and smoke-test Hugging Face Docker runtime
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker build --tag rafiq-backend:ci .
+          docker run --detach --rm --name rafiq-backend-ci --publish 127.0.0.1:17860:7860 \
+            --env PORT=7860 --env HOST=0.0.0.0 rafiq-backend:ci
+          cleanup() { docker stop rafiq-backend-ci >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --max-time 2 http://127.0.0.1:17860/health > /tmp/rafiq-health.json; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          python3 - <<'PY'
+          import json
+          with open("/tmp/rafiq-health.json", encoding="utf-8") as f:
+              data = json.load(f)
+          assert data.get("status") == "ok", data
+          assert data.get("service") == "rafiq-backend", data
+          assert isinstance(data.get("timestamp"), str), data
+          print("Docker health smoke test passed")
+          PY
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
