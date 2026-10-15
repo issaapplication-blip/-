@@ -29,3 +29,10 @@
 
 
 - Bun 1.3.10 rejected both frozen and explicit no-frozen install attempts against the stale lock. For a validation attempt only, Docker now installs from `package.json` without copying the stale lock into the image; a reproducible frozen-lockfile build remains a release requirement.
+
+## 2026-10-15 — offline fallback and environment template completion
+- Added `public/offline.html` with an Arabic retry page.
+- Updated the existing Service Worker to precache the offline page and serve it on navigation network failure, while preserving its existing cache ownership and private-route protections.
+- Expanded the environment template with the requested Telegram, WhatsApp/Kapso, Meta, Gemini, and runtime variable names; no secret values were added.
+- PWA icon files were not moved or duplicated: the existing icons are referenced from the `public/` root, not `public/assets/`. The existing manifest remains unchanged pending a decision on the requested alternate icon paths.
+- Supabase preflight remains blocked by connector permissions; no SQL or database changes were performed.
