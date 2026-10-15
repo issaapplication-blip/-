@@ -128,7 +128,11 @@ jobs:
           test -f dist/admin.html
           test -f dist/_routes.json
           test ! -e dist/auto-reply.mjs
-          ! grep -R 'rafiq-o6qd.onrender.com' dist
+          if grep -RniE 'onrender\.com|rafiq-o6qd' dist/; then
+            echo "❌ Render reference found in BUILT assets (dist/). Stop for manual review."
+            exit 1
+          fi
+          echo "✅ No Render references in built assets."
       - name: Run mocked, offline Supabase Edge Function tests
         if: always()
         run: |
