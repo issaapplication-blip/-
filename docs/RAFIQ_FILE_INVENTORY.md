@@ -27,5 +27,5 @@ Audit date: 2026-10-15. Source of truth inspected: GitHub `main`.
 
 This is a source-tree inventory, not proof that external services are currently deployed or operational. Supabase table/RLS inspection was blocked by the connected tool's permission response; see the audit report.
 
-## Additional source-tree anomaly
-The recursive Git tree contains several paths that appear to be accidentally named after shell commands, including paths beginning with `bash ops` and `git switch main` (some contain embedded newlines). They were not deleted during this migration because their contents/usage must be inspected first. Review them in a dedicated cleanup change before removing anything.
+## Resolved source-tree anomaly
+- The prior tree contained two accidental files whose names were shell command sequences and whose contents were command text, not application code. After inspecting the exact blobs and confirming these were not the real scripts, the two stray entries were removed. The real scripts under `ops/` remain in place.

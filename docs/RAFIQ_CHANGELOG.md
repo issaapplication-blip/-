@@ -17,3 +17,6 @@
 - Added manifest JSON to the existing Service Worker asset list.
 - Reduced optional health-check cadence to six hours.
 - Confirmed no duplicate Service Worker registration was added.
+
+## 2026-10-15 — source-tree hygiene
+- Removed two accidental files whose paths were shell command sequences and whose contents were command text. The real scripts under `ops/` were preserved. This cleanup did not remove application code or database objects.
