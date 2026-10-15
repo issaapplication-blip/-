@@ -10,6 +10,7 @@ var CACHE = "rafig-v84-20261015";
 var ASSETS = [
   "/",
   "/index.html",
+  "/offline.html",
   "/barcode.html",
   "/app.html",
   "/faq.html",
@@ -84,11 +85,14 @@ self.addEventListener("fetch", function (e) {
     }
     e.respondWith(
       fetch(req, { cache: "no-store" }).catch(function () {
-        return caches.match("/index.html").then(function (c) {
-          return c || new Response(
-            "RAFIQ is temporarily unavailable. Please refresh in a moment.",
-            { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }
-          );
+        return caches.match("/offline.html").then(function (offline) {
+          if (offline) return offline;
+          return caches.match("/index.html").then(function (c) {
+            return c || new Response(
+              "RAFIQ is temporarily unavailable. Please refresh in a moment.",
+              { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+            );
+          });
         });
       })
     );
