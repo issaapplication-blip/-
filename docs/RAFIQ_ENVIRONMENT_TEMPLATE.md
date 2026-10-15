@@ -1,41 +1,50 @@
-# RAFIQ environment variable template (names only; no values)
+# RAFIQ — Environment Variables Template
 
-## Runtime
-- `PORT=7860` — container default
-- `HOST=0.0.0.0` — container default
-- `NODE_ENV=production`
+ضع هذه المتغيرات في إعدادات الاستضافة المناسبة. لا تضع قيمًا حقيقية أو أسرارًا في المستودع.
 
-## Supabase
-- `SUPABASE_URL` — existing project URL: https://qmuxaehrahfsnabyjens.supabase.co
-- `SUPABASE_ANON_KEY` — public/anon key; browser exposure only where intended and protected by RLS
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only; never expose to browser, commit, or log
+## Supabase — المشروع الحالي فقط
+- `SUPABASE_URL` — https://qmuxaehrahfsnabyjens.supabase.co
+- `SUPABASE_ANON_KEY` — المفتاح العام؛ استخدمه في الواجهة فقط مع سياسات RLS سليمة
+- `SUPABASE_SERVICE_ROLE_KEY` — سري، للخادم فقط، ولا يوضع في ملفات الواجهة أو GitHub
+- `SUPABASE_DB_URL` — رابط اتصال قاعدة البيانات؛ استخدم إعداد Pooling المناسب من لوحة Supabase ولا تنشر الرابط
 
-## Telegram — server secret settings only
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_WEBHOOK_SECRET`
-- `TELEGRAM_MANAGER_CHAT_IDS` (optional; restrict access)
-- `RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false` by default; keep false until explicit cutover
-- `TELEGRAM_MARKETING_ENABLED=false` by default
-- `TELEGRAM_BROADCAST_ON_START=false` by default
+## Telegram
+- `TELEGRAM_BOT_TOKEN` — سري
+- `TELEGRAM_WEBHOOK_SECRET` — سري
+- `TELEGRAM_MANAGER_CHAT_IDS` — اختياري؛ عرّف معرّفات المدير في إعدادات الخادم فقط
+- `RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false` — يبقى متوقفًا إلى أن يُختبر البديل ويُعتمد التحويل
+- `TELEGRAM_MARKETING_ENABLED=false`
+- `TELEGRAM_BROADCAST_ON_START=false`
 
-## WhatsApp / Kapso / Meta — disabled during migration
+## WhatsApp / Kapso
+- `KAPSO_API_KEY` — سري، أضفه فقط عند اعتماد التكامل
+- `KAPSO_WEBHOOK_SECRET` — سري
+- `WHATSAPP_PHONE_NUMBER_ID=1324609540731383`
+- `WHATSAPP_BUSINESS_ACCOUNT_ID=1571101954509141`
 - `KAPSO_ENABLED=false`
 - `WHATSAPP_SENDING_ENABLED=false`
 - `RAFIQ_WHATSAPP_AUTO_REPLY=false`
 - `RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING=false`
-- `KAPSO_API_KEY` (only if later approved)
-- `KAPSO_WEBHOOK_SECRET` (only if later approved)
-- `META_ACCESS_TOKEN` (only if later approved)
-- `META_APP_SECRET` (only if later approved)
-- `META_VERIFY_TOKEN` (only if later approved)
 
-## Optional Cloudflare Workers AI
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_API_TOKEN` — narrowly scoped token; server-side only
-- `CLOUDFLARE_AI_MODEL` (optional)
+## Meta
+- `META_APP_ID=1087358919742996`
+- `META_BUSINESS_ID=1092569476458172`
+- `META_ACCESS_TOKEN` — سري، فقط عند الحاجة
+- `META_APP_SECRET` — سري، فقط عند الحاجة
+- `META_VERIFY_TOKEN` — سري، فقط عند الحاجة
 
-## Rules
-- Store secret values only in hosting-provider secret settings.
-- Never paste tokens into chat, source files, GitHub issues, or logs.
-- Do not use the old Supabase project `nyrwfxqitxrspfvshejb`.
-- These are names and safety defaults, not proof that a hosting environment is configured.
+## AI
+- `GEMINI_API_KEY` — سري
+- `RAFIQ_AGENT_MODEL=gpt-5.6-sol` — قيمة اختيارية؛ تأكد من أن مزود النموذج يدعم الاسم قبل تفعيله
+
+## Runtime
+- `PORT=7860`
+- `HOST=0.0.0.0`
+- `NODE_ENV=production`
+
+## قواعد أمان
+- ضع القيم السرية في إعدادات Secrets لدى مزود الاستضافة فقط.
+- لا تضع أي مفتاح خدمة أو Token في ملفات `public/` أو السجلات أو محادثات الدعم.
+- لا تستخدم مشروع Supabase القديم `nyrwfxqitxrspfvshejb`.
+- وجود أسماء المتغيرات هنا لا يعني أن بيئة الاستضافة مهيأة أو أن التكامل يعمل.
+- لا تفعّل إرسال WhatsApp أو تسجيل Webhook أو البث قبل اختبار صريح ومراجعة بشرية.
