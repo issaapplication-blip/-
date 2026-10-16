@@ -110,7 +110,7 @@ $('magicBtn').onclick=async()=>{
  const email=$('email').value.trim().toLowerCase()||ADMIN_EMAIL;
  $('loginError').className='error hidden';
  if(!email){$('loginError').textContent='اكتب بريد المدير أولًا.';$('loginError').className='error';$('loginError').classList.remove('hidden');return}
- const redirectTo='https://rafiq-o6qd.onrender.com/admin.html';
+ const redirectTo=new URL('/admin.html',window.location.origin).href;
  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo,shouldCreateUser:false}});
  if(error){$('loginError').textContent='تعذر إرسال رابط الدخول: '+error.message;$('loginError').className='error';$('loginError').classList.remove('hidden');return}
  $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط دخول آمن إلى البريد. افتحه من نفس الجهاز للعودة مباشرة إلى لوحة الإدارة.';$('loginError').classList.remove('hidden');
@@ -119,7 +119,7 @@ $('resetBtn').onclick=async()=>{
  const email=$('email').value.trim().toLowerCase()||ADMIN_EMAIL;
  $('loginError').classList.add('hidden');
  if(!email){$('loginError').textContent='اكتب بريدك الإلكتروني أولًا.';$('loginError').classList.remove('hidden');return}
- const redirectTo='https://rafiq-o6qd.onrender.com/admin.html';
+ const redirectTo=new URL('/admin.html',window.location.origin).href;
  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
  if(error){$('loginError').textContent='تعذر إرسال رابط إعادة التعيين: '+error.message;$('loginError').classList.remove('hidden');return}
  $('loginError').className='notice';$('loginError').textContent='تم إرسال رابط إعادة تعيين كلمة المرور إلى البريد إذا كان الحساب مسجلًا.';$('loginError').classList.remove('hidden');
