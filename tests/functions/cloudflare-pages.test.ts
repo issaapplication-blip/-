@@ -7,6 +7,7 @@ const proxy = read("functions/_lib/public-intake.ts");
 const webAgent = read("functions/api/agent/chat.ts");
 const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
+const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
 
 test("Pages intake proxy uses only the legacy anon key and existing Supabase function", () => {
   expect(proxy).toContain("SUPABASE_ANON_KEY");
@@ -29,6 +30,11 @@ test("Cloudflare build requires an HTTPS Pages origin and excludes the legacy au
   expect(build).toContain('rm -f "$OUT_DIR/auto-reply.mjs"');
   expect(build).toContain("Suspended Render URL remains");
   expect(build).toContain('include":["/api/*"]');
+});
+
+test("legacy-host validation scans only the built bundle, not source templates", () => {
+  expect(workflow).toContain("grep -RniE 'onrender\\\\.com|rafiq-o6qd' dist/;");
+  expect(workflow).not.toContain("dist/ public/");
 });
 
 test("admin UI never grants access from an email address alone", () => {
