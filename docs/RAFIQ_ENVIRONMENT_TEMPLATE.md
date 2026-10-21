@@ -41,6 +41,7 @@
 
 ## Runtime
 - `PLATFORM_URL` أو `RAFIQ_PUBLIC_BASE_URL` — عنوان HTTPS الفعلي للواجهة بعد نشرها؛ اتركه غير مضبوط إلى أن يتوفر عنوان موثّق. لن يعود الخادم إلى عنوان Render القديم.
+- `RAFIQ_PUBLIC_SITE_URL` — أصل الواجهة العام فقط (مثل `https://<project>.pages.dev` دون مسار)، أضفه إلى Secrets الخاصة بـ Supabase Edge Functions بعد التأكد من عنوان Cloudflare النهائي؛ تستخدمه دالتا استقبال الطلبات ورفع المستندات في قائمة CORS المسموح بها.
 - `PORT=7860`
 - `HOST=0.0.0.0`
 - `NODE_ENV=production`
