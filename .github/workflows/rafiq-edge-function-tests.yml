@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'supabase/functions/rafiq-agent/**'
+      - 'supabase/functions/public-application-intake/**'
+      - 'supabase/functions/public-application-upload/**'
       - 'tests/functions/**'
       - 'src/index.ts'
       - 'src/agent.ts'
@@ -39,6 +41,8 @@ on:
     branches: [main]
     paths:
       - 'supabase/functions/rafiq-agent/**'
+      - 'supabase/functions/public-application-intake/**'
+      - 'supabase/functions/public-application-upload/**'
       - 'tests/functions/**'
       - 'src/index.ts'
       - 'src/agent.ts'
