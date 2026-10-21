@@ -2,9 +2,8 @@ FROM oven/bun:1.3.10-slim
 
 WORKDIR /app
 
+# Copy the manifest and lockfile together so Docker installs the exact locked dependencies.
 COPY package.json bun.lock ./
-# CI proved the checked-in bun.lock is out of sync with package.json.
-# Temporary validation path: refresh bun.lock with Bun 1.3.10 before production release.
 RUN bun install --frozen-lockfile --production
 
 COPY . .
