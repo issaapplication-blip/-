@@ -1,8 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 const sb=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-const allowedOrigins=new Set(["https://rafiq-o6qd.onrender.com","https://issaapplication-blip.github.io"]);
-const cors=(req:Request)=>({"Access-Control-Allow-Origin":allowedOrigins.has(req.headers.get("Origin")||"")?req.headers.get("Origin")!:"https://rafiq-o6qd.onrender.com","Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"});
+const configuredSiteOrigin=(Deno.env.get("RAFIQ_PUBLIC_SITE_URL")||"").trim().replace(/\/+$/,"");
+const allowedOrigins=new Set(["https://issaapplication-blip.github.io",configuredSiteOrigin].filter(Boolean));
+const cors=(req:Request)=>{
+ const origin=req.headers.get("Origin")||"";
+ return {...(allowedOrigins.has(origin)?{"Access-Control-Allow-Origin":origin}:{}),"Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
+};
 const mime=new Set(["application/pdf","image/jpeg","image/png","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
 const cats=new Set(["cv","certificate","experience","id_front","id_back","passport","driver_license","portrait","nursing_license","nursing_certificate","medical_report","family_proof","payment_proof","other"]);
 const hex=(b:Uint8Array)=>Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");
