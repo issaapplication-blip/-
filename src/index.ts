@@ -17,10 +17,10 @@ const port = Number(process.env.PORT ?? 7860);
 const startedAt = new Date().toISOString();
 let lastKapsoWebhookAt: string | null = null;
 let lastKapsoWebhookEvent: string | null = null;
-const AGENT_DEFAULT_MODEL = "gpt-5.6-sol";
 const effectiveAgentModel = () => {
-  const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
-  return configured || AGENT_DEFAULT_MODEL;
+  const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "gemini").trim().toLowerCase();
+  if (provider === "gemini") return (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
+  return (process.env.RAFIQ_AGENT_MODEL ?? "not-configured").trim() || "not-configured";
 };
 const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\bkareh\b|\bnurse\b/i;
 const CARE_SESSION_TTL_MS = 30 * 60 * 1000;

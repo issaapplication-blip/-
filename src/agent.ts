@@ -1,8 +1,7 @@
 import { answerRafiqKnowledge, RAFIQ_SERVICE_KNOWLEDGE } from "./rafiq-service-knowledge";
-const DEFAULT_MODEL = "gpt-5.6-sol";
 const resolveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
-  if (!configured) return DEFAULT_MODEL;
+  if (!configured) throw new Error("RAFIQ_AGENT_MODEL must be set when RAFIQ_AGENT_PROVIDER=openai");
   return configured;
 };
 
@@ -283,7 +282,7 @@ const callGeminiAgent = async (input: string) => {
 };
 
 const callAgent = async (input: string) => {
-  const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "openai").trim().toLowerCase();
+  const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "gemini").trim().toLowerCase();
   if (provider === "gemini") return callGeminiAgent(input);
   if (provider !== "openai") throw new Error("Unsupported RAFIQ agent provider");
   return callOpenAIAgent(input);

@@ -1,5 +1,5 @@
 export const RAFIQ_CONFIG = {
-  platformUrl: (process.env.PLATFORM_URL ?? "https://rafiq-o6qd.onrender.com").trim().replace(/\/$/, ""),
+  platformUrl: (process.env.PLATFORM_URL ?? process.env.RAFIQ_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, ""),
   telegramBotUrl: (process.env.TELEGRAM_BOT_URL ?? "https://t.me/RAFIQ_Care_Bot").trim(),
   telegramGroupUrl: (process.env.TELEGRAM_GROUP_URL ?? "https://t.me/+a7CDblNyGkw1Yjg8").trim(),
   whatsappChannelUrl: (process.env.WHATSAPP_CHANNEL_URL ?? "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K").trim(),
@@ -8,7 +8,7 @@ export const RAFIQ_CONFIG = {
 } as const;
 
 export const validateRafiqLinks = () => {
-  const entries = Object.entries(RAFIQ_CONFIG).filter(([key]) => key.endsWith("Url"));
+  const entries = Object.entries(RAFIQ_CONFIG).filter(([key]) => key.endsWith("Url") && key !== "platformUrl");
   const missing = entries.filter(([, value]) => !String(value).trim()).map(([key]) => key);
   if (missing.length) throw new Error("RAFIQ links are incomplete: " + missing.join(", "));
   return true;
@@ -19,7 +19,7 @@ export const rafiqFooter = () => {
   return [
     "🌿 RAFIQ | رفيق",
     "نصل بالحب والأمان لرعاية العائلة 🤍",
-    "🌐 ادخل إلى منصة RAFIQ: " + RAFIQ_CONFIG.platformUrl,
+    ...(RAFIQ_CONFIG.platformUrl ? ["🌐 ادخل إلى منصة RAFIQ: " + RAFIQ_CONFIG.platformUrl] : []),
     "🤖 تواصل مع RAFIQ عبر Telegram: " + RAFIQ_CONFIG.telegramBotUrl,
     "📢 انضم إلى مجموعة RAFIQ: " + RAFIQ_CONFIG.telegramGroupUrl,
     "📱 تابع قناة RAFIQ على WhatsApp: " + RAFIQ_CONFIG.whatsappChannelUrl,
