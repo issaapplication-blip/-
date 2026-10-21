@@ -23,6 +23,7 @@ on:
       - 'docs/recovery/**'
       - 'ops/**'
       - '.github/workflows/rafiq-edge-function-tests.yml'
+      - '.github/workflows/keep-alive.yml'
       - 'supabase/functions/telegram-webhook/**'
       - 'supabase/migrations/**'
       - 'supabase/rollback/**'
