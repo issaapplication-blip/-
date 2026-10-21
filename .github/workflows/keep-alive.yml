@@ -23,10 +23,12 @@ jobs:
             echo "::notice::Skipped: configure the repository variable RAFIQ_HEALTH_URL with a verified deployed HTTPS health/status URL."
             exit 0
           fi
+          HEALTH_URL="$(python3 -c 'import os; print(os.environ["HEALTH_URL"].strip())')"
+          export HEALTH_URL
           python3 - <<'PY'
           import os
           from urllib.parse import urlsplit
-          raw = os.environ["HEALTH_URL"].strip()
+          raw = os.environ["HEALTH_URL"]
           u = urlsplit(raw)
           if u.scheme != "https" or not u.netloc or u.username or u.password or u.fragment:
               raise SystemExit("RAFIQ_HEALTH_URL must be a valid HTTPS URL without embedded credentials or a fragment")
