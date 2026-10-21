@@ -34,10 +34,13 @@
 - `META_VERIFY_TOKEN` — سري، فقط عند الحاجة
 
 ## AI
-- `GEMINI_API_KEY` — سري
-- `RAFIQ_AGENT_MODEL=gpt-5.6-sol` — قيمة اختيارية؛ تأكد من أن مزود النموذج يدعم الاسم قبل تفعيله
+- `GEMINI_API_KEY` — سري؛ يضاف فقط إلى Secrets في مساحة Hugging Face عند اختبار الوكيل.
+- `RAFIQ_AGENT_PROVIDER=gemini` — الافتراضي في خادم RAFIQ؛ لا يحتاج إلى OpenAI API key.
+- `RAFIQ_GEMINI_MODEL=gemini-3.6-flash` — نموذج Gemini المستقر الافتراضي؛ قد تختلف الإتاحة والحدود المجانية حسب حساب Google AI Studio.
+- `RAFIQ_AGENT_MODEL` — مطلوب فقط إذا اختير `RAFIQ_AGENT_PROVIDER=openai` صراحةً، ويجب أن يكون اسم نموذج صالحًا لحسابك.
 
 ## Runtime
+- `PLATFORM_URL` أو `RAFIQ_PUBLIC_BASE_URL` — عنوان HTTPS الفعلي للواجهة بعد نشرها؛ اتركه غير مضبوط إلى أن يتوفر عنوان موثّق. لن يعود الخادم إلى عنوان Render القديم.
 - `PORT=7860`
 - `HOST=0.0.0.0`
 - `NODE_ENV=production`
