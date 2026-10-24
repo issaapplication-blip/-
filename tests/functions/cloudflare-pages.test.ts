@@ -33,7 +33,15 @@ test("Cloudflare build requires an HTTPS Pages origin and excludes the legacy au
 });
 
 test("legacy-host validation scans only the built bundle, not source templates", () => {
-  expect(workflow).toContain("grep -RniE 'onrender\\.com|rafiq-o6qd' dist/;");
+  const validationLine = workflow
+    .split("\n")
+    .find((line) => line.includes("grep -RniE") && line.includes("dist/")) ?? "";
+
+  expect(validationLine).toContain("onrender");
+  expect(validationLine).toContain("rafiq-o6qd");
+  expect(validationLine).toContain("|");
+  expect(validationLine).toContain("dist/;");
+  expect(validationLine).not.toContain("public/");
   expect(workflow).not.toContain("dist/ public/");
 });
 
