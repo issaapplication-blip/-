@@ -39,6 +39,7 @@ test("legacy-host validation scans only the built bundle, not source templates",
 
   expect(validationLine).toContain("onrender");
   expect(validationLine).toContain("rafiq-o6qd");
+  expect(validationLine).toContain("|");
   expect(validationLine).toContain("dist/;");
   expect(validationLine).not.toContain("public/");
   expect(workflow).not.toContain("dist/ public/");
