@@ -67,7 +67,9 @@ const isTelegramBlockedError=(error:any)=>{
 const telegramBroadcastOne=async(recipientId:string,text:string)=>{
   for(let attempt=0;attempt<3;attempt++){
     try{
-      return await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
+      return TELEGRAM_BROADCAST_IMAGE
+        ? await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON)
+        : await telegramSendText(recipientId,text,TELEGRAM_BROADCAST_BUTTON);
     }catch(error:any){
       const retryAfter=Number(error?.retryAfter||0);
       if(retryAfter>0){ await sleep(Math.min(retryAfter*1000,10000)); continue; }
