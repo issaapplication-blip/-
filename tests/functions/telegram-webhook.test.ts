@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const legacyIndex = readFileSync(resolve(import.meta.dir, "../../src/index.ts"), "utf8");
 const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram.ts"), "utf8");
+const legacyManager = readFileSync(resolve(import.meta.dir, "../../src/telegram-manager.ts"), "utf8");
 
 const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/telegram-webhook/index.ts"),
@@ -71,8 +72,8 @@ test("Telegram broadcasts do not require the website or its image assets", () =>
   expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
 });
 
-test("Public Telegram broadcast defaults contain no retired Render URL", () => {
-  expect(legacyIndex).not.toContain("https://rafiq-o6qd.onrender.com");
+test("Manager broadcast defaults contain no retired Render URL", () => {
+  expect(legacyManager).not.toContain("https://rafiq-o6qd.onrender.com");
 });
 
 test("Scheduled marketing ads require a separate explicit approval flag", () => {
