@@ -582,7 +582,7 @@ const telegramAdminApprove=async(ref:string)=>{
   if(!barcode.response.ok)throw new Error("تعذر إصدار الباركود");
   await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",admin_decision_notes:"تم القبول وإصدار الرقم والباركود من إدارة RAFIQ",updated_at:new Date().toISOString()})});
   if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",updated_at:new Date().toISOString()})});
-  const publicBase=(process.env.PUBLIC_BASE_URL??process.env.RAFIQ_PUBLIC_BASE_URL??RAFIQ_WEBSITE??"").trim().replace(/\/$/,"");
+  const publicBase=(process.env.PUBLIC_BASE_URL||process.env.RAFIQ_PUBLIC_BASE_URL||RAFIQ_WEBSITE||"").trim().replace(/\/$/,"");
   const link=publicBase.startsWith("https://")?publicBase+"/barcode.html?code="+encodeURIComponent(code):"";
   const applicantUsername=String(p.profile?.telegram_username??payload.telegram_username??"").replace(/^@/,"").trim();
   if(applicantUsername){
