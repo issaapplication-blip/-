@@ -63,3 +63,9 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
   expect(legacyTelegram).toContain("difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i)");
   expect(legacyTelegram).not.toContain("if (!expected) return true");
 });
+
+test("provider approval never falls back to the retired Render host for barcode links", () => {
+  expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
+  expect(legacyIndex).toContain("process.env.RAFIQ_PUBLIC_BASE_URL??RAFIQ_WEBSITE");
+  expect(legacyIndex).toContain("...(link?[");
+});
