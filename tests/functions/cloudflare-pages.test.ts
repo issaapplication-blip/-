@@ -7,6 +7,7 @@ const proxy = read("functions/_lib/public-intake.ts");
 const webAgent = read("functions/api/agent/chat.ts");
 const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
+const adminHtml = read("public/admin.html");
 const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
 
 test("Pages intake proxy uses only the legacy anon key and existing Supabase function", () => {
@@ -40,4 +41,10 @@ test("legacy-host validation scans only the built bundle, not source templates",
 test("admin UI never grants access from an email address alone", () => {
   expect(admin).toContain("dbAdmin===true&&p?.role==='admin'&&p?.status==='active'");
   expect(admin).not.toContain("ownerByEmail");
+});
+
+test("admin dashboard requires database authorization and an active admin profile", () => {
+  expect(adminHtml).toContain("db.rpc('is_admin')");
+  expect(adminHtml).toContain("db.from('profiles').select('id,email,role,status')");
+  expect(adminHtml).toContain("profile?.role!=='admin'||profile?.status!=='active'");
 });

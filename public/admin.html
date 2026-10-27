@@ -127,9 +127,17 @@ function formatDate(v){try{return new Date(v).toLocaleString('ar-LB')}catch{retu
 async function isAdmin(){
   const {data:{user},error}=await db.auth.getUser();
   if(error||!user)return null;
-  const {data:isAdminFlag,error:ae}=await db.rpc('is_admin');
-  if(ae||isAdminFlag!==true){await db.auth.signOut();return null;}
-  return {user,profile:{id:user.id,email:user.email||'' ,role:'admin',status:'active'}};
+  // Require both the database authorization function and an active admin profile.
+  // An email address or a client-side claim alone must never grant admin access.
+  const [{data:isAdminFlag,error:ae},{data:profile,error:pe}]=await Promise.all([
+    db.rpc('is_admin'),
+    db.from('profiles').select('id,email,role,status').eq('id',user.id).maybeSingle()
+  ]);
+  if(ae||pe||isAdminFlag!==true||profile?.role!=='admin'||profile?.status!=='active'){
+    await db.auth.signOut();
+    return null;
+  }
+  return {user,profile};
 }
 
 async function loadCounts(){
