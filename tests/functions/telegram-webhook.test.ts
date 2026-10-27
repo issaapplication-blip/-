@@ -70,6 +70,7 @@ test("Telegram broadcasts do not require the website or its image assets", () =>
   expect(legacyIndex).toContain(": await telegramSendText(recipientId,text,TELEGRAM_BROADCAST_BUTTON)");
   expect(legacyIndex).toContain('const link=publicBase.startsWith("https://")');
   expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
+  expect(legacyIndex).not.toContain("Sitemap: https://rafiq-o6qd.onrender.com/sitemap.xml");
 });
 
 test("Manager broadcast defaults contain no retired Render URL", () => {
