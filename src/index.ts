@@ -588,7 +588,10 @@ const telegramAdminApprove=async(ref:string)=>{
   if(applicantUsername){
     const ir=await supabaseServerRest("/rest/v1/rafiq_telegram_identities?username=ilike."+encodeURIComponent(applicantUsername)+"&select=chat_id&order=last_seen_at.desc&limit=1");
     const recipient=Array.isArray(ir.body)?ir.body[0]?.chat_id:null;
-    if(recipient)await telegramSendText(recipient,telegramSigned("🎉 أهلًا بك في RAFIQ | رفيق\\n\\nتم قبول طلبك رسميًا.\\n🪪 رقمك الشخصي: "+memberNumber+"\\n🔖 باركودك: "+code+"\\n🔗 افتح بطاقة الباركود: "+link+"\\n\\nاحتفظ بهذا الرقم والباركود لاستخدامهما ضمن منصة رفيق.")).catch(()=>{});
+    if(recipient){
+      const welcome=["🎉 أهلًا بك في RAFIQ | رفيق","","تم قبول طلبك رسميًا.","🪪 رقمك الشخصي: "+memberNumber,"🔖 باركودك: "+code,...(link?["🔗 افتح بطاقة الباركود: "+link]:[]),"","احتفظ بهذا الرقم والباركود لاستخدامهما عند التواصل مع إدارة رفيق."].join("\\n");
+      await telegramSendText(recipient,telegramSigned(welcome)).catch(()=>{});
+    }
   }
   return{intake,type,memberNumber,code,link};
 };
