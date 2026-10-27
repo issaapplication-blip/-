@@ -404,7 +404,7 @@ const TELEGRAM_MARKETING_ADS = [
 let lastTelegramMarketingSlot = "";
 const supabaseBroadcastPending=async(key:string,recipientId:string)=>supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:key,recipient_id:recipientId,status:"pending",error_message:null})});
 const telegramMarketingTick = async () => {
-  if(process.env.TELEGRAM_MARKETING_ENABLED !== "true" || !telegramConfigured()) return;
+  if(process.env.TELEGRAM_MARKETING_ENABLED !== "true" || process.env.RAFIQ_TELEGRAM_SCHEDULED_ADS_APPROVED !== "true" || !telegramConfigured()) return;
   const target = TELEGRAM_MARKETING_TARGET();
   const discovered=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?is_active=eq.true&select=chat_id");
   const targets=Array.from(new Set([
