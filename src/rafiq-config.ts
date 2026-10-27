@@ -1,7 +1,8 @@
 export const RAFIQ_CONFIG = {
   platformUrl: (process.env.PLATFORM_URL ?? process.env.RAFIQ_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, ""),
   telegramBotUrl: (process.env.TELEGRAM_BOT_URL ?? "https://t.me/RAFIQ_Care_Bot").trim(),
-  telegramGroupUrl: (process.env.TELEGRAM_GROUP_URL ?? "https://t.me/+a7CDblNyGkw1Yjg8").trim(),
+  telegramGroupUrl: (process.env.TELEGRAM_GROUP_URL ?? "").trim(),
+  telegramChannelUrl: (process.env.TELEGRAM_CHANNEL_URL ?? "https://t.me/+a7CDblNyGkw1Yjg8").trim(),
   whatsappChannelUrl: (process.env.WHATSAPP_CHANNEL_URL ?? "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K").trim(),
   whatsappNumber: (process.env.WHATSAPP_NUMBER ?? "+961 81 506 299").trim(),
   whatsappUrl: (process.env.WHATSAPP_URL ?? "https://wa.me/96181506299").trim(),
