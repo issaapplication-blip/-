@@ -63,3 +63,24 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
   expect(legacyTelegram).toContain("difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i)");
   expect(legacyTelegram).not.toContain("if (!expected) return true");
 });
+
+test("Telegram broadcasts do not require the website or its image assets", () => {
+  expect(legacyIndex).toContain("TELEGRAM_BROADCAST_IMAGE\\n        ? await telegramSendPhoto");
+  expect(legacyIndex).toContain(": await telegramSendText(recipientId,text,TELEGRAM_BROADCAST_BUTTON)");
+  expect(legacyIndex).toContain('const link=publicBase.startsWith("https://")');
+  expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
+});
+
+test("Public Telegram broadcast defaults contain no retired Render URL", () => {
+  expect(legacyIndex).not.toContain("https://rafiq-o6qd.onrender.com");
+});
+
+test("Scheduled marketing ads require a separate explicit approval flag", () => {
+  expect(legacyIndex).toContain('process.env.RAFIQ_TELEGRAM_SCHEDULED_ADS_APPROVED !== "true"');
+});
+
+test("Unknown Telegram group link is not silently substituted with the official channel", () => {
+  const config = readFileSync(resolve(import.meta.dir, "../../src/rafiq-config.ts"), "utf8");
+  expect(config).toContain('telegramGroupUrl: (process.env.TELEGRAM_GROUP_URL ?? "").trim()');
+  expect(config).toContain('telegramChannelUrl: (process.env.TELEGRAM_CHANNEL_URL ?? "https://t.me/+a7CDblNyGkw1Yjg8").trim()');
+});
