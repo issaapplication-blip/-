@@ -168,9 +168,57 @@ async function getActiveSession(chatId: string) {
   return data;
 }
 
-async function processRequestMessage(chatId: string, userId: string, text: string): Promise<boolean> {
-  const session = await getActiveSession(chatId);
-  if (!session) return false;
+async function dispatchPendingManagerNotifications(requestId: string): Promise<void> {
+  const { data: pending, error: readError } = await db!.from("rafiq_telegram_manager_notification_outbox")
+    .select("id,manager_chat_id,message_text,attempts")
+    .eq("request_id", requestId).eq("status", "pending")
+    .order("created_at", { ascending: true }).limit(10);
+  if (readError) throw new Error("telegram_manager_outbox_read_failed");
+
+  for (const item of pending || []) {
+    try {
+      await sendText(item.manager_chat_id, item.message_text);
+      const { error } = await db!.from("rafiq_telegram_manager_notification_outbox").update({
+        status: "sent", attempts: Number(item.attempts || 0) + 1,
+        sent_at: new Date().toISOString(), updated_at: new Date().toISOString(), last_error: null,
+      }).eq("id", item.id).eq("status", "pending");
+      if (error) throw new Error("telegram_manager_outbox_mark_sent_failed");
+    } catch (error) {
+      await db!.from("rafiq_telegram_manager_notification_outbox").update({
+        attempts: Number(item.attempts || 0) + 1,
+        last_error: String(error).slice(0, 300), updated_at: new Date().toISOString(),
+      }).eq("id", item.id).eq("status", "pending");
+      console.error(JSON.stringify({ event: "telegram_manager_notice_pending", request_id: requestId, reason: String(error).slice(0, 120) }));
+    }
+  }
+
+  const { count, error: remainingError } = await db!.from("rafiq_telegram_manager_notification_outbox")
+    .select("id", { count: "exact", head: true })
+    .eq("request_id", requestId).eq("status", "pending");
+  if (remainingError || (count || 0) > 0) throw new Error("telegram_manager_notification_delivery_pending");
+}
+
+async function sendRequestConfirmation(chatId: string, sessionId: string, requestId: string): Promise<void> {
+  await sendText(chatId, "✅ تم حفظ طلبك لدى رفيق بالرقم " + requestId + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
+  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
+    confirmation_sent: true, updated_at: new Date().toISOString(),
+  }).eq("id", sessionId);
+  if (error) throw new Error("telegram_request_confirmation_state_failed");
+}
+
+async function processRequestMessage(chatId: string, userId: string, text: string, updateId: number): Promise<boolean> {
+  let session = await getActiveSession(chatId);
+  if (!session) {
+    const { data, error } = await db!.from("rafiq_telegram_request_sessions")
+      .select("id,request_id,submit_update_id,confirmation_sent,status")
+      .eq("chat_id", chatId).eq("submit_update_id", updateId).eq("status", "submitted")
+      .limit(1).maybeSingle();
+    if (error) throw new Error("telegram_submitted_request_read_failed");
+    if (!data) return false;
+    await dispatchPendingManagerNotifications(data.request_id);
+    if (!data.confirmation_sent) await sendRequestConfirmation(chatId, data.id, data.request_id);
+    return true;
+  }
 
   if (!session.service_type) {
     await sendText(chatId, "اختر الخدمة المطلوبة:", serviceKeyboard);
@@ -189,12 +237,8 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
     return true;
   }
 
+  if (!MANAGER_CHAT_IDS.length) throw new Error("telegram_manager_chat_ids_missing");
   const notes = text.trim().toLowerCase() === "/skip" ? null : text.slice(0, 1000);
-  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
-    notes, status: "submitted", updated_at: new Date().toISOString(),
-  }).eq("id", session.id).eq("status", "collecting");
-  if (error) throw new Error("telegram_request_submit_failed");
-
   const summary = [
     "📝 طلب رعاية جديد على RAFIQ",
     "الطلب: " + session.request_id,
@@ -205,11 +249,21 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
     "Chat ID: " + chatId,
     "Telegram User ID: " + userId,
   ].join("\n");
-  for (const managerId of MANAGER_CHAT_IDS) {
-    try { await sendText(managerId, summary); }
-    catch (error) { console.error(JSON.stringify({ event: "telegram_manager_notice_failed", error: String(error).slice(0, 120) })); }
-  }
-  await sendText(chatId, "✅ تم حفظ طلبك لدى رفيق بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
+  const outboxRows = MANAGER_CHAT_IDS.map((managerId) => ({
+    request_id: session!.request_id, manager_chat_id: managerId, message_text: summary, status: "pending",
+  }));
+  const { error: outboxError } = await db!.from("rafiq_telegram_manager_notification_outbox")
+    .upsert(outboxRows, { onConflict: "request_id,manager_chat_id", ignoreDuplicates: true });
+  if (outboxError) throw new Error("telegram_manager_outbox_enqueue_failed");
+
+  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
+    notes, status: "submitted", submit_update_id: updateId, confirmation_sent: false,
+    updated_at: new Date().toISOString(),
+  }).eq("id", session.id).eq("status", "collecting");
+  if (error) throw new Error("telegram_request_submit_failed");
+
+  await dispatchPendingManagerNotifications(session.request_id);
+  await sendRequestConfirmation(chatId, session.id, session.request_id);
   return true;
 }
 
@@ -287,7 +341,7 @@ async function processUpdate(update: any) {
     return;
   }
 
-  if (await processRequestMessage(String(chatId), userId, text)) return;
+  if (await processRequestMessage(String(chatId), userId, text, Number(update?.update_id))) return;
   await sendText(chatId, await generateFaqReply(text));
 }
 
