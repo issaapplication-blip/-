@@ -57,8 +57,8 @@ const telegramLanguage = (message:any) => {
   if(/[أ-ي]/.test(t)) return "ar";
   return "ar";
 };
-const TELEGRAM_BROADCAST_IMAGE = (process.env.TELEGRAM_BROADCAST_IMAGE_URL || `${RAFIQ_WEBSITE}/assets/rafig-logo.png`).trim();
-const TELEGRAM_BROADCAST_BUTTON = {inline_keyboard:[[{text:"🌐 منصة RAFIQ",url:RAFIQ_WEBSITE}]]};
+const TELEGRAM_BROADCAST_IMAGE = (process.env.TELEGRAM_BROADCAST_IMAGE_URL || (RAFIQ_WEBSITE ? `${RAFIQ_WEBSITE}/assets/rafig-logo.png` : "")).trim();
+const TELEGRAM_BROADCAST_BUTTON = RAFIQ_WEBSITE.startsWith("https://") ? {inline_keyboard:[[{text:"🌐 منصة RAFIQ",url:RAFIQ_WEBSITE}]]} : undefined;
 const sleep = (ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
 const isTelegramBlockedError=(error:any)=>{
   const s=String(error?.telegramDescription||error?.message||"").toLowerCase();
