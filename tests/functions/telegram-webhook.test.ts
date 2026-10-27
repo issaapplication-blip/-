@@ -99,3 +99,25 @@ test("Kapso webhooks fail closed without a configured secret and signature", () 
   expect(legacyIndex).not.toContain('KAPSO_ALLOW_UNSIGNED==="true"');
   expect(legacyIndex).toContain('if(!secret||!signature||!(await verifyKapsoSignature(raw,signature)))');
 });
+
+test("Manager notices are durably queued before a request is submitted and can be retried", () => {
+  expect(source).toContain('from("rafiq_telegram_manager_notification_outbox")');
+  expect(source).toContain('onConflict: "request_id,manager_chat_id", ignoreDuplicates: true');
+  expect(source).toContain("dispatchPendingManagerNotifications");
+  expect(source).toContain('status: "pending"');
+  expect(source).toContain('status: "sent"');
+  expect(source).toContain("submit_update_id: updateId");
+  expect(source).toContain("confirmation_sent: false");
+  expect(source).toContain('throw new Error("telegram_manager_notification_delivery_pending")');
+  expect(source).toContain("Number(update?.update_id)");
+  const enqueue = source.indexOf('from("rafiq_telegram_manager_notification_outbox")\n    .upsert(outboxRows');
+  const submit = source.indexOf('status: "submitted", submit_update_id: updateId');
+  expect(enqueue).toBeGreaterThan(-1);
+  expect(submit).toBeGreaterThan(enqueue);
+});
+
+test("Manager notifications require configured admin targets and never silently swallow delivery failures", () => {
+  expect(source).toContain("MANAGER_CHAT_IDS.length === 0");
+  expect(source).toContain('event: "telegram_manager_notice_pending"');
+  expect(source).not.toContain('try { await sendText(managerId, summary); }');
+});
