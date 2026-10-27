@@ -580,12 +580,16 @@ const telegramAdminApprove=async(ref:string)=>{
   if(!barcode.response.ok)throw new Error("تعذر إصدار الباركود");
   await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",admin_decision_notes:"تم القبول وإصدار الرقم والباركود من إدارة RAFIQ",updated_at:new Date().toISOString()})});
   if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",updated_at:new Date().toISOString()})});
-  const link=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"")+"/barcode.html?code="+encodeURIComponent(code);
+  const publicBaseUrl=(process.env.PUBLIC_BASE_URL??process.env.RAFIQ_PUBLIC_BASE_URL??RAFIQ_WEBSITE).trim().replace(/\/$/,"");
+  const link=publicBaseUrl?publicBaseUrl+"/barcode.html?code="+encodeURIComponent(code):"";
   const applicantUsername=String(p.profile?.telegram_username??payload.telegram_username??"").replace(/^@/,"").trim();
   if(applicantUsername){
     const ir=await supabaseServerRest("/rest/v1/rafiq_telegram_identities?username=ilike."+encodeURIComponent(applicantUsername)+"&select=chat_id&order=last_seen_at.desc&limit=1");
     const recipient=Array.isArray(ir.body)?ir.body[0]?.chat_id:null;
-    if(recipient)await telegramSendText(recipient,telegramSigned("🎉 أهلًا بك في RAFIQ | رفيق\\n\\nتم قبول طلبك رسميًا.\\n🪪 رقمك الشخصي: "+memberNumber+"\\n🔖 باركودك: "+code+"\\n🔗 افتح بطاقة الباركود: "+link+"\\n\\nاحتفظ بهذا الرقم والباركود لاستخدامهما ضمن منصة رفيق.")).catch(()=>{});
+    if(recipient){
+      const welcome=["🎉 أهلًا بك في RAFIQ | رفيق","تم قبول طلبك رسميًا.","🪪 رقمك الشخصي: "+memberNumber,"🔖 باركودك: "+code,...(link?["🔗 افتح بطاقة الباركود: "+link]:[]),"احتفظ بهذا الرقم والباركود لاستخدامهما ضمن منصة رفيق."].join("\\n\\n");
+      await telegramSendText(recipient,telegramSigned(welcome)).catch(()=>{});
+    }
   }
   return{intake,type,memberNumber,code,link};
 };
