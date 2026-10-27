@@ -138,7 +138,7 @@ const TELEGRAM_ANNOUNCEMENT = [
   "",
   "🤖 بوت Telegram: @RAFIQ_Care_Bot",
   "📢 قناة Telegram: " + RAFIQ_TELEGRAM_CHANNEL,
-  "🌐 الموقع: " + RAFIQ_WEBSITE,
+  ...(RAFIQ_WEBSITE ? ["🌐 الموقع: " + RAFIQ_WEBSITE] : []),
   "📱 WhatsApp الرسمي: " + RAFIQ_WHATSAPP_NUMBER + " — " + RAFIQ_WHATSAPP
 ].join("\n");
 const draftInboundReply = async (message: string, senderPhone?: string) => {
