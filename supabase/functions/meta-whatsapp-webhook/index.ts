@@ -149,9 +149,15 @@ Deno.serve(async (req: Request) => {
       });
 
       if (insert.error) {
+        // A unique violation means Meta is retrying an event already accepted.
+        // Any other persistence error must be retryable; returning 200 here would
+        // acknowledge and potentially lose a message that was never stored.
         if (insert.error.code === "23505") continue;
-        console.error("inbound insert failed", insert.error.message);
-        continue;
+        console.error("inbound insert failed", JSON.stringify({ code: insert.error.code || "unknown" }));
+        return new Response("Temporary persistence failure", {
+          status: 503,
+          headers: { ...cors, "Retry-After": "5", "Cache-Control": "no-store" }
+        });
       }
 
       if (!msg.text) {
