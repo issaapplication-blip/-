@@ -114,11 +114,10 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
       if(process.env.TELEGRAM_MARKETING_ENABLED!=="true"){await deps.send(input.chatId,"⚠️ النشر التسويقي متوقف في إعدادات الخادم. لم يتم نشر أي إعلان.");return true;}
       const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
-      const site="https://rafiq-o6qd.onrender.com/";
       const bot="https://t.me/RAFIQ_Care_Bot";
-      const group="https://t.me/+a7CDblNyGkw1Yjg8";
+      const channel="https://t.me/+a7CDblNyGkw1Yjg8";
       const wa="https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
-      const footer="\\n\\n🌐 المنصة: "+site+"\\n🤖 بوت Telegram: "+bot+"\\n📢 مجموعة Telegram: "+group+"\\n📱 قناة WhatsApp: "+wa;
+      const footer="\\n\\n🤖 بوت Telegram: "+bot+"\\n📢 قناة Telegram الرسمية: "+channel+"\\n📱 قناة WhatsApp الرسمية: "+wa;
       const ads=[
         "👩‍⚕️ RAFIQ | رفيق — للممرضين والممرضات\\n\\nإذا كنت ممرضًا أو ممرضة وتعمل في مجال الرعاية المنزلية، ندعوك للانضمام إلى RAFIQ وتقديم طلب الانتساب. نعمل على تنظيم الطلبات ومراجعة الملفات ضمن إجراءات المنصة.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
         "🤝 RAFIQ | رفيق — لمقدمي الرعاية\\n\\nإذا كنت مقدم رعاية وتملك خبرة في رعاية كبار السن أو المرضى، ندعوك للتسجيل وتقديم طلب الانضمام إلى RAFIQ. اجعل خبرتك جزءًا من شبكة الرعاية المنزلية التي نبنيها.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
