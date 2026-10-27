@@ -86,3 +86,16 @@ test("Unknown Telegram group link is not silently substituted with the official 
   expect(config).toContain('telegramGroupUrl: (process.env.TELEGRAM_GROUP_URL ?? "").trim()');
   expect(config).toContain('telegramChannelUrl: (process.env.TELEGRAM_CHANNEL_URL ?? "https://t.me/+a7CDblNyGkw1Yjg8").trim()');
 });
+
+test("Meta WhatsApp webhook fails closed when META_APP_SECRET or a valid signature is missing", () => {
+  const start = legacyIndex.indexOf('.post("/api/whatsapp/webhook",async({request,set})=>{');
+  const end = legacyIndex.indexOf('.post("/api/agent/chat"', start);
+  const handler = legacyIndex.slice(start, end);
+  expect(handler).toContain('if(!(await verifyMetaSignature(raw,signature)))');
+  expect(handler).not.toContain('if(process.env.META_APP_SECRET)');
+});
+
+test("Kapso webhooks fail closed without a configured secret and signature", () => {
+  expect(legacyIndex).not.toContain('KAPSO_ALLOW_UNSIGNED==="true"');
+  expect(legacyIndex).toContain('if(!secret||!signature||!(await verifyKapsoSignature(raw,signature)))');
+});
