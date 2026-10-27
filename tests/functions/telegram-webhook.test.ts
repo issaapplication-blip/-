@@ -34,6 +34,16 @@ test("Telegram requests are stored only after a real session write and never pro
   expect(source).toContain('from("rafiq_telegram_request_sessions")');
 });
 
+test("Telegram request is not reported submitted when admin delivery is unconfigured or fails", () => {
+  expect(source).toContain("if (MANAGER_CHAT_IDS.length === 0)");
+  expect(source).toContain("telegram_manager_destinations_missing");
+  expect(source).toContain("telegram_manager_notice_failed");
+  expect(source).toContain('await sendText(managerId, summary)');
+  expect(source).toContain('status: "submitted"');
+  expect(source).toContain("if (error) throw new Error(\"telegram_request_submit_failed\")");
+  expect(source).toContain("لم نتمكن من تأكيد وصول طلبك إلى الإدارة");
+});
+
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
   expect(source).toContain("function redactPhones");
   const redactionSource = source.slice(source.indexOf("function redactPhones"), source.indexOf("async function generateFaqReply"));
