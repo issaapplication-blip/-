@@ -747,7 +747,7 @@ const app=new Elysia()
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
   const secret=kapsoWebhookSecret();
-  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  if(!secret||!signature||!(await verifyKapsoSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
   const eventBody=payload?.request_body??payload;
@@ -767,7 +767,7 @@ const app=new Elysia()
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
   const secret=kapsoWebhookSecret();
-  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  if(!secret||!signature||!(await verifyKapsoSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
   const eventBody=payload?.request_body??payload;
@@ -1305,9 +1305,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-hub-signature-256");
-  if(process.env.META_APP_SECRET){
-    if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
-  }
+  if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   if(String(payload?.object??"")!=="whatsapp_business_account"){set.status=200;return{ok:true,status:"ignored_non_whatsapp_object"}}
   const messages=extractIncomingMessages(payload);
