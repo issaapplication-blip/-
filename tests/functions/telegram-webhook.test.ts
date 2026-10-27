@@ -66,7 +66,7 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
 });
 
 test("Telegram broadcasts do not require the website or its image assets", () => {
-  expect(legacyIndex).toContain("TELEGRAM_BROADCAST_IMAGE\\n        ? await telegramSendPhoto");
+  expect(legacyIndex).toContain("await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON)");
   expect(legacyIndex).toContain(": await telegramSendText(recipientId,text,TELEGRAM_BROADCAST_BUTTON)");
   expect(legacyIndex).toContain('const link=publicBase.startsWith("https://")');
   expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
