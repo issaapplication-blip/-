@@ -357,7 +357,7 @@ async function markUpdate(updateId: number, status: "completed" | "failed", erro
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
-  if (!db || !BOT_TOKEN || WEBHOOK_SECRET.length < 32 || MANAGER_CHAT_IDS.length === 0) {
+  if (!db || !BOT_TOKEN || WEBHOOK_SECRET.length < 32) {
     return json(503, { error: "webhook_configuration_incomplete" });
   }
   const receivedSecret = req.headers.get("x-telegram-bot-api-secret-token") || "";
