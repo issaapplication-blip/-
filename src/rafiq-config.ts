@@ -9,7 +9,7 @@ export const RAFIQ_CONFIG = {
 } as const;
 
 export const validateRafiqLinks = () => {
-  const entries = Object.entries(RAFIQ_CONFIG).filter(([key]) => key.endsWith("Url") && key !== "platformUrl");
+  const entries = Object.entries(RAFIQ_CONFIG).filter(([key]) => key.endsWith("Url") && key !== "platformUrl" && key !== "telegramGroupUrl");
   const missing = entries.filter(([, value]) => !String(value).trim()).map(([key]) => key);
   if (missing.length) throw new Error("RAFIQ links are incomplete: " + missing.join(", "));
   return true;
