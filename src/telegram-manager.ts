@@ -81,6 +81,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
     }
 
     if(command.name==="publish_ads"){
+      if(process.env.TELEGRAM_MARKETING_ENABLED!=="true"){await deps.send(input.chatId,"⚠️ النشر التسويقي متوقف في إعدادات الخادم. لم يتم نشر أي إعلان.");return true;}
       const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
       const invite="https://t.me/+a7CDblNyGkw1Yjg8";
