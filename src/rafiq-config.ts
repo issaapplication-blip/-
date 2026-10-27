@@ -22,7 +22,8 @@ export const rafiqFooter = () => {
     "نصل بالحب والأمان لرعاية العائلة 🤍",
     ...(RAFIQ_CONFIG.platformUrl ? ["🌐 ادخل إلى منصة RAFIQ: " + RAFIQ_CONFIG.platformUrl] : []),
     "🤖 تواصل مع RAFIQ عبر Telegram: " + RAFIQ_CONFIG.telegramBotUrl,
-    "📢 انضم إلى مجموعة RAFIQ: " + RAFIQ_CONFIG.telegramGroupUrl,
+    ...(RAFIQ_CONFIG.telegramGroupUrl ? ["👥 مجموعة RAFIQ على Telegram: " + RAFIQ_CONFIG.telegramGroupUrl] : []),
+    "📢 قناة RAFIQ على Telegram: " + RAFIQ_CONFIG.telegramChannelUrl,
     "📱 تابع قناة RAFIQ على WhatsApp: " + RAFIQ_CONFIG.whatsappChannelUrl,
   ].join("\n");
 };
