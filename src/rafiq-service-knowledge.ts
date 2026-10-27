@@ -2,7 +2,7 @@ import { RAFIQ_CONFIG } from "./rafiq-config";
 /* RAFIQ | رفيق — centralized family-facing service knowledge */
 // Telegram FAQ routing is intentionally deterministic for common customer questions.
 export const RAFIQ_TELEGRAM_BOT = RAFIQ_CONFIG.telegramBotUrl;
-export const RAFIQ_TELEGRAM_CHANNEL = RAFIQ_CONFIG.telegramGroupUrl;
+export const RAFIQ_TELEGRAM_CHANNEL = RAFIQ_CONFIG.telegramChannelUrl;
 export const RAFIQ_WEBSITE = RAFIQ_CONFIG.platformUrl;
 export const RAFIQ_WHATSAPP = RAFIQ_CONFIG.whatsappUrl;
 export const RAFIQ_WHATSAPP_CHANNEL = RAFIQ_CONFIG.whatsappChannelUrl;

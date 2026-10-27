@@ -12,9 +12,12 @@
 - `TELEGRAM_BOT_TOKEN` — سري
 - `TELEGRAM_WEBHOOK_SECRET` — سري
 - `TELEGRAM_MANAGER_CHAT_IDS` — اختياري؛ عرّف معرّفات المدير في إعدادات الخادم فقط
+- `TELEGRAM_CHANNEL_URL` — رابط قناة Telegram الرسمية الحالية؛ القيمة الافتراضية هي الرابط المعروف فقط
+- `TELEGRAM_GROUP_URL` — اختياري؛ لا تضبطه حتى يتم تأكيد رابط المجموعة الإدارية الحالية
 - `RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false` — يبقى متوقفًا إلى أن يُختبر البديل ويُعتمد التحويل
 - `TELEGRAM_MARKETING_ENABLED=false`
 - `TELEGRAM_BROADCAST_ON_START=false`
+- `RAFIQ_TELEGRAM_SCHEDULED_ADS_APPROVED=false` — يتطلب موافقة منفصلة قبل الإعلانات المجدولة؛ لا تفعّله افتراضيًا
 
 ## WhatsApp / Kapso
 - `KAPSO_API_KEY` — سري، أضفه فقط عند اعتماد التكامل
