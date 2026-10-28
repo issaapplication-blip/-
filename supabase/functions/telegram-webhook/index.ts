@@ -190,14 +190,24 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
   }
 
   const notes = text.trim().toLowerCase() === "/skip" ? null : text.slice(0, 1000);
-  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
-    notes, status: "submitted", updated_at: new Date().toISOString(),
+  // Preserve the customer's final notes before any manager-delivery failure path.
+  // Keep the session in collecting so delivery can be retried without losing details.
+  const { error: notesSaveError } = await db!.from("rafiq_telegram_request_sessions").update({
+    notes, updated_at: new Date().toISOString(),
   }).eq("id", session.id).eq("status", "collecting");
-  if (error) throw new Error("telegram_request_submit_failed");
+  if (notesSaveError) throw new Error("telegram_request_notes_save_failed");
+
+  // Never mark a request submitted or tell the customer it succeeded unless an
+  // authorized admin destination is configured and Telegram confirms delivery.
+  if (MANAGER_CHAT_IDS.length === 0) {
+    await sendText(chatId, "وصلنا إلى نهاية نموذج الطلب، لكن قناة مراجعة الإدارة غير مهيأة حاليًا. لم يُعتمد الطلب بعد؛ يرجى التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299. يمكنك إبقاء المحادثة مفتوحة والمحاولة لاحقًا.");
+    console.error(JSON.stringify({ event: "telegram_manager_destinations_missing", request_id: session.request_id }));
+    return true;
+  }
 
   const summary = [
     "📝 طلب رعاية جديد على RAFIQ",
-    "الطلب: " + session.request_id,
+    "الطلب: " + session.request_id + " (استخدم رقم الطلب لمنع تكرار المعالجة)",
     "الخدمة: " + (serviceNames[session.service_type] || session.service_type),
     "المنطقة: " + session.area,
     "الدوام: " + session.schedule,
@@ -206,10 +216,20 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
     "Telegram User ID: " + userId,
   ].join("\n");
   for (const managerId of MANAGER_CHAT_IDS) {
-    try { await sendText(managerId, summary); }
-    catch (error) { console.error(JSON.stringify({ event: "telegram_manager_notice_failed", error: String(error).slice(0, 120) })); }
+    try {
+      await sendText(managerId, summary);
+    } catch (error) {
+      console.error(JSON.stringify({ event: "telegram_manager_notice_failed", request_id: session.request_id, error: String(error).slice(0, 120) }));
+      await sendText(chatId, "لم نتمكن من تأكيد وصول طلبك إلى الإدارة، لذلك لم نعلّمه كطلب مُرسل. يرجى المحاولة لاحقًا أو التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299.");
+      return true;
+    }
   }
-  await sendText(chatId, "✅ تم حفظ طلبك لدى رفيق بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
+
+  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
+    notes, status: "submitted", updated_at: new Date().toISOString(),
+  }).eq("id", session.id).eq("status", "collecting");
+  if (error) throw new Error("telegram_request_submit_failed");
+  await sendText(chatId, "✅ وصل طلبك إلى قناة مراجعة الإدارة بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
   return true;
 }
 
