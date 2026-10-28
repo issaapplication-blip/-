@@ -44,6 +44,17 @@ test("Telegram request is not reported submitted when admin delivery is unconfig
   expect(source).toContain("لم نتمكن من تأكيد وصول طلبك إلى الإدارة");
 });
 
+test("Telegram request notes are persisted before manager notification failure paths", () => {
+  const notesSave = source.indexOf("const { error: notesSaveError }");
+  const missingDestination = source.indexOf("if (MANAGER_CHAT_IDS.length === 0)");
+  const managerSend = source.indexOf("await sendText(managerId, summary)");
+  expect(notesSave).toBeGreaterThan(-1);
+  expect(missingDestination).toBeGreaterThan(notesSave);
+  expect(managerSend).toBeGreaterThan(notesSave);
+  expect(source).toContain('throw new Error("telegram_request_notes_save_failed")');
+  expect(source).toContain('.eq("status", "collecting")');
+});
+
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
   expect(source).toContain("function redactPhones");
   const redactionSource = source.slice(source.indexOf("function redactPhones"), source.indexOf("async function generateFaqReply"));
