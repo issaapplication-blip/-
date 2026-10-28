@@ -190,6 +190,13 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
   }
 
   const notes = text.trim().toLowerCase() === "/skip" ? null : text.slice(0, 1000);
+  // Preserve the customer's final notes before any manager-delivery failure path.
+  // Keep the session in collecting so delivery can be retried without losing details.
+  const { error: notesSaveError } = await db!.from("rafiq_telegram_request_sessions").update({
+    notes, updated_at: new Date().toISOString(),
+  }).eq("id", session.id).eq("status", "collecting");
+  if (notesSaveError) throw new Error("telegram_request_notes_save_failed");
+
   // Never mark a request submitted or tell the customer it succeeded unless an
   // authorized admin destination is configured and Telegram confirms delivery.
   if (MANAGER_CHAT_IDS.length === 0) {
