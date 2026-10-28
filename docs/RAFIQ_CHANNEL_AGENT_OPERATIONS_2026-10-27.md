@@ -14,8 +14,7 @@ These IDs are observations from the connected account inventory, not a substitut
 ## Existing WhatsApp destinations
 - Official contact: https://wa.me/96181506299
 - Official channel: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K
-- A historical invitation link was found in Telegram messages sent by RAFIQ on 2024-01-11: https://chat.whatsapp.com/GYzi4ZfJSx0KAUIPIycp1Z
-Treat that group invite as historical and unverified. Confirm it in the owner's WhatsApp account before use; do not create a replacement group.
+- A historical WhatsApp group invitation was found in prior messages, but the invitation URL is intentionally omitted because it may grant access to the group. The owner must verify the current group and, if necessary, rotate the invitation privately before any use. Do not create a replacement group.
 
 ## Agent responsibilities
 1. Answer general service questions in Arabic; support English, French, Italian, and German where existing code supports it.
