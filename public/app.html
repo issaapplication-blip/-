@@ -32,7 +32,7 @@
 <section class="card" style="text-align:center"><h2>تحتاج خدمة في منطقتك؟</h2><p class="small">سجّل طلبك وسيتولى فريقنا المراجعة والمطابقة.</p><div class="actions" style="justify-content:center;display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><a class="btn" href="./app.html">تقديم طلب</a><a class="btn alt" href="./agent.html">اسأل الوكيل</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">واتساب</a></div></section></main><script src="./js/rafiq-welcome.js"></script><script src="./js/rafig-locations.js?v=70"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const $=x=>document.getElementById(x);
 const show=(id,on)=>$(id)?.classList.toggle('hidden',!on);
-const report=(id,t,ok=false)=>{const el=$(id);if(el)el.innerHTML='<div class="'+(ok?'ok':'err')+'">'+t+'</div>'};
+const report=(id,t,ok=false)=>{const el=$(id);if(!el)return;el.replaceChildren();if(!t)return;const box=document.createElement('div');box.className=ok?'ok':'err';box.textContent=String(t);el.appendChild(box)};
 function resetRequired(role){
   const person=role!=='family', family=role==='family';
   document.querySelectorAll('#personFields input,#personFields select,#personFields textarea').forEach(x=>{x.disabled=!person});
@@ -67,7 +67,7 @@ $('form').onsubmit=async e=>{
     const response=await fetch('/api/public/intake',{method:'POST',body:fd,headers:{'Accept':'application/json'}});
     const data=await response.json().catch(()=>null);
     if(!response.ok||!data?.ok)throw new Error(data?.error||'تعذر إرسال الطلب.');
-    report('appMsg','✅ تم استلام طلبك بنجاح.<br>Request ID: <b>'+String(data.request_id||('RAFIQ-REQ-'+String(data.application_number).padStart(6,'0')))+'</b><br>رقم الطلب: <b>'+String(data.application_number)+'</b><br>سيظهر مباشرة لدى إدارة RAFIQ للمراجعة.',true);
+    report('appMsg','✅ تم استلام طلبك بنجاح. رقم الطلب: '+String(data.application_number||'قيد الإصدار')+' — Request ID: '+String(data.request_id||('RAFIQ-REQ-'+String(data.application_number).padStart(6,'0')))+'. سيظهر لدى إدارة RAFIQ للمراجعة.',true);
     form.reset(); $('role').value=''; show('application',false);
   }catch(error){
     report('appMsg',String(error?.message||'تعذر إرسال الطلب. حاول مرة أخرى.'));
