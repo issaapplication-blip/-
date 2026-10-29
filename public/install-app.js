@@ -98,7 +98,7 @@
   }
 
   if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("/sw.js?v=83",{scope:"/",updateViaCache:"none"}).then(function(reg){if(reg&&reg.update)reg.update();}).catch(function(e){console.warn("[RAFIQ PWA] Service Worker registration failed",e);});
+    navigator.serviceWorker.register("/sw.js?v=85",{scope:"/",updateViaCache:"none"}).then(function(reg){if(reg&&reg.update)reg.update();}).catch(function(e){console.warn("[RAFIQ PWA] Service Worker registration failed",e);});
   }
 
   function boot(){
