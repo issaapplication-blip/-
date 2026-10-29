@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { resolve, relative, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 const packageRoot = process.env.PLAYWRIGHT_PACKAGE_ROOT;
 if (!packageRoot) throw new Error("PLAYWRIGHT_PACKAGE_ROOT is required");
@@ -39,7 +39,23 @@ try {
       }));
       if (result.scrollWidth > result.width + 1) failures.push(path + " @" + width + " horizontal overflow " + result.scrollWidth + ">" + result.width);
       if (result.replacementChar) failures.push(path + " @" + width + " contains Unicode replacement character");
+      if (!result.menuButton) failures.push(path + " menu trigger missing");
       if (result.menuButton && (result.menuButton.width < 44 || result.menuButton.height < 44)) failures.push(path + " @" + width + " menu touch target below 44px");
+      const resources = await page.evaluate(() => Array.from(document.querySelectorAll("script[src],img[src],link[href]"))
+        .map(el => { const raw = el.src || el.href; if (!raw) return null; const url = new URL(raw, location.href); return url.origin === location.origin ? url.pathname : null; })
+        .filter(Boolean));
+      for (const resource of new Set(resources)) {
+        const rel = decodeURIComponent(resource).replace(/^\\/+/, "") || "index.html";
+        const target = resolve("dist", rel);
+        if (!fs.existsSync(target)) failures.push(path + " missing local asset " + resource);
+      }
+      const htmlLinks = await page.evaluate(() => Array.from(document.querySelectorAll("a[href]"))
+        .map(a => { const url = new URL(a.href, location.href); return url.origin === location.origin && (url.pathname === "/" || url.pathname.endsWith(".html")) ? url.pathname : null; })
+        .filter(Boolean));
+      for (const linkedPath of new Set(htmlLinks)) {
+        const rel = linkedPath === "/" ? "index.html" : decodeURIComponent(linkedPath).replace(/^\\/+/, "");
+        if (!fs.existsSync(resolve("dist", rel))) failures.push(path + " broken internal page link " + linkedPath);
+      }
       if (path === "/index.html" || path === "/") {
         if (width === 390) {
           const summary = page.locator(".topbar-menu > summary").first();
