@@ -626,10 +626,10 @@ async function loadDocs(){
   const intakeDocs=intake.data||[];
   APP.docs=legacyDocs;
   const legacyHtml=legacyDocs.map(d=>{
-    return '<tr><td class="small">'+esc(d.file_name||d.document_type||'—')+(d.file_size?'<br>'+Math.round(d.file_size/1024)+' KB':'')+'</td><td class="small">'+esc(d.document_type||'—')+'</td><td>'+st(d.verification_status)+'</td><td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn alt" onclick="openDoc(\\''+encodeURIComponent(d.storage_path)+'\\')">فتح</button><button class="btn" onclick="reviewDoc(\\''+d.id+'\\',\\'approved\\')">✓</button><button class="btn danger" onclick="reviewDoc(\\''+d.id+'\\',\\'rejected\\')">✕</button></div></td></tr>';
+    return '<tr><td class="small">'+esc(d.file_name||d.document_type||'—')+(d.file_size?'<br>'+Math.round(d.file_size/1024)+' KB':'')+'</td><td class="small">'+esc(d.document_type||'—')+'</td><td>'+st(d.verification_status)+'</td><td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn alt" type="button" data-doc-action="open" data-doc-path="'+esc(encodeURIComponent(d.storage_path||''))+'">فتح</button><button class="btn" type="button" data-doc-action="review" data-doc-id="'+esc(d.id)+'" data-doc-status="approved">✓</button><button class="btn danger" type="button" data-doc-action="review" data-doc-id="'+esc(d.id)+'" data-doc-status="rejected">✕</button></div></td></tr>';
   }).join('');
   const intakeHtml=intakeDocs.map(f=>{
-    return '<tr><td class="small">'+esc(f.file_name||'—')+(f.file_size?'<br>'+Math.round(f.file_size/1024)+' KB':'')+'</td><td class="small">'+esc(f.document_category||'طلب رعاية/انتساب')+'</td><td>'+st(f.verification_status)+'</td><td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn alt" onclick="openIntakeDoc(\\''+encodeURIComponent(f.storage_path)+'\\')">فتح</button><button class="btn" onclick="reviewIntakeDoc(\\''+f.id+'\\',\\'approved\\')">✓</button><button class="btn danger" onclick="reviewIntakeDoc(\\''+f.id+'\\',\\'rejected\\')">✕</button></div></td></tr>';
+    return '<tr><td class="small">'+esc(f.file_name||'—')+(f.file_size?'<br>'+Math.round(f.file_size/1024)+' KB':'')+'</td><td class="small">'+esc(f.document_category||'طلب رعاية/انتساب')+'</td><td>'+st(f.verification_status)+'</td><td><div class="actions" style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn alt" type="button" data-doc-action="open-intake" data-doc-path="'+esc(encodeURIComponent(f.storage_path||''))+'">فتح</button><button class="btn" type="button" data-doc-action="review-intake" data-doc-id="'+esc(f.id)+'" data-doc-status="approved">✓</button><button class="btn danger" type="button" data-doc-action="review-intake" data-doc-id="'+esc(f.id)+'" data-doc-status="rejected">✕</button></div></td></tr>';
   }).join('');
   if(!legacyHtml&&!intakeHtml){$('docList').innerHTML='<div class="notice">لا توجد مستندات مرفوعة بعد.</div>';return}
   $('docList').innerHTML='<div class="scroll"><table><thead><tr><th>الملف</th><th>النوع</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+legacyHtml+intakeHtml+'</tbody></table></div>';
@@ -660,6 +660,19 @@ window.openDoc=async enc=>{
   if(error){ msg('تعذر فتح المستند: '+error.message); return; }
   window.open(data.signedUrl,'_blank','noopener,noreferrer');
 };
+
+$('docList').addEventListener('click',async e=>{
+  const button=e.target.closest('button[data-doc-action]');
+  if(!button)return;
+  const action=button.dataset.docAction,id=button.dataset.docId,status=button.dataset.docStatus,path=button.dataset.docPath;
+  button.disabled=true;
+  try{
+    if(action==='open') await window.openDoc(path);
+    else if(action==='open-intake') await window.openIntakeDoc(path);
+    else if(action==='review') await window.reviewDoc(id,status);
+    else if(action==='review-intake') await window.reviewIntakeDoc(id,status);
+  }finally{button.disabled=false;}
+});
 
 $('appFilter').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
