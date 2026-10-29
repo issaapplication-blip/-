@@ -149,7 +149,7 @@ jobs:
       - name: Validate backup script syntax
         if: always()
         run: |
-          bash -n ops/*.sh
+          for script in ops/*.sh; do bash -n "$script"; done
           find public -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -r -n1 node --check
       - name: Validate Cloudflare Pages bundle
         if: always()
