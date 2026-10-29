@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
     const expected = Deno.env.get("META_VERIFY_TOKEN");
-    if (mode === "subscribe" && expected && token === expected && challenge) {
+    if (mode === "subscribe" && expected && token && timingSafeEqual(token, expected) && challenge) {
       return new Response(challenge, { status: 200 });
     }
     return new Response("Forbidden", { status: 403, headers: cors });
@@ -108,8 +108,10 @@ Deno.serve(async (req: Request) => {
     return new Response("Method Not Allowed", { status: 405, headers: { ...cors, Allow: "GET, POST, OPTIONS" } });
   }
 
+  const declaredLength = Number(req.headers.get("content-length") || 0);
+  if (declaredLength > 512000) return new Response("Payload Too Large", { status: 413, headers: cors });
   const body = await req.text();
-  if (body.length > 512000) return new Response("Payload Too Large", { status: 413, headers: cors });
+  if (new TextEncoder().encode(body).byteLength > 512000) return new Response("Payload Too Large", { status: 413, headers: cors });
 
   if (!(await verifySignature(body, req.headers.get("x-hub-signature-256")))) {
     return new Response("Invalid signature", { status: 401, headers: cors });
