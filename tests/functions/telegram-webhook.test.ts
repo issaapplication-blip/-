@@ -46,7 +46,8 @@ test("Telegram request stays retryable until an admin notification is confirmed"
   expect(source).toContain("telegram_manager_destinations_missing");
   expect(source).toContain("telegram_manager_notice_failed");
   expect(source).toContain("if (delivered === 0)");
-  expect(source).toContain("تم الاحتفاظ بالتفاصيل لإعادة المحاولة");
+  expect(source).toContain('throw new Error("telegram_manager_delivery_failed")');
+  expect(source).toContain('throw new Error("telegram_manager_destinations_missing")');
   expect(source).toContain("لا يُعد هذا تأكيدًا لحجز الخدمة");
 });
 
