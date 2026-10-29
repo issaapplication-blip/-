@@ -3,6 +3,7 @@ const cors={"Access-Control-Allow-Headers":"authorization,apikey,content-type","
 function json(data:any,status=200){return new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json",...cors}})}
 function clean(s:any,max:number){return String(s??"").trim().slice(0,max)}
 function safeName(s:string){return (s||"file").replace(/[^A-Za-z0-9._-]/g,"_").slice(-120)||"file"}
+// Trust the filename extension, not the client-supplied MIME header.
 const ALLOWED_FILE_TYPES:Record<string,string>={".pdf":"application/pdf",".doc":"application/msword",".docx":"application/vnd.openxmlformats-officedocument.wordprocessingml.document",".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".webp":"image/webp"};
 function fileType(file:File){const match=(file.name||"").toLowerCase().match(/\.[^.]+$/);return match?ALLOWED_FILE_TYPES[match[0]]||null:null}
 function validateFiles(files:File[]){return files.every(file=>fileType(file)!==null)}
