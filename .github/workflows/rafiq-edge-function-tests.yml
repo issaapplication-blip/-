@@ -80,6 +80,17 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - name: Scan tracked source for common secret formats
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          pattern='(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|sk-proj-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|EAAG[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16})'
+          if git grep -I -l -E "$pattern" -- .; then
+            echo "Potential credential material detected in tracked files; inspect the listed paths without printing secret values."
+            exit 1
+          else
+            echo "No common private-key or provider-token formats found in tracked source."
+          fi
       - name: Type-check changed Supabase Edge Functions with Deno
         shell: bash
         run: |
