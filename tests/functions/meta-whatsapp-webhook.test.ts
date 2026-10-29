@@ -51,6 +51,7 @@ test("WhatsApp automatic replies remain disabled and HMAC signature verification
     "utf8",
   );
   expect(source).toContain("const WHATSAPP_AUTOREPLY_ENABLED = false");
+  expect(source).not.toContain('"Access-Control-Allow-Origin": "*"');
   expect(source).toContain('req.headers.get("x-hub-signature-256")');
   expect(source).toContain("readLimitedBody(req, maxBodyBytes)");
   expect(source).toContain('insert.error.code === "23505"');
