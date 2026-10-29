@@ -150,7 +150,7 @@ jobs:
         if: always()
         run: |
           for script in ops/*.sh; do bash -n "$script"; done
-          find public -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -r -n1 node --check
+          find public tests src -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -r -n1 node --check
       - name: Validate Cloudflare Pages bundle
         if: always()
         run: |
