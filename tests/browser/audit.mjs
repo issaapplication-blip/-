@@ -1,4 +1,8 @@
-import { chromium } from "playwright";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+const packageRoot = process.env.PLAYWRIGHT_PACKAGE_ROOT;
+if (!packageRoot) throw new Error("PLAYWRIGHT_PACKAGE_ROOT is required");
+const { chromium } = await import(pathToFileURL(resolve(packageRoot, "index.mjs")).href);
 
 const base = process.env.RAFIQ_TEST_BASE_URL || "http://127.0.0.1:4173";
 const widths = [320, 360, 390, 768, 1280, 1920];
