@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { fileType, validateFiles } from "../_shared/upload-validation.ts";
 const configuredSiteOrigin=(Deno.env.get("RAFIQ_PUBLIC_SITE_URL")||"").trim().replace(/\/+$/,"");
 const allowedOrigins=new Set(["https://issaapplication-blip.github.io",configuredSiteOrigin].filter(Boolean));
 const cors=(req?:Request)=>{const origin=req?.headers.get("Origin")||"";return {...(allowedOrigins.has(origin)?{"Access-Control-Allow-Origin":origin}:{}),"Access-Control-Allow-Headers":"authorization,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Vary":"Origin"}};
@@ -15,9 +16,6 @@ function clean(s:any,max:number){return String(s??"").trim().slice(0,max)}
 function safeName(s:string){return (s||"file").replace(/[^A-Za-z0-9._-]/g,"_").slice(-120)||"file"}
 // Trust the filename extension, not the client-supplied MIME header.
 // Reject unsupported extensions before creating any intake database record.
-const ALLOWED_FILE_TYPES:Record<string,string>={".pdf":"application/pdf",".doc":"application/msword",".docx":"application/vnd.openxmlformats-officedocument.wordprocessingml.document",".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".webp":"image/webp"};
-function fileType(file:File){const match=(file.name||"").toLowerCase().match(/\.[^.]+$/);return match?ALLOWED_FILE_TYPES[match[0]]||null:null}
-function validateFiles(files:File[]){return files.every(file=>fileType(file)!==null)}
 const url=Deno.env.get("SUPABASE_URL")!;
 const secretKeysRaw=Deno.env.get("SUPABASE_SECRET_KEYS")||"";
 let secretKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
