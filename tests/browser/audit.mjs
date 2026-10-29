@@ -68,7 +68,7 @@ try {
       if (result.menuButton && (result.menuButton.width < 44 || result.menuButton.height < 44)) failures.push(path + " @" + width + " menu touch target below 44px");
       const smallControls = await page.evaluate(() => Array.from(document.querySelectorAll("button,[role=button],input[type=button],input[type=submit],summary"))
         .filter(el => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); return r.width > 0 && r.height > 0 && c.visibility !== "hidden" && (r.width < 44 || r.height < 44); })
-        .map(el => ({ text: (el.innerText || el.getAttribute("aria-label") || el.getAttribute("type") || el.tagName).trim().slice(0, 50), width: Math.round(el.getBoundingClientRect().width), height: Math.round(el.getBoundingClientRect().height) }).slice(0, 5));
+        .map(el => ({ text: (el.innerText || el.getAttribute("aria-label") || el.getAttribute("type") || el.tagName).trim().slice(0, 50), width: Math.round(el.getBoundingClientRect().width), height: Math.round(el.getBoundingClientRect().height) })).slice(0, 5));
       if (smallControls.length) failures.push(path + " @" + width + " touch controls below 44px: " + JSON.stringify(smallControls));
       if (width === 390) {
         const contrast = await page.evaluate(async () => {
