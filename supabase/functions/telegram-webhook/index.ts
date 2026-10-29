@@ -199,8 +199,8 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
 
   if (MANAGER_CHAT_IDS.length === 0) {
     console.error(JSON.stringify({ event: "telegram_manager_destinations_missing", request_id: session.request_id }));
-    await sendText(chatId, "لم يُعتمد الطلب بعد لأن قناة مراجعة الإدارة غير مهيأة. يرجى التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299 أو المحاولة لاحقًا.");
-    return true;
+    // Throw so the webhook responds 503 and Telegram retries the same update.
+    throw new Error("telegram_manager_destinations_missing");
   }
 
   const summary = [
@@ -223,8 +223,9 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
     }
   }
   if (delivered === 0) {
-    await sendText(chatId, "لم نتمكن من تأكيد وصول طلبك إلى الإدارة؛ لم نعلّمه كطلب مُرسل، وتم الاحتفاظ بالتفاصيل لإعادة المحاولة. يرجى التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299.");
-    return true;
+    // Keep the persisted session in collecting state; returning 503 triggers
+    // Telegram redelivery, which retries manager notification without a false confirmation.
+    throw new Error("telegram_manager_delivery_failed");
   }
 
   const { error: submitError } = await db!.from("rafiq_telegram_request_sessions").update({
