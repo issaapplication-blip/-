@@ -42,7 +42,7 @@ try {
       if (!result.menuButton) failures.push(path + " menu trigger missing");
       if (result.menuButton && (result.menuButton.width < 44 || result.menuButton.height < 44)) failures.push(path + " @" + width + " menu touch target below 44px");
       const resources = await page.evaluate(() => Array.from(document.querySelectorAll("script[src],img[src],link[href]"))
-        .map(el => { const raw = el.src || el.href; if (!raw) return null; const url = new URL(raw, location.href); return url.origin === location.origin ? url.pathname : null; })
+        .map(el => { const raw = el.src || el.href; if (!raw) return null; const url = document.createElement("a"); url.href = raw; return url.origin === location.origin ? url.pathname : null; })
         .filter(Boolean));
       for (const resource of new Set(resources)) {
         const rel = decodeURIComponent(resource).replace(/^\/+/, "") || "index.html";
@@ -50,7 +50,7 @@ try {
         if (!fs.existsSync(target)) failures.push(path + " missing local asset " + resource);
       }
       const htmlLinks = await page.evaluate(() => Array.from(document.querySelectorAll("a[href]"))
-        .map(a => { const url = new URL(a.href, location.href); return url.origin === location.origin && (url.pathname === "/" || url.pathname.endsWith(".html")) ? url.pathname : null; })
+        .map(a => { const url = document.createElement("a"); url.href = a.href; return url.origin === location.origin && (url.pathname === "/" || url.pathname.endsWith(".html")) ? url.pathname : null; })
         .filter(Boolean));
       for (const linkedPath of new Set(htmlLinks)) {
         const rel = linkedPath === "/" ? "index.html" : decodeURIComponent(linkedPath).replace(/^\/+/, "");
