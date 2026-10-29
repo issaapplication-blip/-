@@ -27,6 +27,16 @@ test("Meta webhook checks declared and encoded body size before signature verifi
   expect(response.status).toBe(413);
 });
 
+test("Meta webhook rejects oversized streamed bodies even without Content-Length", async () => {
+  const f = loadFunction("meta-whatsapp-webhook", BASE, async () => { throw new Error("network must not be used"); });
+  const response = await f.handler(new Request("https://f.invalid/", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "x".repeat(512001),
+  }));
+  expect(response.status).toBe(413);
+});
+
 test("WhatsApp automatic replies remain disabled and HMAC signature verification is mandatory", async () => {
   const f = loadFunction("meta-whatsapp-webhook", BASE, async () => { throw new Error("network must not be used"); });
   const response = await f.handler(new Request("https://f.invalid/", {
@@ -42,5 +52,6 @@ test("WhatsApp automatic replies remain disabled and HMAC signature verification
   );
   expect(source).toContain("const WHATSAPP_AUTOREPLY_ENABLED = false");
   expect(source).toContain('req.headers.get("x-hub-signature-256")');
+  expect(source).toContain("readLimitedBody(req, maxBodyBytes)");
   expect(source).toContain('insert.error.code === "23505"');
 });
