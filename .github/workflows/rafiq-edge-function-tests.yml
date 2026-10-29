@@ -72,14 +72,18 @@ permissions:
 jobs:
   edge-function-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - name: Type-check changed Supabase Edge Functions with Deno
-        run: deno check --node-modules-dir=auto supabase/functions/public-intake/index.ts supabase/functions/meta-whatsapp-webhook/index.ts
+        shell: bash
+        run: |
+          mapfile -d '' functions < <(find supabase/functions -mindepth 2 -maxdepth 2 -name index.ts -print0 | sort -z)
+          if [ "${#functions[@]}" -eq 0 ]; then echo "No Supabase Edge Function entrypoints found"; exit 1; fi
+          deno check --node-modules-dir=auto "${functions[@]}"
       - name: Build and smoke-test Hugging Face Docker runtime
         id: docker-smoke
         shell: bash
@@ -143,7 +147,9 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Validate backup script syntax
         if: always()
-        run: bash -n ops/backup.sh ops/verify.sh
+        run: |
+          bash -n ops/*.sh
+          find public -type f \\( -name '*.js' -o -name '*.mjs' \\) -print0 | xargs -0 -r -n1 node --check
       - name: Validate Cloudflare Pages bundle
         if: always()
         run: |
@@ -162,3 +168,18 @@ jobs:
         run: |
           bun test tests/functions
           bun test src
+      - name: Run Playwright public-page and responsive audit
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx --no-install playwright install chromium
+          python3 -m http.server 4173 --directory dist >/tmp/rafiq-pages.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node tests/browser/audit.mjs
