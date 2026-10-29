@@ -174,8 +174,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          npm install --no-save --no-package-lock playwright@1.55.0
-          npx --no-install playwright install chromium
+          npm install --prefix /tmp/rafiq-playwright --no-save --no-package-lock playwright@1.55.0
+          /tmp/rafiq-playwright/node_modules/.bin/playwright install chromium
           python3 -m http.server 4173 --directory dist >/tmp/rafiq-pages.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" >/dev/null 2>&1 || true' EXIT
@@ -183,4 +183,4 @@ jobs:
             if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
             sleep 1
           done
-          node tests/browser/audit.mjs
+          PLAYWRIGHT_PACKAGE_ROOT=/tmp/rafiq-playwright/node_modules/playwright node tests/browser/audit.mjs
