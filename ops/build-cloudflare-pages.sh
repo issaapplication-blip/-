@@ -40,7 +40,7 @@ for here, dirs, files in os.walk(root):
             continue
         updated=text.replace("https://rafiq-o6qd.onrender.com",base)
         if path.lower().endswith(".html") and 'src="/site-menu.js' not in updated and "</body>" in updated:
-            updated=updated.replace("</body>", '  <script src="/site-menu.js?v=1" defer></script>\\n</body>')
+            updated=updated.replace("</body>", '  <script src="/site-menu.js?v=1" defer></script>\n</body>')
         if updated != text:
             replaced += text.count("https://rafiq-o6qd.onrender.com")
             with open(path,"w",encoding="utf-8",newline="") as f: f.write(updated)
