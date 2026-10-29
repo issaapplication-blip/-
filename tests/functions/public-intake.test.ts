@@ -12,6 +12,10 @@ const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/public-intake/index.ts"),
   "utf8",
 );
+const uploadValidation = readFileSync(
+  resolve(import.meta.dir, "../../supabase/functions/_shared/upload-validation.ts"),
+  "utf8",
+);
 
 test("public intake CORS reflects only configured or known Pages origins", async () => {
   const f = loadFunction("public-intake", BASE, async () => { throw new Error("network must not be used"); });
@@ -50,7 +54,7 @@ test("unsupported extension is rejected before any intake database write even if
 
 test("stored MIME is derived from the allowlisted extension, not client-supplied File.type", () => {
   expect(uploadValidation).toContain('".pdf": "application/pdf"');
-  expect(source).toContain('"docx":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"');
+  expect(uploadValidation).toContain('".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"');
   expect(source).toContain("contentType:fileType(file)!");
   expect(source).toContain("mime_type:fileType(file)!");
   expect(source).toContain("readLimitedBody(req,maxBodyBytes)");
