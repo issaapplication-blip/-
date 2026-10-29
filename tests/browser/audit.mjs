@@ -47,6 +47,8 @@ try {
       const result = await page.evaluate(() => ({
         width: window.innerWidth,
         scrollWidth: document.documentElement.scrollWidth,
+        lang: document.documentElement.lang,
+        dir: document.documentElement.dir,
         replacementChar: document.documentElement.innerText.includes("\uFFFD"),
         menuButton: (() => {
           const el = document.querySelector(".topbar-menu > summary");
@@ -57,6 +59,7 @@ try {
       }));
       if (result.scrollWidth > result.width + 1) failures.push(path + " @" + width + " horizontal overflow " + result.scrollWidth + ">" + result.width);
       if (result.replacementChar) failures.push(path + " @" + width + " contains Unicode replacement character");
+      if (result.lang.toLowerCase().startsWith("ar") && result.dir !== "rtl") failures.push(path + " @" + width + " Arabic document is not RTL");
       if (!result.menuButton) failures.push(path + " menu trigger missing");
       if (result.menuButton && (result.menuButton.width < 44 || result.menuButton.height < 44)) failures.push(path + " @" + width + " menu touch target below 44px");
       const smallControls = await page.evaluate(() => Array.from(document.querySelectorAll("button,[role=button],input[type=button],input[type=submit],summary"))
@@ -99,6 +102,23 @@ try {
             if (await page.locator(".topbar-menu").first().evaluate(el => el.open)) failures.push("homepage menu did not close on outside click");
           } else failures.push("homepage menu trigger missing");
         }
+      }
+    }
+    if (path === "/index.html") {
+      const languageButton = page.locator(".ra-lang-btn").first();
+      for (const code of ["ar", "en", "fr", "it", "de"]) {
+        await languageButton.click();
+        const choice = page.locator('.ra-lang-menu [data-lang="' + code + '"]').first();
+        if (!(await choice.count())) {
+          failures.push("homepage language option missing: " + code);
+          continue;
+        }
+        await choice.click();
+        await page.waitForFunction(code => document.documentElement.lang === code, code, { timeout: 5000 }).catch(() => failures.push("homepage language did not activate: " + code));
+        const languageState = await page.evaluate(() => ({ lang: document.documentElement.lang, dir: document.documentElement.dir, text: document.body.innerText }));
+        if (languageState.lang !== code) failures.push("homepage language mismatch: expected " + code + ", got " + languageState.lang);
+        if (languageState.dir !== (code === "ar" ? "rtl" : "ltr")) failures.push("homepage direction mismatch for " + code + ": " + languageState.dir);
+        if (languageState.text.includes("\\uFFFD")) failures.push("homepage " + code + " contains Unicode replacement character");
       }
     }
     await page.close();
