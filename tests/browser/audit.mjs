@@ -23,10 +23,10 @@ try {
   const manifestJson = fs.readFileSync(resolve("dist", "manifest.json"), "utf8");
   if (manifestRaw !== manifestJson) failures.push("manifest.json and manifest.webmanifest differ");
   for (const icon of manifest.icons || []) {
-    if (!fs.existsSync(resolve("dist", icon.src.replace(/^\\/+/, "")))) failures.push("manifest icon missing: " + icon.src);
+    if (!fs.existsSync(resolve("dist", icon.src.replace(/^\/+/, "")))) failures.push("manifest icon missing: " + icon.src);
   }
   const sw = fs.readFileSync(resolve("dist", "sw.js"), "utf8");
-  if (/["']\\/(?:admin|dashboard)\\.html["']|["']\\/admin\\.js["']/.test(sw)) failures.push("Service Worker precaches an administration asset");
+  if (/["']\/(?:admin|dashboard)\.html["']|["']\/admin\.js["']/.test(sw)) failures.push("Service Worker precaches an administration asset");
   const installScript = fs.readFileSync(resolve("dist", "install-app.js"), "utf8");
   if (!installScript.includes('/sw.js?v=85')) failures.push("PWA registration is not pinned to Service Worker v85");
   if (!installScript.includes("إضافة إلى الشاشة الرئيسية")) failures.push("iOS Add to Home Screen instructions missing");
