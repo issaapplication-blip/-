@@ -49,7 +49,7 @@ test("unsupported extension is rejected before any intake database write even if
 });
 
 test("stored MIME is derived from the allowlisted extension, not client-supplied File.type", () => {
-  expect(source).toContain('".pdf":"application/pdf"');
+  expect(uploadValidation).toContain('".pdf": "application/pdf"');
   expect(source).toContain('"docx":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"');
   expect(source).toContain("contentType:fileType(file)!");
   expect(source).toContain("mime_type:fileType(file)!");
