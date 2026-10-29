@@ -29,7 +29,7 @@ try {
       const result = await page.evaluate(() => ({
         width: window.innerWidth,
         scrollWidth: document.documentElement.scrollWidth,
-        replacementChar: document.documentElement.innerText.includes("\\uFFFD"),
+        replacementChar: document.documentElement.innerText.includes("\uFFFD"),
         menuButton: (() => {
           const el = document.querySelector(".topbar-menu > summary");
           if (!el) return null;
