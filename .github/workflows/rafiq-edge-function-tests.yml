@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'supabase/functions/rafiq-agent/**'
+      - 'supabase/functions/public-intake/**'
+      - 'supabase/functions/meta-whatsapp-webhook/**'
+      - 'public/**'
       - 'supabase/functions/public-application-intake/**'
       - 'supabase/functions/public-application-upload/**'
       - 'tests/functions/**'
