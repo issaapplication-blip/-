@@ -174,7 +174,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          npm install --prefix /tmp/rafiq-playwright --no-save --no-package-lock playwright@1.55.0
+          npm install --prefix /tmp/rafiq-playwright --no-save --no-package-lock playwright@1.55.0 axe-core@4.10.3
           /tmp/rafiq-playwright/node_modules/.bin/playwright install chromium
           python3 -m http.server 4173 --directory dist >/tmp/rafiq-pages.log 2>&1 &
           server_pid=$!
