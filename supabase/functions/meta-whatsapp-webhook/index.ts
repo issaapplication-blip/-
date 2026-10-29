@@ -22,6 +22,34 @@ const timingSafeEqual = (a: string, b: string) => {
   return diff === 0;
 };
 
+async function readLimitedBody(req: Request, maxBytes: number): Promise<Uint8Array | null> {
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      total += part.value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(part.value);
+    }
+  } catch {
+    return null;
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
 async function verifySignature(body: string, header: string | null) {
   const secret = Deno.env.get("META_APP_SECRET");
   if (!secret || !header?.startsWith("sha256=")) return false;
@@ -108,10 +136,12 @@ Deno.serve(async (req: Request) => {
     return new Response("Method Not Allowed", { status: 405, headers: { ...cors, Allow: "GET, POST, OPTIONS" } });
   }
 
+  const maxBodyBytes = 512000;
   const declaredLength = Number(req.headers.get("content-length") || 0);
-  if (declaredLength > 512000) return new Response("Payload Too Large", { status: 413, headers: cors });
-  const body = await req.text();
-  if (new TextEncoder().encode(body).byteLength > 512000) return new Response("Payload Too Large", { status: 413, headers: cors });
+  if (declaredLength > maxBodyBytes) return new Response("Payload Too Large", { status: 413, headers: cors });
+  const bodyBytes = await readLimitedBody(req, maxBodyBytes);
+  if (bodyBytes === null) return new Response("Payload Too Large", { status: 413, headers: cors });
+  const body = new TextDecoder().decode(bodyBytes);
 
   if (!(await verifySignature(body, req.headers.get("x-hub-signature-256")))) {
     return new Response("Invalid signature", { status: 401, headers: cors });
