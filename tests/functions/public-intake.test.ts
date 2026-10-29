@@ -35,6 +35,18 @@ test("public intake CORS reflects only configured or known Pages origins", async
   expect(source).not.toContain('"Access-Control-Allow-Origin":"*"');
 });
 
+test("public intake refuses requests without explicit consent before database writes", async () => {
+  const f = loadFunction("public-intake", BASE, async () => { throw new Error("network must not be used"); });
+  const form = new FormData();
+  form.set("role", "caregiver");
+  form.set("first_name", "Synthetic");
+  form.set("last_name", "Applicant");
+  form.set("phone", "+96100000000");
+  const response = await f.handler(new Request("https://f.invalid/", { method: "POST", body: form }));
+  expect(response.status).toBe(400);
+  expect(f.calls.length).toBe(0);
+});
+
 test("unsupported extension is rejected before any intake database write even if client MIME claims PDF", async () => {
   const f = loadFunction("public-intake", BASE, async () => { throw new Error("network must not be used"); });
   const form = new FormData();
@@ -42,6 +54,7 @@ test("unsupported extension is rejected before any intake database write even if
   form.set("first_name", "Synthetic");
   form.set("last_name", "Applicant");
   form.set("phone", "+96100000000");
+  form.set("privacy_consent", "accepted");
   form.set("cv", new File(["synthetic test"], "payload.exe", { type: "application/pdf" }));
   const response = await f.handler(new Request("https://f.invalid/", {
     method: "POST",
