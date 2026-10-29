@@ -79,7 +79,7 @@ jobs:
         with:
           deno-version: v2.x
       - name: Type-check changed Supabase Edge Functions with Deno
-        run: deno check supabase/functions/public-intake/index.ts supabase/functions/meta-whatsapp-webhook/index.ts
+        run: deno check --node-modules-dir=auto supabase/functions/public-intake/index.ts supabase/functions/meta-whatsapp-webhook/index.ts
       - name: Build and smoke-test Hugging Face Docker runtime
         id: docker-smoke
         shell: bash
