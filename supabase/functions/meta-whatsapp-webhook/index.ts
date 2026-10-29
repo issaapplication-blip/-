@@ -2,7 +2,6 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const cors = {
-  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "content-type, x-hub-signature-256, authorization, apikey",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
 };
@@ -21,6 +20,34 @@ const timingSafeEqual = (a: string, b: string) => {
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 };
+
+async function readLimitedBody(req: Request, maxBytes: number): Promise<Uint8Array | null> {
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      total += part.value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(part.value);
+    }
+  } catch {
+    return null;
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
 
 async function verifySignature(body: string, header: string | null) {
   const secret = Deno.env.get("META_APP_SECRET");
@@ -98,7 +125,7 @@ Deno.serve(async (req: Request) => {
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
     const expected = Deno.env.get("META_VERIFY_TOKEN");
-    if (mode === "subscribe" && expected && token === expected && challenge) {
+    if (mode === "subscribe" && expected && token && timingSafeEqual(token, expected) && challenge) {
       return new Response(challenge, { status: 200 });
     }
     return new Response("Forbidden", { status: 403, headers: cors });
@@ -108,8 +135,12 @@ Deno.serve(async (req: Request) => {
     return new Response("Method Not Allowed", { status: 405, headers: { ...cors, Allow: "GET, POST, OPTIONS" } });
   }
 
-  const body = await req.text();
-  if (body.length > 512000) return new Response("Payload Too Large", { status: 413, headers: cors });
+  const maxBodyBytes = 512000;
+  const declaredLength = Number(req.headers.get("content-length") || 0);
+  if (declaredLength > maxBodyBytes) return new Response("Payload Too Large", { status: 413, headers: cors });
+  const bodyBytes = await readLimitedBody(req, maxBodyBytes);
+  if (bodyBytes === null) return new Response("Payload Too Large", { status: 413, headers: cors });
+  const body = new TextDecoder().decode(bodyBytes);
 
   if (!(await verifySignature(body, req.headers.get("x-hub-signature-256")))) {
     return new Response("Invalid signature", { status: 401, headers: cors });

@@ -190,14 +190,22 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
   }
 
   const notes = text.trim().toLowerCase() === "/skip" ? null : text.slice(0, 1000);
-  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
-    notes, status: "submitted", updated_at: new Date().toISOString(),
+  // Persist the final notes, but keep the request retryable until a manager
+  // notification is confirmed by Telegram.
+  const { error: notesSaveError } = await db!.from("rafiq_telegram_request_sessions").update({
+    notes, updated_at: new Date().toISOString(),
   }).eq("id", session.id).eq("status", "collecting");
-  if (error) throw new Error("telegram_request_submit_failed");
+  if (notesSaveError) throw new Error("telegram_request_notes_save_failed");
+
+  if (MANAGER_CHAT_IDS.length === 0) {
+    console.error(JSON.stringify({ event: "telegram_manager_destinations_missing", request_id: session.request_id }));
+    // Throw so the webhook responds 503 and Telegram retries the same update.
+    throw new Error("telegram_manager_destinations_missing");
+  }
 
   const summary = [
     "📝 طلب رعاية جديد على RAFIQ",
-    "الطلب: " + session.request_id,
+    "الطلب: " + session.request_id + " (يرجى التحقق من رقم الطلب قبل إعادة المعالجة)",
     "الخدمة: " + (serviceNames[session.service_type] || session.service_type),
     "المنطقة: " + session.area,
     "الدوام: " + session.schedule,
@@ -205,11 +213,26 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
     "Chat ID: " + chatId,
     "Telegram User ID: " + userId,
   ].join("\n");
+  let delivered = 0;
   for (const managerId of MANAGER_CHAT_IDS) {
-    try { await sendText(managerId, summary); }
-    catch (error) { console.error(JSON.stringify({ event: "telegram_manager_notice_failed", error: String(error).slice(0, 120) })); }
+    try {
+      await sendText(managerId, summary);
+      delivered++;
+    } catch (error) {
+      console.error(JSON.stringify({ event: "telegram_manager_notice_failed", request_id: session.request_id, error: String(error).slice(0, 120) }));
+    }
   }
-  await sendText(chatId, "✅ تم حفظ طلبك لدى رفيق بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
+  if (delivered === 0) {
+    // Keep the persisted session in collecting state; returning 503 triggers
+    // Telegram redelivery, which retries manager notification without a false confirmation.
+    throw new Error("telegram_manager_delivery_failed");
+  }
+
+  const { error: submitError } = await db!.from("rafiq_telegram_request_sessions").update({
+    notes, status: "submitted", updated_at: new Date().toISOString(),
+  }).eq("id", session.id).eq("status", "collecting");
+  if (submitError) throw new Error("telegram_request_submit_failed");
+  await sendText(chatId, "✅ وصل طلبك إلى قناة مراجعة الإدارة بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
   return true;
 }
 

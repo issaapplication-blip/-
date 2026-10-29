@@ -116,7 +116,7 @@ const TYPE_AR={
   owner:'صاحب مؤسسة'
 };
 
-function msg(t,ok){ $('msg').innerHTML = t ? '<div class="'+(ok?'ok':'err')+'">'+t+'</div>' : ''; }
+function msg(t,ok){ const el=$('msg');if(!el)return;el.replaceChildren();if(!t)return;const box=document.createElement('div');box.className=ok?'ok':'err';box.textContent=String(t);el.appendChild(box); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function row(k,v,cls){ return '<div class="row"><span class="small">'+esc(k)+'</span><span class="'+(cls||'b')+'">'+v+'</span></div>'; }
 

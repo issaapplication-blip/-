@@ -5,8 +5,13 @@ import { resolve } from "node:path";
 export type DbCall = { table: string; op: string; args: any[]; filters: [string, any][] };
 
 export function loadFunction(name: string, env: Record<string, string>, fetchImpl: (url: string, init?: any) => Promise<any>) {
-  const raw = readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8")
+  let raw = readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8")
     .replace(/^import .*$/gm, "");
+  if (name === "public-intake") {
+    const uploadHelpers = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/upload-validation.ts"), "utf8")
+      .replace(/^export\s+/gm, "");
+    raw = uploadHelpers + "\n" + raw;
+  }
   const src = new Bun.Transpiler({ loader: "ts" }).transformSync(raw);
   const calls: DbCall[] = [];
   const existing: Record<string, any> = {};

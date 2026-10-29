@@ -34,6 +34,30 @@ test("Telegram requests are stored only after a real session write and never pro
   expect(source).toContain('from("rafiq_telegram_request_sessions")');
 });
 
+test("Telegram request stays retryable until an admin notification is confirmed", () => {
+  const notesSave = source.indexOf("const { error: notesSaveError }");
+  const noManagers = source.indexOf("if (MANAGER_CHAT_IDS.length === 0)");
+  const sendManager = source.indexOf("await sendText(managerId, summary)");
+  const submitted = source.indexOf('status: "submitted"');
+  expect(notesSave).toBeGreaterThan(-1);
+  expect(noManagers).toBeGreaterThan(notesSave);
+  expect(sendManager).toBeGreaterThan(noManagers);
+  expect(submitted).toBeGreaterThan(sendManager);
+  expect(source).toContain("telegram_manager_destinations_missing");
+  expect(source).toContain("telegram_manager_notice_failed");
+  expect(source).toContain("if (delivered === 0)");
+  expect(source).toContain('throw new Error("telegram_manager_delivery_failed")');
+  expect(source).toContain('throw new Error("telegram_manager_destinations_missing")');
+  expect(source).toContain("لا يُعد هذا تأكيدًا لحجز الخدمة");
+});
+
+test("Telegram webhook authenticates and deduplicates update IDs before processing", () => {
+  expect(source).toContain('x-telegram-bot-api-secret-token');
+  expect(source).toContain("safeEqual(receivedSecret, WEBHOOK_SECRET)");
+  expect(source).toContain('rpc("claim_telegram_update"');
+  expect(source).toContain('claim.current_status === "completed"');
+});
+
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
   expect(source).toContain("function redactPhones");
   const redactionSource = source.slice(source.indexOf("function redactPhones"), source.indexOf("async function generateFaqReply"));
