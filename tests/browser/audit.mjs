@@ -45,7 +45,7 @@ try {
         .map(el => { const raw = el.src || el.href; if (!raw) return null; const url = new URL(raw, location.href); return url.origin === location.origin ? url.pathname : null; })
         .filter(Boolean));
       for (const resource of new Set(resources)) {
-        const rel = decodeURIComponent(resource).replace(/^\\/+/, "") || "index.html";
+        const rel = decodeURIComponent(resource).replace(/^\/+/, "") || "index.html";
         const target = resolve("dist", rel);
         if (!fs.existsSync(target)) failures.push(path + " missing local asset " + resource);
       }
@@ -53,7 +53,7 @@ try {
         .map(a => { const url = new URL(a.href, location.href); return url.origin === location.origin && (url.pathname === "/" || url.pathname.endsWith(".html")) ? url.pathname : null; })
         .filter(Boolean));
       for (const linkedPath of new Set(htmlLinks)) {
-        const rel = linkedPath === "/" ? "index.html" : decodeURIComponent(linkedPath).replace(/^\\/+/, "");
+        const rel = linkedPath === "/" ? "index.html" : decodeURIComponent(linkedPath).replace(/^\/+/, "");
         if (!fs.existsSync(resolve("dist", rel))) failures.push(path + " broken internal page link " + linkedPath);
       }
       if (path === "/index.html" || path === "/") {
