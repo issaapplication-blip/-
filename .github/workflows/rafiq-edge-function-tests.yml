@@ -149,7 +149,7 @@ jobs:
         if: always()
         run: |
           bash -n ops/*.sh
-          find public -type f \\( -name '*.js' -o -name '*.mjs' \\) -print0 | xargs -0 -r -n1 node --check
+          find public -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -r -n1 node --check
       - name: Validate Cloudflare Pages bundle
         if: always()
         run: |
