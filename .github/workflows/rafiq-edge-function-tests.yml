@@ -84,6 +84,7 @@ jobs:
           mapfile -d '' functions < <(find supabase/functions -mindepth 2 -maxdepth 2 -name index.ts -print0 | sort -z)
           if [ "${#functions[@]}" -eq 0 ]; then echo "No Supabase Edge Function entrypoints found"; exit 1; fi
           deno check --node-modules-dir=auto "${functions[@]}"
+          deno test --node-modules-dir=auto tests/deno/public-intake-mime.test.ts
       - name: Build and smoke-test Hugging Face Docker runtime
         id: docker-smoke
         shell: bash
