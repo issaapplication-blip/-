@@ -237,8 +237,8 @@ Deno.serve(async (req: Request) => {
       : await generateReply(message, context);
     const nextContext: ChatMessage[] = [
       ...context,
-      { role: "user", content: message },
-      { role: "assistant", content: generated.reply },
+      { role: "user" as const, content: message },
+      { role: "assistant" as const, content: generated.reply },
     ].slice(-12);
 
     const normalized = normalizeArabic(message);
