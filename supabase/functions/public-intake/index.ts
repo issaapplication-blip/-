@@ -29,7 +29,7 @@ Deno.serve(async(req)=>{
   if(!secretKey)return json({ok:false,error:"server_configuration_incomplete"},500,req);
   const maxBodyBytes=18*1024*1024;const len=Number(req.headers.get("content-length")||0);if(len>maxBodyBytes)return json({ok:false,error:"حجم الطلب يتجاوز الحد المسموح"},413,req);
   const raw=await readLimitedBody(req,maxBodyBytes);if(raw===null)return json({ok:false,error:"حجم الطلب يتجاوز الحد المسموح"},413,req);
-  const contentType=req.headers.get("content-type")||"";const form=await new Response(raw,{headers:{"content-type":contentType}}).formData().catch(()=>null);if(!form)return json({ok:false,error:"invalid form"},400,req);
+  const contentType=req.headers.get("content-type")||"";const form=await new Response(raw as unknown as BodyInit,{headers:{"content-type":contentType}}).formData().catch(()=>null);if(!form)return json({ok:false,error:"invalid form"},400,req);
   const institutionType=clean(form.get("institution_type"),80);
   const isInstitution=["laboratory","radiology_center","medical_equipment_center"].includes(institutionType);
   const files=form.getAll("files").filter((v):v is File=>v instanceof File&&v.size>0); if(!validateFiles(files))return json({ok:false,error:"نوع الملف غير مسموح. الأنواع المقبولة PDF وDOC وDOCX وJPG وPNG وWEBP."},415,req); const payload:any={};
