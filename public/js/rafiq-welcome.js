@@ -21,7 +21,7 @@ const ENGLISH=["Welcome to RAFIQ. We review each request before confirming next 
 function localDay(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
 function pick(list,salt){if(!Array.isArray(list)||!list.length)return "";let h=localDay();for(const c of String(salt||""))h=(h*31+c.charCodeAt(0))%2147483647;return list[Math.abs(h)%list.length]}
 function forRole(role,lang){const l=String(lang||(root.document&&root.document.documentElement.lang)||"ar").toLowerCase();return l.startsWith("en")?pick(ENGLISH,role||"general"):pick(MESSAGES[role]||MESSAGES.general,role||"general")}
-function render(){const el=root.document&&root.document.getElementById("dailyWelcome");if(!el)return;const lang=root.document.documentElement.lang||"ar";el.textContent=forRole("general",lang);el.dataset.rafiqWelcomeDate=String(localDay())}
+function render(){const el=root.document&&root.document.getElementById("dailyWelcome");if(!el)return;const lang=root.document.documentElement.lang||"ar";if(!String(lang).toLowerCase().startsWith("ar"))return;el.textContent=forRole("general","ar");el.dataset.rafiqWelcomeDate=String(localDay())}
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",render);else render();root.document.addEventListener("rafiq:i18n:refresh",render);root.document.addEventListener("languagechange",render)}
 root.RAFIQ_WELCOME={forRole,pick,MESSAGES,ENGLISH};
 })(typeof window!=="undefined"?window:globalThis);
