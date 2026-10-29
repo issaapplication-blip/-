@@ -41,6 +41,10 @@ try {
     page.on("pageerror", error => failures.push(path + " JS: " + error.message));
     const response = await page.goto(base + path, { waitUntil: "domcontentloaded" });
     if (!response || response.status() >= 500) failures.push(path + " HTTP " + (response ? response.status() : "no response"));
+    if (path === "/app.html") {
+      const consentCount = await page.locator('#form input[name="privacy_consent"][required]').count();
+      if (!consentCount) failures.push("public intake form missing required privacy consent checkbox");
+    }
     await page.addScriptTag({ path: resolve(packageRoot, "../axe-core/axe.min.js") }).catch(error => failures.push(path + " axe-core load failed: " + error.message));
     for (const width of widths) {
       await page.setViewportSize({ width, height: 900 });
