@@ -9,8 +9,8 @@ export function loadFunction(name: string, env: Record<string, string>, fetchImp
     .replace(/^import .*$/gm, "");
   if (name === "public-intake") {
     const uploadHelpers = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/upload-validation.ts"), "utf8")
-      .replace(/^export\\s+/gm, "");
-    raw = uploadHelpers + "\\n" + raw;
+      .replace(/^export\s+/gm, "");
+    raw = uploadHelpers + "\n" + raw;
   }
   const src = new Bun.Transpiler({ loader: "ts" }).transformSync(raw);
   const calls: DbCall[] = [];
