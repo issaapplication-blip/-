@@ -75,6 +75,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check changed Supabase Edge Functions with Deno
+        run: deno check supabase/functions/public-intake/index.ts supabase/functions/meta-whatsapp-webhook/index.ts
       - name: Build and smoke-test Hugging Face Docker runtime
         id: docker-smoke
         shell: bash
