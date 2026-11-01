@@ -245,7 +245,8 @@ async function processUpdate(update: any) {
   if (chatId === undefined || !["private", "group", "supergroup"].includes(chatType)) return;
   // Never answer the bot itself or other bots; this prevents group reply loops.
   if (message?.from?.is_bot === true) return;
-  const text = typeof message.text === "string" ? message.text.trim() : "";
+  const text = typeof message.text === "string" ? message.text.trim()
+    : typeof message.caption === "string" ? message.caption.trim() : "";
   const replyTo = chatType === "private" ? undefined : Number(message.message_id) || undefined;
   if (!text) {
     await sendText(chatId, "يمكنك كتابة سؤالك أو استخدام /services. لتقديم طلب رعاية، افتح المحادثة الخاصة مع البوت واكتب /request. لا ترسل كلمات مرور أو رموز تحقق.", undefined, replyTo);
@@ -262,7 +263,8 @@ async function processUpdate(update: any) {
     return;
   }
   if (command === "/services") {
-    await sendText(chatId, "خدمات رفيق الأساسية:", serviceKeyboard, replyTo);
+    if (chatType === "private") await sendText(chatId, "خدمات رفيق الأساسية:", serviceKeyboard, replyTo);
+    else await sendText(chatId, "خدمات RAFIQ: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، العلاج الفيزيائي المنزلي، وتسجيل المختبرات ومراكز الأشعة وجهات المعدات الطبية. اكتب سؤالك وسأجيبك.", undefined, replyTo);
     return;
   }
   if (command === "/stop") {
