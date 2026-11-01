@@ -28,6 +28,11 @@ const AR = {
   hours: "لا تنشر المنصة ساعات عمل موحدة مؤكدة للإدارة. أرسل استفسارك عبر WhatsApp على +961 81 506 299 ليُراجع الفريق الطلب.",
   privacy: "تُستخدم المعلومات والوثائق المرسلة بالقدر اللازم لمراجعة الطلب وإدارة المنصة. أرسل البيانات الضرورية فقط، ولا ترسل كلمات مرور أو رموز تحقق. راجع صفحة الخصوصية على موقع RAFIQ.",
   contact: "للتواصل مع إدارة RAFIQ: WhatsApp ‏+961 81 506 299. بوت Telegram: https://t.me/RAFIQ_Care_Bot .",
+  jobs: "لا توجد قائمة وظائف شاغرة مؤكدة منشورة حاليًا. يمكن لمقدمي الرعاية إرسال ملف الخبرة والاختصاص ومناطق العمل عبر نموذج التسجيل لمراجعته. التسجيل لا يضمن التوظيف أو وجود شاغر.",
+  registration: "لا تحتاج إلى إنشاء حساب مسبقًا لتقديم طلب عبر نموذج RAFIQ. اختر فئة الطلب وأرسل البيانات الضرورية وموافقة الخصوصية. إرسال الطلب لا يعني القبول أو التوظيف أو تأكيد حجز.",
+  availability: "يمكنك طلب رعاية نهارية أو ليلية أو إقامة، بما فيها نظام 24 ساعة عند الحاجة، لكن التوفر الفعلي يُراجع حسب الحالة والمنطقة ومقدمي الخدمة ولا يُؤكد قبل مراجعة الإدارة.",
+  household: "تتضمن الرعاية الشخصية المساعدة في النظافة واللباس والطعام والحركة والروتين اليومي. الطبخ والتنظيف والقيادة والمرافقة خارج المنزل مهام إضافية تُحدد مسبقًا عند الاتفاق.",
+  noSubscription: "لا تفرض RAFIQ اشتراكًا شهريًا أو سنويًا على مقدمي الرعاية في نموذجها الأولي. قد تخضع خدمات أخرى لشروط منفصلة يوضحها الفريق قبل الاتفاق.",
   unknown: "هذه المعلومة غير متوفرة حاليًا في المعلومات المعتمدة لمنصة RAFIQ. لا أريد تخمينها أو إعطاء وعد غير مؤكد. يرجى التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299 للمراجعة.",
 };
 
@@ -49,6 +54,11 @@ const EN = {
   hours: "The platform does not publish confirmed general office hours. Contact the team on WhatsApp at +961 81 506 299 for review.",
   privacy: "Submitted information and documents are used as needed to review requests and operate the platform. Share only necessary information; never send passwords or verification codes. See the Privacy page on the RAFIQ website.",
   contact: "Contact RAFIQ administration on WhatsApp: +961 81 506 299. Telegram bot: https://t.me/RAFIQ_Care_Bot.",
+  jobs: "There is no verified public list of current vacancies. Care providers may submit their experience, specialty and work areas through the registration form for review. Registration does not guarantee employment or an open position.",
+  registration: "You do not need to create an account before submitting a RAFIQ request. Choose the request category, provide the necessary details and consent to privacy processing. Submission does not mean approval, employment or a confirmed booking.",
+  availability: "You may request daytime, overnight or live-in care, including a 24-hour arrangement where needed. Actual availability depends on the case, location and providers and is not confirmed before administrative review.",
+  household: "Personal care may include help with hygiene, dressing, meals, mobility and daily routines. Cooking, cleaning, driving and outings are additional tasks that must be agreed in advance.",
+  noSubscription: "RAFIQ's initial caregiver model does not charge caregivers a monthly or annual subscription. Other services may have separate terms that the team explains before agreement.",
   unknown: "This information is not currently available in RAFIQ's approved information. I will not guess or make an unconfirmed promise. Please contact the team on WhatsApp at +961 81 506 299.",
 };
 
@@ -64,7 +74,12 @@ export function getRafiqKnowledgeReply(message: string, language: RafiqLanguage 
   if (/(فيزيائي|فيزيو|علاج طبيعي|علاج فيزيائي|physio|physical therap)/.test(t)) return a.physio;
   if (/(مسن|كبار السن|كبير السن|والدي|والدتي|جدتي|جدي|elderly|senior care|old age)/.test(t)) return a.elderly;
   if (/(مريض|مريضه|مريضة|بعد المستشفى|بعد عمليه|بعد عملية|patient care|after hospital)/.test(t)) return a.patient;
-  if (/(مقدم رعايه|مقدم رعاية|مقدمي الرعايه|وظيف|توظيف|caregiver|job application|provider registration)/.test(t)) return a.provider;
+  if (/(اشتراك|subscription|monthly fee|annual fee)/.test(t)) return a.noSubscription;
+  if (/(وظيف|توظيف|شاغر|vacanc|job opening|employment)/.test(t)) return a.jobs;
+  if (/(تسجيل|انشاء حساب|إنشاء حساب|حساب مسبق|register|registration|sign up|create an account)/.test(t)) return a.registration;
+  if (/(24 ساع|اربعه وعشرين|أربعة وعشرين|ليل|نهار|اقامه|إقامة|24.hour|overnight|live.in)/.test(t)) return a.availability;
+  if (/(طبخ|تنظيف|قياده|قيادة|اعمال منزليه|أعمال منزلية|cooking|cleaning|driving|household tasks)/.test(t)) return a.household;
+  if (/(مقدم رعايه|مقدم رعاية|مقدمي الرعايه|caregiver|job application|provider registration)/.test(t)) return a.provider;
   if (/(مؤسسه|مؤسسة|شركه|شركة|تسجيل مختبر|تسجيل مركز|institution|register a lab|register centre)/.test(t)) return a.institution;
   if (/(سعر|تكلف|كم|اسعار|الاسعار|price|cost|how much)/.test(t)) return a.price;
   if (/(منطقه|منطقة|وين|اين|تغطيه|تغطية|لبنان|طرابلس|الضنيه|ضنيه|زغرتا|الكوره|البترون|بيروت|tripoli|where.*area|service area|location)/.test(t)) return a.areas;
