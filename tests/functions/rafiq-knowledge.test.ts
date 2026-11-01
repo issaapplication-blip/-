@@ -2,74 +2,53 @@ import { expect, test } from "bun:test";
 import { detectRafiqLanguage, getRafiqKnowledgeReply, rafiqUnknownReply } from "../../supabase/functions/_shared/rafiq-knowledge";
 
 const cases = [
-  ["ما خدمات رفيق؟", "services"],
-  ["أريد رعاية مسن", "elderly"],
-  ["أحتاج رعاية لمريض", "patient"],
-  ["هل لديكم تمريض منزلي؟", "nursing"],
-  ["أريد علاجًا فيزيائيًا", "physio"],
-  ["كيف أسجل مختبرًا؟", "labs"],
-  ["هل تسجلون مراكز الأشعة؟", "imaging"],
-  ["أحتاج معدات طبية", "equipment"],
-  ["كيف أسجل كمقدم رعاية؟", "provider"],
-  ["هل يمكن للمؤسسات التسجيل؟", "institution"],
-  ["كم سعر السيرة الذاتية؟", "cv"],
-  ["ما أسعار الخدمات؟", "price"],
-  ["هل تغطون طرابلس؟", "areas"],
-  ["ما ساعات العمل؟", "hours"],
-  ["كيف تحمون الخصوصية؟", "privacy"],
-  ["كيف أتواصل معكم؟", "contact"],
-  ["هل لديكم وظائف شاغرة؟", "jobs"],
-  ["هل أحتاج إلى حساب للتسجيل؟", "registration"],
-  ["هل تتوفر رعاية 24 ساعة؟", "availability"],
-  ["هل تشمل الرعاية الطبخ والتنظيف؟", "household"],
-  ["هل يوجد اشتراك لمقدمي الرعاية؟", "noSubscription"],
-  ["I need elderly care", "elderly"],
-  ["I need patient home care", "patient"],
-  ["Do you provide home nursing?", "nursing"],
-  ["I need physiotherapy", "physio"],
-  ["How can a laboratory register?", "labs"],
-  ["How do imaging centres register?", "imaging"],
-  ["Do you list medical equipment?", "equipment"],
-  ["How can I register as a caregiver?", "provider"],
-  ["Can an institution register?", "institution"],
-  ["What are your CV prices?", "cv"],
-  ["How much do your services cost?", "price"],
-  ["Do you cover Tripoli?", "areas"],
-  ["What are your working hours?", "hours"],
-  ["How do you handle privacy?", "privacy"],
-  ["How can I contact RAFIQ?", "contact"],
-  ["Are there current job vacancies?", "jobs"],
-  ["Do I need an account to register?", "registration"],
-  ["Can I request 24-hour care?", "availability"],
-  ["Does care include cooking and cleaning?", "household"],
-  ["Is there a monthly subscription for caregivers?", "noSubscription"],
+  { ar: "ما خدمات رفيق؟", en: "What services do you offer?", arExpected: "خدمات RAFIQ", enExpected: "elderly care" },
+  { ar: "أريد رعاية مسن", en: "I need elderly care", arExpected: "رعاية كبار السن", enExpected: "in-home elderly care" },
+  { ar: "أحتاج رعاية لمريض", en: "I need patient home care", arExpected: "الرعاية المنزلية للمرضى", enExpected: "home-care requests for patients" },
+  { ar: "هل لديكم تمريض منزلي؟", en: "Do you provide home nursing?", arExpected: "التمريض المنزلي", enExpected: "home-nursing requests" },
+  { ar: "أريد علاجًا فيزيائيًا", en: "I need physiotherapy", arExpected: "العلاج الفيزيائي المنزلي", enExpected: "home-physiotherapy requests" },
+  { ar: "كيف أسجل مختبرًا؟", en: "How can a laboratory register?", arExpected: "المختبرات الطبية", enExpected: "medical laboratories" },
+  { ar: "هل تسجلون مراكز الأشعة؟", en: "How do imaging centres register?", arExpected: "مراكز الأشعة", enExpected: "Imaging centres" },
+  { ar: "أحتاج معدات طبية", en: "Do you list medical equipment?", arExpected: "المعدات الطبية", enExpected: "Medical-equipment providers" },
+  { ar: "كيف أسجل كمقدم رعاية؟", en: "How can I register as a caregiver?", arExpected: "مقدمي الرعاية", enExpected: "Caregivers, nurses" },
+  { ar: "هل يمكن للمؤسسات التسجيل؟", en: "Can an institution register?", arExpected: "المختبرات", enExpected: "Medical laboratories" },
+  { ar: "كم سعر السيرة الذاتية؟", en: "What are your CV prices?", arExpected: "$25", enExpected: "$25" },
+  { ar: "ما أسعار الخدمات؟", en: "How much do your services cost?", arExpected: "لا يوجد سعر موحد", enExpected: "There is no published standard price" },
+  { ar: "هل تغطون طرابلس؟", en: "Do you cover Tripoli?", arExpected: "مناطق لبنان", enExpected: "across Lebanon" },
+  { ar: "ما ساعات العمل؟", en: "What are your working hours?", arExpected: "لا تنشر المنصة ساعات عمل", enExpected: "does not publish confirmed general office hours" },
+  { ar: "كيف تحمون الخصوصية؟", en: "How do you handle privacy?", arExpected: "الخصوصية", enExpected: "Submitted information" },
+  { ar: "كيف أتواصل معكم؟", en: "How can I contact RAFIQ?", arExpected: "WhatsApp", enExpected: "WhatsApp" },
+  { ar: "هل لديكم وظائف شاغرة؟", en: "Are there current job vacancies?", arExpected: "لا توجد قائمة وظائف شاغرة", enExpected: "There is no verified public list" },
+  { ar: "هل أحتاج إلى حساب للتسجيل؟", en: "Do I need an account to register?", arExpected: "لا تحتاج إلى إنشاء حساب", enExpected: "You do not need to create an account" },
+  { ar: "هل تتوفر رعاية 24 ساعة؟", en: "Can I request 24-hour care?", arExpected: "رعاية نهارية أو ليلية أو إقامة", enExpected: "daytime, overnight or live-in" },
+  { ar: "هل تشمل الرعاية الطبخ والتنظيف؟", en: "Does care include cooking and cleaning?", arExpected: "الطبخ والتنظيف", enExpected: "Cooking, cleaning" },
+  { ar: "هل يوجد اشتراك لمقدمي الرعاية؟", en: "Is there a monthly subscription for caregivers?", arExpected: "لا تفرض RAFIQ اشتراكًا", enExpected: "does not charge caregivers" },
 ] as const;
 
-test("RAFIQ shared knowledge answers every supported FAQ in Arabic and English", () => {
-  for (const [question] of cases) {
-    const answer = getRafiqKnowledgeReply(question);
-    expect(answer).toBeTruthy();
-    expect(answer).not.toContain("rafiq.pages.dev");
+test("every supported FAQ returns its approved Arabic and English answer", () => {
+  for (const item of cases) {
+    const arabic = getRafiqKnowledgeReply(item.ar, "ar");
+    const english = getRafiqKnowledgeReply(item.en, "en");
+    expect(arabic).toContain(item.arExpected);
+    expect(english).toContain(item.enExpected);
   }
 });
 
-test("knowledge intent replies are consistent across language variants", () => {
-  const ar = getRafiqKnowledgeReply("ما سعر السيرة الذاتية؟");
-  const en = getRafiqKnowledgeReply("What are your CV prices?");
-  expect(ar).toContain("$25");
-  expect(ar).toContain("$35");
-  expect(ar).toContain("$10");
-  expect(ar).toContain("$16");
-  expect(en).toContain("$25");
-  expect(en).toContain("$51");
+test("CV pricing matches the approved schedule in both languages", () => {
+  const ar = getRafiqKnowledgeReply("ما سعر السيرة الذاتية؟", "ar")!;
+  const en = getRafiqKnowledgeReply("What are your CV prices?", "en")!;
+  for (const amount of ["$25", "$35", "$10", "$16", "$51", "$20", "$28"]) {
+    expect(ar).toContain(amount);
+    expect(en).toContain(amount);
+  }
 });
 
 test("emergency questions are routed to emergency services in both languages", () => {
-  expect(getRafiqKnowledgeReply("لدي ضيق تنفس")).toContain("خدمات الطوارئ");
-  expect(getRafiqKnowledgeReply("I have chest pain")).toContain("emergency services");
+  expect(getRafiqKnowledgeReply("لدي ضيق تنفس", "ar")).toContain("خدمات الطوارئ");
+  expect(getRafiqKnowledgeReply("I have chest pain", "en")).toContain("emergency services");
 });
 
-test("unknown questions are not guessed and are escalated to a human", () => {
+test("unknown questions are not guessed and have a human escalation answer", () => {
   expect(getRafiqKnowledgeReply("هل تقدمون خدمة غير مدرجة؟")).toBeNull();
   expect(rafiqUnknownReply("ar")).toContain("غير متوفرة حاليًا");
   expect(rafiqUnknownReply("en")).toContain("not currently available");
