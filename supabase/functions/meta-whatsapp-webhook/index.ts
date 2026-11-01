@@ -9,7 +9,9 @@ const cors = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db = createClient(SUPABASE_URL, SERVICE_KEY);
-const WHATSAPP_AUTOREPLY_ENABLED = false; // Keep disabled until a separately reviewed re-enable change.
+const TELEGRAM_BOT_TOKEN = (Deno.env.get("TELEGRAM_BOT_TOKEN") || "").trim();
+const TELEGRAM_MANAGER_CHAT_IDS = (Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
+  .split(",").map((value) => value.trim()).filter(Boolean);
 
 const hex = (bytes: ArrayBuffer) =>
   Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
@@ -65,54 +67,49 @@ async function verifySignature(body: string, header: string | null) {
   return timingSafeEqual(expected, header);
 }
 
-async function sendWhatsAppText(to: string, body: string) {
-  const token = Deno.env.get("META_ACCESS_TOKEN");
-  const phoneNumberId = Deno.env.get("META_PHONE_NUMBER_ID");
-  const version = Deno.env.get("META_GRAPH_API_VERSION") || "v23.0";
-  if (!token || !phoneNumberId) throw new Error("META WhatsApp credentials are not configured");
-
-  const r = await fetch(
-    `https://graph.facebook.com/${version}/${phoneNumberId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to,
-        type: "text",
-        text: { preview_url: false, body }
-      })
-    }
-  );
-  const payload = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(`Meta send failed: ${r.status}`);
-  return payload;
+// WhatsApp is an owner-operated inbox only. The RAFIQ AI agent never handles WhatsApp messages.
+// The owner reads the forwarded question and sends any WhatsApp reply manually from WhatsApp.
+function relayText(msg: { from: string; type: string; text: string; profileName: string; mediaId: string },): string {
+  const sender = "+" + msg.from.replace(/^\\+/, "");
+  const body = msg.text || "[رسالة غير نصية: " + (msg.type || "unknown") + "]";
+  const media = msg.mediaId ? "\\nمعرّف الوسائط: " + msg.mediaId : "";
+  return [
+    "📩 رسالة WhatsApp جديدة إلى RAFIQ",
+    "المرسل: " + sender + (msg.profileName ? " (" + msg.profileName.slice(0, 60) + ")" : ""),
+    "النوع: " + (msg.type || "unknown"),
+    "",
+    body.slice(0, 2600) + media,
+    "",
+    "هذه الرسالة للمالك فقط. الوكيل يعمل على Telegram فقط؛ اقرأ السؤال وأرسل جوابك يدوياً من WhatsApp.",
+  ].join("\\n").slice(0, 3800);
 }
 
-async function runAgent(phone: string, message: string) {
-  const r = await fetch(`${SUPABASE_URL}/functions/v1/rafiq-agent`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      apikey: SERVICE_KEY,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message,
-      channel: "whatsapp",
-      conversation_id: `meta:${phone}`,
-      external_conversation_id: `meta:${phone}`,
-      phone,
-      locale: "ar"
-    })
-  });
-  const payload = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(`rafiq-agent failed: ${r.status}`);
-  return String(payload.reply || "");
+async function relayToOwner(text: string, phone: string): Promise<number> {
+  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_MANAGER_CHAT_IDS.length === 0) {
+    throw new Error("telegram_owner_relay_not_configured");
+  }
+  let delivered = 0;
+  for (const chatId of TELEGRAM_MANAGER_CHAT_IDS) {
+    try {
+      const response = await fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          disable_web_page_preview: true,
+          reply_markup: { inline_keyboard: [[{ text: "فتح محادثة WhatsApp", url: "https://wa.me/" + phone.replace(/\\D/g, "") }]] },
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result?.ok === true) delivered++;
+    } catch {
+      // Continue to the remaining owner chats; never log tokens, phone numbers or message content.
+    }
+  }
+  if (delivered === 0) throw new Error("telegram_owner_relay_failed");
+  return delivered;
 }
 
 Deno.serve(async (req: Request) => {
@@ -173,17 +170,25 @@ Deno.serve(async (req: Request) => {
     const messages = [];
     for (const entry of payload.entry || []) {
       for (const change of entry.changes || []) {
+        const names: Record<string, string> = {};
+        for (const contact of change?.value?.contacts || []) {
+          if (contact?.wa_id) names[String(contact.wa_id)] = String(contact?.profile?.name || "");
+        }
         for (const msg of change?.value?.messages || []) {
+          const mediaId = String(msg?.image?.id || msg?.document?.id || msg?.audio?.id || msg?.video?.id || msg?.sticker?.id || "");
+          const location = msg?.location;
           messages.push({
             id: String(msg.id || ""),
             from: String(msg.from || ""),
+            profileName: names[String(msg.from || "")] || "",
             type: String(msg.type || ""),
+            mediaId,
             text: typeof msg?.text?.body === "string" ? msg.text.body.trim()
               : typeof msg?.image?.caption === "string" ? msg.image.caption.trim()
               : typeof msg?.document?.caption === "string" ? msg.document.caption.trim()
               : typeof msg?.document?.filename === "string" ? "Document: " + msg.document.filename.slice(0, 160)
-              : typeof msg?.location?.latitude === "number" && typeof msg?.location?.longitude === "number"
-                ? "Location: " + msg.location.latitude + ", " + msg.location.longitude
+              : typeof location?.latitude === "number" && typeof location?.longitude === "number"
+                ? "Location: " + location.latitude + ", " + location.longitude
               : typeof msg?.interactive?.button_reply?.title === "string" ? msg.interactive.button_reply.title
               : typeof msg?.interactive?.list_reply?.title === "string" ? msg.interactive.list_reply.title
               : typeof msg?.button?.text === "string" ? msg.button.text
@@ -212,50 +217,21 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      if (!msg.text) {
-        await db.from("whatsapp_inbound_events")
-          .update({ processing_status: "ignored", processed_at: new Date().toISOString() })
-          .eq("provider", "meta")
-          .eq("provider_message_id", msg.id);
-        continue;
-      }
-
-      if (!WHATSAPP_AUTOREPLY_ENABLED) {
-        await db.from("whatsapp_inbound_events")
-          .update({ error_message: "Automatic WhatsApp replies are disabled; pending manual review." })
-          .eq("provider", "meta")
-          .eq("provider_message_id", msg.id);
-        continue;
-      }
-
+      // WhatsApp messages are relayed to the configured owner Telegram chat(s) only.
+      // No agent invocation and no outbound WhatsApp API call exists in this handler.
       try {
-        const reply = await runAgent(msg.from, msg.text);
-        if (!reply) throw new Error("Agent returned empty reply");
-
-        const outbound = await sendWhatsAppText(msg.from, reply);
-        const outboundId = outbound?.messages?.[0]?.id || null;
-
-        await db.from("whatsapp_outbound_messages").insert({
-          provider: "meta",
-          provider_message_id: outboundId,
-          to_phone: msg.from,
-          body: reply,
-          status: "sent",
-          payload: outbound
-        });
-
+        const notice = relayText(msg, msg.from);
+        const delivered = await relayToOwner(notice, msg.from);
         await db.from("whatsapp_inbound_events")
-          .update({ processing_status: "processed", processed_at: new Date().toISOString() })
+          .update({ processing_status: "forwarded_to_owner", processed_at: new Date().toISOString(), error_message: null, owner_relay_count: delivered })
           .eq("provider", "meta")
           .eq("provider_message_id", msg.id);
-      } catch (error) {
-        console.error("message processing failed", String(error));
+      } catch {
+        console.error("WhatsApp owner relay failed; message retained for manual review.");
         await db.from("whatsapp_inbound_events")
-          .update({ processing_status: "failed", error_message: String(error).slice(0,500) })
+          .update({ processing_status: "failed", error_message: "telegram_owner_relay_failed" })
           .eq("provider", "meta")
           .eq("provider_message_id", msg.id);
-        // Return 200 after persistence so Meta does not create an uncontrolled duplicate storm.
-        // The failed event remains visible for human retry/review.
       }
     }
 
