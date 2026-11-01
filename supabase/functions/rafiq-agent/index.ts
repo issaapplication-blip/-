@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { getRafiqKnowledgeReply } from "../_shared/rafiq-knowledge.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -100,6 +101,7 @@ async function createEscalation(conversationId: string, reason: string, payload:
 }
 
 const systemPrompt = `أنت وكيل خدمة العملاء والاستقبال لمنصة RAFIQ | رفيق للرعاية المنزلية في لبنان.
+المعلومات المعتمدة في صفحة الخدمات والأسئلة الشائعة هي المصدر الوحيد للحقائق. إذا لم تجد المعلومة، قل إنها غير متوفرة حاليًا ووجّه إلى الإدارة. لا تخترع ساعات عمل أو أسعارًا أو مناطق مؤكدة أو وعود توفر أو تسجيل أو اعتماد.
 أجب مباشرة عن سؤال العميل ولا تستبدل الإجابة بقائمة عامة عن الخدمات.
 الخدمات: رعاية المسنين، رعاية المرضى، التمريض المنزلي، العلاج الفيزيائي.
 افهم اللهجات العربية والأخطاء الإملائية البسيطة، واستخدم سياق المحادثة ولا تكرر الأسئلة التي أُجيب عنها.
@@ -181,6 +183,8 @@ async function callGemini(message: string, context: ChatMessage[]): Promise<stri
 }
 
 async function generateReply(message: string, context: ChatMessage[]): Promise<{ reply: string; mode: string }> {
+  const knownReply = getRafiqKnowledgeReply(message);
+  if (knownReply) return { reply: knownReply, mode: "knowledge" };
   const provider = (Deno.env.get("RAFIQ_AGENT_PROVIDER") || "").trim().toLowerCase();
   if (provider === "gemini") {
     const reply = await callGemini(message, context);
