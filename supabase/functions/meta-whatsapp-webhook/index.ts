@@ -207,7 +207,7 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      // WhatsApp messages are relayed to the configured owner Telegram chat(s) only.
+      // WhatsApp messages are relayed to the owner's private Telegram chat only.
       // No agent invocation and no outbound WhatsApp API call exists in this handler.
       try {
         const notice = relayText(msg);
