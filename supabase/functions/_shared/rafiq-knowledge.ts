@@ -76,11 +76,11 @@ export function getRafiqKnowledgeReply(message: string, language: RafiqLanguage 
   if (/(مريض|مريضه|مريضة|بعد المستشفى|بعد عمليه|بعد عملية|patient care|after hospital)/.test(t)) return a.patient;
   if (/(اشتراك|subscription|monthly fee|annual fee)/.test(t)) return a.noSubscription;
   if (/(وظيف|توظيف|شاغر|vacanc|job opening|employment)/.test(t)) return a.jobs;
-  if (/(تسجيل|انشاء حساب|إنشاء حساب|حساب مسبق|register|registration|sign up|create an account)/.test(t)) return a.registration;
-  if (/(24 ساع|اربعه وعشرين|أربعة وعشرين|ليل|نهار|اقامه|إقامة|24.hour|overnight|live.in)/.test(t)) return a.availability;
-  if (/(طبخ|تنظيف|قياده|قيادة|اعمال منزليه|أعمال منزلية|cooking|cleaning|driving|household tasks)/.test(t)) return a.household;
   if (/(مقدم رعايه|مقدم رعاية|مقدمي الرعايه|caregiver|job application|provider registration)/.test(t)) return a.provider;
   if (/(مؤسسه|مؤسسة|شركه|شركة|تسجيل مختبر|تسجيل مركز|institution|register a lab|register centre)/.test(t)) return a.institution;
+  if (/(24 ساع|اربعه وعشرين|أربعة وعشرين|ليل|نهار|اقامه|إقامة|24.hour|overnight|live.in)/.test(t)) return a.availability;
+  if (/(طبخ|تنظيف|قياده|قيادة|اعمال منزليه|أعمال منزلية|cooking|cleaning|driving|household tasks)/.test(t)) return a.household;
+  if (/(تسجيل|انشاء حساب|إنشاء حساب|حساب مسبق|register|registration|sign up|create an account)/.test(t)) return a.registration;
   if (/(سعر|تكلف|كم|اسعار|الاسعار|price|cost|how much)/.test(t)) return a.price;
   if (/(منطقه|منطقة|وين|اين|تغطيه|تغطية|لبنان|طرابلس|الضنيه|ضنيه|زغرتا|الكوره|البترون|بيروت|tripoli|where.*area|service area|location)/.test(t)) return a.areas;
   if (/(خصوصيه|خصوصية|بيانات|privacy|personal data)/.test(t)) return a.privacy;
