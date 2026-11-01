@@ -70,7 +70,7 @@ async function verifySignature(body: string, header: string | null) {
 // WhatsApp is an owner-operated inbox only. The RAFIQ AI agent never handles WhatsApp messages.
 // The owner reads the forwarded question and sends any WhatsApp reply manually from WhatsApp.
 function relayText(msg: { from: string; type: string; text: string; profileName: string; mediaId: string },): string {
-  const sender = "+" + msg.from.replace(/^\\+/, "");
+  const sender = "+" + msg.from.replace(/^\+/, "");
   const body = msg.text || "[رسالة غير نصية: " + (msg.type || "unknown") + "]";
   const media = msg.mediaId ? "\nمعرّف الوسائط: " + msg.mediaId : "";
   return [
