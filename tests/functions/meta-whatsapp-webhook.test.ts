@@ -57,7 +57,7 @@ test("WhatsApp requires a valid Meta HMAC signature", async () => {
   expect(response.status).toBe(401);
 });
 
-test("WhatsApp text is relayed to every owner Telegram chat and never to the agent or WhatsApp API", async () => {
+test("WhatsApp text is relayed only to the owner's private Telegram chat", async () => {
   const urls: string[] = [];
   const sent: any[] = [];
   const f = loadFunction("meta-whatsapp-webhook", OWNER_ENV, async (url: string, init?: any) => {
