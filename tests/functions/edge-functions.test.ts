@@ -46,7 +46,7 @@ describe("rafiq-agent caller isolation", () => {
     expect(calls).toBe(0);
     expect(body.mode).toBe("knowledge");
     expect(body.reply).toContain("$25");
-    expect(body.reply).toContain("التكلفة");
+    expect(body.reply).toContain("السعر والتوفر");
   });
   test("configured model is sent to provider", async () => {
     let sent: any;
