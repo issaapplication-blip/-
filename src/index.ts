@@ -210,7 +210,6 @@ const supabaseRest=async(path:string,token:string,init:RequestInit={})=>{
   return {response,body};
 };
 const requireAdminToken=(request:Request)=>Boolean(process.env.RAFIQ_ADMIN_ACTION_TOKEN&&request.headers.get("x-rafig-admin-token")===process.env.RAFIQ_ADMIN_ACTION_TOKEN);
-const sendWhatsAppText=async(to:string,body:string)=>{const accessToken=process.env.META_ACCESS_TOKEN,phoneNumberId=process.env.META_PHONE_NUMBER_ID,apiVersion=process.env.META_GRAPH_API_VERSION??"v23.0";if(!accessToken||!phoneNumberId)throw new Error("WhatsApp Cloud API server configuration is incomplete");const response=await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,{method:"POST",headers:{Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",recipient_type:"individual",to,type:"text",text:{preview_url:false,body}})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(`Meta WhatsApp API error (${response.status})`);return result};
 const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html","public/barcode.html","public/member.html"]); const RAFIQ_LOGO_STYLE='<style id="rafig-logo-quality">.brand img,.brand-mini img,.hero-logo,.logo,.brand-logo{background:#fff!important;object-fit:contain!important;image-rendering:auto!important;filter:none!important}.brand img,.brand-mini img,.logo,.brand-logo{border-radius:14px!important;padding:6px!important;box-sizing:border-box!important}.hero-logo{display:block;background:#fff!important;border-radius:18px!important;padding:10px!important;box-shadow:0 5px 18px rgba(0,0,0,.08)!important}</style>'; const FILE_CACHE_MAX_BYTES=16*1024*1024; const fileCache=new Map<string,{body:Uint8Array,type:string}>(); let fileCacheBytes=0;
 const fileResponse=async(path:string,type:string,cache="no-store")=>{const cached=fileCache.get(path+"|"+type);if(cached)return new Response(cached.body,{status:200,headers:{"Content-Type":type,"Content-Length":String(cached.body.byteLength),"Cache-Control":cache}});const file=Bun.file(path);if(!(await file.exists()))return new Response("Not Found",{status:404,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});let body:any=await file.arrayBuffer();if(type.startsWith("text/html")&&!PUBLIC_I18N_EXCLUDED.has(path)){let html=new TextDecoder().decode(body);if(type.startsWith("text/html")&&!html.includes("id=\"rafig-logo-quality\"")){html=html.includes("</head>")?html.replace("</head>",RAFIQ_LOGO_STYLE+"</head>"):RAFIQ_LOGO_STYLE+html;}if(!html.includes("/css/device.css")){const marker="</head>";const tag='<link rel="stylesheet" href="/css/device.css?v=72">';html=html.includes(marker)?html.replace(marker,tag+marker):tag+html;}if(!html.includes("/i18n.js")){const marker="</body>";const tag='<script src="/i18n.js?v=3" defer></script>';html=html.includes(marker)?html.replace(marker,tag+marker):html+tag;}body=html;}const bytes=typeof body==="string"?new TextEncoder().encode(body):new Uint8Array(body);if(bytes.byteLength<=FILE_CACHE_MAX_BYTES){const key=path+"|"+type;while(fileCacheBytes+bytes.byteLength>FILE_CACHE_MAX_BYTES&&fileCache.size){const first=fileCache.keys().next().value;if(first){const oldEntry=fileCache.get(first);fileCache.delete(first);fileCacheBytes-=oldEntry?.body.byteLength||0}else break}const stored=new Uint8Array(bytes);fileCache.set(key,{body:stored,type});fileCacheBytes+=stored.byteLength;}return new Response(bytes,{status:200,headers:{"Content-Type":type,"Content-Length":String(bytes.byteLength),"Cache-Control":cache}})};
 const broadcastTelegramAnnouncement = async (announcementKey: string, body: string, cutoffIso?: string) => {
@@ -637,137 +636,8 @@ const app=new Elysia()
     return{ok:true,status:"delivered",messageId};
   }catch(error){set.status=502;return{ok:false,error:"Telegram document delivery failed"}}
 })
-.get("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"Legacy webhook disabled; configure the Supabase Meta webhook"}})
-.post("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"Legacy webhook disabled; configure the Supabase Meta webhook"}})
-.post("/api/telegram/webhook",async({request,set})=>{
-  if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
-  if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
-  const update=await request.clone().json().catch(()=>null) as any;
-  const updateId=parseTelegramUpdateId(update?.update_id);
-  if(updateId===null){set.status=400;return{ok:false,error:"invalid Telegram update_id"}}
-  let claim:string;
-  try {
-    claim=classifyTelegramUpdateClaim(await claimTelegramUpdate(updateId));
-  } catch(error) {
-    console.error(JSON.stringify({event:"rafig_telegram_update_claim_failed",updateId,error:String(error).slice(0,200)}));
-    set.status=503;
-    return{ok:false,error:"Telegram update protection is temporarily unavailable"};
-  }
-  if(claim==="duplicate"){set.status=200;return{ok:true,status:"duplicate_update_ignored"}}
-  if(claim==="busy"){set.status=503;return{ok:false,error:"Telegram update is already processing"}}
-  if(claim!=="claimed"){set.status=503;return{ok:false,error:"Telegram update claim returned an invalid state"}}
-  try {
-    const result=await handleTelegramWebhook({request,set});
-    const status=Number(set.status??200);
-    await finishTelegramUpdate(updateId,status>=500?"failed":"completed",status>=500?"Telegram handler returned HTTP "+status:undefined);
-    return result;
-  } catch(error) {
-    await finishTelegramUpdate(updateId,"failed",String(error)).catch(finishError=>console.error(JSON.stringify({event:"rafig_telegram_update_mark_failed",updateId,error:String(finishError).slice(0,200)})));
-    throw error;
-  }
-})
-const forwardPublicIntake=async({request,set}:any)=>{
-  const now=Date.now();
-  const ip=(request.headers.get("x-forwarded-for")||request.headers.get("x-real-ip")||"public").split(",")[0].trim();
-  const rateStore=(globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__; const last:Map<string,number>=rateStore||new Map<string,number>(); (globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__=last;
-  const previous=last.get(ip)||0; if(now-previous<PUBLIC_INTAKE_RATE_LIMIT_MS){set.status=429;return{ok:false,error:"يرجى الانتظار قليلًا ثم إعادة إرسال الطلب"}} last.set(ip,now);
-  const contentLength=Number(request.headers.get("content-length")||0); if(contentLength>MAX_PUBLIC_INTAKE_BODY){set.status=413;return{ok:false,error:"حجم الطلب يتجاوز الحد المسموح"}}
-  const key=(process.env.SUPABASE_PUBLISHABLE_KEY||process.env.SUPABASE_ANON_KEY||"").trim(); if(!key){set.status=503;return{ok:false,error:"public intake configuration unavailable"}}
-  const contentType=request.headers.get("content-type")||"application/octet-stream";
-  try{
-    const upstream=await fetch(SUPABASE_URL+"/functions/v1/public-intake",{method:"POST",headers:{"Authorization":"Bearer "+key,"apikey":key,"Content-Type":contentType},body:await request.arrayBuffer()});
-    const body=await upstream.json().catch(()=>({ok:false,error:"invalid upstream response"})); set.status=upstream.status; return body;
-  }catch(error){console.error(JSON.stringify({event:"rafig_public_intake_edge_proxy_failed",error:String(error).slice(0,240)}));set.status=502;return{ok:false,error:"تعذر حفظ الطلب الآن. حاول مرة أخرى."}}
-}
-app.post("/api/public/institution-intake",forwardPublicIntake)
-.post("/api/public/intake",forwardPublicIntake)
-.get("/api/intake/complete",async({query,set})=>{
-  const token=String(query?.token??"").trim();
-  if(!token){set.status=400;return{ok:false,error:"invalid completion token"}}
-  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token)))).map(b=>b.toString(16).padStart(2,"0")).join("");
-  const r=await supabaseServerRest("/rest/v1/application_intakes?upload_token_hash=eq."+encodeURIComponent(hash)+"&upload_token_expires_at=gt."+encodeURIComponent(new Date().toISOString())+"&status=eq.review&select=id,application_number,applicant_name,status&limit=1");
-  const row=Array.isArray(r.body)?r.body[0]:null;
-  if(!r.response.ok||!row){set.status=404;return{ok:false,error:"رابط الإكمال غير صالح أو منتهي الصلاحية"}}
-  return{ok:true,application_number:row.application_number,applicant_name:row.applicant_name,status:row.status};
-})
-.post("/api/intake/complete",async({request,set})=>{
-  const form=await request.formData().catch(()=>null);
-  if(!form){set.status=400;return{ok:false,error:"invalid form"}}
-  const token=String(form.get("token")??"").trim();
-  if(!token){set.status=400;return{ok:false,error:"invalid completion token"}}
-  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token)))).map(b=>b.toString(16).padStart(2,"0")).join("");
-  const r=await supabaseServerRest("/rest/v1/application_intakes?upload_token_hash=eq."+encodeURIComponent(hash)+"&upload_token_expires_at=gt."+encodeURIComponent(new Date().toISOString())+"&status=eq.review&select=id,application_number,applicant_name&limit=1");
-  const intake=Array.isArray(r.body)?r.body[0]:null;
-  if(!r.response.ok||!intake){set.status=404;return{ok:false,error:"رابط الإكمال غير صالح أو منتهي الصلاحية"}}
-  const note=String(form.get("note")??"").trim().slice(0,5000);
-  const files=form.getAll("files").filter(v=>v instanceof File) as File[];
-  if(files.length>10){set.status=400;return{ok:false,error:"يمكن إرفاق 10 ملفات كحد أقصى"}}
-  if(files.some(f=>f.size>6*1024*1024)){set.status=413;return{ok:false,error:"الحد الأقصى لحجم الملف الواحد 6MB"}}
-  if(note){
-    const current=await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id)+"&select=payload&limit=1");
-    const payload=Array.isArray(current.body)?(current.body[0]?.payload??{}):{};
-    await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({payload:{...(payload&&typeof payload==="object"?payload:{}),completion_note:note,completion_submitted_at:new Date().toISOString()},updated_at:new Date().toISOString()})});
-  }
-  let uploaded=0;
-  for(const file of files){
-    const safeName=String(file.name||"file").replace(/[^A-Za-z0-9._-]/g,"_").slice(-120)||"file";
-    const path="intakes/"+String(intake.id)+"/completion-"+crypto.randomUUID()+"-"+safeName;
-    const bytes=await file.arrayBuffer();
-    const sr=await fetch(SUPABASE_URL+"/storage/v1/object/private_documents/"+path,{method:"POST",headers:{apikey:SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+SUPABASE_SERVICE_ROLE_KEY,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},body:bytes});
-    if(!sr.ok){console.error(JSON.stringify({event:"rafig_completion_upload_failed",intakeId:intake.id,file:safeName,status:sr.status}));continue}
-    const ir=await supabaseServerRest("/rest/v1/application_intake_files",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({intake_id:intake.id,storage_path:path,file_name:file.name,mime_type:file.type||null,file_size:file.size,verification_status:"pending",document_category:"completion"} )});
-    if(ir.response.ok)uploaded++;
-  }
-  const admins=await supabaseServerRest("/rest/v1/profiles?role=eq.admin&status=eq.active&select=id");
-  const adminRows=Array.isArray(admins.body)?admins.body:[];
-  if(adminRows.length){
-    await supabaseServerRest("/rest/v1/notifications",{
-      method:"POST",
-      headers:{"Prefer":"return=minimal"},
-      body:JSON.stringify(adminRows.map((a:any)=>({
-        user_id:a.id,
-        title:"استكمال ملف RAFIQ",
-        message:"تم استكمال الطلب رقم "+String(intake.application_number)+" وإرسال "+String(uploaded)+" ملف/ملفات.",
-        type:"application_completion"
-      })))
-    }).catch(()=>{});
-  }
-  return{ok:true,status:"submitted",uploaded};
-})
-.get("/api/status",()=>({ok:true,service:"RAFIQ",started_at:startedAt,uptime_seconds:Math.floor(process.uptime())}))
-.get("/api/barcode/qr/:code",async({params,set})=>{
-  const code=String(params.code??"").trim();
-  if(!code){set.status=400;return new Response("invalid code",{status:400})}
-  const lookup=await supabaseServerRest("/rest/v1/issued_barcodes?code=eq."+encodeURIComponent(code)+"&status=eq.active&select=code&limit=1");
-  if(!lookup.response.ok||!Array.isArray(lookup.body)||!lookup.body.length){set.status=404;return new Response("not found",{status:404})}
-  const png=await QRCode.toBuffer(code,{type:"png",width:600,margin:2});
-  return new Response(png,{status:200,headers:{"Content-Type":"image/png","Cache-Control":"private, max-age=300"}});
-})
-
-.post("/api/kapso/send-text",({set})=>{set.status=410;return{ok:false,error:"WhatsApp sending is disabled; send replies manually from the WhatsApp app"}})
-.get("/api/whatsapp/webhook",({query,set})=>{const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=process.env.META_VERIFY_TOKEN;if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;set.status=403;return{ok:false,error:"webhook verification failed"}})
-.post("/api/whatsapp/webhook",async({request,set})=>{
-  const raw=await request.text();
-  if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
-  const signature=request.headers.get("x-hub-signature-256");
-  if(process.env.META_APP_SECRET){
-    if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
-  }
-  let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
-  if(String(payload?.object??"")!=="whatsapp_business_account"){set.status=200;return{ok:true,status:"ignored_non_whatsapp_object"}}
-  const messages=extractIncomingMessages(payload);
-  if(!messages.length){set.status=200;return{ok:true,status:"received_no_messages"}}
-  if(process.env.KAPSO_ENABLED==="true"){
-    console.log(JSON.stringify({event:"rafig_meta_webhook_received_kapso_primary",messageCount:messages.length}));
-    set.status=200;return{ok:true,status:"received_kapso_primary",messageCount:messages.length};
-  }
-  const results=[];
-  for(const message of messages){
-    const identity={phone:message.from,bsuid:"",username:""};
-    results.push(await processKapsoMessage(message,identity));
-  }
-  return{ok:true,status:"processed",results};
-})
+.get("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"Legacy WhatsApp webhook disabled; configure the Supabase Meta webhook"}})
+.post("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"Legacy WhatsApp webhook disabled; configure the Supabase Meta webhook"}})
 .post("/api/agent/chat",async({request,set})=>{const started=Date.now();console.log(JSON.stringify({event:"rafig_agent_chat_received"}));let input:any;try{input=await request.json()}catch{set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_json"}));return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>4000){set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_message"}));return{ok:false,error:"invalid message"}}try{const result=await draftInboundReply(message);console.log(JSON.stringify({event:"rafig_agent_chat_completed",model:result.model,durationMs:Date.now()-started}));return{ok:true,reply:result.reply,model:result.model}}catch(error){console.error(JSON.stringify({event:"rafig_agent_chat_failed",error:String(error).slice(0,160),durationMs:Date.now()-started}));return{ok:true,reply:rafiqFallback(message),model:"rafig-local-fallback"}}})
 .post("/api/agent/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>8000){set.status=400;return{ok:false,error:"invalid message"}}try{const result=await draftAgentReply(message,typeof input?.language==="string"?input.language:undefined);return{ok:true,draft:result.reply,model:result.model,humanApprovalRequired:true}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/agent/outreach-draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const target=input?.target;if(target!=="laboratory"&&target!=="medical_equipment_supplier"&&target!=="radiology_center"){set.status=400;return{ok:false,error:"invalid outreach target"}}const institutionName=typeof input?.institutionName==="string"?input.institutionName.trim():"",language=typeof input?.language==="string"?input.language.trim():"";if(institutionName.length>200||language.length>40){set.status=400;return{ok:false,error:"invalid input"}}try{const result=await draftInstitutionOutreach(target,institutionName,language||undefined);return{ok:true,target,institutionName:institutionName||null,draft:result.reply,model:result.model,humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
