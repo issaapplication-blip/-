@@ -255,6 +255,14 @@ async function processUpdate(update: any) {
   const command = text.toLowerCase().split(/\s+/)[0].replace(/@[^\s]+$/, "");
   const userId = String(message.from?.id || chatId);
 
+  if (command === "/myid") {
+    if (chatType !== "private") {
+      await sendText(chatId, "لأسباب الخصوصية، أرسل /myid في المحادثة الخاصة مع البوت.");
+      return;
+    }
+    await sendText(chatId, "معرّف محادثتك الخاصة هو: " + String(chatId) + "\\nاستخدمه كقيمة TELEGRAM_OWNER_CHAT_ID في أسرار Supabase، ولا تنشره علناً.");
+    return;
+  }
   if (command === "/start" || command === "/help") {
     const welcome = detectRafiqLanguage(text) === "en"
       ? "Welcome to RAFIQ | رفيق 🇱🇧\\n\\nServices: elderly care, patient home care, home nursing and home physiotherapy.\\n\\n/services — Services\\n/request — Submit a request for review\\n/stop — Cancel the active request"
