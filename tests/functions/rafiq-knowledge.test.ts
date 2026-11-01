@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { detectRafiqLanguage, getRafiqKnowledgeReply, rafiqUnknownReply } from "../..//supabase/functions/_shared/rafiq-knowledge";
+import { detectRafiqLanguage, getRafiqKnowledgeReply, rafiqUnknownReply } from "../../supabase/functions/_shared/rafiq-knowledge";
 
 const cases = [
   ["ما خدمات رفيق؟", "services"],
@@ -35,7 +35,7 @@ const cases = [
   ["How can I contact RAFIQ?", "contact"],
 ] as const;
 
-test("RAF IQ shared knowledge answers every supported FAQ in Arabic and English", () => {
+test("RAFIQ shared knowledge answers every supported FAQ in Arabic and English", () => {
   for (const [question] of cases) {
     const answer = getRafiqKnowledgeReply(question);
     expect(answer).toBeTruthy();
