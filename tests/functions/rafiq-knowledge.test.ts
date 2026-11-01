@@ -29,6 +29,8 @@ test("every supported FAQ returns its approved Arabic and English answer", () =>
   for (const item of cases) {
     const arabic = getRafiqKnowledgeReply(item.ar, "ar");
     const english = getRafiqKnowledgeReply(item.en, "en");
+    if (!arabic) throw new Error("Arabic FAQ did not match: " + item.ar);
+    if (!english) throw new Error("English FAQ did not match: " + item.en);
     expect(arabic).toContain(item.arExpected);
     expect(english).toContain(item.enExpected);
   }
