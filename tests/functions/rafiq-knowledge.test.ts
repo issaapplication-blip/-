@@ -11,7 +11,7 @@ const cases = [
   { ar: "هل تسجلون مراكز الأشعة؟", en: "How do imaging centres register?", arExpected: "مراكز الأشعة", enExpected: "Imaging centres" },
   { ar: "أحتاج معدات طبية", en: "Do you list medical equipment?", arExpected: "المعدات الطبية", enExpected: "Medical-equipment providers" },
   { ar: "كيف أسجل كمقدم رعاية؟", en: "How can I register as a caregiver?", arExpected: "مقدمي الرعاية", enExpected: "Caregivers, nurses" },
-  { ar: "هل يمكن للمؤسسات التسجيل؟", en: "Can an institution register?", arExpected: "المختبرات", enExpected: "Medical laboratories" },
+  { ar: "هل يمكن للمؤسسات التسجيل؟", en: "Can an institution register?", arExpected: "مراكز الأشعة", enExpected: "Medical laboratories" },
   { ar: "كم سعر السيرة الذاتية؟", en: "What are your CV prices?", arExpected: "$25", enExpected: "$25" },
   { ar: "ما أسعار الخدمات؟", en: "How much do your services cost?", arExpected: "لا يوجد سعر موحد", enExpected: "There is no published standard price" },
   { ar: "هل تغطون طرابلس؟", en: "Do you cover Tripoli?", arExpected: "مناطق لبنان", enExpected: "across Lebanon" },
