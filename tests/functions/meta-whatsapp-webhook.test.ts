@@ -10,7 +10,7 @@ const BASE = {
 const OWNER_ENV = {
   ...BASE,
   TELEGRAM_BOT_TOKEN: "123456:synthetic-bot-token",
-  TELEGRAM_MANAGER_CHAT_IDS: "1001,1002",
+  TELEGRAM_OWNER_CHAT_ID: "1001",
 };
 
 async function sign(body: string) {
@@ -77,7 +77,7 @@ test("WhatsApp text is relayed to every owner Telegram chat and never to the age
   });
   const response = await f.handler(webhook(body, await sign(body)));
   expect(response.status).toBe(200);
-  expect(sent.map(x => x.chat_id)).toEqual(["1001", "1002"]);
+  expect(sent.map(x => x.chat_id)).toEqual(["1001"]);
   expect(sent[0].text).toContain("مرحباً، أريد رعاية منزلية");
   expect(sent[0].text).toContain("Synthetic Sender");
   expect(sent[0].reply_markup.inline_keyboard[0][0].url).toBe("https://wa.me/96170000000");
@@ -103,7 +103,7 @@ test("WhatsApp media and location are relayed with metadata for the owner to ins
   });
   const response = await f.handler(webhook(body, await sign(body)));
   expect(response.status).toBe(200);
-  expect(sent).toHaveLength(8);
+  expect(sent).toHaveLength(4);
   expect(sent.some(x => x.text.includes("صورة تقرير تجريبي") && x.text.includes("media-image-1"))).toBe(true);
   expect(sent.some(x => x.text.includes("sample.pdf") && x.text.includes("media-doc-1"))).toBe(true);
   expect(sent.some(x => x.text.includes("Location: 33.9, 35.5"))).toBe(true);
