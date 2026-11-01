@@ -18,6 +18,11 @@ const cases = [
   ["ما ساعات العمل؟", "hours"],
   ["كيف تحمون الخصوصية؟", "privacy"],
   ["كيف أتواصل معكم؟", "contact"],
+  ["هل لديكم وظائف شاغرة؟", "jobs"],
+  ["هل أحتاج إلى حساب للتسجيل؟", "registration"],
+  ["هل تتوفر رعاية 24 ساعة؟", "availability"],
+  ["هل تشمل الرعاية الطبخ والتنظيف؟", "household"],
+  ["هل يوجد اشتراك لمقدمي الرعاية؟", "noSubscription"],
   ["I need elderly care", "elderly"],
   ["I need patient home care", "patient"],
   ["Do you provide home nursing?", "nursing"],
@@ -33,6 +38,11 @@ const cases = [
   ["What are your working hours?", "hours"],
   ["How do you handle privacy?", "privacy"],
   ["How can I contact RAFIQ?", "contact"],
+  ["Are there current job vacancies?", "jobs"],
+  ["Do I need an account to register?", "registration"],
+  ["Can I request 24-hour care?", "availability"],
+  ["Does care include cooking and cleaning?", "household"],
+  ["Is there a monthly subscription for caregivers?", "noSubscription"],
 ] as const;
 
 test("RAFIQ shared knowledge answers every supported FAQ in Arabic and English", () => {
