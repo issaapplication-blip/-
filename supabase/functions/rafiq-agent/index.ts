@@ -210,7 +210,7 @@ async function generateReply(message: string, context: ChatMessage[]): Promise<{
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: jsonHeaders(req)(req) });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: jsonHeaders(req) });
   if (req.method !== "POST") return Response.json({ error: "method_not_allowed" }, { status: 405, headers: jsonHeaders(req) });
 
   try {
