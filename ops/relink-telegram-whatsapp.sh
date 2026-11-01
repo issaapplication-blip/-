@@ -6,7 +6,7 @@ set -euo pipefail
 : "${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN in your local environment}"
 : "${TELEGRAM_WEBHOOK_SECRET:?Set TELEGRAM_WEBHOOK_SECRET in your local environment}"
 : "${SUPABASE_URL:?Set SUPABASE_URL in your local environment}"
-: "${TELEGRAM_MANAGER_CHAT_IDS:?Set your private Telegram chat ID(s), comma-separated}"
+: "${TELEGRAM_OWNER_CHAT_ID:?Set your own private Telegram chat ID}"
 [[ "${#TELEGRAM_WEBHOOK_SECRET}" -ge 32 ]] || { echo "TELEGRAM_WEBHOOK_SECRET must be at least 32 characters" >&2; exit 1; }
 
 mode="${1:-}"
@@ -62,9 +62,9 @@ fi
 echo
 echo "== WhatsApp owner relay configuration =="
 echo "Meta callback URL: ${SUPABASE_URL%/}/functions/v1/meta-whatsapp-webhook"
-echo "Required Supabase Edge Function secrets: META_VERIFY_TOKEN, META_APP_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_MANAGER_CHAT_IDS"
+echo "Required Supabase Edge Function secrets: META_VERIFY_TOKEN, META_APP_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_OWNER_CHAT_ID"
 echo "No META_ACCESS_TOKEN or META_PHONE_NUMBER_ID is required: RAFIQ never sends WhatsApp messages."
-echo "Incoming WhatsApp messages are relayed to owner Telegram chat IDs; the owner replies manually in WhatsApp."
+echo "Incoming WhatsApp messages are relayed only to TELEGRAM_OWNER_CHAT_ID; the owner replies manually in WhatsApp."
 echo "For channel comments, link a discussion group, add the bot there, and set BotFather /setprivacy to Disable."
 
 if [[ "$mode" == "--apply" ]]; then
