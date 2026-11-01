@@ -9,8 +9,8 @@ export function loadFunction(name: string, env: Record<string, string>, fetchImp
     .replace(/^import .*$/gm, "");
   if (name === "telegram-webhook" || name === "rafiq-agent") {
     const knowledge = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/rafiq-knowledge.ts"), "utf8")
-      .replace(/^export\\s+/gm, "");
-    raw = knowledge + "\\n" + raw;
+      .replace(/^export\s+/gm, "");
+    raw = knowledge + "\n" + raw;
   }
   if (name === "public-intake") {
     const uploadHelpers = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/upload-validation.ts"), "utf8")
