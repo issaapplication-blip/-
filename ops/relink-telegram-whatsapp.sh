@@ -45,7 +45,8 @@ if [[ -n "${TELEGRAM_CHANNEL_ID:-}" ]]; then
   echo
   echo "== Channel bot membership =="
   BOT_ID="$(node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) process.exit(1); process.stdout.write(String(x.result.id))' "$ME")"
-  MEMBER="$(telegram_get getChatMember "chat_id=$(printf %s "$TELEGRAM_CHANNEL_ID" | jq -sRr @uri)&user_id=$BOT_ID")"
+  CHANNEL_QUERY="$(node -e 'process.stdout.write("chat_id="+encodeURIComponent(process.argv[1])+"&user_id="+process.argv[2])' "$TELEGRAM_CHANNEL_ID" "$BOT_ID")"
+  MEMBER="$(telegram_get getChatMember "$CHANNEL_QUERY")"
   node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) process.exit(1); console.log(JSON.stringify({status:x.result.status,is_member:x.result.status!=="left"&&x.result.status!=="kicked",can_post_messages:x.result.can_post_messages},null,2))' "$MEMBER"
 fi
 
