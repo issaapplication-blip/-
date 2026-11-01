@@ -220,7 +220,7 @@ Deno.serve(async (req: Request) => {
       // WhatsApp messages are relayed to the configured owner Telegram chat(s) only.
       // No agent invocation and no outbound WhatsApp API call exists in this handler.
       try {
-        const notice = relayText(msg, msg.from);
+        const notice = relayText(msg);
         const delivered = await relayToOwner(notice, msg.from);
         await db.from("whatsapp_inbound_events")
           .update({ processing_status: "forwarded_to_owner", processed_at: new Date().toISOString(), error_message: null, owner_relay_count: delivered })
