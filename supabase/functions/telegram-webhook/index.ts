@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { getRafiqKnowledgeReply } from "../_shared/rafiq-knowledge.ts";
+import { detectRafiqLanguage, getRafiqKnowledgeReply, rafiqUnknownReply } from "../_shared/rafiq-knowledge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -111,7 +111,7 @@ async function generateFaqReply(text: string): Promise<string> {
   // Workers AI Free allocation is bounded; if it is absent or unavailable, retain guided mode.
   // Only the text is sent. We never transmit Telegram chat/user IDs, request-session data, or phone numbers.
   if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_API_TOKEN) {
-    return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق، لكن لم أفهم السؤال بدقة. هل تسأل عن رعاية المسنين أو المرضى أو التمريض المنزلي أو العلاج الفيزيائي؟ ويمكنك كتابة /request لبدء طلب تراجعه الإدارة.";
+    return rafiqUnknownReply(detectRafiqLanguage(text)) + "\n/request — submit a request for human review.";
   }
   try {
     const response = await fetch(
@@ -121,7 +121,7 @@ async function generateFaqReply(text: string): Promise<string> {
         headers: { "authorization": "Bearer " + CLOUDFLARE_API_TOKEN, "content-type": "application/json" },
         body: JSON.stringify({
           messages: [
-            { role: "system", content: "أنت مساعد خدمة العملاء لمنصة RAFIQ للرعاية المنزلية في لبنان. أجب بالعربية بشكل واضح ومفيد عن الخدمات فقط. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. إذا لم تعرف، قل بوضوح إن الإدارة ستراجع السؤال." },
+            { role: "system", content: "You are the customer support assistant for RAFIQ | رفيق in Lebanon. Reply in the user language and only use approved platform facts. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. If a fact is not available in the approved website or knowledge base, state that it is not currently available and direct the user to a human administrator." },
             { role: "user", content: redactPhones(text) }
           ],
           max_tokens: 350,
@@ -132,7 +132,7 @@ async function generateFaqReply(text: string): Promise<string> {
     );
     if (!response.ok) {
       console.error(JSON.stringify({ event: "telegram_ai_provider_unavailable", status: response.status }));
-      return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
+      return rafiqUnknownReply(detectRafiqLanguage(text)) + "\n/request — submit a request for human review.";
     }
     const payload = await response.json().catch(() => ({}));
     const answer = typeof payload?.result?.response === "string" ? payload.result.response.trim() : "";
