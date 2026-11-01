@@ -279,7 +279,10 @@ async function processUpdate(update: any) {
   const userId = String(message.from?.id || chatId);
 
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\n\n/services — الخدمات\n/request — تسجيل طلب تراجعه الإدارة\n/stop — إلغاء الطلب الجاري");
+    const welcome = detectRafiqLanguage(text) === "en"
+      ? "Welcome to RAFIQ | رفيق 🇱🇧\\n\\nServices: elderly care, patient home care, home nursing and home physiotherapy.\\n\\n/services — Services\\n/request — Submit a request for review\\n/stop — Cancel the active request"
+      : "أهلًا بك في RAFIQ | رفيق 🇱🇧\\n\\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\\n\\n/services — الخدمات\\n/request — تسجيل طلب تراجعه الإدارة\\n/stop — إلغاء الطلب الجاري";
+    await sendText(chatId, welcome);
     return;
   }
   if (command === "/services") {
