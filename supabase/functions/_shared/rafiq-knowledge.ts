@@ -67,7 +67,7 @@ export function getRafiqKnowledgeReply(message: string, language: RafiqLanguage 
   if (/(مقدم رعايه|مقدم رعاية|مقدمي الرعايه|وظيف|توظيف|caregiver|job application|provider registration)/.test(t)) return a.provider;
   if (/(مؤسسه|مؤسسة|شركه|شركة|تسجيل مختبر|تسجيل مركز|institution|register a lab|register centre)/.test(t)) return a.institution;
   if (/(سعر|تكلف|كم|اسعار|الاسعار|price|cost|how much)/.test(t)) return a.price;
-  if (/(منطقه|منطقة|وين|اين|تغطيه|تغطية|لبنان|where.*area|service area|location)/.test(t)) return a.areas;
+  if (/(منطقه|منطقة|وين|اين|تغطيه|تغطية|لبنان|طرابلس|الضنيه|ضنيه|زغرتا|الكوره|البترون|بيروت|tripoli|where.*area|service area|location)/.test(t)) return a.areas;
   if (/(خصوصيه|خصوصية|بيانات|privacy|personal data)/.test(t)) return a.privacy;
   if (/(ساعات|دوام|متى تفتح|working hours|opening hours|business hours)/.test(t)) return a.hours;
   if (/(تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|contact|phone number)/.test(t)) return a.contact;
