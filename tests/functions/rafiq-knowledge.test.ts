@@ -16,7 +16,7 @@ const cases = [
   { ar: "ما أسعار الخدمات؟", en: "How much do your services cost?", arExpected: "لا يوجد سعر موحد", enExpected: "There is no published standard price" },
   { ar: "هل تغطون طرابلس؟", en: "Do you cover Tripoli?", arExpected: "مناطق لبنان", enExpected: "across Lebanon" },
   { ar: "ما ساعات العمل؟", en: "What are your working hours?", arExpected: "لا تنشر المنصة ساعات عمل", enExpected: "does not publish confirmed general office hours" },
-  { ar: "كيف تحمون الخصوصية؟", en: "How do you handle privacy?", arExpected: "الخصوصية", enExpected: "Submitted information" },
+  { ar: "كيف تحمون الخصوصية؟", en: "How do you handle privacy?", arExpected: "المعلومات والوثائق", enExpected: "Submitted information" },
   { ar: "كيف أتواصل معكم؟", en: "How can I contact RAFIQ?", arExpected: "WhatsApp", enExpected: "WhatsApp" },
   { ar: "هل لديكم وظائف شاغرة؟", en: "Are there current job vacancies?", arExpected: "لا توجد قائمة وظائف شاغرة", enExpected: "There is no verified public list" },
   { ar: "هل أحتاج إلى حساب للتسجيل؟", en: "Do I need an account to register?", arExpected: "لا تحتاج إلى إنشاء حساب", enExpected: "You do not need to create an account" },
