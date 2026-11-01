@@ -27,7 +27,12 @@ telegram_post() {
   {
     printf 'url = "https://api.telegram.org/bot%s/%s"\n' "$TELEGRAM_BOT_TOKEN" "$method"
     printf 'request = "POST"\n'
-    for field in "$@"; do printf 'data-urlencode = "%s"\n' "$field"; done
+    for field in "$@"; do
+      case "$field" in
+        allowed_updates=*) printf 'data = "%s"\n' "$field" ;;
+        *) printf 'data-urlencode = "%s"\n' "$field" ;;
+      esac
+    done
     printf 'fail\nshow-error\nsilent\n'
   } | curl --config -
 }
@@ -70,7 +75,7 @@ echo "For channel comments, link a discussion group, add the bot there, and set 
 if [[ "$mode" == "--apply" ]]; then
   echo
   echo "== Register Telegram webhook (no pending updates dropped) =="
-  RESULT="$(telegram_post setWebhook "url=$TG_URL" "secret_token=$TELEGRAM_WEBHOOK_SECRET" 'allowed_updates=["message","callback_query"]' "drop_pending_updates=false")"
+  RESULT="$(telegram_post setWebhook "url=$TG_URL" "secret_token=$TELEGRAM_WEBHOOK_SECRET" 'allowed_updates=%5B%22message%22%2C%22callback_query%22%5D' "drop_pending_updates=false")"
   node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) { console.error("setWebhook failed"); process.exit(1); } console.log("Telegram webhook registered successfully.")' "$RESULT"
 else
   echo
