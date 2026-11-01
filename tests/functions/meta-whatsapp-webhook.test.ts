@@ -130,3 +130,17 @@ test("Failed owner Telegram relay is recorded as failed and never replies to Wha
   expect(source).toContain("readLimitedBody(req, maxBodyBytes)");
   expect(source).toContain('insert.error.code === "23505"');
 });
+
+
+test("Legacy Bun backend cannot send or auto-reply on WhatsApp", async () => {
+  const source = (await import("node:fs")).readFileSync(
+    (await import("node:path")).resolve(import.meta.dir, "../../src/index.ts"), "utf8",
+  );
+  expect(source).not.toContain("graph.facebook.com");
+  expect(source).not.toContain("sendWhatsAppText");
+  expect(source).not.toContain("kapsoSendText");
+  expect(source).not.toContain("RAFIQ_WHATSAPP_AUTO_REPLY");
+  expect(source).not.toContain("WHATSAPP_SENDING_ENABLED");
+  expect(source).toContain('set.status=410;return{ok:false,error:"Legacy WhatsApp webhook disabled; configure the Supabase Meta webhook"}');
+  expect(source).toContain('set.status=410;return{ok:false,error:"WhatsApp sending is disabled; send replies manually from the WhatsApp app"}');
+});
