@@ -221,9 +221,9 @@ Deno.serve(async (req: Request) => {
       // No agent invocation and no outbound WhatsApp API call exists in this handler.
       try {
         const notice = relayText(msg);
-        const delivered = await relayToOwner(notice, msg.from);
+        await relayToOwner(notice, msg.from);
         await db.from("whatsapp_inbound_events")
-          .update({ processing_status: "forwarded_to_owner", processed_at: new Date().toISOString(), error_message: null, owner_relay_count: delivered })
+          .update({ processing_status: "forwarded_to_owner", processed_at: new Date().toISOString(), error_message: null })
           .eq("provider", "meta")
           .eq("provider_message_id", msg.id);
       } catch {
