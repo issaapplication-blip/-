@@ -53,12 +53,13 @@ async function telegram(method: string, payload: Record<string, unknown>) {
   return result;
 }
 
-async function sendText(chatId: string | number, text: string, replyMarkup?: Record<string, unknown>) {
+async function sendText(chatId: string | number, text: string, replyMarkup?: Record<string, unknown>, replyToMessageId?: number) {
   return telegram("sendMessage", {
     chat_id: chatId,
     text: signed(text),
     disable_web_page_preview: true,
     ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+    ...(replyToMessageId ? { reply_parameters: { message_id: replyToMessageId, allow_sending_without_reply: true } } : {}),
   });
 }
 
@@ -240,27 +241,45 @@ async function processUpdate(update: any) {
 
   const message = update?.message;
   const chatId = message?.chat?.id;
-  if (chatId === undefined || message?.chat?.type !== "private") return;
-  const text = typeof message.text === "string" ? message.text.trim() : "";
+  const chatType = String(message?.chat?.type || "");
+  if (chatId === undefined || !["private", "group", "supergroup"].includes(chatType)) return;
+  // Never answer the bot itself or other bots; this prevents group reply loops.
+  if (message?.from?.is_bot === true) return;
+  const text = typeof message.text === "string" ? message.text.trim()
+    : typeof message.caption === "string" ? message.caption.trim() : "";
+  const replyTo = chatType === "private" ? undefined : Number(message.message_id) || undefined;
   if (!text) {
-    await sendText(chatId, "يمكنك كتابة سؤالك أو استخدام /services و/request. لا ترسل كلمات مرور أو رموز تحقق.");
+    await sendText(chatId, "يمكنك كتابة سؤالك أو استخدام /services. لتقديم طلب رعاية، افتح المحادثة الخاصة مع البوت واكتب /request. لا ترسل كلمات مرور أو رموز تحقق.", undefined, replyTo);
     return;
   }
-  const command = text.toLowerCase().split(/\s+/)[0];
+  const command = text.toLowerCase().split(/\s+/)[0].replace(/@[^\s]+$/, "");
   const userId = String(message.from?.id || chatId);
 
+  if (command === "/myid") {
+    if (chatType !== "private") {
+      await sendText(chatId, "لأسباب الخصوصية، أرسل /myid في المحادثة الخاصة مع البوت.");
+      return;
+    }
+    await sendText(chatId, "معرّف محادثتك الخاصة هو: " + String(chatId) + "\\nاستخدمه كقيمة TELEGRAM_OWNER_CHAT_ID في أسرار Supabase، ولا تنشره علناً.");
+    return;
+  }
   if (command === "/start" || command === "/help") {
     const welcome = detectRafiqLanguage(text) === "en"
       ? "Welcome to RAFIQ | رفيق 🇱🇧\\n\\nServices: elderly care, patient home care, home nursing and home physiotherapy.\\n\\n/services — Services\\n/request — Submit a request for review\\n/stop — Cancel the active request"
       : "أهلًا بك في RAFIQ | رفيق 🇱🇧\\n\\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\\n\\n/services — الخدمات\\n/request — تسجيل طلب تراجعه الإدارة\\n/stop — إلغاء الطلب الجاري";
-    await sendText(chatId, welcome);
+    await sendText(chatId, welcome, undefined, replyTo);
     return;
   }
   if (command === "/services") {
-    await sendText(chatId, "خدمات رفيق الأساسية:", serviceKeyboard);
+    if (chatType === "private") await sendText(chatId, "خدمات رفيق الأساسية:", serviceKeyboard, replyTo);
+    else await sendText(chatId, "خدمات RAFIQ: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، العلاج الفيزيائي المنزلي، وتسجيل المختبرات ومراكز الأشعة وجهات المعدات الطبية. اكتب سؤالك وسأجيبك.", undefined, replyTo);
     return;
   }
   if (command === "/stop") {
+    if (chatType !== "private") {
+      await sendText(chatId, "لإدارة طلبك، انتقل إلى المحادثة الخاصة مع البوت.", undefined, replyTo);
+      return;
+    }
     const session = await getActiveSession(String(chatId));
     if (session) {
       const { error } = await db!.from("rafiq_telegram_request_sessions").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", session.id);
@@ -270,6 +289,10 @@ async function processUpdate(update: any) {
     return;
   }
   if (command === "/request") {
+    if (chatType !== "private") {
+      await sendText(chatId, "لحماية خصوصيتك، ابدأ طلب الرعاية في المحادثة الخاصة مع البوت عبر /request.", undefined, replyTo);
+      return;
+    }
     const existing = await getActiveSession(String(chatId));
     if (existing) {
       await sendText(chatId, "لديك طلب جارٍ بالرقم " + existing.request_id + ". أكمل الإجابات المطلوبة أو أرسل /stop لإلغائه.");
@@ -285,8 +308,9 @@ async function processUpdate(update: any) {
     return;
   }
 
-  if (await processRequestMessage(String(chatId), userId, text)) return;
-  await sendText(chatId, await generateFaqReply(text));
+  if (chatType === "private" && await processRequestMessage(String(chatId), userId, text)) return;
+  // Answer every received text message in private chats and linked discussion groups.
+  await sendText(chatId, await generateFaqReply(text), undefined, replyTo);
 }
 
 async function markUpdate(updateId: number, status: "completed" | "failed", errorMessage?: string) {

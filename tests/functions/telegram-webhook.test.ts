@@ -87,3 +87,19 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
   expect(legacyTelegram).toContain("difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i)");
   expect(legacyTelegram).not.toContain("if (!expected) return true");
 });
+
+
+test("Telegram agent answers private chats and linked discussion groups, while care requests remain private", () => {
+  expect(source).toContain('["private", "group", "supergroup"].includes(chatType)');
+  expect(source).toContain('chatType === "private" && await processRequestMessage');
+  expect(source).toContain('if (chatType !== "private")');
+  expect(source).toContain("reply_parameters");
+  expect(source).toContain('message?.from?.is_bot === true');
+  expect(source).toContain("generateFaqReply(text)");
+});
+
+test("Telegram channel contact answer makes the WhatsApp manual-only boundary explicit", () => {
+  const knowledge = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/rafiq-knowledge.ts"), "utf8");
+  expect(knowledge).toContain("الوكيل الآلي يعمل على Telegram فقط");
+  expect(knowledge).toContain("automated agent runs on Telegram only");
+});
