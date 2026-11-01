@@ -152,6 +152,24 @@ Deno.serve(async (req: Request) => {
       return Response.json({ ok: true, ignored: true }, { headers: cors });
     }
 
+    const statuses: Array<{ id: string; status: string; payload: unknown }> = [];
+    for (const entry of payload.entry || []) {
+      for (const change of entry.changes || []) {
+        for (const status of change?.value?.statuses || []) {
+          if (status?.id && status?.status) {
+            statuses.push({ id: String(status.id), status: String(status.status), payload: status });
+          }
+        }
+      }
+    }
+    for (const status of statuses) {
+      const { error } = await db.from("whatsapp_outbound_messages")
+        .update({ status: status.status, payload: status.payload })
+        .eq("provider", "meta")
+        .eq("provider_message_id", status.id);
+      if (error) console.error("outbound status update failed", error.message);
+    }
+
     const messages = [];
     for (const entry of payload.entry || []) {
       for (const change of entry.changes || []) {
@@ -160,7 +178,16 @@ Deno.serve(async (req: Request) => {
             id: String(msg.id || ""),
             from: String(msg.from || ""),
             type: String(msg.type || ""),
-            text: typeof msg?.text?.body === "string" ? msg.text.body.trim() : ""
+            text: typeof msg?.text?.body === "string" ? msg.text.body.trim()
+              : typeof msg?.image?.caption === "string" ? msg.image.caption.trim()
+              : typeof msg?.document?.caption === "string" ? msg.document.caption.trim()
+              : typeof msg?.document?.filename === "string" ? "Document: " + msg.document.filename.slice(0, 160)
+              : typeof msg?.location?.latitude === "number" && typeof msg?.location?.longitude === "number"
+                ? "Location: " + msg.location.latitude + ", " + msg.location.longitude
+              : typeof msg?.interactive?.button_reply?.title === "string" ? msg.interactive.button_reply.title
+              : typeof msg?.interactive?.list_reply?.title === "string" ? msg.interactive.list_reply.title
+              : typeof msg?.button?.text === "string" ? msg.button.text
+              : ""
           });
         }
       }
@@ -232,7 +259,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    return Response.json({ ok: true, received: messages.length }, { headers: cors });
+    return Response.json({ ok: true, received: messages.length, statuses: statuses.length }, { headers: cors });
   } catch (error) {
     console.error("webhook parse/processing error", String(error));
     return Response.json({ ok: false }, { status: 200, headers: cors });
