@@ -3,7 +3,6 @@ import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-u
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
@@ -15,8 +14,6 @@ import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSA
 
 const port = Number(process.env.PORT ?? 7860);
 const startedAt = new Date().toISOString();
-let lastKapsoWebhookAt: string | null = null;
-let lastKapsoWebhookEvent: string | null = null;
 const effectiveAgentModel = () => {
   const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "gemini").trim().toLowerCase();
   if (provider === "gemini") return (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
@@ -705,10 +702,5 @@ console.log(JSON.stringify({
   event:"rafig_runtime_configuration",
   openAIConfigured:Boolean(process.env.OPENAI_API_KEY),
   metaWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
-  metaOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
-  whatsappSendingEnabled:process.env.WHATSAPP_SENDING_ENABLED==="true",
-  whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
-  agentModel:effectiveAgentModel(),
-  kapsoConfigured:kapsoConfigured(),
-  kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret())
+  agentModel:effectiveAgentModel()
 }));
