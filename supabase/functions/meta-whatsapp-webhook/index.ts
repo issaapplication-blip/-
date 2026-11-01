@@ -94,7 +94,7 @@ async function relayToOwner(text: string, phone: string): Promise<void> {
       chat_id: TELEGRAM_OWNER_CHAT_ID,
       text,
       disable_web_page_preview: true,
-      reply_markup: { inline_keyboard: [[{ text: "فتح محادثة WhatsApp", url: "https://wa.me/" + phone.replace(/\\D/g, "") }]] },
+      reply_markup: { inline_keyboard: [[{ text: "فتح محادثة WhatsApp", url: "https://wa.me/" + phone.replace(/\D/g, "") }]] },
     }),
     signal: AbortSignal.timeout(8000),
   });
