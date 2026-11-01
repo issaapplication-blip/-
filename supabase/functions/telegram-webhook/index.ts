@@ -251,7 +251,7 @@ async function processUpdate(update: any) {
     await sendText(chatId, "يمكنك كتابة سؤالك أو استخدام /services. لتقديم طلب رعاية، افتح المحادثة الخاصة مع البوت واكتب /request. لا ترسل كلمات مرور أو رموز تحقق.", undefined, replyTo);
     return;
   }
-  const command = text.toLowerCase().split(/\\s+/)[0].replace(/@[^\\s]+$/, "");
+  const command = text.toLowerCase().split(/\s+/)[0].replace(/@[^\s]+$/, "");
   const userId = String(message.from?.id || chatId);
 
   if (command === "/start" || command === "/help") {
