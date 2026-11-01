@@ -72,7 +72,7 @@ async function verifySignature(body: string, header: string | null) {
 function relayText(msg: { from: string; type: string; text: string; profileName: string; mediaId: string },): string {
   const sender = "+" + msg.from.replace(/^\\+/, "");
   const body = msg.text || "[رسالة غير نصية: " + (msg.type || "unknown") + "]";
-  const media = msg.mediaId ? "\\nمعرّف الوسائط: " + msg.mediaId : "";
+  const media = msg.mediaId ? "\nمعرّف الوسائط: " + msg.mediaId : "";
   return [
     "📩 رسالة WhatsApp جديدة إلى RAFIQ",
     "المرسل: " + sender + (msg.profileName ? " (" + msg.profileName.slice(0, 60) + ")" : ""),
@@ -81,7 +81,7 @@ function relayText(msg: { from: string; type: string; text: string; profileName:
     body.slice(0, 2600) + media,
     "",
     "هذه الرسالة للمالك فقط. الوكيل يعمل على Telegram فقط؛ اقرأ السؤال وأرسل جوابك يدوياً من WhatsApp.",
-  ].join("\\n").slice(0, 3800);
+  ].join("\n").slice(0, 3800);
 }
 
 async function relayToOwner(text: string, phone: string): Promise<number> {
@@ -98,7 +98,7 @@ async function relayToOwner(text: string, phone: string): Promise<number> {
           chat_id: chatId,
           text,
           disable_web_page_preview: true,
-          reply_markup: { inline_keyboard: [[{ text: "فتح محادثة WhatsApp", url: "https://wa.me/" + phone.replace(/\\D/g, "") }]] },
+          reply_markup: { inline_keyboard: [[{ text: "فتح محادثة WhatsApp", url: "https://wa.me/" + phone.replace(/\D/g, "") }]] },
         }),
         signal: AbortSignal.timeout(10000),
       });
