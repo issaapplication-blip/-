@@ -34,7 +34,7 @@ telegram_post() {
 
 echo "== Telegram bot identity (token hidden) =="
 ME="$(telegram_get getMe)"
-node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) process.exit(1); console.log(JSON.stringify({username:x.result.username,can_join_groups:x.result.can_join_groups,can_read_all_group_messages:x.result.can_read_all_group_messages},null,2))' "$ME"
+node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) process.exit(1); console.log(JSON.stringify({username:x.result.username,can_join_groups:x.result.can_join_groups,can_read_all_group_messages:x.result.can_read_all_group_messages},null,2)); if(x.result.can_read_all_group_messages!==true) console.log("WARNING: Bot privacy mode appears enabled. Use BotFather /setprivacy -> Disable to receive every discussion-group message.")' "$ME"
 
 echo
 echo "== Existing webhook (URL hidden) =="
@@ -50,12 +50,22 @@ if [[ -n "${TELEGRAM_CHANNEL_ID:-}" ]]; then
   node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) process.exit(1); console.log(JSON.stringify({status:x.result.status,is_member:x.result.status!=="left"&&x.result.status!=="kicked",can_post_messages:x.result.can_post_messages},null,2))' "$MEMBER"
 fi
 
+if [[ -n "${TELEGRAM_DISCUSSION_GROUP_ID:-}" ]]; then
+  echo
+  echo "== Linked channel discussion-group membership =="
+  BOT_ID="$(node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) process.exit(1); process.stdout.write(String(x.result.id))' "$ME")"
+  GROUP_QUERY="$(node -e 'process.stdout.write("chat_id="+encodeURIComponent(process.argv[1])+"&user_id="+process.argv[2])' "$TELEGRAM_DISCUSSION_GROUP_ID" "$BOT_ID")"
+  MEMBER="$(telegram_get getChatMember "$GROUP_QUERY")"
+  node -e 'const x=JSON.parse(process.argv[1]); if(!x.ok) process.exit(1); console.log(JSON.stringify({status:x.result.status,is_member:x.result.status!=="left"&&x.result.status!=="kicked"},null,2))' "$MEMBER"
+fi
+
 echo
 echo "== WhatsApp owner relay configuration =="
 echo "Meta callback URL: ${SUPABASE_URL%/}/functions/v1/meta-whatsapp-webhook"
 echo "Required Supabase Edge Function secrets: META_VERIFY_TOKEN, META_APP_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_MANAGER_CHAT_IDS"
 echo "No META_ACCESS_TOKEN or META_PHONE_NUMBER_ID is required: RAFIQ never sends WhatsApp messages."
 echo "Incoming WhatsApp messages are relayed to owner Telegram chat IDs; the owner replies manually in WhatsApp."
+echo "For channel comments, link a discussion group, add the bot there, and set BotFather /setprivacy to Disable."
 
 if [[ "$mode" == "--apply" ]]; then
   echo
