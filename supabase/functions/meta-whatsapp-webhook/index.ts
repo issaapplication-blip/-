@@ -10,8 +10,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db = createClient(SUPABASE_URL, SERVICE_KEY);
 const TELEGRAM_BOT_TOKEN = (Deno.env.get("TELEGRAM_BOT_TOKEN") || "").trim();
-const TELEGRAM_MANAGER_CHAT_IDS = (Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
-  .split(",").map((value) => value.trim()).filter(Boolean);
+const TELEGRAM_OWNER_CHAT_ID = (Deno.env.get("TELEGRAM_OWNER_CHAT_ID") || "").trim();
 
 const hex = (bytes: ArrayBuffer) =>
   Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
@@ -84,32 +83,23 @@ function relayText(msg: { from: string; type: string; text: string; profileName:
   ].join("\n").slice(0, 3800);
 }
 
-async function relayToOwner(text: string, phone: string): Promise<number> {
-  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_MANAGER_CHAT_IDS.length === 0) {
+async function relayToOwner(text: string, phone: string): Promise<void> {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_OWNER_CHAT_ID) {
     throw new Error("telegram_owner_relay_not_configured");
   }
-  let delivered = 0;
-  for (const chatId of TELEGRAM_MANAGER_CHAT_IDS) {
-    try {
-      const response = await fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          disable_web_page_preview: true,
-          reply_markup: { inline_keyboard: [[{ text: "فتح محادثة WhatsApp", url: "https://wa.me/" + phone.replace(/\D/g, "") }]] },
-        }),
-        signal: AbortSignal.timeout(10000),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (response.ok && result?.ok === true) delivered++;
-    } catch {
-      // Continue to the remaining owner chats; never log tokens, phone numbers or message content.
-    }
-  }
-  if (delivered === 0) throw new Error("telegram_owner_relay_failed");
-  return delivered;
+  const response = await fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      chat_id: TELEGRAM_OWNER_CHAT_ID,
+      text,
+      disable_web_page_preview: true,
+      reply_markup: { inline_keyboard: [[{ text: "فتح محادثة WhatsApp", url: "https://wa.me/" + phone.replace(/\\D/g, "") }]] },
+    }),
+    signal: AbortSignal.timeout(8000),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result?.ok !== true) throw new Error("telegram_owner_relay_failed");
 }
 
 Deno.serve(async (req: Request) => {
