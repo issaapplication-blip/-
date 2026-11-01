@@ -39,13 +39,14 @@ describe("rafiq-agent caller isolation", () => {
     await f.handler(post({ message: "مرحبا", channel: "whatsapp", conversation_id: "meta:1" }, { authorization: "Bearer " + BASE.SUPABASE_SERVICE_ROLE_KEY + "x" }));
     expect(f.calls.find(c => c.op === "upsert")!.args[0].channel).toBe("web");
   });
-  test("no model configured uses guided fallback without provider calls", async () => {
+  test("approved price FAQ uses the knowledge base without provider calls", async () => {
     let calls = 0;
     const f = loadFunction("rafiq-agent", { ...BASE, OPENAI_API_KEY: "test-key" }, async () => { calls++; throw new Error("provider should not be called without model"); });
     const body: any = await (await f.handler(post({ message: "كم السعر؟" }))).json();
     expect(calls).toBe(0);
-    expect(body.mode).toBe("guided");
-    expect(body.reply).toContain("التكلفة");
+    expect(body.mode).toBe("knowledge");
+    expect(body.reply).toContain("$25");
+    expect(body.reply).toContain("السعر والتوفر");
   });
   test("configured model is sent to provider", async () => {
     let sent: any;
@@ -53,7 +54,7 @@ describe("rafiq-agent caller isolation", () => {
       sent = JSON.parse(init.body);
       return { ok: true, json: async () => ({ output_text: "رد تجريبي" }) };
     });
-    await f.handler(post({ message: "مرحبا" }));
+    await f.handler(post({ message: "سؤال عام غير مدرج عن معلومة غير موثقة" }));
     expect(sent.model).toBe("test-model");
   });
   test("emergency wording creates an escalation record", async () => {

@@ -56,3 +56,50 @@ test("WhatsApp automatic replies remain disabled and HMAC signature verification
   expect(source).toContain("readLimitedBody(req, maxBodyBytes)");
   expect(source).toContain('insert.error.code === "23505"');
 });
+
+
+test("Meta webhook records image, document, location and interactive metadata and updates delivery receipts", async () => {
+  const f = loadFunction("meta-whatsapp-webhook", BASE, async () => {
+    throw new Error("network must not be used while WhatsApp auto replies are disabled");
+  });
+  const payload = {
+    object: "whatsapp_business_account",
+    entry: [{
+      changes: [{
+        value: {
+          messages: [
+            { id: "wamid.image.synthetic", from: "961700000001", type: "image", image: { id: "media-image-1", caption: "صورة تقرير تجريبي" } },
+            { id: "wamid.document.synthetic", from: "961700000002", type: "document", document: { id: "media-doc-1", filename: "sample.pdf" } },
+            { id: "wamid.location.synthetic", from: "961700000003", type: "location", location: { latitude: 33.9, longitude: 35.5 } },
+            { id: "wamid.interactive.synthetic", from: "961700000004", type: "interactive", interactive: { button_reply: { title: "طلب رعاية" } } }
+          ],
+          statuses: [{ id: "wamid.outbound.synthetic", status: "delivered", recipient_id: "961700000005" }]
+        }
+      }]
+    }]
+  };
+  const body = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(BASE.META_APP_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+  const signature = "sha256=" + Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+  const response = await f.handler(new Request("https://f.invalid/", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-hub-signature-256": signature },
+    body,
+  }));
+  expect(response.status).toBe(200);
+  const inbound = f.calls.filter(x => x.table === "whatsapp_inbound_events" && x.op === "insert");
+  expect(inbound).toHaveLength(4);
+  const inserted = inbound.map(x => x.args[0]);
+  expect(inserted.some(x => x.message_type === "image" && x.text_body === "صورة تقرير تجريبي")).toBe(true);
+  expect(inserted.some(x => x.message_type === "document" && x.text_body === "Document: sample.pdf")).toBe(true);
+  expect(inserted.some(x => x.message_type === "location" && x.text_body?.startsWith("Location: "))).toBe(true);
+  expect(inserted.some(x => x.message_type === "interactive" && x.text_body === "طلب رعاية")).toBe(true);
+  expect(f.calls.some(x => x.table === "whatsapp_outbound_messages" && x.op === "update" && x.args[0]?.status === "delivered")).toBe(true);
+});

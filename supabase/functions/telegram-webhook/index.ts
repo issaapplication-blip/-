@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { detectRafiqLanguage, getRafiqKnowledgeReply, rafiqUnknownReply } from "../_shared/rafiq-knowledge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -69,35 +70,6 @@ function normalize(text: string): string {
     .replace(/\s+/g, " ").trim().toLowerCase();
 }
 
-function faq(text: string): string {
-  const t = normalize(text);
-  if (/(طوارئ|طواري|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(t)) {
-    return "إذا كانت هناك حالة طارئة أو خطر فوري، اتصل فورًا بخدمات الطوارئ المحلية أو بالفريق الطبي المعالج. لا تؤخر الرعاية العاجلة بانتظار رفيق.";
-  }
-  if (/(سعر|تكلف|كم|اسعار|الاسعار|price|cost)/.test(t)) {
-    return "لا يوجد سعر موحّد أستطيع تأكيده. تتحدد التكلفة بحسب الخدمة والمنطقة والدوام واحتياجات الحالة وتوفر مقدم الخدمة؛ وتؤكد الإدارة السعر قبل أي اتفاق. اكتب /request لبدء طلب مراجعة.";
-  }
-  if (/(تمريض|ممرض|ممرضة|حقن|ضماد|جرح)/.test(t)) {
-    return "يساعد رفيق في تنظيم طلب التمريض المنزلي. يمكن للإدارة مراجعة المنطقة والمهمة المطلوبة وتأكيد التوفر. اكتب /request لبدء الطلب.";
-  }
-  if (/(فيزيائي|طبيعي|فيزيو|physio)/.test(t)) {
-    return "يساعد رفيق في تنظيم طلب العلاج الفيزيائي المنزلي؛ وتُراجع ملاءمة الخدمة والتوفر من الفريق المختص. اكتب /request لبدء الطلب.";
-  }
-  if (/(مسن|كبار السن|كبير السن|والدي|والدتي|جدتي|جدي|مرافق|رعايه منزليه)/.test(t)) {
-    return "رفيق ينظم طلبات رعاية كبار السن داخل المنزل، نهارًا أو ليلًا أو بنظام الإقامة بحسب التوفر. اكتب /request لبدء طلب تراجعه الإدارة.";
-  }
-  if (/(مريض|مريضة|بعد المستشفى|بعد عملية|رعاية المريض)/.test(t)) {
-    return "رفيق يساعد في تنظيم طلب رعاية منزلية للمريض، وتراجع الإدارة احتياجات الحالة من دون تقديم تشخيص أو استبدال الفريق الطبي. اكتب /request لبدء الطلب.";
-  }
-  if (/(منطقة|وين|اين|تغطية|لبنان|طرابلس|الضنيه|ضنيه|زغرتا|الكوره|البترون|بيروت)/.test(t)) {
-    return "نستقبل طلبات من مناطق لبنان، ويُراجع التوفر لكل خدمة ومنطقة على حدة. اكتب /request وحدد المنطقة المطلوبة.";
-  }
-  if (/(تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|رقم الاداره)/.test(t)) {
-    return "للمتابعة الإدارية: WhatsApp ‏+961 81 506 299. ويمكنك متابعة بوت رفيق: https://t.me/RAFIQ_Care_Bot. الردود الآلية على WhatsApp ما زالت متوقفة إلى حين اجتياز اختبار منفصل.";
-  }
-  return "";
-}
-
 function redactPhones(text: string): string {
   return text
     .replace(/(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g, "[رقم محجوب]")
@@ -105,12 +77,12 @@ function redactPhones(text: string): string {
     .slice(0, 1500);
 }
 async function generateFaqReply(text: string): Promise<string> {
-  const known = faq(text);
+  const known = getRafiqKnowledgeReply(text);
   if (known) return known;
   // Workers AI Free allocation is bounded; if it is absent or unavailable, retain guided mode.
   // Only the text is sent. We never transmit Telegram chat/user IDs, request-session data, or phone numbers.
   if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_API_TOKEN) {
-    return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق، لكن لم أفهم السؤال بدقة. هل تسأل عن رعاية المسنين أو المرضى أو التمريض المنزلي أو العلاج الفيزيائي؟ ويمكنك كتابة /request لبدء طلب تراجعه الإدارة.";
+    return rafiqUnknownReply(detectRafiqLanguage(text)) + "\n/request — submit a request for human review.";
   }
   try {
     const response = await fetch(
@@ -120,7 +92,7 @@ async function generateFaqReply(text: string): Promise<string> {
         headers: { "authorization": "Bearer " + CLOUDFLARE_API_TOKEN, "content-type": "application/json" },
         body: JSON.stringify({
           messages: [
-            { role: "system", content: "أنت مساعد خدمة العملاء لمنصة RAFIQ للرعاية المنزلية في لبنان. أجب بالعربية بشكل واضح ومفيد عن الخدمات فقط. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. إذا لم تعرف، قل بوضوح إن الإدارة ستراجع السؤال." },
+            { role: "system", content: "You are the customer support assistant for RAFIQ | رفيق in Lebanon. Reply in the user language and only use approved platform facts. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. If a fact is not available in the approved website or knowledge base, state that it is not currently available and direct the user to a human administrator." },
             { role: "user", content: redactPhones(text) }
           ],
           max_tokens: 350,
@@ -131,7 +103,7 @@ async function generateFaqReply(text: string): Promise<string> {
     );
     if (!response.ok) {
       console.error(JSON.stringify({ event: "telegram_ai_provider_unavailable", status: response.status }));
-      return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
+      return rafiqUnknownReply(detectRafiqLanguage(text)) + "\n/request — submit a request for human review.";
     }
     const payload = await response.json().catch(() => ({}));
     const answer = typeof payload?.result?.response === "string" ? payload.result.response.trim() : "";
@@ -278,7 +250,10 @@ async function processUpdate(update: any) {
   const userId = String(message.from?.id || chatId);
 
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\n\n/services — الخدمات\n/request — تسجيل طلب تراجعه الإدارة\n/stop — إلغاء الطلب الجاري");
+    const welcome = detectRafiqLanguage(text) === "en"
+      ? "Welcome to RAFIQ | رفيق 🇱🇧\\n\\nServices: elderly care, patient home care, home nursing and home physiotherapy.\\n\\n/services — Services\\n/request — Submit a request for review\\n/stop — Cancel the active request"
+      : "أهلًا بك في RAFIQ | رفيق 🇱🇧\\n\\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\\n\\n/services — الخدمات\\n/request — تسجيل طلب تراجعه الإدارة\\n/stop — إلغاء الطلب الجاري";
+    await sendText(chatId, welcome);
     return;
   }
   if (command === "/services") {

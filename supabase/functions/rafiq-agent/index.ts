@@ -1,12 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { getRafiqKnowledgeReply } from "../_shared/rafiq-knowledge.ts";
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+const allowedOrigins = new Set(
+  (Deno.env.get("RAFIQ_ALLOWED_ORIGINS") || "")
+    .split(",").map((origin) => origin.trim()).filter(Boolean),
+);
+const jsonHeaders = (req: Request) => {
+  const origin = req.headers.get("origin") || "";
+  const allowed = origin && allowedOrigins.has(origin);
+  return {
+    ...(allowed ? { "Access-Control-Allow-Origin": origin, "Vary": "Origin" } : {}),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json",
+  };
 };
-const jsonHeaders = { ...cors, "Content-Type": "application/json" };
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 if (!supabaseUrl || !serviceKey) throw new Error("Supabase server configuration is incomplete");
@@ -100,6 +109,7 @@ async function createEscalation(conversationId: string, reason: string, payload:
 }
 
 const systemPrompt = `أنت وكيل خدمة العملاء والاستقبال لمنصة RAFIQ | رفيق للرعاية المنزلية في لبنان.
+المعلومات المعتمدة في صفحة الخدمات والأسئلة الشائعة هي المصدر الوحيد للحقائق. إذا لم تجد المعلومة، قل إنها غير متوفرة حاليًا ووجّه إلى الإدارة. لا تخترع ساعات عمل أو أسعارًا أو مناطق مؤكدة أو وعود توفر أو تسجيل أو اعتماد.
 أجب مباشرة عن سؤال العميل ولا تستبدل الإجابة بقائمة عامة عن الخدمات.
 الخدمات: رعاية المسنين، رعاية المرضى، التمريض المنزلي، العلاج الفيزيائي.
 افهم اللهجات العربية والأخطاء الإملائية البسيطة، واستخدم سياق المحادثة ولا تكرر الأسئلة التي أُجيب عنها.
@@ -181,6 +191,8 @@ async function callGemini(message: string, context: ChatMessage[]): Promise<stri
 }
 
 async function generateReply(message: string, context: ChatMessage[]): Promise<{ reply: string; mode: string }> {
+  const knownReply = getRafiqKnowledgeReply(message);
+  if (knownReply) return { reply: knownReply, mode: "knowledge" };
   const provider = (Deno.env.get("RAFIQ_AGENT_PROVIDER") || "").trim().toLowerCase();
   if (provider === "gemini") {
     const reply = await callGemini(message, context);
@@ -198,18 +210,18 @@ async function generateReply(message: string, context: ChatMessage[]): Promise<{
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  if (req.method !== "POST") return Response.json({ error: "method_not_allowed" }, { status: 405, headers: jsonHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: jsonHeaders(req) });
+  if (req.method !== "POST") return Response.json({ error: "method_not_allowed" }, { status: 405, headers: jsonHeaders(req) });
 
   try {
     const body = await req.json().catch(() => null) as Record<string, unknown> | null;
     if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return Response.json({ error: "invalid_json", reply: "تعذّر قراءة الطلب. أعد إرسال رسالتك." }, { status: 400, headers: jsonHeaders });
+      return Response.json({ error: "invalid_json", reply: "تعذّر قراءة الطلب. أعد إرسال رسالتك." }, { status: 400, headers: jsonHeaders(req) });
     }
     const rawMessage = typeof body.message === "string" ? body.message : "";
     const message = rawMessage.normalize("NFKC").trim();
     if (!message || message.length > 1500) {
-      return Response.json({ error: "invalid_message", reply: "اكتب سؤالك بوضوح وبحد أقصى 1500 حرف." }, { status: 400, headers: jsonHeaders });
+      return Response.json({ error: "invalid_message", reply: "اكتب سؤالك بوضوح وبحد أقصى 1500 حرف." }, { status: 400, headers: jsonHeaders(req) });
     }
     // The gateway's verify_jwt accepts the public anon key too. Only the exact
     // server-side service-role bearer may select a private channel, phone, or meta:* id.
@@ -223,7 +235,7 @@ Deno.serve(async (req: Request) => {
       ? (requestedId || crypto.randomUUID())
       : (UUID_RE.test(requestedId) ? requestedId : crypto.randomUUID());
     if (conversationId.length > 200) {
-      return Response.json({ error: "invalid_conversation_id" }, { status: 400, headers: jsonHeaders });
+      return Response.json({ error: "invalid_conversation_id" }, { status: 400, headers: jsonHeaders(req) });
     }
     const phone = trusted && typeof body.phone === "string" ? body.phone.slice(0, 40) : null;
     const language = typeof body.locale === "string" && body.locale.trim() ? body.locale.trim().slice(0, 12) : "ar";
@@ -259,12 +271,12 @@ Deno.serve(async (req: Request) => {
       mode: generated.mode,
       conversation_id: conversationId,
       escalated: needsHuman || alreadyEscalated,
-    }, { headers: jsonHeaders });
+    }, { headers: jsonHeaders(req) });
   } catch (error) {
     console.error(JSON.stringify({ event: "rafiq_agent_error", error: String(error).slice(0, 240) }));
     return Response.json({
       error: "agent_processing_failed",
       reply: "تعذّر معالجة الطلب حاليًا. يمكنك إعادة المحاولة أو التواصل مع إدارة رفيق عبر WhatsApp على +961 81 506 299. لا توجد ردود WhatsApp تلقائية مفعّلة.",
-    }, { status: 500, headers: jsonHeaders });
+    }, { status: 500, headers: jsonHeaders(req) });
   }
 });
