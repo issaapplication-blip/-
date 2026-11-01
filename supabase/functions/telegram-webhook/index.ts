@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { getRafiqKnowledgeReply } from "../_shared/rafiq-knowledge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -105,7 +106,7 @@ function redactPhones(text: string): string {
     .slice(0, 1500);
 }
 async function generateFaqReply(text: string): Promise<string> {
-  const known = faq(text);
+  const known = getRafiqKnowledgeReply(text);
   if (known) return known;
   // Workers AI Free allocation is bounded; if it is absent or unavailable, retain guided mode.
   // Only the text is sent. We never transmit Telegram chat/user IDs, request-session data, or phone numbers.
