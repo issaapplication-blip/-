@@ -39,6 +39,9 @@ Deno.serve(async(req)=>{
  // Hidden honeypot: silently accept bot submissions without creating records.
  if(clean(form.get("website"),300))return json({ok:true,status:"received"});
  const files=form.getAll("files").filter((v):v is File=>v instanceof File&&v.size>0);
+ const categories=form.getAll("document_category").map(v=>clean(v,80));
+ const allowedCategories=new Set(["cv","certificate","experience","nursing_license","nursing_certificate","institution_logo","institution_image","institution_registration","other"]);
+ if(categories.some(c=>!allowedCategories.has(c)))return json({ok:false,error:"نوع أحد المرفقات غير صالح."},400);
  if(files.length>8)return json({ok:false,error:"يمكن إرفاق 8 ملفات كحد أقصى"},400);
  for(const file of files){if(!(await validFile(file)))return json({ok:false,error:"الملفات المسموحة PDF أو JPG أو PNG فقط، وبحد أقصى 8MB للملف."},415)}
  const institutionType=clean(form.get("institution_type"),80);
@@ -56,6 +59,8 @@ Deno.serve(async(req)=>{
   return json({ok:true,status:"received",request_id:intake.request_id,uploaded});
  }
  const role=clean(form.get("role"),50);if(!new Set(["caregiver","nurse","physiotherapist","family","doctor","member"]).has(role))return json({ok:false,error:"نوع الطلب غير معروف."},400);
+ const requiredDocs:Record<string,string[]>={nurse:["cv","nursing_certificate","nursing_license"],caregiver:["cv"],physiotherapist:["cv","certificate"],doctor:["cv","certificate"]};
+ for(const required of (requiredDocs[role]||[])){if(!categories.includes(required))return json({ok:false,error:"يرجى إرفاق جميع الوثائق المطلوبة قبل الإرسال."},400)}
  const first=clean(form.get("first_name"),80),lastName=clean(form.get("last_name"),80),familyName=clean(form.get("family_name"),160),phone=clean(form.get("phone"),40);
  const applicantName=(role==="family"?familyName:(first+" "+lastName).trim())||clean(form.get("name"),160);
  if(!applicantName||!phone)return json({ok:false,error:"الاسم ورقم الهاتف حقول مطلوبة."},400);
@@ -66,7 +71,7 @@ Deno.serve(async(req)=>{
  const {data:intake,error}=await admin.from("application_intakes").insert({application_type:applicationType,applicant_name:applicantName,phone,area,status:"review",payload,source:"platform"}).select("*").single();
  if(error||!intake){console.error(JSON.stringify({event:"public_intake_create_failed",code:error?.code||null,status:error?.status||null}));return json({ok:false,error:"تعذر حفظ الطلب الآن. حاول مرة أخرى."},502)}
  const requestId="RAFIQ-REQ-"+String(intake.application_number).padStart(6,"0");await admin.from("application_intakes").update({payload:{...(intake.payload||{}),request_id:requestId},updated_at:new Date().toISOString()}).eq("id",intake.id);
- let uploaded=0;for(let i=0;i<files.length;i++){const file=files[i],category=clean(form.getAll("document_category")[i]||"other",80),path="intakes/"+intake.id+"/"+crypto.randomUUID()+"-"+safeName(file.name);const up=await admin.storage.from("private_documents").upload(path,file,{contentType:file.type,upsert:false});if(up.error){console.error(JSON.stringify({event:"public_intake_upload_failed",intakeId:intake.id,status:up.error.statusCode||null}));continue}const ins=await admin.from("application_intake_files").insert({intake_id:intake.id,storage_path:path,file_name:file.name,mime_type:file.type,file_size:file.size,verification_status:"pending",document_category:category});if(!ins.error)uploaded++}
+ let uploaded=0;for(let i=0;i<files.length;i++){const file=files[i],category=categories[i]||"other",path="intakes/"+intake.id+"/"+crypto.randomUUID()+"-"+safeName(file.name);const up=await admin.storage.from("private_documents").upload(path,file,{contentType:file.type,upsert:false});if(up.error){console.error(JSON.stringify({event:"public_intake_upload_failed",intakeId:intake.id,status:up.error.statusCode||null}));continue}const ins=await admin.from("application_intake_files").insert({intake_id:intake.id,storage_path:path,file_name:file.name,mime_type:file.type,file_size:file.size,verification_status:"pending",document_category:category});if(!ins.error)uploaded++}
  const {data:admins}=await admin.from("profiles").select("id").eq("role","admin").eq("status","active");if(admins?.length)await admin.from("notifications").insert(admins.map(a=>({user_id:a.id,title:"طلب جديد من منصة RAFIQ",message:"تم استلام طلب جديد رقم "+String(intake.application_number)+" — "+applicantName,type:"new_public_intake"})));
  return json({ok:true,status:"received",request_id:requestId,application_number:intake.application_number,uploaded});
 });
