@@ -53,7 +53,7 @@ describe("RAFIQ offline knowledge base — 30 common questions", () => {
   test("answers French questions in French", () => {
     const result = answerFromKnowledge("Comment postuler comme infirmier ?", "fr");
     expect(result.language).toBe("fr");
-    expect(result.reply).toContain("actuellement");
+    expect(result.reply).toContain("infirmiers");
   });
 
 
