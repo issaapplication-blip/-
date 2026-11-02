@@ -3,7 +3,7 @@ import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-u
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { kapsoConfigured, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
@@ -104,12 +104,29 @@ const telegramBroadcast=async(text:string,testOnly=false)=>{
 };
 
 const forwardWhatsAppToTelegramManager=async(message:any,identity:any,body:string)=>{
-  if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING!=="true")return;
   const managerChatIds=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
-  if(!managerChatIds.length){console.warn(JSON.stringify({event:"rafig_whatsapp_to_telegram_no_manager_ids"}));return;}
+  if(!managerChatIds.length)throw new Error("telegram_manager_chat_ids_missing");
   const messageType=typeof message?.type==="string"?message.type:"text";
-  const notice=telegramSigned(["📲 رسالة WhatsApp واردة إلى RAFIQ","","👤 رقم العميل: "+(identity.phone||"غير متوفر"),"💬 نوع الرسالة: "+messageType,"💬 الرسالة:",body||"[رسالة غير نصية]","","🟡 الحالة: بانتظار متابعة المدير","⚠️ لا يوجد رد تلقائي على WhatsApp حاليًا.","يمكن للمدير نسخ الرد المناسب وإرساله يدويًا عبر WhatsApp."].join("\n"));
-  for(const managerId of managerChatIds){await telegramSendText(managerId,notice).catch(error=>console.error(JSON.stringify({event:"rafig_whatsapp_to_telegram_send_failed",managerId,error:String(error).slice(0,240)})));}
+  const notice=telegramSigned([
+    "📲 رسالة WhatsApp واردة إلى RAFIQ",
+    "",
+    "👤 رقم المرسل: "+(identity.phone||"غير متوفر"),
+    "💬 نوع الرسالة: "+messageType,
+    "💬 نص الرسالة:",
+    body||"[رسالة غير نصية]",
+    "",
+    "🟡 الحالة: بانتظار متابعة المدير",
+    "⚠️ لم يتم استدعاء أي وكيل ولم يُرسل أي رد إلى WhatsApp.",
+    "يرجى الرد يدويًا من تطبيق WhatsApp الرسمي."
+  ].join("\\n"));
+  let delivered=0;
+  const failures:string[]=[];
+  for(const managerId of managerChatIds){
+    try{await telegramSendText(managerId,notice);delivered++;}
+    catch(error){failures.push(String(error).slice(0,120));}
+  }
+  if(delivered===0)throw new Error("telegram_manager_delivery_failed:"+failures.join("|"));
+  return {delivered,partial:delivered!==managerChatIds.length};
 };
 const TELEGRAM_WELCOME = [
   "أهلًا وسهلًا بك في رفيق | RAFIQ 🇱🇧",
@@ -139,25 +156,12 @@ const TELEGRAM_ANNOUNCEMENT = [
   "🌐 الموقع: " + RAFIQ_WEBSITE,
   "📱 WhatsApp الرسمي: " + RAFIQ_WHATSAPP_NUMBER + " — " + RAFIQ_WHATSAPP
 ].join("\n");
-const draftInboundReply = async (message: string, senderPhone?: string) => {
-  const key = senderPhone?.trim() || "unknown";
-  const now = Date.now();
-  const previous = careSessions.get(key);
-  const active = Boolean(previous && now - previous.updatedAt < CARE_SESSION_TTL_MS);
-  const careMode = CARE_KEYWORD_RE.test(message) || active;
-  const messages = [...(previous?.messages ?? []), message].slice(-8);
-  if (careMode) careSessions.set(key, { updatedAt: now, messages });
-  const context = careMode ? [
-    "ACTIVE RAFIQ CARE INTAKE: true",
-    senderPhone ? `WhatsApp sender number (known contact, confirm it with the customer): ${senderPhone}` : "WhatsApp sender number unavailable.",
-    "Recent intake conversation:",
-    ...messages.map((item, index) => `${index + 1}. ${item}`),
-  ].join("\n") : undefined;
+const draftPlatformReply = async (message: string, language?: string) => {
   try {
-    return await draftAgentReply(message, undefined, context);
+    return await draftAgentReply(message, language);
   } catch (error) {
-    console.error(JSON.stringify({event:"rafig_agent_provider_failed",reason:String(error).slice(0,160)}));
-    return {reply:rafiqFallback(message),model:"rafig-local-fallback"};
+    console.error(JSON.stringify({ event: "rafiq_platform_agent_provider_failed", reason: String(error).slice(0, 160) }));
+    return { reply: rafiqFallback(message), model: "rafig-local-fallback" };
   }
 };
 const MAX_WEBHOOK_BODY = 512_000;
@@ -170,70 +174,38 @@ const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16
 const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
 const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessageCore=async(message:any,conversation:any={})=>{
   const identity=kapsoIdentity(message,conversation);
-  const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
+  const id=String(message?.id??"").trim();
+  if(!id||(!identity.phone&&!identity.bsuid))return{id:id||"unknown",status:"ignored_missing_identity"};
   const body=typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():"");
-  const destination=identity.phone?{to:identity.phone}:{recipient:identity.bsuid};
-  if(!body||(!destination.to&&!destination.recipient))return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
+  const relayBody=body||("[رسالة WhatsApp غير نصية: "+String(message?.type||"unknown")+"]");
   try{
-    const inbound=await recordInboundEvent(message,identity,"kapso");if(inbound?.duplicate){console.log(JSON.stringify({event:"rafig_kapso_duplicate_ignored",messageId:String(message?.id??"")}));return{id:String(message?.id??"unknown"),status:"duplicate_ignored"}}
-    console.log(JSON.stringify({event:"rafig_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
-    await forwardWhatsAppToTelegramManager(message,identity,body);
-    if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING==="true" && (process.env.RAFIQ_WHATSAPP_AUTO_REPLY!=="true" || process.env.WHATSAPP_SENDING_ENABLED!=="true")){
-      await updateInboundEvent(String(message.id??""),"processed");
-      return{id:String(message.id??""),status:"forwarded_to_telegram"};
-    }
-    const result=await draftInboundReply(body,identity.phone||undefined);
-    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
-      try{
-        const outbound=kapsoConfigured()?await kapsoSendText(destination,result.reply):identity.phone?await sendWhatsAppText(identity.phone,result.reply):null;
-        if(!outbound)throw new Error("BSUID-only inbound requires Kapso API configuration");
-        await recordOutboundMessage(identity.phone||"",result.reply,outbound);
-        await updateInboundEvent(String(message.id??""),"processed");
-        console.log(JSON.stringify({event:"rafig_kapso_auto_reply_sent",provider:kapsoConfigured()?"kapso":"meta",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),outboundMessageId:outbound?.messages?.[0]?.id??null}));
-        return{id:String(message.id??""),status:outbound?.messages?.[0]?.id?"auto_replied":"draft_ready"};
-      }catch(error){
-        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
-        console.error(JSON.stringify({event:"rafig_kapso_auto_reply_failed",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),error:String(error)}));
-        return{id:String(message.id??""),status:"draft_ready_send_failed"};
-      }
-    }
-    await updateInboundEvent(String(message.id??""),"processed");
-    return{id:String(message.id??""),status:"draft_ready"};
+    const inbound=await recordInboundEvent(message,identity,"kapso");
+    if(inbound?.duplicate)return{id,status:"duplicate_ignored"};
+    await forwardWhatsAppToTelegramManager(message,identity,relayBody);
+    await updateInboundEvent(id,"forwarded_to_manager",undefined,"kapso");
+    return{id,status:"forwarded_to_manager"};
   }catch(error){
-    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
-    console.error(JSON.stringify({event:"rafig_kapso_agent_failed",messageId:String(message.id??""),error:String(error)}));
-    return{id:String(message.id??""),status:"draft_failed"};
+    await updateInboundEvent(id,"failed",String(error).slice(0,300),"kapso").catch(()=>{});
+    console.error(JSON.stringify({event:"rafig_kapso_manager_relay_failed",messageId:id,error:String(error).slice(0,160)}));
+    return{id,status:"relay_failed"};
   }
-};const processMetaMessageCore=async(message:any)=>{
+};
+const processMetaMessageCore=async(message:any)=>{
   const identity={phone:typeof message?.from==="string"?message.from:""};
-  const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
+  const id=String(message?.id??"").trim();
+  if(!id||!identity.phone)return{id:id||"unknown",status:"ignored_missing_identity"};
   const body=typeof message?.text?.body==="string"?message.text.body.trim():"";
-  if(!body||!identity.phone)return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
+  const relayBody=body||("[رسالة WhatsApp غير نصية: "+String(message?.type||"unknown")+"]");
   try{
     const inbound=await recordInboundEvent(message,identity,"meta");
-    if(inbound?.duplicate)return{id:String(message?.id??"unknown"),status:"duplicate_ignored"};
-    console.log(JSON.stringify({event:"rafig_meta_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
-    await forwardWhatsAppToTelegramManager(message,identity,body);
-    const result=await draftInboundReply(body,identity.phone);
-    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
-      try{
-        const outbound=kapsoConfigured()?await kapsoSendText({to:identity.phone},result.reply):await sendWhatsAppText(identity.phone,result.reply);
-        await recordOutboundMessage(identity.phone,result.reply,outbound);
-        await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
-        return{id:String(message.id??""),status:"auto_replied",outboundMessageId:outbound?.messages?.[0]?.id??null};
-      }catch(error){
-        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
-        return{id:String(message.id??""),status:"draft_ready_send_failed"};
-      }
-    }
-    await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
-    return{id:String(message.id??""),status:"draft_ready"};
+    if(inbound?.duplicate)return{id,status:"duplicate_ignored"};
+    await forwardWhatsAppToTelegramManager(message,identity,relayBody);
+    await updateInboundEvent(id,"forwarded_to_manager",undefined,"meta");
+    return{id,status:"forwarded_to_manager"};
   }catch(error){
-    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
-    console.error(JSON.stringify({event:"rafig_meta_webhook_failed",messageId:String(message?.id??""),error:String(error)}));
-    return{id:String(message?.id??""),status:"draft_failed"};
+    await updateInboundEvent(id,"failed",String(error).slice(0,300),"meta").catch(()=>{});
+    console.error(JSON.stringify({event:"rafig_meta_manager_relay_failed",messageId:id,error:String(error).slice(0,160)}));
+    return{id,status:"relay_failed"};
   }
 };
 const processMetaMessage=async(message:any)=>{
@@ -259,7 +231,7 @@ const supabaseServerRest=async(path:string,init:RequestInit={})=>{
 const recordInboundEvent=async(message:any,identity:any,provider="kapso")=>{
   const providerMessageId=String(message?.id??"").trim();
   if(!providerMessageId)return null;
-  const prevRow=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider_message_id=eq."+encodeURIComponent(providerMessageId)+"&select=id,provider,processing_status&order=received_at.desc&limit=1");
+  const prevRow=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq."+encodeURIComponent(provider)+"&provider_message_id=eq."+encodeURIComponent(providerMessageId)+"&select=id,provider,processing_status&order=received_at.desc&limit=1");
   const prev=Array.isArray(prevRow.body)?prevRow.body[0]:null;
   if(prev)return{...prev,duplicate:true};
   const textBody=typeof message?.text?.body==="string"
@@ -276,11 +248,6 @@ const updateInboundEvent=async(providerMessageId:string,status:string,errorMessa
   if(!SUPABASE_SERVICE_ROLE_KEY||!providerMessageId)return;
   await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq."+encodeURIComponent(provider)+"&provider_message_id=eq."+encodeURIComponent(providerMessageId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({processing_status:status,error_message:errorMessage??null,processed_at:new Date().toISOString()})});
 };
-const recordOutboundMessage=async(toPhone:string,body:string,result:any)=>{
-  if(!SUPABASE_SERVICE_ROLE_KEY)return;
-  await supabaseServerRest("/rest/v1/whatsapp_outbound_messages",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({provider:"kapso",provider_message_id:result?.messages?.[0]?.id??null,to_phone:toPhone,body,status:"sent",payload:result??{}})});
-};
-
 const bearerToken=(request:Request)=>{const h=request.headers.get("authorization")??"";return h.startsWith("Bearer ")?h.slice(7).trim():""};
 const supabaseRest=async(path:string,token:string,init:RequestInit={})=>{
   const response=await fetch(SUPABASE_URL+path,{...init,headers:{
@@ -293,7 +260,6 @@ const supabaseRest=async(path:string,token:string,init:RequestInit={})=>{
   return {response,body};
 };
 const requireAdminToken=(request:Request)=>Boolean(process.env.RAFIQ_ADMIN_ACTION_TOKEN&&request.headers.get("x-rafig-admin-token")===process.env.RAFIQ_ADMIN_ACTION_TOKEN);
-const sendWhatsAppText=async(to:string,body:string)=>{const accessToken=process.env.META_ACCESS_TOKEN,phoneNumberId=process.env.META_PHONE_NUMBER_ID,apiVersion=process.env.META_GRAPH_API_VERSION??"v23.0";if(!accessToken||!phoneNumberId)throw new Error("WhatsApp Cloud API server configuration is incomplete");const response=await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,{method:"POST",headers:{Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",recipient_type:"individual",to,type:"text",text:{preview_url:false,body}})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(`Meta WhatsApp API error (${response.status})`);return result};
 const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html","public/barcode.html","public/member.html"]); const RAFIQ_LOGO_STYLE='<style id="rafig-logo-quality">.brand img,.brand-mini img,.hero-logo,.logo,.brand-logo{background:#fff!important;object-fit:contain!important;image-rendering:auto!important;filter:none!important}.brand img,.brand-mini img,.logo,.brand-logo{border-radius:14px!important;padding:6px!important;box-sizing:border-box!important}.hero-logo{display:block;background:#fff!important;border-radius:18px!important;padding:10px!important;box-shadow:0 5px 18px rgba(0,0,0,.08)!important}</style>'; const FILE_CACHE_MAX_BYTES=16*1024*1024; const fileCache=new Map<string,{body:Uint8Array,type:string}>(); let fileCacheBytes=0;
 const fileResponse=async(path:string,type:string,cache="no-store")=>{const cached=fileCache.get(path+"|"+type);if(cached)return new Response(cached.body,{status:200,headers:{"Content-Type":type,"Content-Length":String(cached.body.byteLength),"Cache-Control":cache}});const file=Bun.file(path);if(!(await file.exists()))return new Response("Not Found",{status:404,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});let body:any=await file.arrayBuffer();if(type.startsWith("text/html")&&!PUBLIC_I18N_EXCLUDED.has(path)){let html=new TextDecoder().decode(body);if(type.startsWith("text/html")&&!html.includes("id=\"rafig-logo-quality\"")){html=html.includes("</head>")?html.replace("</head>",RAFIQ_LOGO_STYLE+"</head>"):RAFIQ_LOGO_STYLE+html;}if(!html.includes("/css/device.css")){const marker="</head>";const tag='<link rel="stylesheet" href="/css/device.css?v=72">';html=html.includes(marker)?html.replace(marker,tag+marker):tag+html;}if(!html.includes("/i18n.js")){const marker="</body>";const tag='<script src="/i18n.js?v=3" defer></script>';html=html.includes(marker)?html.replace(marker,tag+marker):html+tag;}body=html;}const bytes=typeof body==="string"?new TextEncoder().encode(body):new Uint8Array(body);if(bytes.byteLength<=FILE_CACHE_MAX_BYTES){const key=path+"|"+type;while(fileCacheBytes+bytes.byteLength>FILE_CACHE_MAX_BYTES&&fileCache.size){const first=fileCache.keys().next().value;if(first){const oldEntry=fileCache.get(first);fileCache.delete(first);fileCacheBytes-=oldEntry?.body.byteLength||0}else break}const stored=new Uint8Array(bytes);fileCache.set(key,{body:stored,type});fileCacheBytes+=stored.byteLength;}return new Response(bytes,{status:200,headers:{"Content-Type":type,"Content-Length":String(bytes.byteLength),"Cache-Control":cache}})};
 const broadcastTelegramAnnouncement = async (announcementKey: string, body: string, cutoffIso?: string) => {
@@ -1293,7 +1259,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
   return new Response(png,{status:200,headers:{"Content-Type":"image/png","Cache-Control":"private, max-age=300"}});
 })
 
-.post("/api/kapso/send-text",async({request,set})=>{if(process.env.KAPSO_ENABLED!=="true"){set.status=503;return{ok:false,error:"Kapso sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096||input?.humanApproved!==true){set.status=input?.humanApproved===true?400:409;return{ok:false,error:input?.humanApproved===true?"invalid recipient or message":"human approval required"}}try{const result=await kapsoSendText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"Kapso WhatsApp API request failed"}}})
+.post("/api/kapso/send-text",({set})=>{set.status=410;return{ok:false,error:"WhatsApp replies must be sent manually from the official WhatsApp app"}})
 .get("/api/whatsapp/webhook",({query,set})=>{const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=process.env.META_VERIFY_TOKEN;if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;set.status=403;return{ok:false,error:"webhook verification failed"}})
 .post("/api/whatsapp/webhook",async({request,set})=>{
   const raw=await request.text();
@@ -1317,11 +1283,11 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
   }
   return{ok:true,status:"processed",results};
 })
-.post("/api/agent/chat",async({request,set})=>{const started=Date.now();console.log(JSON.stringify({event:"rafig_agent_chat_received"}));let input:any;try{input=await request.json()}catch{set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_json"}));return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>4000){set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_message"}));return{ok:false,error:"invalid message"}}try{const result=await draftInboundReply(message);console.log(JSON.stringify({event:"rafig_agent_chat_completed",model:result.model,durationMs:Date.now()-started}));return{ok:true,reply:result.reply,model:result.model}}catch(error){console.error(JSON.stringify({event:"rafig_agent_chat_failed",error:String(error).slice(0,160),durationMs:Date.now()-started}));return{ok:true,reply:rafiqFallback(message),model:"rafig-local-fallback"}}})
+.post("/api/agent/chat",async({request,set})=>{const started=Date.now();console.log(JSON.stringify({event:"rafig_agent_chat_received"}));let input:any;try{input=await request.json()}catch{set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_json"}));return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>4000){set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_message"}));return{ok:false,error:"invalid message"}}try{const result=await draftPlatformReply(message);console.log(JSON.stringify({event:"rafig_agent_chat_completed",model:result.model,durationMs:Date.now()-started}));return{ok:true,reply:result.reply,model:result.model}}catch(error){console.error(JSON.stringify({event:"rafig_agent_chat_failed",error:String(error).slice(0,160),durationMs:Date.now()-started}));return{ok:true,reply:rafiqFallback(message),model:"rafig-local-fallback"}}})
 .post("/api/agent/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>8000){set.status=400;return{ok:false,error:"invalid message"}}try{const result=await draftAgentReply(message,typeof input?.language==="string"?input.language:undefined);return{ok:true,draft:result.reply,model:result.model,humanApprovalRequired:true}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/agent/outreach-draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const target=input?.target;if(target!=="laboratory"&&target!=="medical_equipment_supplier"&&target!=="radiology_center"){set.status=400;return{ok:false,error:"invalid outreach target"}}const institutionName=typeof input?.institutionName==="string"?input.institutionName.trim():"",language=typeof input?.language==="string"?input.language.trim():"";if(institutionName.length>200||language.length>40){set.status=400;return{ok:false,error:"invalid input"}}try{const result=await draftInstitutionOutreach(target,institutionName,language||undefined);return{ok:true,target,institutionName:institutionName||null,draft:result.reply,model:result.model,humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/channel/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const topic=typeof input?.topic==="string"?input.topic.trim():"",language=typeof input?.language==="string"?input.language.trim():"ar";if(!topic||topic.length>4000||language.length>40){set.status=400;return{ok:false,error:"invalid topic or language"}}try{const result=await draftAgentReply(`Prepare a public WhatsApp Channel post for the official RAFIQ | رفيق channel.\nLanguage: ${language}\nTopic: ${topic}\nAudience: families, caregivers, nurses, healthcare institutions, laboratories, medical equipment suppliers, and radiology centers.\nThe post must be informative, professional, concise, and suitable for a public one-way channel. Do not claim that a partnership, booking, payment, referral, approval, or service has already happened unless explicitly stated in the topic. Do not expose private information. Return only the ready-to-review channel post.`);return{ok:true,draft:result.reply,model:result.model,channel:"RAFIQ official WhatsApp Channel",publishMode:"manual-admin",humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
-.post("/api/whatsapp/send-text",async({request,set})=>{if(process.env.WHATSAPP_SENDING_ENABLED!=="true"){set.status=503;return{ok:false,error:"WhatsApp sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096){set.status=400;return{ok:false,error:"invalid recipient or message"}}if(input?.humanApproved!==true){set.status=409;return{ok:false,error:"human approval required"}}try{const result=await sendWhatsAppText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"WhatsApp provider request failed"}}})
+.post("/api/whatsapp/send-text",({set})=>{set.status=410;return{ok:false,error:"WhatsApp replies must be sent manually from the official WhatsApp app"}})
 .get("/",()=>fileResponse("public/index.html","text/html; charset=utf-8","no-store"))
 .get("/agent.html",()=>fileResponse("public/agent.html","text/html; charset=utf-8","no-store"))
 .get("/admin",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
