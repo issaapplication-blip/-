@@ -94,6 +94,7 @@ test("a Telegram update is processed once and a completed duplicate is rejected 
       return { ok: true, status: 200, json: async () => ({ ok: true }) };
     },
     (name, args) => {
+      if (name === "consume_telegram_rate_limit") return { data: true, error: null };
       if (name !== "claim_telegram_update") return { data: null, error: null };
       const id = Number(args.p_update_id);
       if (claimed.has(id)) return { data: [{ claimed: false, current_status: "completed" }], error: null };
