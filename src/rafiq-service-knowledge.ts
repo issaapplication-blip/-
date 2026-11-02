@@ -16,7 +16,7 @@ RAFIQ identity:
 - Lebanon home-care platform for families of elderly people and patients.
 - Main services: elderly home care, patient home care, home nursing, home physiotherapy.
 - Public website: ${RAFIQ_WEBSITE}
-- Official care/admin WhatsApp: ${RAFIQ_WHATSAPP_NUMBER} (${RAFIQ_WHATSAPP})
+- Official human administration WhatsApp (manual replies only): ${RAFIQ_WHATSAPP_NUMBER} (${RAFIQ_WHATSAPP})
 - Telegram bot: @RAFIQ_Care_Bot (${RAFIQ_TELEGRAM_BOT})
 - Official Telegram channel: ${RAFIQ_TELEGRAM_CHANNEL}
 - Official WhatsApp Channel: ${RAFIQ_WHATSAPP_CHANNEL}
