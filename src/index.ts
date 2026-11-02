@@ -1148,7 +1148,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
     const path="intakes/"+String(intake.id)+"/completion-"+crypto.randomUUID()+"-"+safeName;
     const bytes=await file.arrayBuffer();
     const sr=await fetch(SUPABASE_URL+"/storage/v1/object/private_documents/"+path,{method:"POST",headers:{apikey:SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+SUPABASE_SERVICE_ROLE_KEY,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},body:bytes});
-    if(!sr.ok){console.error(JSON.stringify({event:"rafig_completion_upload_failed",intakeId:intake.id,file:safeName,status:sr.status}));continue}
+    if(!sr.ok){console.error(JSON.stringify({event:"rafig_completion_upload_failed",intakeId:intake.id,status:sr.status}));continue}
     const ir=await supabaseServerRest("/rest/v1/application_intake_files",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({intake_id:intake.id,storage_path:path,file_name:file.name,mime_type:file.type||null,file_size:file.size,verification_status:"pending",document_category:"completion"} )});
     if(ir.response.ok)uploaded++;
   }

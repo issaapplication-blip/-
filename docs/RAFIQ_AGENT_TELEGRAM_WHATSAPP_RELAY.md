@@ -98,3 +98,32 @@ The test suite uses mocked database and provider calls. It does not contact Tele
 7. Do not send customer messages or WhatsApp replies as a test. Use synthetic test fixtures and the offline suite first.
 
 No function deployment, live webhook registration, Meta dashboard change, or external message is performed by this code change.
+
+
+## Telegram update claim RPC — unresolved production prerequisite
+
+The Edge Function calls:
+
+```ts
+db.rpc("claim_telegram_update", {
+  p_update_id: updateId,
+  p_lease_seconds: 120
+})
+```
+
+It expects one row (or a single row array) with:
+- `claimed: boolean`
+- `current_status: "processing" | "completed" | "failed"`
+
+The repository's migrations currently define `consume_telegram_rate_limit` and `telegram_webhook_rate_limits`, but do not define `claim_telegram_update` or `telegram_update_receipts`. The Edge Function subsequently updates `telegram_update_receipts` using `update_id`, `status`, `updated_at`, `lease_until`, `completed_at`, and `last_error`.
+
+A proposed additive migration is staged at:
+`supabase/migrations/20261102190000_claim_telegram_update.sql`
+
+It creates the receipt table and an atomic lease-based claim function. It is **not applied**. The live project's RPC/table definition could not be read from the connected Supabase account, so it is not yet proven that the production database is missing or incompatible. Before applying anything, inspect the live function signature, table columns, and grants read-only. If they already match, do not apply this migration. If they differ, review the exact diff and rollback plan before authorizing a database change.
+
+Rollback for a newly-created, unused object set would be:
+`DROP FUNCTION public.claim_telegram_update(bigint, integer); DROP TABLE public.telegram_update_receipts;`
+Do not execute that rollback if the objects pre-existed or contain real receipts. A safe rollback must first preserve or export existing data and assess dependencies.
+
+The webhook duplicate behavior is covered by the offline mocked test in `tests/functions/telegram-webhook.test.ts`; it proves the application makes one send for the first update and treats the same completed update as a duplicate when the RPC mock returns the expected contract. It does not prove PostgreSQL concurrency or the live schema.

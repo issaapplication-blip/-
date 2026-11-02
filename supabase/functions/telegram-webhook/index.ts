@@ -61,14 +61,6 @@ async function sendText(chatId: string | number, text: string, replyMarkup?: Rec
   });
 }
 
-function normalize(text: string): string {
-  return text.normalize("NFKC")
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
-    .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي")
-    .replace(/ؤ/g, "و").replace(/ئ/g, "ي")
-    .replace(/\s+/g, " ").trim().toLowerCase();
-}
-
 function faq(text: string): string {
   return answerFromKnowledge(text).reply;
 }
@@ -225,7 +217,7 @@ async function processUpdate(update: any) {
 
 async function markUpdate(updateId: number, status: "completed" | "failed", errorMessage?: string) {
   const patch: Record<string, unknown> = {
-    status, updated_at: new Date().toISOString(),
+    status, updated_at: new Date().toISOString(), lease_until: null,
     ...(status === "completed" ? { completed_at: new Date().toISOString(), last_error: null } : { last_error: (errorMessage || "processing_failed").slice(0, 300) }),
   };
   const { error } = await db!.from("telegram_update_receipts").update(patch).eq("update_id", updateId);

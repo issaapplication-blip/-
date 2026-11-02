@@ -82,3 +82,11 @@ describe("legacy WhatsApp inbound-only policy — offline source checks", () => 
     expect(agentPrompt).toContain("The platform must never send an outbound WhatsApp message");
   });
 });
+
+test("completion upload failure logs omit applicant-provided filenames", () => {
+  const source = readFileSync(resolve(root, "src/index.ts"), "utf8");
+  const line = source.split("\n").find((entry) => entry.includes('event:"rafig_completion_upload_failed"'));
+  expect(line).toBeDefined();
+  expect(line).not.toContain("safeName");
+  expect(line).not.toContain("file:");
+});

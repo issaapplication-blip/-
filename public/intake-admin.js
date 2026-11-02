@@ -56,6 +56,18 @@
       document.getElementById('modalBody').querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',async()=>{
         let result,error;
         if(isGeneral){({data:result,error}=await sb2.rpc('admin_approve_public_member',{p_intake_id:x.id,p_status:b.dataset.review,p_notes:null}));}
+        else if(b.dataset.review==='rejected'){
+          // The existing admin RPC removes file metadata and returns every private storage path.
+          // Remove the corresponding objects through the Storage API (never SQL DELETE on storage.objects).
+          ({data:result,error}=await sb2.rpc('admin_approve_application_intake',{p_intake_id:x.id,p_status:'rejected',p_notes:null}));
+          if(!error){
+            const paths=Array.isArray(result?.deleted_file_paths)?result.deleted_file_paths.filter(v=>typeof v==='string'&&v.length):[];
+            if(paths.length){
+              const {error:storageError}=await sb2.storage.from('private_documents').remove(paths);
+              if(storageError){alert('تم تسجيل رفض الطلب، لكن تعذّر حذف بعض الملفات الخاصة. أبلغ الدعم الإداري قبل إغلاق الطلب: '+storageError.message);return;}
+            }
+          }
+        }
         else if(isCv&&b.dataset.review==='approved'){
           const hasProof=(files||[]).some(f=>f.document_category==='payment_proof');
           if(!hasProof){alert('لا يمكن تأكيد دفع CV قبل وجود صورة إثبات الدفع.');return;}
