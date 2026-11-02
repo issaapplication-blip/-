@@ -93,7 +93,7 @@ function generateReply(message: string, language: string): { reply: string; mode
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return originAllowed(req) ? new Response(null, { status: 204, headers: corsHeaders(req) }) : Response.json({ error: "origin_not_allowed" }, { status: 403 });
   if (!originAllowed(req)) return Response.json({ error: "origin_not_allowed" }, { status: 403 });
-  if (req.method !== "POST") return Response.json({ error: "method_not_allowed" }, { status: 405, headers: jsonHeaders(req)(req) });
+  if (req.method !== "POST") return Response.json({ error: "method_not_allowed" }, { status: 405, headers: jsonHeaders(req) });
 
   try {
     const body = await req.json().catch(() => null) as Record<string, unknown> | null;
