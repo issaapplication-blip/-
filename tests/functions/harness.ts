@@ -7,7 +7,7 @@ export type DbCall = { table: string; op: string; args: any[]; filters: [string,
 export function loadFunction(name: string, env: Record<string, string>, fetchImpl: (url: string, init?: any) => Promise<any>) {
   const sharedKnowledge = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/rafiq-knowledge.ts"), "utf8")
     .replace(/^export /gm, "");
-  const raw = (sharedKnowledge + "\\n" + readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8"))
+  const raw = (sharedKnowledge + "\n" + readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8"))
     .replace(/^import .*$/gm, "");
   const src = new Bun.Transpiler({ loader: "ts" }).transformSync(raw);
   const calls: DbCall[] = [];
