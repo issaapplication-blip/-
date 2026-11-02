@@ -69,3 +69,8 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
   expect(legacyTelegram).toContain("difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i)");
   expect(legacyTelegram).not.toContain("if (!expected) return true");
 });
+
+test("Telegram webhook clears the processing lease when it marks an update finished", () => {
+  const mark = source.slice(source.indexOf("async function markUpdate"), source.indexOf("Deno.serve"));
+  expect(mark).toContain("lease_until: null");
+});
