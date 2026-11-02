@@ -225,7 +225,7 @@ async function processUpdate(update: any) {
 
 async function markUpdate(updateId: number, status: "completed" | "failed", errorMessage?: string) {
   const patch: Record<string, unknown> = {
-    status, updated_at: new Date().toISOString(),
+    status, updated_at: new Date().toISOString(), lease_until: null,
     ...(status === "completed" ? { completed_at: new Date().toISOString(), last_error: null } : { last_error: (errorMessage || "processing_failed").slice(0, 300) }),
   };
   const { error } = await db!.from("telegram_update_receipts").update(patch).eq("update_id", updateId);
