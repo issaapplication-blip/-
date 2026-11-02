@@ -1,0 +1,65 @@
+import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const root = resolve(import.meta.dir, "../..");
+const backend = readFileSync(resolve(root, "src/index.ts"), "utf8");
+const agentPrompt = readFileSync(resolve(root, "src/agent.ts"), "utf8");
+
+function block(source: string, startToken: string, endToken: string): string {
+  const start = source.indexOf(startToken);
+  const end = source.indexOf(endToken, start);
+  if (start < 0 || end < 0) throw new Error("source block not found: " + startToken);
+  return source.slice(start, end);
+}
+
+describe("legacy WhatsApp inbound-only policy — offline source checks", () => {
+  test("Meta webhook processing only persists and forwards; it never invokes an agent", () => {
+    const core = block(backend, "const processMetaMessageCore=", "const processMetaMessage=");
+    expect(core).toContain("recordInboundEvent");
+    expect(core).toContain("forwardWhatsAppToTelegramManager");
+    expect(core).not.toContain("draftAgentReply");
+    expect(core).not.toContain("draftPlatformReply");
+    expect(core).not.toContain("draftInboundReply");
+    expect(core).not.toContain("rafiqFallback");
+    expect(core).not.toContain("sendWhatsAppText");
+  });
+
+  test("Kapso compatibility webhook also only forwards to manager and never invokes an agent", () => {
+    const core = block(backend, "const processKapsoMessageCore=", "const processMetaMessageCore=");
+    expect(core).toContain("recordInboundEvent");
+    expect(core).toContain("forwardWhatsAppToTelegramManager");
+    expect(core).not.toContain("draftAgentReply");
+    expect(core).not.toContain("draftPlatformReply");
+    expect(core).not.toContain("draftInboundReply");
+    expect(core).not.toContain("kapsoSendText");
+    expect(core).not.toContain("sendWhatsAppText");
+  });
+
+  test("legacy backend contains no WhatsApp outbound provider implementation", () => {
+    expect(backend).not.toContain("graph.facebook.com");
+    expect(backend).not.toContain("kapsoSendText(");
+    expect(backend).not.toContain("sendWhatsAppText(");
+    expect(backend).not.toContain("recordOutboundMessage(");
+    expect(backend).not.toContain("whatsapp_outbound_messages");
+  });
+
+  test("legacy send endpoints are disabled instead of sending through Meta or Kapso", () => {
+    expect(backend).toContain('.post("/api/whatsapp/send-text",({set})=>{set.status=410;');
+    expect(backend).toContain('.post("/api/kapso/send-text",({set})=>{set.status=410;');
+    expect(backend).toContain("WhatsApp replies must be sent manually from the official WhatsApp app");
+  });
+
+  test("manager relay is not gated behind an optional auto-forward toggle", () => {
+    const relay = block(backend, "const forwardWhatsAppToTelegramManager=", "const TELEGRAM_WELCOME");
+    expect(relay).toContain("TELEGRAM_MANAGER_CHAT_IDS");
+    expect(relay).toContain("telegramSendText");
+    expect(relay).not.toContain("RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING");
+  });
+
+  test("agent instructions explicitly prohibit WhatsApp invocation and outbound replies", () => {
+    expect(agentPrompt).toContain("The RAFIQ automated agent operates only on the website and Telegram");
+    expect(agentPrompt).toContain("Never process, answer, classify, draft a reply to");
+    expect(agentPrompt).toContain("The platform must never send an outbound WhatsApp message");
+  });
+});
