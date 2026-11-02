@@ -206,9 +206,13 @@ const rules: Array<{ intent: string; re: RegExp }> = [
 ];
 
 export function answerFromKnowledge(text: string, preferredLanguage?: string | null): KnowledgeResult {
-  const language = (["ar", "en", "fr"].includes((preferredLanguage || "").slice(0, 2).toLowerCase())
-    ? (preferredLanguage || "ar").slice(0, 2).toLowerCase()
-    : detectLanguage(text)) as AgentLanguage;
+  const detectedLanguage = detectLanguage(text);
+  const preferred = (preferredLanguage || "").slice(0, 2).toLowerCase();
+  // A clearly detected English/French question wins over the UI's saved locale.
+  // The preferred locale is only a fallback for short or language-neutral text.
+  const language = (detectedLanguage !== "ar"
+    ? detectedLanguage
+    : (["ar", "en", "fr"].includes(preferred) ? preferred : "ar")) as AgentLanguage;
   const normalized = normalize(text);
   for (const rule of rules) {
     if (rule.re.test(text) || rule.re.test(normalized)) {
