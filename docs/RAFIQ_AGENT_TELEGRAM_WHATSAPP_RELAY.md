@@ -60,6 +60,12 @@ The script prompts for the bot token and webhook secret using hidden input. It d
 
 It then calls `getWebhookInfo` and checks the URL and both required update types. This script makes a real Telegram API configuration change only when you run it. It does not send a customer message.
 
+## Important verification boundary — Telegram update claim RPC
+
+The Telegram Edge Function calls `public.claim_telegram_update(p_update_id, p_lease_seconds)` and writes `public.telegram_update_receipts`. The current repository migration set contains the webhook's references and the rate-limit migration, but no migration defining `claim_telegram_update` or creating `telegram_update_receipts`. They may already exist in the live project from a manual change or an earlier deployment; this could not be checked because Supabase project access was denied in this session.
+
+**Before enabling Telegram:** in the existing Supabase project, verify that both the table and RPC exist, that the RPC atomically claims an update ID and returns the expected `claimed` / `current_status` fields, and that only `service_role` can execute it. If either is absent, the Telegram webhook will return 503 and must not be considered ready. No migration or database change is included in this branch.
+
 ## Meta webhook setup
 
 In Meta for Developers → WhatsApp → Configuration:
