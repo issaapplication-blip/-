@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { loadFunction } from "./harness";
 
 const legacyIndex = readFileSync(resolve(import.meta.dir, "../../src/index.ts"), "utf8");
 const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram.ts"), "utf8");
@@ -73,4 +74,56 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
 test("Telegram webhook clears the processing lease when it marks an update finished", () => {
   const mark = source.slice(source.indexOf("async function markUpdate"), source.indexOf("Deno.serve"));
   expect(mark).toContain("lease_until: null");
+});
+
+test("a Telegram update is processed once and a completed duplicate is rejected without a second send", async () => {
+  const env = {
+    SUPABASE_URL: "https://example.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "service-role-test-key",
+    TELEGRAM_BOT_TOKEN: "123456:test-token",
+    TELEGRAM_WEBHOOK_SECRET: "01234567890123456789012345678901",
+    TELEGRAM_MANAGER_CHAT_IDS: "-1001234567890",
+  };
+  const claimed = new Set<number>();
+  let telegramSends = 0;
+  const f = loadFunction(
+    "telegram-webhook",
+    env,
+    async () => {
+      telegramSends++;
+      return { ok: true, status: 200, json: async () => ({ ok: true }) };
+    },
+    (name, args) => {
+      if (name !== "claim_telegram_update") return { data: null, error: null };
+      const id = Number(args.p_update_id);
+      if (claimed.has(id)) return { data: [{ claimed: false, current_status: "completed" }], error: null };
+      claimed.add(id);
+      return { data: [{ claimed: true, current_status: "processing" }], error: null };
+    },
+  );
+  const update = {
+    update_id: 987654321,
+    message: {
+      chat: { id: 12345, type: "private" },
+      from: { id: 12345 },
+      text: "/help",
+    },
+  };
+  const request = () => new Request("https://edge.example/telegram-webhook", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-telegram-bot-api-secret-token": env.TELEGRAM_WEBHOOK_SECRET,
+    },
+    body: JSON.stringify(update),
+  });
+
+  const first = await f.handler(request());
+  const second = await f.handler(request());
+  expect(first.status).toBe(200);
+  expect(await first.json()).toMatchObject({ ok: true, status: "processed" });
+  expect(second.status).toBe(200);
+  expect(await second.json()).toMatchObject({ ok: true, status: "duplicate_completed" });
+  expect(telegramSends).toBe(1);
+  expect(f.calls.filter((call) => call.table === "claim_telegram_update")).toHaveLength(2);
 });
