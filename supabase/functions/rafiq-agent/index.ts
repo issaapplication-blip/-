@@ -83,102 +83,11 @@ async function createEscalation(conversationId: string, reason: string, payload:
   if (error) throw new Error("escalation_create_failed: " + error.message);
 }
 
-const systemPrompt = `أنت وكيل استقبال لمنصة RAFIQ | رفيق في لبنان.
-أجب بإيجاز ووضوح وبنبرة إنسانية محترمة. العربية هي اللغة الافتراضية؛ أجب بالإنجليزية أو الفرنسية إذا كانت لغة السائل.
-المعرفة المؤكدة: الخدمات الحالية هي رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي. تُراجع الإدارة كل طلب وتؤكد التوفر.
-يمكن لمقدمي الرعاية والممرضين والمعالجين الفيزيائيين والأطباء المؤهلين تقديم طلب انضمام عبر الصفحة المناسبة. الإرسال لا يعني القبول؛ تتحقق الإدارة من المعلومات والوثائق.
-تقديم طلب الانضمام إلى شبكة مقدمي الخدمات مجاني. لا توجد رسوم لتقديم الطلب أو مراجعته. لا تطلب المال ولا تقترح تحويله.
-طلبات الأسر تُرسل عبر نموذج طلب رعاية لأهلي. لا يوجد سعر أو وقت توفر نهائي مؤكد؛ الإدارة توضح التفاصيل قبل أي اتفاق.
-بيانات الطلبات خاصة ولا تُعرض للعامة؛ لا تطلب كلمات مرور أو رموز تحقق أو تفاصيل طبية غير ضرورية.
-لا يوجد وكيل على WhatsApp إطلاقاً. رسائل WhatsApp الواردة تُحوّل إلى المدير في Telegram فقط، والمدير يرد يدوياً من WhatsApp.
-إذا لم تعرف، قل بوضوح: لا أعرف الإجابة المؤكدة، وأحل السؤال إلى الإدارة. لا تخمّن.
-ممنوع التشخيص أو النصائح الطبية أو وصف الأدوية أو الجرعات أو تعديل العلاج. في الخطر الفوري وجّه إلى خدمات الطوارئ المحلية فوراً، ولا تؤخر طلب المساعدة.
-لا تخترع خدمات أو أسعاراً أو توفراً أو قبولاً أو تعاقداً أو مواعيد رد. لا تدّعِ استلام طلب إلا إذا نجح حفظه فعلياً.`;
 
-function extractOpenAIText(payload: any): string {
-  if (typeof payload?.output_text === "string" && payload.output_text.trim()) return payload.output_text.trim();
-  const parts: string[] = [];
-  for (const item of payload?.output ?? []) for (const c of item?.content ?? []) {
-    if (typeof c?.text === "string") parts.push(c.text);
-  }
-  return parts.join("\n").trim();
-}
 
-async function callOpenAI(message: string, context: ChatMessage[]): Promise<string | null> {
-  const key = Deno.env.get("OPENAI_API_KEY");
-  if (!key) return null;
-  const model = (Deno.env.get("RAFIQ_AGENT_MODEL") || Deno.env.get("OPENAI_MODEL") || "").trim();
-  if (!model) {
-    console.error(JSON.stringify({ event: "rafiq_agent_model_missing", provider: "openai" }));
-    return null;
-  }
-  const input = [
-    { role: "system", content: [{ type: "input_text", text: systemPrompt }] },
-    ...context.slice(-10).map((x) => ({ role: x.role, content: [{ type: "input_text", text: x.content }] })),
-    { role: "user", content: [{ type: "input_text", text: message }] },
-  ];
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(10000),
-    body: JSON.stringify({ model, input, max_output_tokens: 650 }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    console.error(JSON.stringify({ event: "rafiq_agent_provider_error", provider: "openai", status: response.status, detail: String(payload?.error?.code || payload?.error?.type || "provider_error").slice(0, 100) }));
-    return null;
-  }
-  return extractOpenAIText(payload) || null;
-}
-
-async function callGemini(message: string, context: ChatMessage[]): Promise<string | null> {
-  const key = (Deno.env.get("GEMINI_API_KEY") || "").trim();
-  if (!key) return null;
-  const model = (Deno.env.get("RAFIQ_GEMINI_MODEL") || "").trim();
-  if (!model) {
-    console.error(JSON.stringify({ event: "rafiq_agent_model_missing", provider: "gemini" }));
-    return null;
-  }
-  const contents = [
-    ...context.slice(-10).map((x) => ({ role: x.role === "assistant" ? "model" : "user", parts: [{ text: x.content }] })),
-    { role: "user", parts: [{ text: message }] },
-  ];
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST",
-    headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(10000),
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents,
-      generationConfig: { maxOutputTokens: 650, temperature: 0.3 },
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    console.error(JSON.stringify({ event: "rafiq_agent_provider_error", provider: "gemini", status: response.status, detail: String(payload?.error?.status || "provider_error").slice(0, 100) }));
-    return null;
-  }
-  const reply = (payload?.candidates?.[0]?.content?.parts ?? [])
-    .map((part: any) => typeof part?.text === "string" ? part.text : "")
-    .filter(Boolean).join("\n").trim();
-  return reply || null;
-}
-
-async function generateReply(message: string, context: ChatMessage[], language: string): Promise<{ reply: string; mode: string }> {
-  const provider = (Deno.env.get("RAFIQ_AGENT_PROVIDER") || "").trim().toLowerCase();
-  if (provider === "gemini") {
-    const reply = await callGemini(message, context);
-    if (reply) return { reply, mode: "gemini" };
-  } else if (provider === "openai") {
-    const reply = await callOpenAI(message, context);
-    if (reply) return { reply, mode: "openai" };
-  } else {
-    const gemini = await callGemini(message, context);
-    if (gemini) return { reply: gemini, mode: "gemini" };
-    const openai = await callOpenAI(message, context);
-    if (openai) return { reply: openai, mode: "openai" };
-  }
-  return { reply: fallback(message, language), mode: "guided" };
+function generateReply(message: string, language: string): { reply: string; mode: string; intent: string; matched: boolean } {
+  const result = answerFromKnowledge(message, language);
+  return { reply: result.reply, mode: "knowledge", intent: result.intent, matched: result.matched };
 }
 
 Deno.serve(async (req: Request) => {
@@ -212,7 +121,9 @@ Deno.serve(async (req: Request) => {
       return Response.json({ error: "invalid_conversation_id" }, { status: 400, headers: jsonHeaders(req) });
     }
     const phone = trusted && typeof body.phone === "string" ? body.phone.slice(0, 40) : null;
-    const language = typeof body.locale === "string" && body.locale.trim() ? body.locale.trim().slice(0, 12) : "ar";
+    const preferredLanguage = typeof body.locale === "string" && body.locale.trim() ? body.locale.trim().slice(0, 12) : null;
+    const knowledge = answerFromKnowledge(message, preferredLanguage);
+    const language = knowledge.language;
 
     const existing = await getConversation(channel, conversationId);
     const context = (existing?.context ?? []).filter((x: any) =>
@@ -226,14 +137,14 @@ Deno.serve(async (req: Request) => {
     ].slice(-12);
 
     const normalized = normalizeArabic(message);
-    const emergency = /(طوارئ|طواري|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(normalized);
-    const needsHuman = emergency || /(ادارة|موظف|بشري|موافقة|اعتماد|شكوى|اريد شخص|اريد التحدث مع|كلموني|اتصلوا بي)/.test(normalized);
+    const emergency = knowledge.intent === "emergency";
+    const needsHuman = emergency || !knowledge.matched || knowledge.intent === "complaint" || /(ادارة|موظف|بشري|موافقة|اعتماد|اريد شخص|اريد التحدث مع|كلموني|اتصلوا بي)/.test(normalized);
     const alreadyEscalated = existing?.escalation_state === "open";
     const escalationState = needsHuman ? "open" : (existing?.escalation_state || "none");
     const savedConversationId = await saveConversation(channel, conversationId, phone, language, nextContext, escalationState);
 
     if (needsHuman && !alreadyEscalated) {
-      await createEscalation(savedConversationId, emergency ? "medical_emergency" : "human_assistance", {
+      await createEscalation(savedConversationId, emergency ? "medical_emergency" : (!knowledge.matched ? "unknown_question" : "human_assistance"), {
         channel, external_conversation_id: conversationId, message,
       });
     }
