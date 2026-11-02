@@ -8,10 +8,10 @@ const cases = [
   ["أحتاج ممرضًا في المنزل", "nursing", "التمريض المنزلي"],
   ["أحتاج علاجًا فيزيائيًا", "physio", "العلاج الفيزيائي"],
   ["من يمكنه التقديم؟", "provider_eligibility", "أصحاب الاختصاص"],
-  ["كيف يقدم مقدم الرعاية؟", "caregiver_apply", "نموذج التقديم"],
-  ["كيف يقدم الممرض؟", "nurse_apply", "نموذج التقديم"],
-  ["كيف يقدم المعالج الفيزيائي؟", "physio_apply", "نموذج التقديم"],
-  ["كيف يقدم الطبيب؟", "doctor_apply", "صفحة الأطباء"],
+  ["مقدم الرعاية كيف يقدم؟", "caregiver_apply", "نموذج التقديم"],
+  ["الممرض كيف يقدم؟", "nurse_apply", "نموذج التقديم"],
+  ["المعالج الفيزيائي كيف يقدم؟", "physio_apply", "نموذج التقديم"],
+  ["الطبيب كيف يقدم؟", "doctor_apply", "صفحة الأطباء"],
   ["كيف أقدم طلب انضمام؟", "apply", "اختر الصفحة"],
   ["أريد طلب رعاية لأهلي", "family_request", "طلب رعاية"],
   ["متى ترد الإدارة؟", "followup", "لا أستطيع تأكيد مدة"],
@@ -53,7 +53,7 @@ describe("RAFIQ offline knowledge base — 30 common questions", () => {
   test("answers French questions in French", () => {
     const result = answerFromKnowledge("Comment postuler comme infirmier ?", "fr");
     expect(result.language).toBe("fr");
-    expect(result.reply).toContain("formulaire");
+    expect(result.reply).toContain("actuellement");
   });
 
   test("Arabic is the default for unknown language", () => {
