@@ -8,7 +8,7 @@ const cors=(req:Request)=>{
  return {...(allowedOrigins.has(origin)?{"Access-Control-Allow-Origin":origin}:{}),"Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
 };
 const mime=new Set(["application/pdf","image/jpeg","image/png","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
-const cats=new Set(["cv","certificate","experience","id_front","id_back","passport","driver_license","portrait","nursing_license","nursing_certificate","medical_report","family_proof","payment_proof","other"]);
+const cats=new Set(["cv","certificate","experience","id_front","id_back","driver_license","portrait","nursing_license","nursing_certificate","medical_report","family_proof","payment_proof","other"]);
 const hex=(b:Uint8Array)=>Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");
 async function hash(v:string){return hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v))))}
 Deno.serve(async req=>{
