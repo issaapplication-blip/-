@@ -180,7 +180,7 @@ const rules: Array<{ intent: string; re: RegExp }> = [
   { intent: "sharing", re: /(هل.*(تظهر|تنشر|تشارك).*بيانات|بيانات.*(تظهر|تنشر|تشارك)|public.*data|share.*data|données.*publiques|partager.*données)/i },
   { intent: "provider_eligibility", re: /(من.*(يمكن|يستطيع).*(التقديم|ينضم)|مين.*يقدم|who can apply|who may join|qui peut postuler|qui peut rejoindre)/i },
   { intent: "caregiver_apply", re: /(مقدم.*رعاية.*(يقدم|التقديم)|كيف.*(أقدم|اتقدم).*رعاية|caregiver.*apply|apply.*caregiver|aidant.*postuler)/i },
-  { intent: "nurse_apply", re: /(ممرض.*(يقدم|التقديم)|كيف.*(أقدم|اتقدم).*تمريض|nurse.*apply|apply.*nurse|infirmier.*postuler)/i },
+  { intent: "nurse_apply", re: /(ممرض.*(يقدم|التقديم)|كيف.*(أقدم|اتقدم).*تمريض|nurse.*apply|apply.*nurse|infirmier.*postuler|comment.*postuler.*infirmier)/i },
   { intent: "physio_apply", re: /(معالج.*فيزيائي.*(يقدم|التقديم)|كيف.*(أقدم|اتقدم).*فيزيائي|physiotherapist.*apply|kinésithérapeute.*postuler)/i },
   { intent: "doctor_apply", re: /(طبيب.*(يقدم|التقديم)|كيف.*(أقدم|اتقدم).*طبيب|doctor.*apply|médecin.*postuler)/i },
   { intent: "family_request", re: /(طلب.*رعاية.*(اهلي|أهلي|عائلتي)|رعاية.*(والدي|والدتي|أمي|ابي)|care for my family|care for my parent|soins pour ma famille|soins pour mon parent)/i },
@@ -189,7 +189,7 @@ const rules: Array<{ intent: string; re: RegExp }> = [
   { intent: "price", re: /(سعر|تكلفة|كم.*(يكلف|السعر)|price|cost|how much|prix|combien)/i },
   { intent: "regions", re: /(مناطق|منطقة|طرابلس|الضنية|زغرتا|الكورة|البترون|بيروت|تغطية|where.*(serve|area)|regions|régions|où.*(service|intervenez))/i },
   { intent: "schedule", re: /(نهاري|ليلي|إقامة|24 ساعة|دوام|daytime|overnight|live.in|schedule|journée|nuit|présence continue)/i },
-  { intent: "approval", re: /(متى.*(يقبل|قبول)|هل.*(تم قبولي|انقبلت)|approval|accepted|acceptation|ma candidature)/i },
+  { intent: "approval", re: /(متى.*(يقبل|قبول)|هل.*(تم قبولي|تم قبول|انقبلت)|approval|accepted|acceptation|ma candidature)/i },
   { intent: "sharing", re: /(هل.*(تظهر|تنشر|تشارك).*بيانات|بيانات.*(تظهر|تنشر|تشارك)|public.*data|share.*data|données.*publiques)/i },
   { intent: "contact", re: /(تواصل|اتصل|رقم.*الإدارة|whatsapp.*number|contact.*admin|contacter.*administration)/i },
   { intent: "telegram", re: /(رابط.*(تلغرام|telegram)|بوت.*(تلغرام|telegram)|قناة.*(تلغرام|telegram)|telegram.*(bot|channel|link)|lien.*telegram|chaîne.*telegram)/i },
@@ -200,7 +200,7 @@ const rules: Array<{ intent: string; re: RegExp }> = [
   { intent: "elderly", re: /(رعاية.*(مسن|كبير السن)|كبار السن|elderly care|senior care|personne âgée|personnes âgées)/i },
   { intent: "patient", re: /(رعاية.*مريض|رعاية المرضى|مريض.*المنزل|patient care|home care.*patient|soins.*patient)/i },
   { intent: "nursing", re: /(تمريض|ممرض|ممرضة|حقن|ضماد|home nursing|nurse service|soins infirmiers)/i },
-  { intent: "physio", re: /(علاج فيزيائي|علاج طبيعي|فيزيو|physio|physiotherapy|kinésithérapie)/i },
+  { intent: "physio", re: /(علاجا? فيزيائيا?|علاجا? طبيعيا?|فيزيو|physio|physiotherapy|kinésithérapie)/i },
   { intent: "services", re: /(خدمات|ماذا تقدم|شو بتقدم|what services|services.*offer|quels services|services proposez)/i },
   { intent: "greeting", re: /^(مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|hello|hi|hey|bonjour|salut|bonsoir)[!.؟ ]*$/i }
 ];
