@@ -90,7 +90,7 @@ describe("WhatsApp inbound-only Telegram relay — offline", () => {
   test("database uniqueness and duplicate-conflict handling prevent repeated forwarding", () => {
     const source = readFileSync(resolve(import.meta.dir, "../../supabase/functions/meta-whatsapp-webhook/index.ts"), "utf8");
     const migration = readFileSync(resolve(import.meta.dir, "../../supabase/migrations/20260928090843_rafig_agent_whatsapp_runtime.sql"), "utf8");
-    expect(source).toContain('insert.error?.code === "23505"');
+    expect(source).toContain('inserted.error?.code === "23505"');
     expect(migration).toContain("whatsapp_inbound_events_provider_message_uidx");
     expect(migration).toContain("unique index");
   });
