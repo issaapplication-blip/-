@@ -14,6 +14,11 @@ export function loadFunction(name: string, env: Record<string, string>, fetchImp
   const existing: Record<string, any> = {};
 
   const createClient = () => ({
+    rpc(name: string, args: Record<string, unknown>) {
+      const call: DbCall = { table: name, op: "rpc", args: [args], filters: [] };
+      calls.push(call);
+      return Promise.resolve({ data: null, error: null });
+    },
     from(table: string) {
       const call: DbCall = { table, op: "select", args: [], filters: [] };
       calls.push(call);
