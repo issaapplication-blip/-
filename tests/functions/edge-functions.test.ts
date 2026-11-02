@@ -17,13 +17,12 @@ describe("rafiq-agent caller isolation", () => {
     expect(upsert.args[0].customer_phone).toBeNull();
     expect(f.calls.some(c => c.filters.some(([, value]) => String(value).includes("meta:")))).toBe(false);
   });
-  test("service-role caller may use the WhatsApp conversation id", async () => {
+  test("even a service-role caller cannot invoke the agent from WhatsApp", async () => {
     const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
-    await f.handler(post({ message: "مرحبا", channel: "whatsapp", conversation_id: "meta:+96100000000", phone: "+96100000000" }, { authorization: "Bearer " + BASE.SUPABASE_SERVICE_ROLE_KEY }));
-    const upsert = f.calls.find(c => c.op === "upsert")!;
-    expect(upsert.args[0].channel).toBe("whatsapp");
-    expect(upsert.args[0].external_conversation_id).toBe("meta:+96100000000");
-    expect(upsert.args[0].customer_phone).toBe("+96100000000");
+    const res = await f.handler(post({ message: "مرحبا", channel: "whatsapp", conversation_id: "meta:+96100000000", phone: "+96100000000" }, { authorization: "Bearer " + BASE.SUPABASE_SERVICE_ROLE_KEY }));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "whatsapp_agent_disabled" });
+    expect(f.calls.some(c => c.op === "upsert")).toBe(false);
   });
   test("public web caller can retain a UUID session but cannot choose a private channel", async () => {
     const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
@@ -44,17 +43,16 @@ describe("rafiq-agent caller isolation", () => {
     const f = loadFunction("rafiq-agent", { ...BASE, OPENAI_API_KEY: "test-key" }, async () => { calls++; throw new Error("provider should not be called without model"); });
     const body: any = await (await f.handler(post({ message: "كم السعر؟" }))).json();
     expect(calls).toBe(0);
-    expect(body.mode).toBe("guided");
-    expect(body.reply).toContain("التكلفة");
+    expect(body.mode).toBe("knowledge");
+    expect(body.reply).toContain("لا أملك سعرًا");
   });
-  test("configured model is sent to provider", async () => {
-    let sent: any;
-    const f = loadFunction("rafiq-agent", { ...BASE, OPENAI_API_KEY: "test-key", RAFIQ_AGENT_MODEL: "test-model", RAFIQ_AGENT_PROVIDER: "openai" }, async (_url, init) => {
-      sent = JSON.parse(init.body);
-      return { ok: true, json: async () => ({ output_text: "رد تجريبي" }) };
-    });
-    await f.handler(post({ message: "مرحبا" }));
-    expect(sent.model).toBe("test-model");
+  test("agent answers from the offline knowledge base without any provider call", async () => {
+    let providerCalls = 0;
+    const f = loadFunction("rafiq-agent", { ...BASE, OPENAI_API_KEY: "unused", GEMINI_API_KEY: "unused" }, async () => { providerCalls++; throw new Error("network must not be called"); });
+    const body: any = await (await f.handler(post({ message: "من يمكنه التقديم؟" }))).json();
+    expect(providerCalls).toBe(0);
+    expect(body.mode).toBe("knowledge");
+    expect(body.reply).toContain("أصحاب الاختصاص");
   });
   test("emergency wording creates an escalation record", async () => {
     const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
@@ -72,7 +70,7 @@ describe("rafiq-agent caller isolation", () => {
       message: "سؤال غير معروف", channel: "telegram", conversation_id: "telegram:test-chat", privacy_safe_only: true,
     }, { authorization: "Bearer " + BASE.SUPABASE_SERVICE_ROLE_KEY }))).json();
     expect(providerCalls).toBe(0);
-    expect(body.mode).toBe("guided");
+    expect(body.mode).toBe("knowledge");
   });
 });
 
