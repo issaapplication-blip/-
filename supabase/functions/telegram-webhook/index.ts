@@ -7,9 +7,9 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const BOT_TOKEN = (Deno.env.get("TELEGRAM_BOT_TOKEN") || "").trim();
 const WEBHOOK_SECRET = (Deno.env.get("TELEGRAM_WEBHOOK_SECRET") || "").trim();
 const MANAGER_CHAT_IDS = [...new Set((Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
-  .split(",").map((x) => x.trim()).filter((x) => /^-?\\d+$/.test(x)))];
+  .split(",").map((x) => x.trim()).filter((x) => /^-?\d+$/.test(x)))];
 const MANAGER_CHAT_IDS_INVALID = (Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
-  .split(",").map((x) => x.trim()).filter(Boolean).some((x) => !/^-?\\d+$/.test(x));
+  .split(",").map((x) => x.trim()).filter(Boolean).some((x) => !/^-?\d+$/.test(x));
 const MAX_BODY_BYTES = 512 * 1024;
 const SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
 
