@@ -129,7 +129,7 @@ Deno.serve(async (req: Request) => {
     const context = (existing?.context ?? []).filter((x: any) =>
       x && (x.role === "user" || x.role === "assistant") && typeof x.content === "string"
     ).slice(-10);
-    const generated = await generateReply(message, context, language);
+    const generated = generateReply(message, language);
     const nextContext: ChatMessage[] = [
       ...context,
       { role: "user", content: message },
