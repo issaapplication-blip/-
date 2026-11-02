@@ -109,7 +109,7 @@ const forwardWhatsAppToTelegramManager=async(message:any,identity:any,body:strin
     "🟡 الحالة: بانتظار متابعة المدير",
     "⚠️ لم يتم استدعاء أي وكيل ولم يُرسل أي رد إلى WhatsApp.",
     "يرجى الرد يدويًا من تطبيق WhatsApp الرسمي."
-  ].join("\\n"));
+  ].join("\n"));
   let delivered=0;
   const failures:string[]=[];
   for(const managerId of managerChatIds){
@@ -180,7 +180,7 @@ const processMetaMessage=async(message:any)=>{
   if(id)whatsappInFlight.add(id);
   try{return await processMetaMessageCore(message)}finally{if(id)whatsappInFlight.delete(id)}
 };
-const whatsappInFlight=new Set<string>();const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
+const whatsappInFlight=new Set<string>();const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:{body:string};type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?{body:message.text.body}:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? "https://qmuxaehrahfsnabyjens.supabase.co").trim().replace(/\/+$/,"");
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "").trim();
