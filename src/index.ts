@@ -168,7 +168,7 @@ const MAX_WEBHOOK_BODY = 512_000;
 const MAX_PUBLIC_INTAKE_BODY = 18 * 1024 * 1024;
 const PUBLIC_INTAKE_RATE_LIMIT_MS = 15_000;
 const PUBLIC_INTAKE_RATE_MAX_KEYS = 10_000;
-const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Resource-Policy":"same-origin","Content-Security-Policy":"default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https://images.pexels.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://qmuxaehrahfsnabyjens.supabase.co https://graph.facebook.com https://api.kapso.ai"};
+const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Resource-Policy":"same-origin","Content-Security-Policy":"default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https://images.pexels.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://qmuxaehrahfsnabyjens.supabase.co"};
 const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0};
 const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
 const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
@@ -1260,28 +1260,19 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 })
 
 .post("/api/kapso/send-text",({set})=>{set.status=410;return{ok:false,error:"WhatsApp replies must be sent manually from the official WhatsApp app"}})
-.get("/api/whatsapp/webhook",({query,set})=>{const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=process.env.META_VERIFY_TOKEN;if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;set.status=403;return{ok:false,error:"webhook verification failed"}})
+.get("/api/whatsapp/webhook",({query,set})=>{const mode=query["hub.mode"],token=String(query["hub.verify_token"]??""),challenge=query["hub.challenge"],verifyToken=String(process.env.META_VERIFY_TOKEN??"");if(mode==="subscribe"&&verifyToken&&challenge!==undefined&&timingSafeEqual(new TextEncoder().encode(token),new TextEncoder().encode(verifyToken)))return challenge;set.status=403;return{ok:false,error:"webhook verification failed"}})
 .post("/api/whatsapp/webhook",async({request,set})=>{
   const raw=await request.text();
-  if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
+  if(new TextEncoder().encode(raw).byteLength>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-hub-signature-256");
-  if(process.env.META_APP_SECRET){
-    if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
-  }
+  if(!process.env.META_APP_SECRET){set.status=503;return{ok:false,error:"Meta webhook signature secret is not configured"}}
+  if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   if(String(payload?.object??"")!=="whatsapp_business_account"){set.status=200;return{ok:true,status:"ignored_non_whatsapp_object"}}
   const messages=extractIncomingMessages(payload);
-  if(!messages.length){set.status=200;return{ok:true,status:"received_no_messages"}}
-  if(process.env.KAPSO_ENABLED==="true"){
-    console.log(JSON.stringify({event:"rafig_meta_webhook_received_kapso_primary",messageCount:messages.length}));
-    set.status=200;return{ok:true,status:"received_kapso_primary",messageCount:messages.length};
-  }
   const results=[];
-  for(const message of messages){
-    const identity={phone:message.from,bsuid:"",username:""};
-    results.push(await processKapsoMessage(message,identity));
-  }
-  return{ok:true,status:"processed",results};
+  for(const message of messages)results.push(await processMetaMessage(message));
+  return{ok:true,status:"forwarded_to_manager_only",results};
 })
 .post("/api/agent/chat",async({request,set})=>{const started=Date.now();console.log(JSON.stringify({event:"rafig_agent_chat_received"}));let input:any;try{input=await request.json()}catch{set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_json"}));return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>4000){set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_message"}));return{ok:false,error:"invalid message"}}try{const result=await draftPlatformReply(message);console.log(JSON.stringify({event:"rafig_agent_chat_completed",model:result.model,durationMs:Date.now()-started}));return{ok:true,reply:result.reply,model:result.model}}catch(error){console.error(JSON.stringify({event:"rafig_agent_chat_failed",error:String(error).slice(0,160),durationMs:Date.now()-started}));return{ok:true,reply:rafiqFallback(message),model:"rafig-local-fallback"}}})
 .post("/api/agent/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>8000){set.status=400;return{ok:false,error:"invalid message"}}try{const result=await draftAgentReply(message,typeof input?.language==="string"?input.language:undefined);return{ok:true,draft:result.reply,model:result.model,humanApprovalRequired:true}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
