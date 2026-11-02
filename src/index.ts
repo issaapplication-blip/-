@@ -237,12 +237,12 @@ const recordInboundEvent=async(message:any,identity:any,provider="kapso")=>{
   const textBody=typeof message?.text?.body==="string"
     ? message.text.body.trim()
     : (typeof message?.kapso?.content==="string"?message.kapso.content.trim():null);
-  const r=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?on_conflict=provider%2Cprovider_message_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({
+  const r=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?on_conflict=provider%2Cprovider_message_id",{method:"POST",headers:{"Prefer":"resolution=ignore-duplicates,return=representation"},body:JSON.stringify({
     provider,provider_message_id:providerMessageId,from_phone:identity.phone||null,
     message_type:typeof message?.type==="string"?message.type:"text",text_body:textBody||null,payload:message??{},processing_status:"processing"
   })});
   if(!r.response.ok){const detail=typeof r.body==="string"?r.body:JSON.stringify(r.body??{});throw new Error(`could not persist inbound WhatsApp event (${r.response.status}): ${detail.slice(0,700)}`);}
-  return Array.isArray(r.body)?r.body[0]:r.body;
+  if(Array.isArray(r.body)&&r.body.length===0)return{duplicate:true};return Array.isArray(r.body)?r.body[0]:r.body;
 };
 const updateInboundEvent=async(providerMessageId:string,status:string,errorMessage?:string,provider="kapso")=>{
   if(!SUPABASE_SERVICE_ROLE_KEY||!providerMessageId)return;
