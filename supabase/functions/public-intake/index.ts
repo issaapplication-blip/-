@@ -17,7 +17,7 @@ Deno.serve(async(req)=>{
   // The hidden honeypot is never stored or forwarded. Return a bland success to bots.
   if(clean(form.get("website"),160))return json({ok:true,status:"received"});
   const allowedMime=new Set(["application/pdf","image/jpeg","image/png"]);
-  const allowedCategories=new Set(["cv","certificate","experience","nursing_license","nursing_certificate","institution_logo","institution_image","other"]);
+  const allowedCategories=new Set(["cv","certificate","experience","nursing_license","nursing_certificate","institution_logo","institution_image","portrait","other"]);
   const directFiles=form.getAll("files").filter((v):v is File=>v instanceof File&&v.size>0);
   const directCategories=form.getAll("document_category").map(v=>clean(v,80));
   const legacyCv=form.getAll("cv").filter((v):v is File=>v instanceof File&&v.size>0);
