@@ -45,7 +45,7 @@ test("Telegram uses the shared offline knowledge base and does not call an exter
 test("Telegram manager chat IDs are required and validated as numeric chat IDs", () => {
   expect(source).toContain("MANAGER_CHAT_IDS.length === 0");
   expect(source).toContain("MANAGER_CHAT_IDS_INVALID");
-  expect(source).toContain("/^-?\\\\d+$/");
+  expect(source).toContain("/^-?\\d+$/");
 });
 
 test("webhook registration script configures and verifies message and callback_query updates", () => {
