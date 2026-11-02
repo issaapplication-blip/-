@@ -3,7 +3,6 @@ import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-u
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
@@ -15,13 +14,6 @@ import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSA
 
 const port = Number(process.env.PORT ?? 7860);
 const startedAt = new Date().toISOString();
-let lastKapsoWebhookAt: string | null = null;
-let lastKapsoWebhookEvent: string | null = null;
-const effectiveAgentModel = () => {
-  const provider = (process.env.RAFIQ_AGENT_PROVIDER ?? "gemini").trim().toLowerCase();
-  if (provider === "gemini") return (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
-  return (process.env.RAFIQ_AGENT_MODEL ?? "not-configured").trim() || "not-configured";
-};
 const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\bkareh\b|\bnurse\b/i;
 const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
 const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
@@ -156,14 +148,7 @@ const TELEGRAM_ANNOUNCEMENT = [
   "🌐 الموقع: " + RAFIQ_WEBSITE,
   "📱 WhatsApp الرسمي: " + RAFIQ_WHATSAPP_NUMBER + " — " + RAFIQ_WHATSAPP
 ].join("\n");
-const draftPlatformReply = async (message: string, language?: string) => {
-  try {
-    return await draftAgentReply(message, language);
-  } catch (error) {
-    console.error(JSON.stringify({ event: "rafiq_platform_agent_provider_failed", reason: String(error).slice(0, 160) }));
-    return { reply: rafiqFallback(message), model: "rafig-local-fallback" };
-  }
-};
+const draftPlatformReply = async (message: string, _language?: string) => ({ reply: rafiqFallback(message), model: "rafiq-knowledge" });
 const MAX_WEBHOOK_BODY = 512_000;
 const MAX_PUBLIC_INTAKE_BODY = 18 * 1024 * 1024;
 const PUBLIC_INTAKE_RATE_LIMIT_MS = 15_000;
@@ -172,24 +157,6 @@ const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"D
 const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0};
 const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
 const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
-const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessageCore=async(message:any,conversation:any={})=>{
-  const identity=kapsoIdentity(message,conversation);
-  const id=String(message?.id??"").trim();
-  if(!id||(!identity.phone&&!identity.bsuid))return{id:id||"unknown",status:"ignored_missing_identity"};
-  const body=typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():"");
-  const relayBody=body||("[رسالة WhatsApp غير نصية: "+String(message?.type||"unknown")+"]");
-  try{
-    const inbound=await recordInboundEvent(message,identity,"kapso");
-    if(inbound?.duplicate)return{id,status:"duplicate_ignored"};
-    await forwardWhatsAppToTelegramManager(message,identity,relayBody);
-    await updateInboundEvent(id,"forwarded_to_manager",undefined,"kapso");
-    return{id,status:"forwarded_to_manager"};
-  }catch(error){
-    await updateInboundEvent(id,"failed",String(error).slice(0,300),"kapso").catch(()=>{});
-    console.error(JSON.stringify({event:"rafig_kapso_manager_relay_failed",messageId:id,error:String(error).slice(0,160)}));
-    return{id,status:"relay_failed"};
-  }
-};
 const processMetaMessageCore=async(message:any)=>{
   const identity={phone:typeof message?.from==="string"?message.from:""};
   const id=String(message?.id??"").trim();
@@ -210,11 +177,11 @@ const processMetaMessageCore=async(message:any)=>{
 };
 const processMetaMessage=async(message:any)=>{
   const id=String(message?.id??"");
-  if(id&&kapsoInFlight.has("meta:"+id))return{id,status:"duplicate_in_flight"};
-  if(id)kapsoInFlight.add("meta:"+id);
-  try{return await processMetaMessageCore(message)}finally{if(id)kapsoInFlight.delete("meta:"+id)}
+  if(id&&whatsappInFlight.has(id))return{id,status:"duplicate_in_flight"};
+  if(id)whatsappInFlight.add(id);
+  try{return await processMetaMessageCore(message)}finally{if(id)whatsappInFlight.delete(id)}
 };
-const kapsoInFlight=new Set<string>();const processKapsoMessage=async(message:any,conversation:any={})=>{const id=String(message?.id??"");if(id&&kapsoInFlight.has(id))return{id,status:"duplicate_in_flight"};if(id)kapsoInFlight.add(id);try{return await processKapsoMessageCore(message,conversation)}finally{if(id)kapsoInFlight.delete(id)}};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
+const whatsappInFlight=new Set<string>();const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? "https://qmuxaehrahfsnabyjens.supabase.co").trim().replace(/\/+$/,"");
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "").trim();
@@ -228,7 +195,7 @@ const supabaseServerRest=async(path:string,init:RequestInit={})=>{
   const body=await response.json().catch(()=>null);
   return {response,body};
 };
-const recordInboundEvent=async(message:any,identity:any,provider="kapso")=>{
+const recordInboundEvent=async(message:any,identity:any,provider="meta")=>{
   const providerMessageId=String(message?.id??"").trim();
   if(!providerMessageId)return null;
   const prevRow=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq."+encodeURIComponent(provider)+"&provider_message_id=eq."+encodeURIComponent(providerMessageId)+"&select=id,provider,processing_status&order=received_at.desc&limit=1");
@@ -236,7 +203,7 @@ const recordInboundEvent=async(message:any,identity:any,provider="kapso")=>{
   if(prev)return{...prev,duplicate:true};
   const textBody=typeof message?.text?.body==="string"
     ? message.text.body.trim()
-    : (typeof message?.kapso?.content==="string"?message.kapso.content.trim():null);
+    : null;
   const r=await supabaseServerRest("/rest/v1/whatsapp_inbound_events?on_conflict=provider%2Cprovider_message_id",{method:"POST",headers:{"Prefer":"resolution=ignore-duplicates,return=representation"},body:JSON.stringify({
     provider,provider_message_id:providerMessageId,from_phone:identity.phone||null,
     message_type:typeof message?.type==="string"?message.type:"text",text_body:textBody||null,payload:message??{},processing_status:"processing"
@@ -244,7 +211,7 @@ const recordInboundEvent=async(message:any,identity:any,provider="kapso")=>{
   if(!r.response.ok){const detail=typeof r.body==="string"?r.body:JSON.stringify(r.body??{});throw new Error(`could not persist inbound WhatsApp event (${r.response.status}): ${detail.slice(0,700)}`);}
   if(Array.isArray(r.body)&&r.body.length===0)return{duplicate:true};return Array.isArray(r.body)?r.body[0]:r.body;
 };
-const updateInboundEvent=async(providerMessageId:string,status:string,errorMessage?:string,provider="kapso")=>{
+const updateInboundEvent=async(providerMessageId:string,status:string,errorMessage?:string,provider="meta")=>{
   if(!SUPABASE_SERVICE_ROLE_KEY||!providerMessageId)return;
   await supabaseServerRest("/rest/v1/whatsapp_inbound_events?provider=eq."+encodeURIComponent(provider)+"&provider_message_id=eq."+encodeURIComponent(providerMessageId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({processing_status:status,error_message:errorMessage??null,processed_at:new Date().toISOString()})});
 };
@@ -702,46 +669,9 @@ const app=new Elysia()
   for(const message of messages)results.push(await processMetaMessage(message));
   return{ok:true,status:"processed",results};
 })
-.post("/api/kapso/webhook",async({request,set})=>{
-  const raw=await request.text();
-  if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
-  const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
-  const secret=kapsoWebhookSecret();
-  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
-  let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
-  lastKapsoWebhookAt=new Date().toISOString();
-  const eventBody=payload?.request_body??payload;
-  lastKapsoWebhookEvent=typeof eventBody?.event==="string"?eventBody.event:typeof eventBody?.type==="string"?eventBody.type:"unknown";
-  const candidates:any[]=[];
-  if(Array.isArray(eventBody?.messages))candidates.push(...eventBody.messages.map((m:any)=>({message:m,conversation:eventBody?.conversation??{}})));
-  if(eventBody?.message)candidates.push({message:eventBody.message,conversation:eventBody?.conversation??eventBody?.data?.conversation??{}});
-  if(eventBody?.data?.message)candidates.push({message:eventBody.data.message,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}});
-  if(Array.isArray(eventBody?.data?.messages))candidates.push(...eventBody.data.messages.map((m:any)=>({message:m,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}})));
-  for(const message of extractIncomingMessages(eventBody))candidates.push({message,conversation:{phone_number:message.from}});
-  if(!candidates.length){console.warn(JSON.stringify({event:"rafig_kapso_webhook_ignored",reason:"no_message",eventType:lastKapsoWebhookEvent,hasRequestBody:Boolean(payload?.request_body)}));set.status=200;return{ok:true,status:"ignored_no_message"}}
-  const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
-  return{ok:true,status:"processed",results};
-}).get("/api/webhooks/webhook/:webhookId",({params})=>({ok:true,status:"webhook_endpoint_ready",webhookId:String(params.webhookId??""),provider:"kapso",acceptedMethod:"POST"}))
-.post("/api/webhooks/webhook/:webhookId",async({request,set})=>{
-  const raw=await request.text();
-  if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
-  const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
-  const secret=kapsoWebhookSecret();
-  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
-  let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
-  lastKapsoWebhookAt=new Date().toISOString();
-  const eventBody=payload?.request_body??payload;
-  lastKapsoWebhookEvent=typeof eventBody?.event==="string"?eventBody.event:typeof eventBody?.type==="string"?eventBody.type:"unknown";
-  const candidates:any[]=[];
-  if(Array.isArray(eventBody?.messages))candidates.push(...eventBody.messages.map((m:any)=>({message:m,conversation:eventBody?.conversation??{}})));
-  if(eventBody?.message)candidates.push({message:eventBody.message,conversation:eventBody?.conversation??eventBody?.data?.conversation??{}});
-  if(eventBody?.data?.message)candidates.push({message:eventBody.data.message,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}});
-  if(Array.isArray(eventBody?.data?.messages))candidates.push(...eventBody.data.messages.map((m:any)=>({message:m,conversation:eventBody?.data?.conversation??eventBody?.conversation??{}})));
-  for(const message of extractIncomingMessages(eventBody))candidates.push({message,conversation:{phone_number:message.from}});
-  if(!candidates.length){console.warn(JSON.stringify({event:"rafig_kapso_webhook_ignored",reason:"no_message",eventType:lastKapsoWebhookEvent,hasRequestBody:Boolean(payload?.request_body)}));set.status=200;return{ok:true,status:"ignored_no_message"}}
-  const results=[];for(const item of candidates){results.push(await processKapsoMessage(item.message,item.conversation))}
-  return{ok:true,status:"processed",results};
-})
+.post("/api/kapso/webhook",({set})=>{set.status=410;return{ok:false,error:"Kapso WhatsApp webhook is retired; use the Meta inbound relay"}})
+.get("/api/webhooks/webhook/:webhookId",({set})=>{set.status=410;return{ok:false,error:"Kapso webhook endpoint is retired"}})
+.post("/api/webhooks/webhook/:webhookId",({set})=>{set.status=410;return{ok:false,error:"Kapso webhook endpoint is retired"}})
 
 const claimTelegramUpdate = async (updateId:number) => {
   const result = await supabaseServerRest("/rest/v1/rpc/claim_telegram_update", {
@@ -1339,12 +1269,5 @@ setTimeout(() => {
 
 console.log(JSON.stringify({
   event:"rafig_runtime_configuration",
-  openAIConfigured:Boolean(process.env.OPENAI_API_KEY),
-  metaWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
-  metaOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
-  whatsappSendingEnabled:process.env.WHATSAPP_SENDING_ENABLED==="true",
-  whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
-  agentModel:effectiveAgentModel(),
-  kapsoConfigured:kapsoConfigured(),
-  kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret())
+  metaWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET)
 }));
