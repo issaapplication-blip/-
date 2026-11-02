@@ -176,7 +176,7 @@ const rules: Array<{ intent: string; re: RegExp }> = [
   { intent: "medical", re: /(تشخيص|دواء|جرعة|علاج طبي|اعطني دواء|diagnos|medication|dosage|prescribe|médicament|diagnostic|posologie|traitement)/i },
   { intent: "free_join", re: /(مجاني|مجانا|رسوم|تكلفة الانضمام|رسوم التقديم|free to apply|application fee|membership fee|gratuit|frais d'inscription|frais de candidature)/i },
   { intent: "whatsapp_policy", re: /(هل.*واتساب.*(يرد|تلقائي)|رد.*واتساب|وكيل.*واتساب|بوت.*واتساب|whatsapp.*(bot|automated|automatic reply)|agent.*whatsapp|réponse automatique.*whatsapp|bot.*whatsapp)/i },
-  { intent: "privacy", re: /(خصوصية|سرية|بياناتي|معلوماتي|privacy|confidential|confidentialité|mes données)/i },
+  { intent: "privacy", re: /(خصوصية|سرية|معلوماتي|privacy|confidential|confidentialité|mes données)/i },
   { intent: "sharing", re: /(هل.*(تظهر|تنشر|تشارك).*بيانات|بيانات.*(تظهر|تنشر|تشارك)|public.*data|share.*data|données.*publiques|partager.*données)/i },
   { intent: "provider_eligibility", re: /(من.*(يمكن|يستطيع).*(التقديم|ينضم)|مين.*يقدم|who can apply|who may join|qui peut postuler|qui peut rejoindre)/i },
   { intent: "caregiver_apply", re: /(مقدم.*رعاية.*(يقدم|التقديم)|كيف.*(أقدم|اتقدم).*رعاية|caregiver.*apply|apply.*caregiver|aidant.*postuler)/i },
