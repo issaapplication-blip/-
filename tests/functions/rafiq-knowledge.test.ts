@@ -56,6 +56,19 @@ describe("RAFIQ offline knowledge base — 30 common questions", () => {
     expect(result.reply).toContain("actuellement");
   });
 
+
+  test("detected English question overrides an Arabic website locale", () => {
+    const result = answerFromKnowledge("Who can apply to join?", "ar");
+    expect(result.language).toBe("en");
+    expect(result.reply).toContain("Qualified professionals");
+  });
+
+  test("detected French question overrides an Arabic website locale", () => {
+    const result = answerFromKnowledge("Comment postuler comme infirmier ?", "ar");
+    expect(result.language).toBe("fr");
+    expect(result.reply).toContain("infirmiers");
+  });
+
   test("Arabic is the default for unknown language", () => {
     expect(answerFromKnowledge("???").language).toBe("ar");
   });
