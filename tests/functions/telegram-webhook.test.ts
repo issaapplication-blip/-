@@ -34,19 +34,25 @@ test("Telegram requests are stored only after a real session write and never pro
   expect(source).toContain('from("rafiq_telegram_request_sessions")');
 });
 
-test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
-  expect(source).toContain("function redactPhones");
-  const redactionSource = source.slice(source.indexOf("function redactPhones"), source.indexOf("async function generateFaqReply"));
-  expect(redactionSource).toContain(".replace(/(?:");
-  expect(redactionSource).toContain("[رقم محجوب]");
-  const lebanonNumber = /(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g;
-  const internationalNumber = /\b(?:\+?\d[\d\s().-]{7,}\d)\b/g;
-  expect("Contact +961 81 506 299 now".replace(lebanonNumber, "[رقم محجوب]")).not.toContain("81 506 299");
-  expect("Call +39 333 123 4567".replace(internationalNumber, "[رقم محجوب]")).not.toContain("333 123 4567");
-  expect(source).toContain("api.cloudflare.com/client/v4/accounts/");
-  expect(source).toContain("@cf/meta/llama-3.1-8b-instruct");
-  expect(source).not.toContain("generativelanguage.googleapis.com");
+test("Telegram uses the shared offline knowledge base and does not call an external AI provider", () => {
+  expect(source).toContain('import { answerFromKnowledge } from "../_shared/rafiq-knowledge.ts"');
+  expect(source).toContain("return answerFromKnowledge(text).reply");
+  expect(source).not.toContain("api.cloudflare.com/client/v4/accounts/");
   expect(source).not.toContain("api.openai.com");
+  expect(source).not.toContain("generativelanguage.googleapis.com");
+});
+
+test("Telegram manager chat IDs are required and validated as numeric chat IDs", () => {
+  expect(source).toContain("MANAGER_CHAT_IDS.length === 0");
+  expect(source).toContain("MANAGER_CHAT_IDS_INVALID");
+  expect(source).toContain("/^-?\\\\d+$/");
+});
+
+test("webhook registration script configures and verifies message and callback_query updates", () => {
+  const script = readFileSync(resolve(import.meta.dir, "../../ops/register-telegram-webhook.sh"), "utf8");
+  expect(script).toContain('"allowed_updates": ["message", "callback_query"]');
+  expect(script).toContain('required = {"message", "callback_query"}');
+  expect(script).toContain("webhook_allowed_updates_verification_failed");
 });
 
 test("legacy Render process cannot re-register the Telegram webhook unless explicitly opted in", () => {
