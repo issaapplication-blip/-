@@ -27,15 +27,11 @@ describe("legacy WhatsApp inbound-only policy — offline source checks", () => 
     expect(core).not.toContain("sendWhatsAppText");
   });
 
-  test("Kapso compatibility webhook also only forwards to manager and never invokes an agent", () => {
-    const core = block(backend, "const processKapsoMessageCore=", "const processMetaMessageCore=");
-    expect(core).toContain("recordInboundEvent");
-    expect(core).toContain("forwardWhatsAppToTelegramManager");
-    expect(core).not.toContain("draftAgentReply");
-    expect(core).not.toContain("draftPlatformReply");
-    expect(core).not.toContain("draftInboundReply");
-    expect(core).not.toContain("kapsoSendText");
-    expect(core).not.toContain("sendWhatsAppText");
+  test("legacy Kapso webhook routes are retired and cannot invoke an agent or send messages", () => {
+    expect(backend).toContain('.post("/api/kapso/webhook",({set})=>{set.status=410;');
+    expect(backend).toContain('.post("/api/webhooks/webhook/:webhookId",({set})=>{set.status=410;');
+    expect(kapso).not.toContain("fetch(");
+    expect(kapso).not.toContain("kapsoSendText");
   });
 
   test("legacy backend contains no WhatsApp outbound provider implementation", () => {
