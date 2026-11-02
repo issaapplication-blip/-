@@ -1,16 +1,16 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { answerFromKnowledge } from "../_shared/rafiq-knowledge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const BOT_TOKEN = (Deno.env.get("TELEGRAM_BOT_TOKEN") || "").trim();
 const WEBHOOK_SECRET = (Deno.env.get("TELEGRAM_WEBHOOK_SECRET") || "").trim();
-const MANAGER_CHAT_IDS = (Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
-  .split(",").map((x) => x.trim()).filter(Boolean);
+const MANAGER_CHAT_IDS = [...new Set((Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
+  .split(",").map((x) => x.trim()).filter((x) => /^-?\\d+$/.test(x)))];
+const MANAGER_CHAT_IDS_INVALID = (Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
+  .split(",").map((x) => x.trim()).filter(Boolean).some((x) => !/^-?\\d+$/.test(x));
 const MAX_BODY_BYTES = 512 * 1024;
-const CLOUDFLARE_ACCOUNT_ID = (Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || "").trim();
-const CLOUDFLARE_API_TOKEN = (Deno.env.get("CLOUDFLARE_API_TOKEN") || "").trim();
-const CLOUDFLARE_AI_MODEL = (Deno.env.get("CLOUDFLARE_AI_MODEL") || "@cf/meta/llama-3.1-8b-instruct").trim();
 const SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
@@ -70,79 +70,11 @@ function normalize(text: string): string {
 }
 
 function faq(text: string): string {
-  const t = normalize(text);
-  if (/(طوارئ|طواري|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(t)) {
-    return "إذا كانت هناك حالة طارئة أو خطر فوري، اتصل فورًا بخدمات الطوارئ المحلية أو بالفريق الطبي المعالج. لا تؤخر الرعاية العاجلة بانتظار رفيق.";
-  }
-  if (/(سعر|تكلف|كم|اسعار|الاسعار|price|cost)/.test(t)) {
-    return "لا يوجد سعر موحّد أستطيع تأكيده. تتحدد التكلفة بحسب الخدمة والمنطقة والدوام واحتياجات الحالة وتوفر مقدم الخدمة؛ وتؤكد الإدارة السعر قبل أي اتفاق. اكتب /request لبدء طلب مراجعة.";
-  }
-  if (/(تمريض|ممرض|ممرضة|حقن|ضماد|جرح)/.test(t)) {
-    return "يساعد رفيق في تنظيم طلب التمريض المنزلي. يمكن للإدارة مراجعة المنطقة والمهمة المطلوبة وتأكيد التوفر. اكتب /request لبدء الطلب.";
-  }
-  if (/(فيزيائي|طبيعي|فيزيو|physio)/.test(t)) {
-    return "يساعد رفيق في تنظيم طلب العلاج الفيزيائي المنزلي؛ وتُراجع ملاءمة الخدمة والتوفر من الفريق المختص. اكتب /request لبدء الطلب.";
-  }
-  if (/(مسن|كبار السن|كبير السن|والدي|والدتي|جدتي|جدي|مرافق|رعايه منزليه)/.test(t)) {
-    return "رفيق ينظم طلبات رعاية كبار السن داخل المنزل، نهارًا أو ليلًا أو بنظام الإقامة بحسب التوفر. اكتب /request لبدء طلب تراجعه الإدارة.";
-  }
-  if (/(مريض|مريضة|بعد المستشفى|بعد عملية|رعاية المريض)/.test(t)) {
-    return "رفيق يساعد في تنظيم طلب رعاية منزلية للمريض، وتراجع الإدارة احتياجات الحالة من دون تقديم تشخيص أو استبدال الفريق الطبي. اكتب /request لبدء الطلب.";
-  }
-  if (/(منطقة|وين|اين|تغطية|لبنان|طرابلس|الضنيه|ضنيه|زغرتا|الكوره|البترون|بيروت)/.test(t)) {
-    return "نستقبل طلبات من مناطق لبنان، ويُراجع التوفر لكل خدمة ومنطقة على حدة. اكتب /request وحدد المنطقة المطلوبة.";
-  }
-  if (/(تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|رقم الاداره)/.test(t)) {
-    return "للمتابعة الإدارية: WhatsApp ‏+961 81 506 299. ويمكنك متابعة بوت رفيق: https://t.me/RAFIQ_Care_Bot. الردود الآلية على WhatsApp ما زالت متوقفة إلى حين اجتياز اختبار منفصل.";
-  }
-  return "";
+  return answerFromKnowledge(text).reply;
 }
 
-function redactPhones(text: string): string {
-  return text
-    .replace(/(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g, "[رقم محجوب]")
-    .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "[رقم محجوب]")
-    .slice(0, 1500);
-}
 async function generateFaqReply(text: string): Promise<string> {
-  const known = faq(text);
-  if (known) return known;
-  // Workers AI Free allocation is bounded; if it is absent or unavailable, retain guided mode.
-  // Only the text is sent. We never transmit Telegram chat/user IDs, request-session data, or phone numbers.
-  if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_API_TOKEN) {
-    return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق، لكن لم أفهم السؤال بدقة. هل تسأل عن رعاية المسنين أو المرضى أو التمريض المنزلي أو العلاج الفيزيائي؟ ويمكنك كتابة /request لبدء طلب تراجعه الإدارة.";
-  }
-  try {
-    const response = await fetch(
-      "https://api.cloudflare.com/client/v4/accounts/" + encodeURIComponent(CLOUDFLARE_ACCOUNT_ID) + "/ai/run/" + encodeURIComponent(CLOUDFLARE_AI_MODEL),
-      {
-        method: "POST",
-        headers: { "authorization": "Bearer " + CLOUDFLARE_API_TOKEN, "content-type": "application/json" },
-        body: JSON.stringify({
-          messages: [
-            { role: "system", content: "أنت مساعد خدمة العملاء لمنصة RAFIQ للرعاية المنزلية في لبنان. أجب بالعربية بشكل واضح ومفيد عن الخدمات فقط. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. إذا لم تعرف، قل بوضوح إن الإدارة ستراجع السؤال." },
-            { role: "user", content: redactPhones(text) }
-          ],
-          max_tokens: 350,
-          temperature: 0.2
-        }),
-        signal: AbortSignal.timeout(9000)
-      }
-    );
-    if (!response.ok) {
-      console.error(JSON.stringify({ event: "telegram_ai_provider_unavailable", status: response.status }));
-      return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
-    }
-    const payload = await response.json().catch(() => ({}));
-    const answer = typeof payload?.result?.response === "string" ? payload.result.response.trim() : "";
-    if (!answer || payload?.success === false) {
-      return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
-    }
-    return answer.slice(0, 3000);
-  } catch (error) {
-    console.error(JSON.stringify({ event: "telegram_ai_provider_error", reason: String(error).slice(0, 100) }));
-    return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
-  }
+  return faq(text);
 }
 
 const serviceKeyboard = {
@@ -303,7 +235,7 @@ async function markUpdate(updateId: number, status: "completed" | "failed", erro
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
-  if (!db || !BOT_TOKEN || WEBHOOK_SECRET.length < 32) {
+  if (!db || !BOT_TOKEN || WEBHOOK_SECRET.length < 32 || MANAGER_CHAT_IDS.length === 0 || MANAGER_CHAT_IDS_INVALID) {
     return json(503, { error: "webhook_configuration_incomplete" });
   }
   const receivedSecret = req.headers.get("x-telegram-bot-api-secret-token") || "";
