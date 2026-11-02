@@ -64,7 +64,7 @@ async function sendTelegramManagerMessage(text: string): Promise<void> {
       failures.push("telegram_transport_error");
     }
   }
-  if (failures.length) throw new Error("telegram_manager_delivery_failed:" + failures.join(","));
+  if (failures.length === MANAGER_CHAT_IDS.length) throw new Error("telegram_manager_delivery_failed:" + failures.join(","));
 }
 
 type InboundMessage = {
