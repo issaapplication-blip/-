@@ -34,3 +34,11 @@ test("passport is not an accepted document category in either public upload endp
   expect(upload).not.toContain('"passport"');
   expect(intake).not.toContain('"passport"');
 });
+
+test("rejecting a non-member intake invokes the cleanup RPC and removes returned private storage objects", () => {
+  const admin = readFileSync(resolve(root, "public/intake-admin.js"), "utf8");
+  expect(admin).toContain("admin_approve_application_intake");
+  expect(admin).toContain("deleted_file_paths");
+  expect(admin).toContain("storage.from('private_documents').remove(paths)");
+  expect(admin).toContain("p_status:'rejected'");
+});
