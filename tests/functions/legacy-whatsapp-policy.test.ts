@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dir, "../..");
 const backend = readFileSync(resolve(root, "src/index.ts"), "utf8");
 const agentPrompt = readFileSync(resolve(root, "src/agent.ts"), "utf8");
+const messaging = readFileSync(resolve(root, "src/messaging-service.ts"), "utf8");
+const kapso = readFileSync(resolve(root, "src/kapso.ts"), "utf8");
 
 function block(source: string, startToken: string, endToken: string): string {
   const start = source.indexOf(startToken);
@@ -42,6 +44,12 @@ describe("legacy WhatsApp inbound-only policy — offline source checks", () => 
     expect(backend).not.toContain("sendWhatsAppText(");
     expect(backend).not.toContain("recordOutboundMessage(");
     expect(backend).not.toContain("whatsapp_outbound_messages");
+    expect(messaging).not.toContain("graph.facebook.com");
+    expect(messaging).not.toContain("kapsoSendText");
+    expect(messaging).not.toContain("metaSendText");
+    expect(messaging).not.toContain("channel:\"whatsapp\"");
+    expect(kapso).not.toContain("fetch(");
+    expect(kapso).not.toContain("kapsoSendText");
   });
 
   test("legacy send endpoints are disabled instead of sending through Meta or Kapso", () => {
@@ -55,6 +63,11 @@ describe("legacy WhatsApp inbound-only policy — offline source checks", () => 
     expect(relay).toContain("TELEGRAM_MANAGER_CHAT_IDS");
     expect(relay).toContain("telegramSendText");
     expect(relay).not.toContain("RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING");
+  });
+
+  test("website and Telegram use the deterministic local knowledge fallback", () => {
+    expect(backend).toContain("const draftPlatformReply = async (message: string, _language?: string) => ({ reply: rafiqFallback(message), model: \"rafiq-knowledge\" });");
+    expect(backend).toContain("const result={reply:rafiqFallback(textBody,conversationHistory),model:\"rafiq-knowledge\"};");
   });
 
   test("agent instructions explicitly prohibit WhatsApp invocation and outbound replies", () => {
