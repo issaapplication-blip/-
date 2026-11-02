@@ -686,7 +686,7 @@ const app=new Elysia()
 })
 .get("/api/whatsapp/webhook",({query,set})=>{
   const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=(process.env.META_VERIFY_TOKEN??"").trim();
-  if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;
+  if(mode==="subscribe"&&verifyToken&&challenge!==undefined&&timingSafeEqual(new TextEncoder().encode(String(token??"")),new TextEncoder().encode(String(verifyToken))))return challenge;
   set.status=403;return{ok:false,error:"webhook verification failed"};
 })
 .post("/api/whatsapp/webhook",async({request,set})=>{
