@@ -7,6 +7,7 @@ const backend = readFileSync(resolve(root, "src/index.ts"), "utf8");
 const agentPrompt = readFileSync(resolve(root, "src/agent.ts"), "utf8");
 const messaging = readFileSync(resolve(root, "src/messaging-service.ts"), "utf8");
 const kapso = readFileSync(resolve(root, "src/kapso.ts"), "utf8");
+const autoReply = readFileSync(resolve(root, "public/auto-reply.mjs"), "utf8");
 
 function block(source: string, startToken: string, endToken: string): string {
   const start = source.indexOf(startToken);
@@ -46,6 +47,15 @@ describe("legacy WhatsApp inbound-only policy — offline source checks", () => 
     expect(messaging).not.toContain("channel:\"whatsapp\"");
     expect(kapso).not.toContain("fetch(");
     expect(kapso).not.toContain("kapsoSendText");
+  });
+
+  test("legacy polling worker is a no-network retired stub", () => {
+    expect(autoReply).toContain("WhatsApp auto-reply worker is retired");
+    expect(autoReply).not.toContain("fetch(");
+    expect(autoReply).not.toContain("setInterval(");
+    expect(autoReply).not.toContain("setTimeout(");
+    expect(autoReply).not.toContain("rafiq-agent");
+    expect(autoReply).not.toContain("kapso(");
   });
 
   test("legacy send endpoints are disabled instead of sending through Meta or Kapso", () => {
