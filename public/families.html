@@ -3,15 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#087f58">
 <meta name="description" content="طلب رعاية منزلية للعائلة عبر منصة RAFIQ."><title>طلب رعاية لأحد أفراد العائلة | RAFIQ</title>
 <link rel="stylesheet" href="/css/rafiq-intake-pages.css"></head><body><main>
-<header class="topbar" aria-label="شريط RAFIQ الرئيسي">
-<details class="menu topbar-menu">
-<summary aria-label="القائمة">⋮</summary>
-<div class="menu-panel">
-<a href="/">الرئيسية</a><a href="/services.html">الخدمات</a><a href="/app.html">طلب رعاية أو انتساب</a>
-<hr style="border:0;border-top:1px solid #e7eee9;margin:7px 0">
-<a href="/guide.html">دليل الرعاية</a><a href="/faq.html">الأسئلة الشائعة</a><a href="/regions.html">المناطق</a>
-<a href="/caregivers.html">مقدمو الرعاية</a><a href="/agent.html">مساعد رفيق</a>
-</div></details></header>
+<header class="topbar" aria-label="شريط RAFIQ الرئيسي"><details class="menu topbar-menu"><summary aria-label="القائمة">⋮</summary><div class="menu-panel"><a href="/">العودة إلى الصفحة الأولى</a><a href="/services.html">الخدمات</a><a href="/app.html">طلب رعاية أو انتساب</a><hr style="border:0;border-top:1px solid #e7eee9;margin:7px 0"><strong style="display:block;padding:7px 10px;color:#087f58">التقديم والانتساب</strong><a href="/nurses.html">الممرضون والممرضات</a><a href="/caregivers.html">مقدمو الرعاية</a><a href="/physiotherapists.html">المعالجون الفيزيائيون</a><a href="/ads.html">الإعلانات والمنشآت الصحية</a><a href="/doctors.html">الأطباء</a><a href="/families.html">طلب رعاية للأهل</a><a href="/members.html">المنتسبون والتقديمات</a><hr style="border:0;border-top:1px solid #e7eee9;margin:7px 0"><a href="/guide.html">دليل الرعاية</a><a href="/faq.html">الأسئلة الشائعة</a><a href="/regions.html">المناطق</a><a href="/agent.html">مساعد رفيق</a></div></details></header>
 <header class="card brand"><img class="brand-mark" src="/assets/rafig-logo.png" alt="RAFIQ | رفيق"><h1>اطلب الرعاية لأهلك</h1><p>أرسل معلومات أولية مختصرة وسيراجع فريق RAFIQ الطلب للتواصل معك.</p></header>
 <section class="card"><div class="notice">لا ترسل تقارير طبية أو معلومات حساسة غير ضرورية. اكتب وصفاً مختصراً للحاجة فقط.</div>
 <form data-rafig-intake-form data-role="family">
@@ -21,10 +13,10 @@
 <label class="field">رقم الهاتف <span class="required">*</span><input name="phone" type="tel" maxlength="40" required autocomplete="tel"></label>
 <label class="field">المدينة / المنطقة <span class="required">*</span><input name="care_location" maxlength="250" required></label>
 <label class="field">نوع الرعاية المطلوبة <span class="required">*</span><select name="service_type" required><option value="">اختر</option><option>رعاية كبار السن</option><option>رعاية مريض</option><option>تمريض منزلي</option><option>علاج فيزيائي</option><option>رعاية ذوي الاحتياجات الخاصة</option><option>استشارة لتحديد الخدمة</option></select></label>
-<label class="field">عمر الشخص المحتاج للرعاية <input name="patient_age" type="number" min="0" max="120"></label>
-<label class="field">المدة المطلوبة <select name="duration"><option value="">اختر</option><option>مؤقتة</option><option>أسبوع</option><option>شهر</option><option>طويلة الأمد</option><option>غير محددة بعد</option></select></label>
+<label class="field">عمر الشخص المحتاج للرعاية <input name="patient_age" type="number" min="0" max="120" required></label>
+<label class="field">المدة المطلوبة <select name="duration" required><option value="">اختر</option><option>مؤقتة</option><option>أسبوع</option><option>شهر</option><option>طويلة الأمد</option><option>غير محددة بعد</option></select></label>
 </div>
-<label class="field">الحالة باختصار <textarea name="patient_condition" maxlength="1000" placeholder="وصف عام مختصر دون تفاصيل طبية حساسة."></textarea></label>
+<label class="field">الحالة باختصار <textarea name="patient_condition" maxlength="1000" placeholder="وصف عام مختصر دون تفاصيل طبية حساسة." required></textarea></label>
 <label class="field">ملاحظات إضافية <textarea name="care_notes" maxlength="1500"></textarea></label>
 <label class="field"><input type="checkbox" name="privacy_consent" value="accepted" required> أوافق على استخدام بيانات التواصل ومعلومات الطلب لمراجعته والرد عليّ.</label>
 <button class="button" type="submit">إرسال طلب الرعاية</button><div class="form-message" data-form-message hidden></div></form></section>
