@@ -1,1 +1,23 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="index,follow"><title>ملف العائلات والأفراد | RAFIQ</title><style>body{margin:0;background:#f3f8f5;color:#17372d;font-family:Arial,Tahoma,sans-serif;line-height:1.8}main{max-width:850px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:22px;margin:14px 0;box-shadow:0 5px 22px #0001}h1,h2{color:#087f58}.btn{display:inline-block;background:#087f58;color:#fff;text-decoration:none;border-radius:11px;padding:12px 18px;margin:4px;font-weight:900}.alt{background:#eaf4ef;color:#17372d}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.item{border:1px solid #dce8e2;border-radius:12px;padding:15px}</style></head><body><main><nav class="card"><a class="btn alt" href="/">الرئيسية</a><a class="btn alt" href="/app.html">تقديم طلب</a><a class="btn alt" href="/agent.html">مساعد رفيق</a><a class="btn alt" href="https://t.me/RAFIQ_Care_Bot">Telegram Bot</a><a class="btn alt" href="https://wa.me/96181506299">WhatsApp</a></nav><section class="card"><h1>ملف العائلات والأفراد</h1><p>مسار مستقل للعائلات والأفراد لتقديم بيانات العائلة، الشخص المحتاج للرعاية، الخدمة المطلوبة والمنطقة وحالة الطلب.</p><div class="grid"><div class="item"><h2>📋 نموذج مستقل</h2><p>ابدأ الطلب مباشرة دون طلب دخول مسبق. يتم حفظه في النظام برقم طلب خاص ويظهر للإدارة للمراجعة.</p></div><div class="item"><h2>🔎 المراجعة</h2><p>الحالات: قيد المراجعة، قيد الدراسة، مقبول، مرفوض. لا يعني التسجيل وحده اعتمادًا أو وعدًا بالخدمة.</p></div><div class="item"><h2>🔐 الملفات</h2><p>الوثائق المرفوعة تبقى ضمن التخزين الخاص ولا تظهر للعامة.</p></div></div><a class="btn" href="/app.html?role=family">بدء طلب رعاية عائلية</a></section></main></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#087f58">
+<meta name="description" content="طلب رعاية منزلية للعائلة عبر منصة RAFIQ."><title>طلب رعاية لأحد أفراد العائلة | RAFIQ</title>
+<link rel="stylesheet" href="/css/rafiq-intake-pages.css"></head><body><main>
+<header class="card brand"><img class="brand-mark" src="/assets/rafig-logo.png" alt="RAFIQ | رفيق"><h1>اطلب الرعاية لأهلك</h1><p>أرسل معلومات أولية مختصرة وسيراجع فريق RAFIQ الطلب للتواصل معك.</p></header>
+<section class="card"><div class="notice">لا ترسل تقارير طبية أو معلومات حساسة غير ضرورية. اكتب وصفاً مختصراً للحاجة فقط.</div>
+<form data-rafig-intake-form data-role="family">
+<input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<div class="form-grid">
+<label class="field">اسم صاحب الطلب <span class="required">*</span><input name="family_name" maxlength="160" required></label>
+<label class="field">رقم الهاتف <span class="required">*</span><input name="phone" type="tel" maxlength="40" required autocomplete="tel"></label>
+<label class="field">المدينة / المنطقة <span class="required">*</span><input name="care_location" maxlength="250" required></label>
+<label class="field">نوع الرعاية المطلوبة <span class="required">*</span><select name="service_type" required><option value="">اختر</option><option>رعاية كبار السن</option><option>رعاية مريض</option><option>تمريض منزلي</option><option>علاج فيزيائي</option><option>رعاية ذوي الاحتياجات الخاصة</option><option>استشارة لتحديد الخدمة</option></select></label>
+<label class="field">عمر الشخص المحتاج للرعاية <input name="patient_age" type="number" min="0" max="120"></label>
+<label class="field">المدة المطلوبة <select name="duration"><option value="">اختر</option><option>مؤقتة</option><option>أسبوع</option><option>شهر</option><option>طويلة الأمد</option><option>غير محددة بعد</option></select></label>
+</div>
+<label class="field">الحالة باختصار <textarea name="patient_condition" maxlength="1000" placeholder="وصف عام مختصر دون تفاصيل طبية حساسة."></textarea></label>
+<label class="field">ملاحظات إضافية <textarea name="care_notes" maxlength="1500"></textarea></label>
+<label class="field"><input type="checkbox" required> أوافق على استخدام بيانات التواصل ومعلومات الطلب لمراجعته والرد عليّ.</label>
+<button class="button" type="submit">إرسال طلب الرعاية</button><div class="form-message" data-form-message hidden></div></form></section>
+<a class="button secondary back-home" href="/">العودة إلى الصفحة الأولى</a><footer>RAFIQ | رفيق — استلام الطلب لا يعني تأكيد توفر الخدمة.</footer>
+</main><script src="/js/rafiq-intake-pages.js" defer></script></body></html>
