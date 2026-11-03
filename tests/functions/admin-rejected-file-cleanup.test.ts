@@ -40,6 +40,29 @@ test("rejected intake files are removed only from their private intake folder", 
   expect(removedPaths).toEqual(paths);
 });
 
+test("cleanup accepts the plural intakes path used by public-intake", async () => {
+  const cleanup = loadCleanup();
+  let removedPaths: string[] = [];
+  const db = {
+    storage: {
+      from() {
+        return {
+          async remove(paths: string[]) {
+            removedPaths = paths;
+            return { data: paths.map((name) => ({ name })), error: null };
+          },
+        };
+      },
+    },
+  };
+
+  const paths = ["intakes/abc/file-cv.pdf"];
+  const result = await cleanup(db, "abc", paths);
+
+  expect(result).toEqual({ ok: true, removed: 1, error: null });
+  expect(removedPaths).toEqual(paths);
+});
+
 test("cleanup refuses paths outside the rejected intake folder", async () => {
   const cleanup = loadCleanup();
   let removeCalled = false;
