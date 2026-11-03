@@ -92,3 +92,43 @@ describe("public intake CORS origin allowlist", () => {
     });
   }
 });
+
+
+describe("public RAFIQ intake hardening", () => {
+  test("honeypot submissions are accepted without creating an intake record", async () => {
+    const f = loadFunction("public-intake", BASE, async () => { throw new Error("no network expected"); });
+    const form = new FormData(); form.set("website", "bot-filled");
+    const res = await f.handler(new Request("https://f.invalid/", { method: "POST", body: form, headers: { "x-rafiq-client-ip": "203.0.113.21" } }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).ok).toBe(true);
+    expect(f.calls.length).toBe(0);
+  });
+
+  test("soft per-isolate throttle blocks the sixth request in ten minutes", async () => {
+    const f = loadFunction("public-intake", BASE, async () => { throw new Error("no network expected"); });
+    let last: Response | undefined;
+    for (let i = 0; i < 6; i++) {
+      const form = new FormData(); form.set("website", "bot");
+      last = await f.handler(new Request("https://f.invalid/", { method: "POST", body: form, headers: { "x-rafiq-client-ip": "203.0.113.22" } }));
+    }
+    expect(last?.status).toBe(429);
+  });
+
+  test("unsupported attachment MIME types are rejected before database writes", async () => {
+    const f = loadFunction("public-intake", BASE, async () => { throw new Error("no network expected"); });
+    const form = new FormData(); form.set("role", "caregiver"); form.set("name", "Test"); form.set("phone", "000000");
+    form.append("files", new File(["not a pdf"], "cv.txt", { type: "text/plain" }));
+    form.append("document_category", "cv");
+    const res = await f.handler(new Request("https://f.invalid/", { method: "POST", body: form }));
+    expect(res.status).toBe(415);
+    expect(f.calls.length).toBe(0);
+  });
+
+  test("nurse intake requires CV, certificate and license attachments", async () => {
+    const f = loadFunction("public-intake", BASE, async () => { throw new Error("no network expected"); });
+    const form = new FormData(); form.set("role", "nurse"); form.set("name", "Test Nurse"); form.set("phone", "000000");
+    const res = await f.handler(new Request("https://f.invalid/", { method: "POST", body: form }));
+    expect(res.status).toBe(400);
+    expect(f.calls.length).toBe(0);
+  });
+});

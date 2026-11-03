@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#087f58">
+<meta name="description" content="التقديم للانضمام إلى شبكة الأطباء في منصة RAFIQ."><title>الأطباء والاختصاصات الطبية | RAFIQ</title>
+<link rel="stylesheet" href="/css/rafiq-intake-pages.css"></head><body><main>
+<header class="card brand"><img class="brand-mark" src="/assets/rafig-logo.png" alt="RAFIQ | رفيق"><h1>الأطباء من جميع الاختصاصات</h1><p>انضم إلى شبكة RAFIQ لتسهيل وصول العائلات إلى الأطباء والخدمات الصحية بعد مراجعة الملف واعتماده.</p></header>
+<section class="card"><h2>شروط التقديم</h2><p>يرجى إدخال بيانات مهنية صحيحة وإرفاق السيرة الذاتية وإثبات الاختصاص أو المؤهل المهني. جميع الطلبات قيد المراجعة ولا يعني الإرسال اعتماد الملف أو نشره.</p>
+<form data-rafig-intake-form data-role="doctor" data-required-documents="cv,certificate">
+<input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<div class="form-grid">
+<label class="field">الاسم الأول <span class="required">*</span><input name="first_name" maxlength="80" required></label>
+<label class="field">اسم العائلة <span class="required">*</span><input name="last_name" maxlength="80" required></label>
+<label class="field">رقم الهاتف <span class="required">*</span><input name="phone" type="tel" maxlength="40" required autocomplete="tel"></label>
+<label class="field">الاختصاص الطبي <span class="required">*</span><select name="specialty" required><option value="">اختر الاختصاص</option><option>طب عام</option><option>طب الأسرة</option><option>طب الأطفال</option><option>القلب</option><option>الأعصاب</option><option>العظام</option><option>الجراحة</option><option>النسائية والتوليد</option><option>الجلدية</option><option>العيون</option><option>الأنف والأذن والحنجرة</option><option>الطب النفسي</option><option>الأورام</option><option>التخدير</option><option>الأشعة</option><option>اختصاص آخر</option></select></label>
+<label class="field">رقم الترخيص المهني <span class="required">*</span><input name="license_number" maxlength="120" required></label>
+<label class="field">سنوات الخبرة <span class="required">*</span><input name="years_experience" type="number" min="0" max="70" required></label>
+<label class="field">مكان العمل <input name="workplace" maxlength="250"></label>
+<label class="field">المنطقة / المدينة <span class="required">*</span><input name="preferred_location" maxlength="250" required></label>
+<label class="field">المواعيد المتاحة <input name="availability" maxlength="500" placeholder="الأيام والساعات"></label>
+<label class="field">نوع تقديم الخدمة <select name="service_mode"><option value="">اختر</option><option>في العيادة</option><option>زيارة منزلية</option><option>كلاهما</option></select></label></div>
+<label class="field">نبذة عن الخبرة والخدمات <textarea name="experience" maxlength="3000"></textarea></label>
+<div class="form-grid">
+<label class="field">السيرة الذاتية CV <span class="required">*</span><input type="file" name="upload_cv" data-document-category="cv" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required><span class="file-name" data-file-name></span></label>
+<label class="field">الشهادة / إثبات الاختصاص <span class="required">*</span><input type="file" name="upload_certificate" data-document-category="certificate" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required><span class="file-name" data-file-name></span></label></div>
+<label class="field"><input type="checkbox" name="privacy_consent" value="accepted" required> أوافق على استخدام بياناتي المهنية لمراجعة طلب الانضمام إلى RAFIQ.</label>
+<button class="button" type="submit">قدّم ملفك</button><div class="form-message" data-form-message hidden></div></form></section>
+<a class="button secondary back-home" href="/">العودة إلى الصفحة الأولى</a><footer>RAFIQ | رفيق — جميع الطلبات تخضع لمراجعة الإدارة.</footer>
+</main><script src="/js/rafiq-intake-pages.js" defer></script></body></html>
