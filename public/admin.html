@@ -110,6 +110,7 @@ th{background:#f7fbf9;color:#087f58}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/rafiq-rejected-file-cleanup.js"></script>
 <script>
 const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co';
 const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
@@ -224,6 +225,16 @@ async function reviewRequest(id,status){
   ({data,error}=await db.rpc('admin_approve_application_intake',{p_intake_id:id,p_status:status,p_notes:notes}));
   if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}
 
+  let fileCleanup={ok:true,removed:0,error:null};
+  if(status==='rejected'){
+    const paths=data?.deleted_file_paths;
+    if(!Array.isArray(paths)){
+      fileCleanup={ok:false,removed:0,error:'مسارات الملفات المحذوفة غير متاحة من قاعدة البيانات.'};
+    }else if(paths.length){
+      fileCleanup=await window.RAFIQRejectedFileCleanup(db,id,paths);
+    }
+  }
+
   if(status==='approved' && data?.barcode_code){
     const box=document.createElement('div');
     box.className='ok';
@@ -250,7 +261,7 @@ async function reviewRequest(id,status){
     }
   }
 
-  await db.from('audit_logs').insert({action:'admin_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes,notification_attempted:status==='approved'}});
+  await db.from('audit_logs').insert({action:'admin_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes,notification_attempted:status==='approved',file_cleanup:status==='rejected'?{ok:fileCleanup.ok,removed:fileCleanup.removed,error:fileCleanup.error}:null}});
   $('modal').classList.add('hidden');
   await loadAll();
   if(status==='review'){
@@ -273,7 +284,15 @@ async function reviewRequest(id,status){
       showMsg('تم وضع الطلب قيد المراجعة، وتعذر إرسال رسالة الاستكمال تلقائياً.');
     }
   }
-  if(status!=='approved' && status!=='review')showMsg('تم تسجيل قرار المدير بنجاح.',true);
+  if(status!=='approved' && status!=='review'){
+    if(status==='rejected' && !fileCleanup.ok){
+      showMsg('تم تسجيل رفض الطلب، لكن لم يكتمل حذف الملفات من التخزين. راجع سجل التدقيق لإعادة المحاولة: '+fileCleanup.error);
+    }else if(status==='rejected' && fileCleanup.removed>0){
+      showMsg('تم رفض الطلب وحذف '+fileCleanup.removed+' ملفاً من التخزين الخاص.',true);
+    }else{
+      showMsg('تم تسجيل قرار المدير بنجاح.',true);
+    }
+  }
 }
 async function loadRejected(){
   const rows=allRequests.filter(x=>x.status==='rejected');
