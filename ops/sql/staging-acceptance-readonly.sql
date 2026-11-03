@@ -11,7 +11,7 @@ select
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 where n.nspname in ('public','storage')
-  and c.relkind = 'r'
+  and c.relkind in ('r','p')
   and (
     n.nspname = 'storage'
     or c.relname ilike any (array[
