@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { loadFunction } from "./harness";
 
 const legacyIndex = readFileSync(resolve(import.meta.dir, "../../src/index.ts"), "utf8");
 const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram.ts"), "utf8");
@@ -9,6 +10,22 @@ const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/telegram-webhook/index.ts"),
   "utf8",
 );
+
+const TELEGRAM_ENV = {
+  SUPABASE_URL: "https://example.invalid",
+  SUPABASE_SERVICE_ROLE_KEY: "service-role-test-key",
+  TELEGRAM_BOT_TOKEN: "123456:test-telegram-token",
+  TELEGRAM_WEBHOOK_SECRET: "offline-test-secret-32-characters",
+  TELEGRAM_MANAGER_CHAT_IDS: "-1001234567890",
+};
+
+async function signedTelegramRequest(update: unknown): Promise<Request> {
+  return new Request("https://f.invalid/telegram-webhook", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-telegram-bot-api-secret-token": TELEGRAM_ENV.TELEGRAM_WEBHOOK_SECRET },
+    body: JSON.stringify(update),
+  });
+}
 
 test("Telegram webhook fails closed without bot, Supabase, or secret configuration", () => {
   expect(source).toContain("WEBHOOK_SECRET.length < 32");
@@ -36,7 +53,7 @@ test("Telegram requests are stored only after a real session write and never pro
 
 test("Telegram uses the shared offline knowledge base and does not call an external AI provider", () => {
   expect(source).toContain('import { answerFromKnowledge } from "../_shared/rafiq-knowledge.ts"');
-  expect(source).toContain("return answerFromKnowledge(text).reply");
+  expect(source).toContain("return faq(text)");
   expect(source).not.toContain("api.cloudflare.com/client/v4/accounts/");
   expect(source).not.toContain("api.openai.com");
   expect(source).not.toContain("generativelanguage.googleapis.com");
@@ -68,4 +85,77 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
   expect(legacyTelegram).toContain("expected.length < 32");
   expect(legacyTelegram).toContain("difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i)");
   expect(legacyTelegram).not.toContain("if (!expected) return true");
+});
+
+test("a completed Telegram update is processed only once; its duplicate is acknowledged without a second send", async () => {
+  let claimCount = 0;
+  const outboundCalls: string[] = [];
+  const f = loadFunction("telegram-webhook", TELEGRAM_ENV, async (url, init) => {
+    outboundCalls.push(String(url));
+    return { ok: true, json: async () => ({ ok: true, result: { message_id: outboundCalls.length } }) };
+  }, async (name, args) => {
+    if (name === "claim_telegram_update") {
+      claimCount++;
+      expect(args).toEqual({ p_update_id: 424242, p_lease_seconds: 120 });
+      return {
+        data: claimCount === 1
+          ? { claimed: true, current_status: "processing" }
+          : { claimed: false, current_status: "completed" },
+        error: null,
+      };
+    }
+    if (name === "consume_telegram_rate_limit") return { data: true, error: null };
+    throw new Error("unexpected_rpc_" + name);
+  });
+
+  const update = {
+    update_id: 424242,
+    message: { message_id: 7, chat: { id: 10001, type: "private" }, from: { id: 10001 }, text: "/start" },
+  };
+
+  const first = await f.handler(await signedTelegramRequest(update));
+  expect(first.status).toBe(200);
+  expect(await first.json()).toMatchObject({ ok: true, status: "processed" });
+  expect(outboundCalls).toHaveLength(1);
+
+  const duplicate = await f.handler(await signedTelegramRequest(update));
+  expect(duplicate.status).toBe(200);
+  expect(await duplicate.json()).toMatchObject({ ok: true, status: "duplicate_completed" });
+  expect(claimCount).toBe(2);
+  expect(f.rpcCalls.filter((call) => call.name === "claim_telegram_update")).toHaveLength(2);
+  expect(f.rpcCalls.filter((call) => call.name === "consume_telegram_rate_limit")).toHaveLength(1);
+  expect(outboundCalls).toHaveLength(1);
+  expect(f.calls.filter((call) => call.table === "telegram_update_receipts" && call.op === "update")).toHaveLength(1);
+});
+
+test("an update already being processed is retried without sending a second Telegram message", async () => {
+  let claimCount = 0;
+  const outboundCalls: string[] = [];
+  const f = loadFunction("telegram-webhook", TELEGRAM_ENV, async (url) => {
+    outboundCalls.push(String(url));
+    return { ok: true, json: async () => ({ ok: true, result: { message_id: 1 } }) };
+  }, async (name) => {
+    if (name === "claim_telegram_update") {
+      claimCount++;
+      return {
+        data: claimCount === 1
+          ? { claimed: true, current_status: "processing" }
+          : { claimed: false, current_status: "processing" },
+        error: null,
+      };
+    }
+    if (name === "consume_telegram_rate_limit") return { data: true, error: null };
+    throw new Error("unexpected_rpc_" + name);
+  });
+
+  const update = {
+    update_id: 424243,
+    message: { message_id: 8, chat: { id: 10002, type: "private" }, from: { id: 10002 }, text: "/start" },
+  };
+  const first = await f.handler(await signedTelegramRequest(update));
+  expect(first.status).toBe(200);
+  const concurrentDuplicate = await f.handler(await signedTelegramRequest(update));
+  expect(concurrentDuplicate.status).toBe(503);
+  expect(await concurrentDuplicate.json()).toMatchObject({ error: "update_in_progress_retry" });
+  expect(outboundCalls).toHaveLength(1);
 });
