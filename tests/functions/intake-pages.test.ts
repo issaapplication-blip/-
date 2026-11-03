@@ -33,7 +33,7 @@ describe("RAFIQ dedicated public intake pages", () => {
     expect(js).toContain('fetch("/api/public/intake"');
     expect(js).toContain('data.append("files"');
     expect(js).toContain('data.append("document_category"');
-    expect(js).toContain('data.set("website", "")');
+    expect(js).toContain('data.set("website","")');
     for (const [page] of pages) expect(read(page)).toContain('name="privacy_consent" value="accepted" required');
   });
 
