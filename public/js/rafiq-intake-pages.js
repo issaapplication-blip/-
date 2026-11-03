@@ -45,7 +45,6 @@
     for(const input of Array.from(form.querySelectorAll('input[type="file"][data-document-category]')))data.delete(input.name);
     for(const item of checked.selected){data.append("files",item.file,item.file.name);data.append("document_category",item.category);}
     data.set("website","");
-    data.set("privacy_consent","accepted");
     if(form.dataset.role)data.set("role",form.dataset.role);
     button.disabled=true;button.setAttribute("aria-busy","true");
     showMessage(message,"جارٍ إرسال طلبك إلى إدارة RAFIQ للمراجعة…",true);
