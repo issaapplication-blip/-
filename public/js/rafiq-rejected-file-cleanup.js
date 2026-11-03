@@ -10,10 +10,12 @@
     }
     if (paths.length === 0) return { ok: true, removed: 0, error: null };
 
-    const prefix = "intake/" + intakeId + "/";
+    // Both existing upload handlers write to this same bucket/table:
+    // public-application-upload uses intake/<id>/; public-intake uses intakes/<id>/.
+    const prefixes = ["intake/" + intakeId + "/", "intakes/" + intakeId + "/"];
     const safePaths = paths.filter((path) =>
       typeof path === "string" &&
-      path.startsWith(prefix) &&
+      prefixes.some((prefix) => path.startsWith(prefix)) &&
       !path.includes("..") &&
       !path.includes("\\")
     );
