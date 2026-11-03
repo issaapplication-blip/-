@@ -1,1 +1,30 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="index,follow"><title>ملف الممرضين والممرضات | RAFIQ</title><style>body{margin:0;background:#f3f8f5;color:#17372d;font-family:Arial,Tahoma,sans-serif;line-height:1.8}main{max-width:850px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:22px;margin:14px 0;box-shadow:0 5px 22px #0001}h1,h2{color:#087f58}.btn{display:inline-block;background:#087f58;color:#fff;text-decoration:none;border-radius:11px;padding:12px 18px;margin:4px;font-weight:900}.alt{background:#eaf4ef;color:#17372d}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.item{border:1px solid #dce8e2;border-radius:12px;padding:15px}</style></head><body><main><nav class="card"><a class="btn alt" href="/">الرئيسية</a><a class="btn alt" href="/app.html">تقديم طلب</a><a class="btn alt" href="/agent.html">مساعد رفيق</a><a class="btn alt" href="https://t.me/RAFIQ_Care_Bot">Telegram Bot</a><a class="btn alt" href="https://wa.me/96181506299">WhatsApp</a></nav><section class="card"><h1>ملف الممرضين والممرضات</h1><p>صفحة مستقلة لبدء الانتساب كممرض/ة مع بيانات الاختصاص والخبرة واللغات والمناطق والوثائق.</p><div class="grid"><div class="item"><h2>📋 نموذج مستقل</h2><p>ابدأ الطلب مباشرة دون طلب دخول مسبق. يتم حفظه في النظام برقم طلب خاص ويظهر للإدارة للمراجعة.</p></div><div class="item"><h2>🔎 المراجعة</h2><p>الحالات: قيد المراجعة، قيد الدراسة، مقبول، مرفوض. لا يعني التسجيل وحده اعتمادًا أو وعدًا بالخدمة.</p></div><div class="item"><h2>🔐 الملفات</h2><p>الوثائق المرفوعة تبقى ضمن التخزين الخاص ولا تظهر للعامة.</p></div></div><a class="btn" href="/app.html?role=nurse">بدء طلب انتساب ممرض/ة</a></section></main></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#087f58">
+<meta name="description" content="التقديم للانضمام إلى شبكة الممرضين والممرضات في RAFIQ."><title>الممرضون والممرضات | RAFIQ</title>
+<link rel="stylesheet" href="/css/rafiq-intake-pages.css"></head><body><main>
+<header class="card brand"><img class="brand-mark" src="/assets/rafig-logo.png" alt="RAFIQ | رفيق"><h1>الممرضون والممرضات</h1><p>قدّم ملفك المهني للانضمام إلى شبكة التمريض والرعاية المنزلية في لبنان.</p></header>
+<section class="card"><h2>شروط التقديم</h2><p>يشترط إدخال بيانات صحيحة وإرفاق السيرة الذاتية والشهادة وصورة الترخيص المهني. تخضع الملفات لمراجعة الإدارة والتحقق قبل أي اعتماد أو تواصل بشأن العمل.</p>
+<form data-rafig-intake-form data-role="nurse" data-required-documents="cv,nursing_certificate,nursing_license">
+<input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<div class="form-grid">
+<label class="field">الاسم الأول <span class="required">*</span><input name="first_name" maxlength="80" required></label>
+<label class="field">اسم العائلة <span class="required">*</span><input name="last_name" maxlength="80" required></label>
+<label class="field">رقم الهاتف <span class="required">*</span><input name="phone" type="tel" maxlength="40" required autocomplete="tel"></label>
+<label class="field">المدينة / المنطقة <span class="required">*</span><input name="preferred_location" maxlength="250" required></label>
+<label class="field">الشهادة العلمية <span class="required">*</span><input name="qualification" maxlength="200" required></label>
+<label class="field">رقم الترخيص <span class="required">*</span><input name="license_number" maxlength="160" required></label>
+<label class="field">سنوات الخبرة <span class="required">*</span><input name="years_experience" type="number" min="0" max="70" required></label>
+<label class="field">التخصص <select name="specialty"><option value="">اختر</option><option>تمريض عام</option><option>تمريض منزلي</option><option>عناية فائقة</option><option>تمريض أطفال</option><option>رعاية كبار السن</option><option>اختصاص آخر</option></select></label>
+<label class="field">ساعات التوفر <span class="required">*</span><input name="availability" maxlength="300" required placeholder="نهاراً، ليلاً، مناوبات، حسب الاتفاق"></label>
+</div>
+<label class="field">الخبرة العملية <textarea name="experience" maxlength="3000"></textarea></label>
+<div class="form-grid">
+<label class="field">السيرة الذاتية CV <span class="required">*</span><input type="file" name="upload_cv" data-document-category="cv" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required><span class="file-name" data-file-name></span></label>
+<label class="field">صورة الشهادة <span class="required">*</span><input type="file" name="upload_certificate" data-document-category="nursing_certificate" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required><span class="file-name" data-file-name></span></label>
+<label class="field">صورة الترخيص <span class="required">*</span><input type="file" name="upload_license" data-document-category="nursing_license" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required><span class="file-name" data-file-name></span></label>
+</div>
+<label class="field"><input type="checkbox" required> أوافق على مراجعة بياناتي المهنية لأغراض الانتساب إلى RAFIQ.</label>
+<button class="button" type="submit">قدّم الآن</button><div class="form-message" data-form-message hidden></div></form></section>
+<a class="button secondary back-home" href="/">العودة إلى الصفحة الأولى</a><footer>RAFIQ | رفيق — لا يوجد أي رسم للتقديم.</footer>
+</main><script src="/js/rafiq-intake-pages.js" defer></script></body></html>
