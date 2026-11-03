@@ -38,7 +38,6 @@ Deno.serve(async(req)=>{
  const form=await req.formData().catch(()=>null); if(!form)return json({ok:false,error:"تعذر قراءة النموذج. تحقق من البيانات والملفات."},400);
  // Hidden honeypot: silently accept bot submissions without creating records.
  if(clean(form.get("website"),300))return json({ok:true,status:"received"});
- if(clean(form.get("privacy_consent"),30)!=="accepted")return json({ok:false,error:"يرجى الموافقة على مراجعة البيانات قبل الإرسال."},400);
  const files=form.getAll("files").filter((v):v is File=>v instanceof File&&v.size>0);
  const categories=form.getAll("document_category").map(v=>clean(v,80));
  const allowedCategories=new Set(["cv","certificate","experience","nursing_license","nursing_certificate","institution_logo","institution_image","institution_registration","other"]);
@@ -46,6 +45,7 @@ Deno.serve(async(req)=>{
  if(categories.length!==files.length)return json({ok:false,error:"تعذر مطابقة الملفات المرفقة. أعد اختيار الملفات وحاول مجددًا."},400);
  if(files.length>8)return json({ok:false,error:"يمكن إرفاق 8 ملفات كحد أقصى"},400);
  for(const file of files){if(!(await validFile(file)))return json({ok:false,error:"الملفات المسموحة PDF أو JPG أو PNG فقط، وبحد أقصى 8MB للملف."},415)}
+ if(clean(form.get("privacy_consent"),30)!=="accepted")return json({ok:false,error:"يرجى الموافقة على مراجعة البيانات قبل الإرسال."},400);
  const institutionType=clean(form.get("institution_type"),80);
  const isInstitution=["laboratory","radiology_center","medical_equipment_center"].includes(institutionType);
  const payload:any={};
