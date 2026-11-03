@@ -38,10 +38,12 @@ Deno.serve(async(req)=>{
  const form=await req.formData().catch(()=>null); if(!form)return json({ok:false,error:"تعذر قراءة النموذج. تحقق من البيانات والملفات."},400);
  // Hidden honeypot: silently accept bot submissions without creating records.
  if(clean(form.get("website"),300))return json({ok:true,status:"received"});
+ if(clean(form.get("privacy_consent"),30)!=="accepted")return json({ok:false,error:"يرجى الموافقة على مراجعة البيانات قبل الإرسال."},400);
  const files=form.getAll("files").filter((v):v is File=>v instanceof File&&v.size>0);
  const categories=form.getAll("document_category").map(v=>clean(v,80));
  const allowedCategories=new Set(["cv","certificate","experience","nursing_license","nursing_certificate","institution_logo","institution_image","institution_registration","other"]);
  if(categories.some(c=>!allowedCategories.has(c)))return json({ok:false,error:"نوع أحد المرفقات غير صالح."},400);
+ if(categories.length!==files.length)return json({ok:false,error:"تعذر مطابقة الملفات المرفقة. أعد اختيار الملفات وحاول مجددًا."},400);
  if(files.length>8)return json({ok:false,error:"يمكن إرفاق 8 ملفات كحد أقصى"},400);
  for(const file of files){if(!(await validFile(file)))return json({ok:false,error:"الملفات المسموحة PDF أو JPG أو PNG فقط، وبحد أقصى 8MB للملف."},415)}
  const institutionType=clean(form.get("institution_type"),80);
@@ -49,7 +51,8 @@ Deno.serve(async(req)=>{
  const payload:any={};
  if(isInstitution){
   const institutionName=clean(form.get("institution_name"),250),contactName=clean(form.get("contact_name"),200),phone=clean(form.get("phone"),40);
-  if(!institutionName||!contactName||!phone)return json({ok:false,error:"اسم المنشأة واسم المسؤول ورقم الهاتف حقول مطلوبة."},400);
+  const address=clean(form.get("address"),500),services=clean(form.get("services"),4000),adDuration=clean(form.get("ad_duration"),80);
+  if(!institutionName||!contactName||!phone||!address||!services||!adDuration)return json({ok:false,error:"اسم المنشأة واسم المسؤول والهاتف والعنوان والخدمات ومدة الإعلان حقول مطلوبة."},400);
   for(const [key,value] of form.entries()){if(value instanceof File||key==="institution_type"||key==="website")continue;payload[key]=clean(value,5000)}
   payload.institution_type=institutionType;payload.submitted_at=new Date().toISOString();
   const {data:intake,error}=await admin.from("institution_intakes").insert({institution_type:institutionType,institution_name:institutionName,contact_name:contactName,phone,email:clean(form.get("email"),250)||null,address:clean(form.get("address"),500)||null,governorate:clean(form.get("governorate"),120)||null,district:clean(form.get("district"),120)||null,locality:clean(form.get("locality"),160)||null,license_number:clean(form.get("license_number"),160)||null,services:clean(form.get("services"),4000)||null,notes:clean(form.get("notes"),4000)||null,payload,status:"pending"}).select("*").single();
@@ -59,6 +62,8 @@ Deno.serve(async(req)=>{
   return json({ok:true,status:"received",request_id:intake.request_id,uploaded});
  }
  const role=clean(form.get("role"),50);if(!new Set(["caregiver","nurse","physiotherapist","family","doctor","member"]).has(role))return json({ok:false,error:"نوع الطلب غير معروف."},400);
+ const requiredFields:Record<string,string[]>={nurse:["first_name","last_name","phone","preferred_location","qualification","license_number","years_experience","specialty","availability"],caregiver:["first_name","last_name","phone","preferred_location","care_type","work_arrangement"],physiotherapist:["first_name","last_name","phone","preferred_location","license_number","years_experience","specialty","service_mode"],family:["family_name","phone","care_location","service_type","patient_age","duration","patient_condition"],doctor:["first_name","last_name","phone","specialty","license_number","years_experience","workplace","preferred_location","availability","service_mode"],member:["first_name","last_name","phone","preferred_location","benefit_interest"]};
+ for(const field of requiredFields[role]||[])if(!clean(form.get(field),5000))return json({ok:false,error:"يرجى استكمال جميع الحقول المطلوبة."},400);
  const requiredDocs:Record<string,string[]>={nurse:["cv","nursing_certificate","nursing_license"],caregiver:["cv"],physiotherapist:["cv","certificate"],doctor:["cv","certificate"]};
  for(const required of (requiredDocs[role]||[])){if(!categories.includes(required))return json({ok:false,error:"يرجى إرفاق جميع الوثائق المطلوبة قبل الإرسال."},400)}
  const first=clean(form.get("first_name"),80),lastName=clean(form.get("last_name"),80),familyName=clean(form.get("family_name"),160),phone=clean(form.get("phone"),40);
