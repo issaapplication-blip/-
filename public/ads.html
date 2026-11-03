@@ -2,7 +2,13 @@
 <html lang="ar" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#087f58">
 <meta name="description" content="قدّم طلب إعلان لمنشأتك الطبية عبر منصة RAFIQ."><title>الإعلانات والشراكات | RAFIQ</title>
-<link rel="stylesheet" href="/css/rafiq-intake-pages.css"></head><body><main>
+<link rel="stylesheet" href="/css/rafiq-intake-pages.css"></head><body><main><header class="topbar" aria-label="شريط RAFIQ الرئيسي">
+<details class="menu topbar-menu"><summary aria-label="القائمة">⋮</summary><div class="menu-panel">
+<a href="/">العودة إلى الصفحة الأولى</a><a href="/services.html">الخدمات</a><a href="/app.html">طلب رعاية أو انتساب</a>
+<hr style="border:0;border-top:1px solid #e7eee9;margin:7px 0"><strong style="display:block;padding:7px 10px;color:#087f58">التقديم والانتساب</strong>
+<a href="/nurses.html">الممرضون والممرضات</a><a href="/caregivers.html">مقدمو الرعاية</a><a href="/physiotherapists.html">المعالجون الفيزيائيون</a><a href="/ads.html">الإعلانات والمنشآت الصحية</a><a href="/doctors.html">الأطباء</a><a href="/families.html">طلب رعاية للأهل</a><a href="/members.html">المنتسبون والتقديمات</a>
+<hr style="border:0;border-top:1px solid #e7eee9;margin:7px 0"><a href="/guide.html">دليل الرعاية</a><a href="/faq.html">الأسئلة الشائعة</a><a href="/regions.html">المناطق</a><a href="/agent.html">مساعد رفيق</a>
+</div></details></header>
 <header class="card brand"><img class="brand-mark" src="/assets/rafig-logo.png" alt="RAFIQ | رفيق"><h1>أعلن معنا في RAFIQ</h1><p>مساحة تعريفية للمختبرات ومراكز الأشعة ومراكز بيع وتأجير المعدات الطبية في لبنان.</p></header>
 <section class="card"><div class="notice">إرسال الطلب لا يعني نشر الإعلان. تُراجع إدارة RAFIQ بيانات المنشأة والمحتوى والمدة، ولا يظهر أي إعلان إلا بعد الموافقة الصريحة.</div>
 <form data-rafig-intake-form data-role="institution"><input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -16,8 +22,8 @@
 <label class="field">المحافظة <input name="governorate" maxlength="120"></label>
 <label class="field">القضاء <input name="district" maxlength="120"></label>
 <label class="field">المنطقة <input name="locality" maxlength="160"></label>
-<label class="field">مدة الإعلان المقترحة <select name="ad_duration"><option value="">اختر</option><option>أسبوع</option><option>شهر</option><option>3 أشهر</option><option>6 أشهر</option><option>مدة أخرى / للمناقشة</option></select></label></div>
-<label class="field">العنوان الكامل <input name="address" maxlength="500"></label>
+<label class="field">مدة الإعلان المقترحة <select name="ad_duration" required><option value="">اختر</option><option>أسبوع</option><option>شهر</option><option>3 أشهر</option><option>6 أشهر</option><option>مدة أخرى / للمناقشة</option></select></label></div>
+<label class="field">العنوان الكامل <input name="address" maxlength="500" required></label>
 <label class="field">الخدمات والأسعار <span class="required">*</span><textarea name="services" maxlength="4000" required placeholder="اكتب الخدمات المتاحة والأسعار كما تعتمدها منشأتك."></textarea></label>
 <label class="field">ملاحظات أو تفاصيل الإعلان <textarea name="notes" maxlength="3000"></textarea></label>
 <div class="form-grid">
@@ -27,4 +33,4 @@
 <label class="field"><input type="checkbox" name="privacy_consent" value="accepted" required> أقر بصحة بيانات المنشأة وأوافق على مراجعة الطلب من إدارة RAFIQ.</label>
 <button class="button" type="submit">أعلن معنا</button><div class="form-message" data-form-message hidden></div></form></section>
 <a class="button secondary back-home" href="/">العودة إلى الصفحة الأولى</a><footer>RAFIQ | رفيق — لا تُنشر الإعلانات قبل اعتماد الإدارة.</footer>
-</main><script src="/js/rafiq-intake-pages.js" defer></script></body></html>
+</main><script src="/js/rafiq-intake-pages.js" defer></script><script src="/i18n.js?v=3" defer></script></body></html>
