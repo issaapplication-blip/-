@@ -15,8 +15,11 @@ export function loadFunction(
 ) {
   const sharedKnowledge = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/rafiq-knowledge.ts"), "utf8")
     .replace(/^export /gm, "");
-  const raw = (sharedKnowledge + "\n" + readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8"))
+  const functionSource = readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8")
     .replace(/^import .*$/gm, "");
+  // Keep shared-module declarations in a closure so names such as normalize()
+  // cannot collide with declarations in the Edge Function under test.
+  const raw = `const answerFromKnowledge = (() => {\n${sharedKnowledge}\nreturn answerFromKnowledge;\n})();\n${functionSource}`;
   const src = new Bun.Transpiler({ loader: "ts" }).transformSync(raw);
   const calls: DbCall[] = [];
   const rpcCalls: RpcCall[] = [];
