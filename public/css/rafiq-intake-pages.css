@@ -1,0 +1,26 @@
+*{box-sizing:border-box}
+:root{color-scheme:light;--green:#087f58;--ink:#17372d;--muted:#64756e;--line:#dce9e2;--surface:#fff;--bg:#f3f8f5}
+html{direction:rtl;background:var(--bg)}
+body{margin:0;background:linear-gradient(180deg,#edf7f2,#f8fbf9 42%,#f3f8f5);color:var(--ink);font-family:Arial,Tahoma,sans-serif;line-height:1.75}
+main{width:min(900px,100%);margin:auto;padding:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(16px,4vw,26px);margin:14px 0;box-shadow:0 7px 24px #17372d0b}
+.brand{text-align:center}.brand-mark{width:min(130px,38vw);height:auto;object-fit:contain}
+h1,h2{color:var(--green);line-height:1.4}h1{font-size:clamp(22px,5vw,30px);margin:.35em 0}h2{font-size:20px}
+p{margin:.5em 0 1em}.muted,.hint{color:var(--muted);font-size:14px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{display:block;min-width:0;margin:8px 0;font-weight:700}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:5px;padding:12px;border:1px solid #c7d8cf;border-radius:10px;background:#fff;color:var(--ink);font:inherit;min-height:46px}
+.field textarea{min-height:104px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:3px solid #087f5830;border-color:var(--green)}
+.field input[type=file]{padding:9px;font-size:14px}
+.field input[type=checkbox]{display:inline-block;width:20px;min-height:20px;vertical-align:middle;margin-inline-end:8px}
+.required{color:#a32222}.notice{background:#fff8e8;border:1px solid #ead9a8;border-radius:12px;padding:12px;margin:12px 0}
+.button{display:inline-flex;justify-content:center;align-items:center;min-height:48px;padding:12px 18px;border:0;border-radius:11px;background:var(--green);color:#fff;text-decoration:none;font:700 16px Arial,Tahoma,sans-serif;cursor:pointer}
+.button.secondary{background:#eaf4ef;color:var(--ink);border:1px solid var(--line)}
+.button:disabled{opacity:.65;cursor:wait}
+.form-message{padding:13px;border-radius:11px;margin-top:14px;white-space:pre-wrap}
+.form-message[hidden]{display:none}.form-message.success{background:#edf8f2;color:#155b3c;border:1px solid #cce8d8}.form-message.error{background:#fff0f0;color:#8b1e1e;border:1px solid #f0cccc}
+.file-name{display:block;color:var(--muted);font-size:13px;font-weight:400;overflow-wrap:anywhere}
+.honeypot{position:absolute!important;inset-inline-start:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+.back-home{margin-top:10px}footer{color:var(--muted);font-size:13px;text-align:center;padding:12px}
+@media(max-width:620px){main{padding:7px}.form-grid{grid-template-columns:1fr}.button{width:100%}.card{border-radius:16px}}
