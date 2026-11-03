@@ -3,17 +3,33 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 export type DbCall = { table: string; op: string; args: any[]; filters: [string, any][] };
+export type RpcCall = { name: string; args: Record<string, unknown> };
+export type RpcResult = { data: any; error: any };
 
-export function loadFunction(name: string, env: Record<string, string>, fetchImpl: (url: string, init?: any) => Promise<any>) {
+export function loadFunction(
+  name: string,
+  env: Record<string, string>,
+  fetchImpl: (url: string, init?: any) => Promise<any>,
+  rpcImpl: (name: string, args: Record<string, unknown>) => Promise<RpcResult> =
+    async () => ({ data: null, error: null }),
+) {
   const sharedKnowledge = readFileSync(resolve(import.meta.dir, "../../supabase/functions/_shared/rafiq-knowledge.ts"), "utf8")
     .replace(/^export /gm, "");
-  const raw = (sharedKnowledge + "\n" + readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8"))
+  const functionSource = readFileSync(resolve(import.meta.dir, `../../supabase/functions/${name}/index.ts`), "utf8")
     .replace(/^import .*$/gm, "");
+  // Keep shared-module declarations in a closure so names such as normalize()
+  // cannot collide with declarations in the Edge Function under test.
+  const raw = `const answerFromKnowledge = (() => {\n${sharedKnowledge}\nreturn answerFromKnowledge;\n})();\n${functionSource}`;
   const src = new Bun.Transpiler({ loader: "ts" }).transformSync(raw);
   const calls: DbCall[] = [];
+  const rpcCalls: RpcCall[] = [];
   const existing: Record<string, any> = {};
 
   const createClient = () => ({
+    rpc(rpcName: string, args: Record<string, unknown>) {
+      rpcCalls.push({ name: rpcName, args });
+      return rpcImpl(rpcName, args);
+    },
     from(table: string) {
       const call: DbCall = { table, op: "select", args: [], filters: [] };
       calls.push(call);
@@ -34,5 +50,10 @@ export function loadFunction(name: string, env: Record<string, string>, fetchImp
   let handler: (req: Request) => Promise<Response>;
   const Deno = { env: { get: (key: string) => env[key] }, serve: (fn: any) => { handler = fn; } };
   new Function("Deno", "createClient", "fetch", "crypto", "console", src)(Deno, createClient, fetchImpl, globalThis.crypto, { error() {}, log() {} });
-  return { handler: (request: Request) => handler(request), calls, existing };
+  return {
+    handler: (request: Request) => handler(request),
+    calls,
+    rpcCalls,
+    existing,
+  };
 }
