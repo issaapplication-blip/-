@@ -34,7 +34,7 @@ describe("RAFIQ dedicated public intake pages", () => {
     expect(js).toContain('data.append("files"');
     expect(js).toContain('data.append("document_category"');
     expect(js).toContain('data.set("website", "")');
-    expect(js).toContain('data.set("privacy_consent", "accepted")');
+    for (const [page] of pages) expect(read(page)).toContain('name="privacy_consent" value="accepted" required');
   });
 
   test("file policy is restricted to PDF/JPG/PNG and 8 MB per file", () => {
