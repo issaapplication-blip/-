@@ -2,11 +2,18 @@
   "use strict";
   const MAX_FILE_BYTES = 8 * 1024 * 1024;
   const MAX_FILES = 8;
+  const submitting = new WeakSet();
   const ALLOWED = new Map([[".pdf","application/pdf"],[".jpg","image/jpeg"],[".jpeg","image/jpeg"],[".png","image/png"]]);
   const errorText = (value) => ({
     unsupported_file_type: "نوع الملف غير مسموح. ارفع PDF أو JPG أو PNG فقط.",
     file_too_large: "حجم الملف يتجاوز 8 ميغابايت.",
-    too_many_files: "يمكن إرفاق 8 ملفات كحد أقصى."
+    too_many_files: "يمكن إرفاق 8 ملفات كحد أقصى.",
+    consent_required: "يرجى الموافقة على مراجعة البيانات قبل الإرسال.",
+    rate_limited: "تم تجاوز عدد المحاولات. يرجى الانتظار قليلًا ثم إعادة المحاولة.",
+    server_configuration_incomplete: "خدمة استقبال الطلبات غير جاهزة حاليًا. يرجى المحاولة لاحقًا.",
+    public_intake_configuration_unavailable: "خدمة استقبال الطلبات غير جاهزة حاليًا. يرجى المحاولة لاحقًا.",
+    upload_failed: "تعذر حفظ أحد الملفات. لم يُعتمد الطلب؛ يرجى إعادة المحاولة.",
+    request_failed: "تعذر حفظ الطلب الآن. حاول مرة أخرى لاحقًا."
   }[value] || value || "تعذر إرسال الطلب. حاول مرة أخرى.");
   function showMessage(target,message,success){
     if(!target)return;
@@ -34,13 +41,17 @@
     return{selected};
   }
   async function submitForm(form){
+    if(submitting.has(form))return;
+    submitting.add(form);
     const message=form.querySelector("[data-form-message]");
     const button=form.querySelector('button[type="submit"]');
     const trap=form.querySelector('input[name="website"]');
-    if(trap&&trap.value.trim()){showMessage(message,"تم استلام الطلب.",true);return;}
-    if(!form.reportValidity())return;
+    if(trap&&trap.value.trim()){showMessage(message,"تم استلام الطلب.",true);submitting.delete(form);return;}
+    if(!form.reportValidity()){submitting.delete(form);return;}
     const checked=validateFiles(form);
-    if(checked.error){showMessage(message,checked.error,false);return;}
+    if(checked.error){showMessage(message,checked.error,false);submitting.delete(form);return;}
+    const consent=form.querySelector('input[name="privacy_consent"]');
+    if(!consent||!consent.checked){showMessage(message,"يرجى الموافقة على مراجعة البيانات قبل الإرسال.",false);submitting.delete(form);return;}
     const data=new FormData(form);
     for(const input of Array.from(form.querySelectorAll('input[type="file"][data-document-category]')))data.delete(input.name);
     for(const item of checked.selected){data.append("files",item.file,item.file.name);data.append("document_category",item.category);}
@@ -53,7 +64,7 @@
       const result=await response.json().catch(()=>null);
       if(!response.ok||!result||result.ok!==true)throw new Error(errorText(result?.error));
       const requestId=result.request_id||(result.application_number?"RAFIQ-REQ-"+String(result.application_number).padStart(6,"0"):"");
-      const confirmation=requestId?"تم استلام طلبك بنجاح. رقم الطلب: "+requestId+". سنراجع البيانات ونتواصل معك عند الحاجة.":"تم استلام طلبك بنجاح. سنراجع البيانات ونتواصل معك عند الحاجة.";
+      const confirmation=requestId?"تم استلام طلبك وسنتواصل معك بعد مراجعة الإدارة. رقم الطلب: "+requestId:"تم استلام طلبك وسنتواصل معك بعد مراجعة الإدارة.";
       showMessage(message,confirmation,true);form.reset();
       form.querySelectorAll("[data-file-name]").forEach(node=>{node.textContent="";});
     }catch(error){showMessage(message,errorText(error?.message),false);}
