@@ -63,6 +63,30 @@ test("cleanup accepts the plural intakes path used by public-intake", async () =
   expect(removedPaths).toEqual(paths);
 });
 
+
+test("cleanup supports both legacy singular and current plural intake storage folders", async () => {
+  const cleanup = loadCleanup();
+  let removedPaths: string[] = [];
+  const db = {
+    storage: {
+      from() {
+        return {
+          async remove(paths: string[]) {
+            removedPaths = paths;
+            return { data: paths.map((name) => ({ name })), error: null };
+          },
+        };
+      },
+    },
+  };
+
+  const paths = ["intake/abc/legacy.pdf", "intakes/abc/current.pdf"];
+  const result = await cleanup(db, "abc", paths);
+
+  expect(result).toEqual({ ok: true, removed: 2, error: null });
+  expect(removedPaths).toEqual(paths);
+});
+
 test("cleanup refuses paths outside the rejected intake folder", async () => {
   const cleanup = loadCleanup();
   let removeCalled = false;
