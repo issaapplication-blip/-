@@ -90,7 +90,7 @@ async function claim(db: D1Like, id: number): Promise<"claimed" | "completed" | 
   const result = await db.prepare(
     "INSERT INTO telegram_update_receipts(update_id,status,attempts,created_at,updated_at) VALUES(?,'processing',1,?,?) " +
     "ON CONFLICT(update_id) DO UPDATE SET status='processing',attempts=attempts+1,updated_at=excluded.updated_at " +
-    "WHERE telegram_update_receipts.status='failed'"
+    "WHERE telegram_update_receipts.status='failed' OR (telegram_update_receipts.status='processing' AND telegram_update_receipts.updated_at < excluded.updated_at - 120)"
   ).bind(id, now, now).run();
   if ((result.meta?.changes || 0) > 0) return "claimed";
   const row = await db.prepare("SELECT status FROM telegram_update_receipts WHERE update_id=?").bind(id).first<{status:string}>();
