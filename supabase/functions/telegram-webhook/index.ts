@@ -168,6 +168,147 @@ async function getActiveSession(chatId: string) {
   return data;
 }
 
+async function deliverManagerNotifications(
+  session: any,
+  chatId: string,
+  userId: string,
+  notes: string | null,
+): Promise<boolean> {
+  if (MANAGER_CHAT_IDS.length === 0) {
+    await sendText(chatId, "حُفظت تفاصيل طلبك، لكن قناة مراجعة الإدارة غير مهيأة حاليًا. لم يُرسل الطلب إلى الإدارة بعد. يرجى المحاولة لاحقًا باستخدام /retry أو التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299.");
+    console.error(JSON.stringify({ event: "telegram_manager_destinations_missing", request_id: session.request_id }));
+    return true;
+  }
+
+  const destinations = MANAGER_CHAT_IDS.map((manager_chat_id) => ({
+    request_id: session.request_id,
+    manager_chat_id,
+  }));
+  const { error: prepareError } = await db!.from("rafiq_telegram_manager_deliveries")
+    .upsert(destinations, { onConflict: "request_id,manager_chat_id", ignoreDuplicates: true });
+  if (prepareError) throw new Error("telegram_manager_delivery_prepare_failed");
+
+  const summary = [
+    "📝 طلب رعاية جديد على RAFIQ",
+    "الطلب: " + session.request_id + " (استخدم رقم الطلب لمنع تكرار المعالجة)",
+    "الخدمة: " + (serviceNames[session.service_type] || session.service_type),
+    "المنطقة: " + session.area,
+    "الدوام: " + session.schedule,
+    "تفاصيل: " + (notes || "لم تُذكر"),
+    "Chat ID: " + chatId,
+    "Telegram User ID: " + userId,
+  ].join("\n");
+
+  for (const managerId of MANAGER_CHAT_IDS) {
+    const { data: delivery, error: readError } = await db!.from("rafiq_telegram_manager_deliveries")
+      .select("status,attempts,lease_expires_at")
+      .eq("request_id", session.request_id)
+      .eq("manager_chat_id", managerId)
+      .maybeSingle();
+    if (readError || !delivery) throw new Error("telegram_manager_delivery_read_failed");
+    if (delivery.status === "sent") continue;
+
+    const now = new Date().toISOString();
+    if (delivery.status === "sending" &&
+        delivery.lease_expires_at &&
+        Date.parse(delivery.lease_expires_at) > Date.now()) {
+      continue;
+    }
+
+    let claimQuery = db!.from("rafiq_telegram_manager_deliveries")
+      .update({
+        status: "sending",
+        attempts: Number(delivery.attempts || 0) + 1,
+        lease_expires_at: new Date(Date.now() + 120000).toISOString(),
+        updated_at: now,
+        last_error: null,
+      })
+      .eq("request_id", session.request_id)
+      .eq("manager_chat_id", managerId)
+      .eq("status", delivery.status);
+    if (delivery.status === "sending") {
+      if (!delivery.lease_expires_at) continue;
+      claimQuery = claimQuery.lt("lease_expires_at", now);
+    }
+    const { data: claimed, error: claimError } = await claimQuery.select("request_id").maybeSingle();
+    if (claimError) throw new Error("telegram_manager_delivery_claim_failed");
+    if (!claimed) continue;
+
+    let sent: any;
+    try {
+      sent = await sendText(managerId, summary);
+    } catch (sendError) {
+      const reason = String(sendError).slice(0, 120);
+      const { error: failedSaveError } = await db!.from("rafiq_telegram_manager_deliveries")
+        .update({
+          status: "failed",
+          lease_expires_at: null,
+          last_error: reason,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("request_id", session.request_id)
+        .eq("manager_chat_id", managerId)
+        .eq("status", "sending");
+      if (failedSaveError) throw new Error("telegram_manager_delivery_failure_save_failed");
+      console.error(JSON.stringify({
+        event: "telegram_manager_notice_failed",
+        request_id: session.request_id,
+        manager_chat_id: managerId,
+        error: reason,
+      }));
+      continue;
+    }
+
+    const { error: sentSaveError } = await db!.from("rafiq_telegram_manager_deliveries")
+      .update({
+        status: "sent",
+        telegram_message_id: Number.isSafeInteger(sent?.message_id) ? sent.message_id : null,
+        lease_expires_at: null,
+        last_error: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("request_id", session.request_id)
+      .eq("manager_chat_id", managerId)
+      .eq("status", "sending");
+    if (sentSaveError) throw new Error("telegram_manager_delivery_receipt_save_failed");
+  }
+
+  const { data: deliveries, error: deliveriesError } = await db!.from("rafiq_telegram_manager_deliveries")
+    .select("manager_chat_id,status")
+    .eq("request_id", session.request_id)
+    .in("manager_chat_id", MANAGER_CHAT_IDS);
+  if (deliveriesError) throw new Error("telegram_manager_delivery_status_read_failed");
+  const allDelivered = MANAGER_CHAT_IDS.every((managerId) =>
+    (deliveries || []).some((row: any) => row.manager_chat_id === managerId && row.status === "sent")
+  );
+  if (!allDelivered) {
+    await sendText(chatId, "حُفظ طلبك وتفاصيله، لكن لم يكتمل وصول إشعار الإدارة بعد. لم نؤكد الإرسال. أرسل /retry لإعادة محاولة الإشعارات المتبقية دون إعادة كتابة التفاصيل.");
+    return true;
+  }
+
+  const { data: submitted, error: submitError } = await db!.from("rafiq_telegram_request_sessions")
+    .update({ status: "submitted", updated_at: new Date().toISOString() })
+    .eq("id", session.id)
+    .eq("status", "collecting")
+    .select("id")
+    .maybeSingle();
+  if (submitError) throw new Error("telegram_request_submit_failed");
+  if (!submitted) {
+    const { data: current, error: currentError } = await db!.from("rafiq_telegram_request_sessions")
+      .select("status")
+      .eq("id", session.id)
+      .maybeSingle();
+    if (currentError) throw new Error("telegram_request_state_read_failed");
+    if (current?.status === "cancelled") {
+      await sendText(chatId, "تم إلغاء هذا الطلب، لذلك لم نرسل تأكيدًا بتقديمه إلى الإدارة.");
+    }
+    return true;
+  }
+
+  await sendText(chatId, "✅ وصل طلبك إلى قناة مراجعة الإدارة بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
+  return true;
+}
+
 async function processRequestMessage(chatId: string, userId: string, text: string): Promise<boolean> {
   const session = await getActiveSession(chatId);
   if (!session) return false;
@@ -189,50 +330,27 @@ async function processRequestMessage(chatId: string, userId: string, text: strin
     return true;
   }
 
-  const notes = text.trim().toLowerCase() === "/skip" ? null : text.slice(0, 1000);
-  // Preserve the customer's final notes before any manager-delivery failure path.
-  // Keep the session in collecting so delivery can be retried without losing details.
-  const { error: notesSaveError } = await db!.from("rafiq_telegram_request_sessions").update({
-    notes, updated_at: new Date().toISOString(),
-  }).eq("id", session.id).eq("status", "collecting");
-  if (notesSaveError) throw new Error("telegram_request_notes_save_failed");
+  const retryRequested = /^\/retry$/i.test(text.trim());
+  if (session.notes !== null && session.notes !== undefined) {
+    if (!retryRequested) {
+      await sendText(chatId, "تم حفظ التفاصيل بالفعل. أرسل /retry لإعادة محاولة إشعارات الإدارة دون استبدال التفاصيل، أو /stop لإلغاء الطلب.");
+      return true;
+    }
+    return deliverManagerNotifications(session, chatId, userId, String(session.notes));
+  }
 
-  // Never mark a request submitted or tell the customer it succeeded unless an
-  // authorized admin destination is configured and Telegram confirms delivery.
-  if (MANAGER_CHAT_IDS.length === 0) {
-    await sendText(chatId, "وصلنا إلى نهاية نموذج الطلب، لكن قناة مراجعة الإدارة غير مهيأة حاليًا. لم يُعتمد الطلب بعد؛ يرجى التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299. يمكنك إبقاء المحادثة مفتوحة والمحاولة لاحقًا.");
-    console.error(JSON.stringify({ event: "telegram_manager_destinations_missing", request_id: session.request_id }));
+  const notes = text.trim().toLowerCase() === "/skip" ? "" : text.slice(0, 1000);
+  const { data: saved, error: notesSaveError } = await db!.from("rafiq_telegram_request_sessions").update({
+    notes, updated_at: new Date().toISOString(),
+  }).eq("id", session.id).eq("status", "collecting").select("id").maybeSingle();
+  if (notesSaveError) throw new Error("telegram_request_notes_save_failed");
+  if (!saved) {
+    await sendText(chatId, "لم يعد هذا الطلب قيد الاستكمال. أرسل /request لبدء طلب جديد عند الحاجة.");
     return true;
   }
 
-  const summary = [
-    "📝 طلب رعاية جديد على RAFIQ",
-    "الطلب: " + session.request_id + " (استخدم رقم الطلب لمنع تكرار المعالجة)",
-    "الخدمة: " + (serviceNames[session.service_type] || session.service_type),
-    "المنطقة: " + session.area,
-    "الدوام: " + session.schedule,
-    "تفاصيل: " + (notes || "لم تُذكر"),
-    "Chat ID: " + chatId,
-    "Telegram User ID: " + userId,
-  ].join("\n");
-  for (const managerId of MANAGER_CHAT_IDS) {
-    try {
-      await sendText(managerId, summary);
-    } catch (error) {
-      console.error(JSON.stringify({ event: "telegram_manager_notice_failed", request_id: session.request_id, error: String(error).slice(0, 120) }));
-      await sendText(chatId, "لم نتمكن من تأكيد وصول طلبك إلى الإدارة، لذلك لم نعلّمه كطلب مُرسل. يرجى المحاولة لاحقًا أو التواصل مع الإدارة عبر WhatsApp ‏+961 81 506 299.");
-      return true;
-    }
-  }
-
-  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
-    notes, status: "submitted", updated_at: new Date().toISOString(),
-  }).eq("id", session.id).eq("status", "collecting");
-  if (error) throw new Error("telegram_request_submit_failed");
-  await sendText(chatId, "✅ وصل طلبك إلى قناة مراجعة الإدارة بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
-  return true;
+  return deliverManagerNotifications(session, chatId, userId, notes || null);
 }
-
 async function processUpdate(update: any) {
   const callback = update?.callback_query;
   if (callback) {
