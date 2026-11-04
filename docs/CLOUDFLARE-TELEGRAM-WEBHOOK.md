@@ -6,7 +6,7 @@ Adds POST /api/telegram/webhook and a GET health response. This handler does not
 
 - Only private Telegram chats are processed; group/channel updates are ignored.
 - Requests require Telegram's X-Telegram-Bot-Api-Secret-Token header.
-- Body limit: 256 KiB. Per-chat rate limit: 12 updates/minute.
+- Body limit: 256 KiB. Per-chat rate limit: 12 updates/minute. Stalled webhook receipt claims can be reclaimed after 120 seconds.
 - Raw updates, usernames, profile names, phone numbers, and message history are not persisted.
 - A request stores only service, area, schedule, Telegram chat ID, request ID, status, and timestamps.
 - Requests are marked new; they are not bookings and do not trigger WhatsApp messages.
@@ -16,13 +16,13 @@ Adds POST /api/telegram/webhook and a GET health response. This handler does not
 ## Configure Cloudflare
 
 1. Create a D1 database in the same Cloudflare account as the Pages project:
-   wrangler d1 create rafiq-telegram
+   npx wrangler@latest d1 create rafiq-telegram
 2. Bind it to the RAFIQ Pages project:
-   Dashboard > Workers & Pages > RAFIQ Pages project > Settings > Functions > D1 database bindings.
-   Variable name: RAFIQ_DB. Select database: rafiq-telegram.
+   Dashboard > Workers & Pages > RAFIQ Pages project > Settings > Bindings > Add > D1 database.
+   Variable name: RAFIQ_DB. Select database: rafiq-telegram, then redeploy so the binding takes effect.
 3. Apply the schema from the repository root:
-   wrangler d1 execute rafiq-telegram --remote --file=migrations/0001_telegram_d1.sql
-4. Add encrypted environment variables (Production; Preview only with a test bot):
+   npx wrangler@latest d1 execute rafiq-telegram --remote --file=migrations/0001_telegram_d1.sql
+4. Add encrypted secrets in Settings > Variables and Secrets > Add (Production; Preview only with a test bot):
    TELEGRAM_BOT_TOKEN
    TELEGRAM_WEBHOOK_SECRET (32–256 chars; A–Z, a–z, 0–9, underscore, hyphen)
    TELEGRAM_MANAGER_CHAT_IDS (comma-separated numeric admin chat IDs; preserve the minus sign for supergroups)
