@@ -168,6 +168,90 @@ async function getActiveSession(chatId: string) {
   return data;
 }
 
+async function getRequestStatus(sessionId: string): Promise<string | null> {
+  const { data, error } = await db!.from("rafiq_telegram_request_sessions")
+    .select("status")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (error) throw new Error("telegram_request_state_read_failed");
+  return typeof data?.status === "string" ? data.status : null;
+}
+
+async function notifyManagersOfCancellation(session: any): Promise<void> {
+  const { data: deliveries, error } = await db!.from("rafiq_telegram_manager_deliveries")
+    .select("manager_chat_id,cancellation_notice_status,cancellation_notice_lease_expires_at")
+    .eq("request_id", session.request_id)
+    .eq("status", "sent");
+  if (error) throw new Error("telegram_manager_cancellation_read_failed");
+
+  for (const delivery of deliveries || []) {
+    if (delivery.cancellation_notice_status === "sent") continue;
+    const now = new Date().toISOString();
+    let claimQuery = db!.from("rafiq_telegram_manager_deliveries")
+      .update({
+        cancellation_notice_status: "sending",
+        cancellation_notice_lease_expires_at: new Date(Date.now() + 120000).toISOString(),
+        cancellation_notice_error: null,
+        updated_at: now,
+      })
+      .eq("request_id", session.request_id)
+      .eq("manager_chat_id", delivery.manager_chat_id)
+      .eq("status", "sent");
+
+    if (delivery.cancellation_notice_status === "sending") {
+      if (!delivery.cancellation_notice_lease_expires_at ||
+          Date.parse(delivery.cancellation_notice_lease_expires_at) > Date.now()) continue;
+      claimQuery = claimQuery.eq("cancellation_notice_status", "sending")
+        .lt("cancellation_notice_lease_expires_at", now);
+    } else {
+      if (!["pending", "failed"].includes(delivery.cancellation_notice_status)) continue;
+      claimQuery = claimQuery.eq("cancellation_notice_status", delivery.cancellation_notice_status);
+    }
+
+    const { data: claimed, error: claimError } = await claimQuery
+      .select("manager_chat_id")
+      .maybeSingle();
+    if (claimError) throw new Error("telegram_manager_cancellation_claim_failed");
+    if (!claimed) continue;
+
+    try {
+      await sendText(
+        delivery.manager_chat_id,
+        "⚠️ إلغاء طلب RAFIQ " + session.request_id +
+          "\\nألغى العميل الطلب. يرجى عدم بدء أي إجراء أو متابعة هذا الطلب."
+      );
+      const { error: saveError } = await db!.from("rafiq_telegram_manager_deliveries")
+        .update({
+          cancellation_notice_status: "sent",
+          cancellation_notice_lease_expires_at: null,
+          cancellation_notice_error: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("request_id", session.request_id)
+        .eq("manager_chat_id", delivery.manager_chat_id)
+        .eq("cancellation_notice_status", "sending");
+      if (saveError) throw new Error("telegram_manager_cancellation_receipt_failed");
+    } catch (sendError) {
+      const { error: saveError } = await db!.from("rafiq_telegram_manager_deliveries")
+        .update({
+          cancellation_notice_status: "failed",
+          cancellation_notice_lease_expires_at: null,
+          cancellation_notice_error: String(sendError).slice(0, 160),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("request_id", session.request_id)
+        .eq("manager_chat_id", delivery.manager_chat_id)
+        .eq("cancellation_notice_status", "sending");
+      if (saveError) throw new Error("telegram_manager_cancellation_failure_save_failed");
+      console.error(JSON.stringify({
+        event: "telegram_manager_cancellation_notice_failed",
+        request_id: session.request_id,
+        manager_chat_id: delivery.manager_chat_id,
+      }));
+    }
+  }
+}
+
 async function deliverManagerNotifications(
   session: any,
   chatId: string,
@@ -200,8 +284,14 @@ async function deliverManagerNotifications(
   ].join("\n");
 
   for (const managerId of MANAGER_CHAT_IDS) {
+    const requestStatus = await getRequestStatus(session.id);
+    if (requestStatus !== "collecting") {
+      if (requestStatus === "cancelled") await notifyManagersOfCancellation(session);
+      return true;
+    }
+
     const { data: delivery, error: readError } = await db!.from("rafiq_telegram_manager_deliveries")
-      .select("status,attempts,lease_expires_at")
+      .select("status,attempts,lease_expires_at,cancellation_notice_status,cancellation_notice_lease_expires_at")
       .eq("request_id", session.request_id)
       .eq("manager_chat_id", managerId)
       .maybeSingle();
@@ -262,7 +352,7 @@ async function deliverManagerNotifications(
     const { error: sentSaveError } = await db!.from("rafiq_telegram_manager_deliveries")
       .update({
         status: "sent",
-        telegram_message_id: Number.isSafeInteger(sent?.message_id) ? sent.message_id : null,
+        telegram_message_id: Number.isSafeInteger(sent?.result?.message_id) ? sent.result.message_id : null,
         lease_expires_at: null,
         last_error: null,
         updated_at: new Date().toISOString(),
@@ -271,6 +361,12 @@ async function deliverManagerNotifications(
       .eq("manager_chat_id", managerId)
       .eq("status", "sending");
     if (sentSaveError) throw new Error("telegram_manager_delivery_receipt_save_failed");
+  }
+
+  const finalRequestStatus = await getRequestStatus(session.id);
+  if (finalRequestStatus !== "collecting") {
+    if (finalRequestStatus === "cancelled") await notifyManagersOfCancellation(session);
+    return true;
   }
 
   const { data: deliveries, error: deliveriesError } = await db!.from("rafiq_telegram_manager_deliveries")
@@ -300,6 +396,7 @@ async function deliverManagerNotifications(
       .maybeSingle();
     if (currentError) throw new Error("telegram_request_state_read_failed");
     if (current?.status === "cancelled") {
+      await notifyManagersOfCancellation(session);
       await sendText(chatId, "تم إلغاء هذا الطلب، لذلك لم نرسل تأكيدًا بتقديمه إلى الإدارة.");
     }
     return true;
@@ -403,8 +500,14 @@ async function processUpdate(update: any) {
   if (command === "/stop") {
     const session = await getActiveSession(String(chatId));
     if (session) {
-      const { error } = await db!.from("rafiq_telegram_request_sessions").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", session.id);
+      const { data: cancelled, error } = await db!.from("rafiq_telegram_request_sessions")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .eq("id", session.id)
+        .eq("status", "collecting")
+        .select("id")
+        .maybeSingle();
       if (error) throw new Error("telegram_request_cancel_failed");
+      if (cancelled) await notifyManagersOfCancellation(session);
     }
     await sendText(chatId, "تم إيقاف الطلب الجاري. يمكنك بدء طلب جديد في أي وقت عبر /request.");
     return;
