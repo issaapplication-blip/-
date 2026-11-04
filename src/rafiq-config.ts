@@ -1,5 +1,12 @@
+const DEFAULT_RAFIQ_PLATFORM_URL = "https://index-html.issaapplication.workers.dev";
+
+export const resolveRafiqPlatformUrl = (configuredUrl?: string | null) => {
+  const normalized = String(configuredUrl ?? "").trim().replace(/\/$/, "");
+  return normalized || DEFAULT_RAFIQ_PLATFORM_URL;
+};
+
 export const RAFIQ_CONFIG = {
-  platformUrl: (process.env.PLATFORM_URL ?? process.env.RAFIQ_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, ""),
+  platformUrl: resolveRafiqPlatformUrl(process.env.PLATFORM_URL ?? process.env.RAFIQ_PUBLIC_BASE_URL),
   telegramBotUrl: (process.env.TELEGRAM_BOT_URL ?? "https://t.me/RAFIQ_Care_Bot").trim(),
   telegramGroupUrl: (process.env.TELEGRAM_GROUP_URL ?? "https://t.me/+a7CDblNyGkw1Yjg8").trim(),
   whatsappChannelUrl: (process.env.WHATSAPP_CHANNEL_URL ?? "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K").trim(),
