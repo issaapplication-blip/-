@@ -418,7 +418,7 @@ async function processUpdate(update: any) {
     const requestId = "RFQ-TG-" + new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14) + "-" + crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
     const { error } = await db!.from("rafiq_telegram_request_sessions").insert({
       request_id: requestId, chat_id: String(chatId), telegram_user_id: userId,
-      language: "ar", status: "collecting", is_test: false,
+      language: "ar", status: "collecting",
     });
     if (error) throw new Error("telegram_request_start_failed");
     await sendText(chatId, "📝 بدأنا طلب رعاية. رقم الطلب: " + requestId + "\n\nاختر الخدمة المطلوبة:", serviceKeyboard);
