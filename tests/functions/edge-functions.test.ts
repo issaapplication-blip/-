@@ -55,6 +55,9 @@ describe("rafiq-agent caller isolation", () => {
     });
     await f.handler(post({ message: "مرحبا" }));
     expect(sent.model).toBe("test-model");
+    expect(sent.input[0].content[0].text).toContain("رفيق | RAFIQ — رعاية منزلية آمنة لكبار السن والمرضى في لبنان.");
+    expect(sent.input[0].content[0].text).toContain("@RAFIQ_Care_Bot");
+    expect(sent.input[0].content[0].text).toContain("https://t.me/RAFIQ_Care_Bot");
   });
   test("emergency wording creates an escalation record", async () => {
     const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
