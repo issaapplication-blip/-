@@ -116,89 +116,69 @@ const systemPrompt = `أنت وكيل خدمة العملاء والاستقبا
 عند اكتمال المعلومات، لخّص الطلب واذكر أن الإدارة ستراجعه وتؤكد التفاصيل.
 لا تدّعِ أن الطلب أُرسل إلى الإدارة إلا إذا نجح حفظه فعليًا.`;
 
-function extractOpenAIText(payload: any): string {
-  if (typeof payload?.output_text === "string" && payload.output_text.trim()) return payload.output_text.trim();
-  const parts: string[] = [];
-  for (const item of payload?.output ?? []) for (const c of item?.content ?? []) {
-    if (typeof c?.text === "string") parts.push(c.text);
-  }
-  return parts.join("\n").trim();
+function redactAgentText(value: string): string {
+  return value
+    .replace(/(?:\\+?961[\\s().-]*0?[\\s().-]*[1-9](?:[\\s().-]*\\d){6,7})/g, "[رقم محجوب]")
+    .replace(/\\b(?:\\+?\\d[\\d\\s().-]{7,}\\d)\\b/g, "[رقم محجوب]")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[بريد محجوب]")
+    .slice(0, 1500);
 }
 
-async function callOpenAI(message: string, context: ChatMessage[]): Promise<string | null> {
-  const key = Deno.env.get("OPENAI_API_KEY");
-  if (!key) return null;
-  const model = (Deno.env.get("RAFIQ_AGENT_MODEL") || Deno.env.get("OPENAI_MODEL") || "").trim();
-  if (!model) {
-    console.error(JSON.stringify({ event: "rafiq_agent_model_missing", provider: "openai" }));
-    return null;
-  }
-  const input = [
-    { role: "system", content: [{ type: "input_text", text: systemPrompt }] },
-    ...context.slice(-10).map((x) => ({ role: x.role, content: [{ type: "input_text", text: x.content }] })),
-    { role: "user", content: [{ type: "input_text", text: message }] },
-  ];
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(10000),
-    body: JSON.stringify({ model, input, max_output_tokens: 650 }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    console.error(JSON.stringify({ event: "rafiq_agent_provider_error", provider: "openai", status: response.status, detail: String(payload?.error?.code || payload?.error?.type || "provider_error").slice(0, 100) }));
-    return null;
-  }
-  return extractOpenAIText(payload) || null;
-}
+async function callWorkersAI(message: string, context: ChatMessage[]): Promise<string | null> {
+  const accountId = (Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || "").trim();
+  const apiToken = (Deno.env.get("CLOUDFLARE_API_TOKEN") || "").trim();
+  const model = (Deno.env.get("CLOUDFLARE_AI_MODEL") || "@cf/meta/llama-3.1-8b-instruct").trim();
+  if (!accountId || !apiToken) return null;
 
-async function callGemini(message: string, context: ChatMessage[]): Promise<string | null> {
-  const key = (Deno.env.get("GEMINI_API_KEY") || "").trim();
-  if (!key) return null;
-  const model = (Deno.env.get("RAFIQ_GEMINI_MODEL") || "").trim();
-  if (!model) {
-    console.error(JSON.stringify({ event: "rafiq_agent_model_missing", provider: "gemini" }));
-    return null;
-  }
-  const contents = [
-    ...context.slice(-10).map((x) => ({ role: x.role === "assistant" ? "model" : "user", parts: [{ text: x.content }] })),
-    { role: "user", parts: [{ text: message }] },
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...context.slice(-8).map((item) => ({
+      role: item.role,
+      content: redactAgentText(item.content),
+    })),
+    { role: "user", content: redactAgentText(message) },
   ];
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST",
-    headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(10000),
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents,
-      generationConfig: { maxOutputTokens: 650, temperature: 0.3 },
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    console.error(JSON.stringify({ event: "rafiq_agent_provider_error", provider: "gemini", status: response.status, detail: String(payload?.error?.status || "provider_error").slice(0, 100) }));
+
+  try {
+    const response = await fetch(
+      "https://api.cloudflare.com/client/v4/accounts/" + encodeURIComponent(accountId) +
+        "/ai/run/" + encodeURIComponent(model),
+      {
+        method: "POST",
+        headers: {
+          authorization: "Bearer " + apiToken,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ messages, max_tokens: 650, temperature: 0.3 }),
+        signal: AbortSignal.timeout(10000),
+      },
+    );
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      console.error(JSON.stringify({
+        event: "rafiq_agent_provider_error",
+        provider: "cloudflare_workers_ai",
+        status: response.status,
+      }));
+      return null;
+    }
+    const reply = typeof payload?.result?.response === "string"
+      ? payload.result.response.trim()
+      : "";
+    return reply ? reply.slice(0, 3000) : null;
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "rafiq_agent_provider_error",
+      provider: "cloudflare_workers_ai",
+      reason: String(error).slice(0, 120),
+    }));
     return null;
   }
-  const reply = (payload?.candidates?.[0]?.content?.parts ?? [])
-    .map((part: any) => typeof part?.text === "string" ? part.text : "")
-    .filter(Boolean).join("\n").trim();
-  return reply || null;
 }
 
 async function generateReply(message: string, context: ChatMessage[]): Promise<{ reply: string; mode: string }> {
-  const provider = (Deno.env.get("RAFIQ_AGENT_PROVIDER") || "").trim().toLowerCase();
-  if (provider === "gemini") {
-    const reply = await callGemini(message, context);
-    if (reply) return { reply, mode: "gemini" };
-  } else if (provider === "openai") {
-    const reply = await callOpenAI(message, context);
-    if (reply) return { reply, mode: "openai" };
-  } else {
-    const gemini = await callGemini(message, context);
-    if (gemini) return { reply: gemini, mode: "gemini" };
-    const openai = await callOpenAI(message, context);
-    if (openai) return { reply: openai, mode: "openai" };
-  }
+  const reply = await callWorkersAI(message, context);
+  if (reply) return { reply, mode: "cloudflare_workers_ai" };
   return { reply: fallback(message), mode: "guided" };
 }
 
