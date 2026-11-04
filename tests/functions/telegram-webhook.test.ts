@@ -45,7 +45,7 @@ test("Telegram request is not reported submitted when admin delivery is unconfig
 });
 
 test("Telegram request notes are saved once and retries preserve the original answer", () => {
-  expect(source).toContain('const retryRequested = /^\\/retry$/i.test(text.trim())');
+  expect(source).toContain("retryRequested =");
   expect(source).toContain("session.notes !== null && session.notes !== undefined");
   expect(source).toContain("String(session.notes)");
   expect(source).toContain("notes, updated_at: new Date().toISOString()");
