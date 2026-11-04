@@ -127,7 +127,7 @@ function redactAgentText(value: string): string {
 async function callWorkersAI(message: string, context: ChatMessage[]): Promise<string | null> {
   const accountId = (Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || "").trim();
   const apiToken = (Deno.env.get("CLOUDFLARE_API_TOKEN") || "").trim();
-  const model = (Deno.env.get("CLOUDFLARE_AI_MODEL") || "@cf/meta/llama-3.1-8b-instruct").trim();
+  const model = (Deno.env.get("CLOUDFLARE_AI_MODEL") || "@cf/meta/llama-3.2-3b-instruct").trim();
   if (!accountId || !apiToken) return null;
 
   const messages = [
