@@ -47,7 +47,11 @@ try:
     info = api("getWebhookInfo")
     if not isinstance(info, dict) or info.get("url") != HOOK_URL:
         raise RuntimeError("webhook_url_verification_failed")
-    print("RESULT=PASS stage=telegram_webhook_registration url_match=true pending_updates=" + str(int(info.get("pending_update_count", 0))))
+    allowed = set(info.get("allowed_updates") or [])
+    required = {"message", "callback_query"}
+    if not required.issubset(allowed):
+        raise RuntimeError("webhook_allowed_updates_verification_failed")
+    print("RESULT=PASS stage=telegram_webhook_registration url_match=true allowed_updates=message,callback_query pending_updates=" + str(int(info.get("pending_update_count", 0))))
 except RuntimeError as exc:
     raise SystemExit("RESULT=FAIL stage=telegram_webhook_registration reason=" + str(exc)) from None
 PY
