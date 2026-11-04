@@ -8,6 +8,10 @@ create table if not exists public.rafiq_telegram_manager_deliveries (
   telegram_message_id bigint,
   lease_expires_at timestamptz,
   last_error text,
+  cancellation_notice_status text not null default 'pending'
+    check (cancellation_notice_status in ('pending','sending','sent','failed')),
+  cancellation_notice_lease_expires_at timestamptz,
+  cancellation_notice_error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (request_id, manager_chat_id)
