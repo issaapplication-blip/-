@@ -40,19 +40,49 @@ test("Telegram request is not reported submitted when admin delivery is unconfig
   expect(source).toContain("telegram_manager_notice_failed");
   expect(source).toContain('await sendText(managerId, summary)');
   expect(source).toContain('status: "submitted"');
-  expect(source).toContain("if (error) throw new Error(\"telegram_request_submit_failed\")");
+  expect(source).toContain('if (submitError) throw new Error("telegram_request_submit_failed")');
   expect(source).toContain("لم نتمكن من تأكيد وصول طلبك إلى الإدارة");
 });
 
-test("Telegram request notes are persisted before manager notification failure paths", () => {
-  const notesSave = source.indexOf("const { error: notesSaveError }");
-  const missingDestination = source.indexOf("if (MANAGER_CHAT_IDS.length === 0)");
-  const managerSend = source.indexOf("await sendText(managerId, summary)");
-  expect(notesSave).toBeGreaterThan(-1);
-  expect(missingDestination).toBeGreaterThan(notesSave);
-  expect(managerSend).toBeGreaterThan(notesSave);
+test("Telegram request notes are saved once and retries preserve the original answer", () => {
+  expect(source).toContain('const retryRequested = /^\\/retry$/i.test(text.trim())');
+  expect(source).toContain("session.notes !== null && session.notes !== undefined");
+  expect(source).toContain("String(session.notes)");
+  expect(source).toContain("notes, updated_at: new Date().toISOString()");
   expect(source).toContain('throw new Error("telegram_request_notes_save_failed")');
+  expect(source).toContain("أرسل /retry لإعادة محاولة إشعارات الإدارة دون استبدال التفاصيل");
+});
+
+test("manager notifications are tracked independently and successful destinations are not resent", () => {
+  expect(source).toContain('from("rafiq_telegram_manager_deliveries")');
+  expect(source).toContain('onConflict: "request_id,manager_chat_id", ignoreDuplicates: true');
+  expect(source).toContain('if (delivery.status === "sent") continue');
+  expect(source).toContain('status: "sending"');
+  expect(source).toContain('status: "sent"');
+  expect(source).toContain('status: "failed"');
+  expect(source).toContain('.in("manager_chat_id", MANAGER_CHAT_IDS)');
+  expect(source).toContain("MANAGER_CHAT_IDS.every");
+});
+
+test("manager delivery outbox migration is additive and service-role only", () => {
+  const migration = readFileSync(
+    resolve(import.meta.dir, "../../supabase/migrations/20261104190000_telegram_manager_delivery_outbox.sql"),
+    "utf8",
+  );
+  expect(migration).toContain("references public.rafiq_telegram_request_sessions(request_id) on delete cascade");
+  expect(migration).toContain("primary key (request_id, manager_chat_id)");
+  expect(migration).toContain("enable row level security");
+  expect(migration).toContain("revoke all on public.rafiq_telegram_manager_deliveries from anon, authenticated");
+  expect(migration).toContain("grant select, insert, update on public.rafiq_telegram_manager_deliveries to service_role");
+});
+
+test("Telegram request submission verifies the conditional state transition before confirming", () => {
+  expect(source).toContain('.eq("id", session.id)');
   expect(source).toContain('.eq("status", "collecting")');
+  expect(source).toContain('.select("id")');
+  expect(source).toContain("if (!submitted)");
+  expect(source).toContain('current?.status === "cancelled"');
+  expect(source).toContain("لم نرسل تأكيدًا بتقديمه إلى الإدارة");
 });
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
