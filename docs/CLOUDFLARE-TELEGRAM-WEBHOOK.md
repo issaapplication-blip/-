@@ -10,7 +10,7 @@ Adds POST /api/telegram/webhook and a GET health response. This handler does not
 - Raw updates, usernames, profile names, phone numbers, and message history are not persisted.
 - A request stores only service, area, schedule, Telegram chat ID, request ID, status, and timestamps.
 - Requests are marked new; they are not bookings and do not trigger WhatsApp messages.
-- Admin notices contain request ID, service, area, and schedule only.
+- Admin notices contain request ID, service, area, schedule, and Telegram chat ID so approved administrators can follow up through the bot. Do not add this ID to public pages or public channels.
 - /stop deletes an unfinished request session. No broadcast/marketing command is included.
 
 ## Configure Cloudflare
