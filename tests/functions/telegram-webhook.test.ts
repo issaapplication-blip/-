@@ -41,7 +41,7 @@ test("Telegram request is not reported submitted when admin delivery is unconfig
   expect(source).toContain('await sendText(managerId, summary)');
   expect(source).toContain('status: "submitted"');
   expect(source).toContain('if (submitError) throw new Error("telegram_request_submit_failed")');
-  expect(source).toContain("لم نتمكن من تأكيد وصول طلبك إلى الإدارة");
+  expect(source).toContain("لم يكتمل وصول إشعار الإدارة بعد");
 });
 
 test("Telegram request notes are saved once and retries preserve the original answer", () => {
@@ -62,6 +62,9 @@ test("manager notifications are tracked independently and successful destination
   expect(source).toContain('status: "failed"');
   expect(source).toContain('.in("manager_chat_id", MANAGER_CHAT_IDS)');
   expect(source).toContain("MANAGER_CHAT_IDS.every");
+  expect(source).toContain("async function notifyManagersOfCancellation");
+  expect(source).toContain("⚠️ إلغاء طلب RAFIQ");
+  expect(source).toContain("cancellation_notice_status: \"sending\"");
 });
 
 test("manager delivery outbox migration is additive and service-role only", () => {
@@ -74,6 +77,8 @@ test("manager delivery outbox migration is additive and service-role only", () =
   expect(migration).toContain("enable row level security");
   expect(migration).toContain("revoke all on public.rafiq_telegram_manager_deliveries from anon, authenticated");
   expect(migration).toContain("grant select, insert, update on public.rafiq_telegram_manager_deliveries to service_role");
+  expect(migration).toContain("cancellation_notice_status text not null default 'pending'");
+  expect(migration).toContain("cancellation_notice_lease_expires_at timestamptz");
 });
 
 test("Telegram request insert matches the tracked request-session schema", () => {
@@ -87,7 +92,14 @@ test("Telegram request submission verifies the conditional state transition befo
   expect(source).toContain('.select("id")');
   expect(source).toContain("if (!submitted)");
   expect(source).toContain('current?.status === "cancelled"');
+  expect(source).toContain('await notifyManagersOfCancellation(session)');
+  expect(source).toContain('.eq("status", "collecting")');
   expect(source).toContain("لم نرسل تأكيدًا بتقديمه إلى الإدارة");
+});
+
+test("Telegram manager delivery stores the message ID from Telegram's result envelope", () => {
+  expect(source).toContain("sent?.result?.message_id");
+  expect(source).not.toContain("sent?.message_id");
 });
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
