@@ -12,6 +12,9 @@ const CLOUDFLARE_ACCOUNT_ID = (Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || "").trim
 const CLOUDFLARE_API_TOKEN = (Deno.env.get("CLOUDFLARE_API_TOKEN") || "").trim();
 const CLOUDFLARE_AI_MODEL = (Deno.env.get("CLOUDFLARE_AI_MODEL") || "@cf/meta/llama-3.1-8b-instruct").trim();
 const SIGNATURE = "— فريق رفيق | RAFIQ 🇱🇧";
+const BOT_USERNAME = "@RAFIQ_Care_Bot";
+const BOT_PUBLIC_URL = "https://t.me/RAFIQ_Care_Bot";
+const BOT_DESCRIPTION = "رفيق | RAFIQ — رعاية منزلية آمنة لكبار السن والمرضى في لبنان.";
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error(JSON.stringify({ event: "telegram_webhook_missing_supabase_configuration" }));
@@ -93,7 +96,7 @@ function faq(text: string): string {
     return "نستقبل طلبات من مناطق لبنان، ويُراجع التوفر لكل خدمة ومنطقة على حدة. اكتب /request وحدد المنطقة المطلوبة.";
   }
   if (/(تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|رقم الاداره)/.test(t)) {
-    return "للمتابعة الإدارية: WhatsApp ‏+961 81 506 299. ويمكنك متابعة بوت رفيق: https://t.me/RAFIQ_Care_Bot. الردود الآلية على WhatsApp ما زالت متوقفة إلى حين اجتياز اختبار منفصل.";
+    return "للمتابعة الإدارية: WhatsApp ‏+961 81 506 299. البوت الأساسي: " + BOT_USERNAME + " — " + BOT_PUBLIC_URL + ". الردود الآلية على WhatsApp ما زالت متوقفة إلى حين اجتياز اختبار منفصل.";
   }
   return "";
 }
@@ -120,7 +123,7 @@ async function generateFaqReply(text: string): Promise<string> {
         headers: { "authorization": "Bearer " + CLOUDFLARE_API_TOKEN, "content-type": "application/json" },
         body: JSON.stringify({
           messages: [
-            { role: "system", content: "أنت مساعد خدمة العملاء لمنصة RAFIQ للرعاية المنزلية في لبنان. أجب بالعربية بشكل واضح ومفيد عن الخدمات فقط. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. إذا لم تعرف، قل بوضوح إن الإدارة ستراجع السؤال." },
+            { role: "system", content: "أنت مساعد خدمة العملاء للبوت الرسمي " + BOT_DESCRIPTION + " (" + BOT_USERNAME + " — " + BOT_PUBLIC_URL + "). أجب بالعربية بشكل واضح ومفيد عن الخدمات فقط. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. إذا لم تعرف، قل بوضوح إن الإدارة ستراجع السؤال." },
             { role: "user", content: redactPhones(text) }
           ],
           max_tokens: 350,
@@ -490,7 +493,7 @@ async function processUpdate(update: any) {
   const userId = String(message.from?.id || chatId);
 
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\n\n/services — الخدمات\n/request — تسجيل طلب تراجعه الإدارة\n/stop — إلغاء الطلب الجاري");
+    await sendText(chatId, "أهلًا بك في " + BOT_DESCRIPTION + "\n\n" + BOT_USERNAME + "\n" + BOT_PUBLIC_URL + "\n\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\n\n/services — الخدمات\n/request — تسجيل طلب تراجعه الإدارة\n/stop — إلغاء الطلب الجاري");
     return;
   }
   if (command === "/services") {
