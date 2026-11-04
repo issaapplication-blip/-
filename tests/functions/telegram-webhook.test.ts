@@ -73,6 +73,10 @@ test("manager notifications are tracked independently and successful destination
   expect(source).toContain("async function notifyManagersOfCancellation");
   expect(source).toContain("⚠️ إلغاء طلب RAFIQ");
   expect(source).toContain("cancellation_notice_status: \"sending\"");
+  expect(source).toContain("async function getLatestCancelledSession");
+  expect(source).toContain('command === "/retry" && !(await getActiveSession(String(chatId)))');
+  expect(source).toContain("notices.pending > 0");
+  expect(source).toContain("أرسل /retry لإعادة المحاولة");
 });
 
 test("manager delivery outbox migration is additive and service-role only", () => {
