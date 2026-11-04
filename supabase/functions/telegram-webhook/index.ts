@@ -180,7 +180,19 @@ async function getRequestStatus(sessionId: string): Promise<string | null> {
   return typeof data?.status === "string" ? data.status : null;
 }
 
-async function notifyManagersOfCancellation(session: any): Promise<void> {
+async function getLatestCancelledSession(chatId: string) {
+  const { data, error } = await db!.from("rafiq_telegram_request_sessions")
+    .select("id,request_id,service_type,area,schedule,notes,status")
+    .eq("chat_id", chatId)
+    .eq("status", "cancelled")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error("telegram_cancelled_session_read_failed");
+  return data;
+}
+
+async function notifyManagersOfCancellation(session: any): Promise<{ total: number; pending: number }> {
   const { data: deliveries, error } = await db!.from("rafiq_telegram_manager_deliveries")
     .select("manager_chat_id,cancellation_notice_status,cancellation_notice_lease_expires_at")
     .eq("request_id", session.request_id)
@@ -253,6 +265,17 @@ async function notifyManagersOfCancellation(session: any): Promise<void> {
       }));
     }
   }
+
+  const { data: finalReceipts, error: finalReceiptError } = await db!.from("rafiq_telegram_manager_deliveries")
+    .select("manager_chat_id,cancellation_notice_status")
+    .eq("request_id", session.request_id)
+    .eq("status", "sent");
+  if (finalReceiptError) throw new Error("telegram_manager_cancellation_status_read_failed");
+  const finalRows = finalReceipts || [];
+  return {
+    total: finalRows.length,
+    pending: finalRows.filter((row: any) => row.cancellation_notice_status !== "sent").length,
+  };
 }
 
 async function deliverManagerNotifications(
@@ -493,7 +516,8 @@ async function processUpdate(update: any) {
   const userId = String(message.from?.id || chatId);
 
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في " + BOT_DESCRIPTION + "\n\n" + BOT_USERNAME + "\n" + BOT_PUBLIC_URL + "\n\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\n\n/services — الخدمات\n/request — تسجيل طلب تراجعه الإدارة\n/stop — إلغاء الطلب الجاري");
+    await sendText(chatId, "أهلًا بك في " + BOT_DESCRIPTION + "\n\n" + BOT_USERNAME + "\n" + BOT_PUBLIC_URL + "\n\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\n\n/services — الخدمات\n/request — تسجيل طلب تراجعه الإدارة\n/stop — إلغاء الطلب الجاري
+/retry — إعادة محاولة الإرسال أو تنبيه الإلغاء");
     return;
   }
   if (command === "/services") {
@@ -510,10 +534,30 @@ async function processUpdate(update: any) {
         .select("id")
         .maybeSingle();
       if (error) throw new Error("telegram_request_cancel_failed");
-      if (cancelled) await notifyManagersOfCancellation(session);
+      if (cancelled) {
+        const notices = await notifyManagersOfCancellation(session);
+        if (notices.pending > 0) {
+          await sendText(chatId, "تم حفظ إلغاء طلبك، لكن تعذّر تأكيد وصول تنبيه الإلغاء إلى جميع المديرين. أرسل /retry لإعادة المحاولة.");
+          return;
+        }
+      }
     }
-    await sendText(chatId, "تم إيقاف الطلب الجاري. يمكنك بدء طلب جديد في أي وقت عبر /request.");
+    await sendText(chatId, "تم إيقاف الطلب الجاري. يمكنك بدء طلب جديد عبر /request. إذا لم يكتمل تنبيه الإدارة، أرسل /retry.");
     return;
+  }
+  if (command === "/retry" && !(await getActiveSession(String(chatId)))) {
+    const cancelledSession = await getLatestCancelledSession(String(chatId));
+    if (cancelledSession) {
+      const notices = await notifyManagersOfCancellation(cancelledSession);
+      if (notices.total === 0) {
+        await sendText(chatId, "تم إلغاء الطلب، ولم يكن هناك إشعار سابق للمديرين يحتاج إلى إعادة إرسال.");
+      } else if (notices.pending > 0) {
+        await sendText(chatId, "لا يزال هناك " + notices.pending + " تنبيه إلغاء لم يصل إلى الإدارة. يمكنك إرسال /retry للمحاولة مجددًا.");
+      } else {
+        await sendText(chatId, "✅ تم تأكيد وصول تنبيهات إلغاء الطلب إلى جميع المديرين الذين استلموا الطلب الأصلي.");
+      }
+      return;
+    }
   }
   if (command === "/request") {
     const existing = await getActiveSession(String(chatId));
