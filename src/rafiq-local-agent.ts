@@ -1,3 +1,4 @@
+import { RAFIQ_WEBSITE } from "./rafiq-service-knowledge";
 const emergency=/(صعوبة\s*شديدة\s*بالتنفس|ألم\s*صدر|نزيف\s*شديد|فقدان\s*الوعي|إغماء|تشنج|سكتة|اختناق|emergency|urgent|chest pain|unconscious|stroke)/i;
 const medical=/(دواء|جرعة|تشخيص|وصفة|أوقف\s*العلاج|غيّر\s*العلاج|medication|dose|diagnos|prescription|wound|dressing)/i;
 const sensitive=/(سعر|تكلف|بكم|دفع|whish|price|cost|payment|فاتورة|تحويل|متوفر|متاحة|حجز|booking|available|شكوى|عقد|قانون|محامي|complaint|dispute)/i;
@@ -20,7 +21,7 @@ export const rafiqFallback=(message:string, conversationContext?:string)=>{
  if(/(?:رجل|امرأة|امرأه|ذكر|أنثى)/i.test(m))return "يمكنكم ذكر تفضيل رجل أو امرأة، وسنأخذه بعين الاعتبار أثناء المطابقة، من دون ضمان مسبق للتوفر.";
  if(/(?:يطبخ|طبخ|تنظيف|ينظف|قيادة|سواقة)/i.test(m))return "المهام الإضافية يجب أن تكون واضحة ومتفقًا عليها مسبقًا؛ الطبخ والتنظيف والقيادة ليست خدمات تلقائية في كل طلب.";
  if(/(?:المناطق|وين بتشتغلوا|وين موجودين|شو المناطق|where.*areas|areas.*covered)/i.test(m))return "نستقبل طلبات من مختلف مناطق لبنان، وتتم مراجعة كل طلب بحسب المنطقة والخدمة المطلوبة.";
- if(/(?:تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|قناة|رقم)/i.test(m))return "قنوات رفيق الرسمية:\n• WhatsApp: +961 81 506 299 — https://wa.me/96181506299\n• Telegram Bot: https://t.me/RAFIQ_Care_Bot\n• Telegram Channel: https://t.me/+a7CDblNyGkw1Yjg8\n• WhatsApp Channel: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\n• الموقع: https://rafiq-o6qd.onrender.com";
+ if(/(?:تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|قناة|رقم)/i.test(m))return "قنوات رفيق الرسمية:\n• WhatsApp: +961 81 506 299 — https://wa.me/96181506299\n• Telegram Bot: https://t.me/RAFIQ_Care_Bot\n• Telegram Channel: https://t.me/+a7CDblNyGkw1Yjg8\n• WhatsApp Channel: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\n• الموقع: "+RAFIQ_WEBSITE;
  if(/(?:وظيفة|عمل|انضم|تسجيل مقدم|caregiver application)/i.test(m))return "يمكن لمقدم الرعاية أو الممرض أو المعالج الفيزيائي تقديم بياناته وملفاته عبر رفيق، ثم تُراجع من الإدارة قبل الاعتماد. إذا أخبرتني بالتخصص والمنطقة أشرح لك الخطوة التالية.";
  if(/(?:مستشفى|مركز طبي|مختبر|شركة|مؤسسة|جمعية|عيادة|صيدلية|hospital|clinic|laboratory|company|institution)/i.test(m))return "أهلًا بكم 🌿 رفيق منفتح على التواصل مع الجهات الصحية ومقدمي الخدمات. للاستفسارات المؤسسية أو الشراكات أو أي اتفاق تجاري، تُراجع التفاصيل مباشرة من إدارة رفيق عبر WhatsApp: +961 81 506 299 — https://wa.me/96181506299";
  if(ctx && /(?:Customer:|TELEGRAM ACTIVE CASE|RAFIQ:)/i.test(ctx)){

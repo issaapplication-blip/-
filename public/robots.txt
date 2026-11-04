@@ -17,4 +17,4 @@ Disallow: /_tools/
 # The financial number must never be indexed or served publicly.
 Disallow: /*70600157*
 
-Sitemap: https://rafiq-o6qd.onrender.com/sitemap.xml
+Sitemap: https://index-html.issaapplication.workers.dev/sitemap.xml

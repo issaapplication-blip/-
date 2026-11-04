@@ -1,3 +1,4 @@
+import { RAFIQ_WEBSITE } from "./rafiq-service-knowledge";
 export type ManagerCommandInput = { chatId: string | number; chatType?: string; text?: string | null };
 export type ManagerRpcResult = { data: any; error: { message?: string } | null };
 export type ManagerDeps = {
@@ -67,7 +68,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
     if(command.name==="manager" || command.name==="help"){ await deps.send(input.chatId,helpText()); return true; }    if(command.name==="broadcast" || command.name==="broadcast_test"){
       if(!deps.broadcast){ await deps.send(input.chatId,"⚠️ نظام البث غير متاح حاليًا."); return true; }
       const custom=command.args.join(" ").trim();
-      const body=custom || "🇱🇧 RAFIQ | رفيق\n\nنصل بالحب والأمان لرعاية العائلة.\n\n🌐 https://rafiq-o6qd.onrender.com\n🤖 https://t.me/RAFIQ_Care_Bot\n📢 https://t.me/+a7CDblNyGkw1Yjg8";
+      const body=custom || ["🇱🇧 RAFIQ | رفيق","","نصل بالحب والأمان لرعاية العائلة.","","🌐 "+RAFIQ_WEBSITE,"🤖 https://t.me/RAFIQ_Care_Bot","📢 https://t.me/+a7CDblNyGkw1Yjg8"].join("\n");
       const report=await deps.broadcast(body,command.name==="broadcast_test");
       await deps.send(input.chatId,[
         command.name==="broadcast_test" ? "🧪 نتيجة بث تجريبي للمدير" : "📣 تقرير البث",
@@ -112,7 +113,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
     if(command.name==="publish_specialty_ads"){
       const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
-      const site="https://rafiq-o6qd.onrender.com/";
+      const site=RAFIQ_WEBSITE;
       const bot="https://t.me/RAFIQ_Care_Bot";
       const group="https://t.me/+a7CDblNyGkw1Yjg8";
       const wa="https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
