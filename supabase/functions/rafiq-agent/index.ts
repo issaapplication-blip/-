@@ -13,6 +13,9 @@ if (!supabaseUrl || !serviceKey) throw new Error("Supabase server configuration 
 const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const BOT_USERNAME = "@RAFIQ_Care_Bot";
+const BOT_PUBLIC_URL = "https://t.me/RAFIQ_Care_Bot";
+const BOT_DESCRIPTION = "رفيق | RAFIQ — رعاية منزلية آمنة لكبار السن والمرضى في لبنان.";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isServiceCaller(req: Request): boolean {
@@ -62,9 +65,9 @@ const fallback = (message: string) => {
     return "نستقبل طلبات من مختلف مناطق لبنان، وتُراجع كل حالة بحسب المنطقة والخدمة المطلوبة. ما المدينة أو المنطقة التي تريد الخدمة فيها؟";
   }
   if (/(تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|رقم الادارة)/.test(m)) {
-    return "يمكنك التواصل مع إدارة رفيق عبر WhatsApp على الرقم +961 81 506 299. كما يمكنك استخدام بوت Telegram: https://t.me/RAFIQ_Care_Bot. لا يُرسل هذا الوكيل رسائل WhatsApp تلقائيًا.";
+    return "يمكنك التواصل مع إدارة رفيق عبر WhatsApp على الرقم +961 81 506 299. البوت الأساسي " + BOT_USERNAME + ": " + BOT_PUBLIC_URL + ". لا يُرسل هذا الوكيل رسائل WhatsApp تلقائيًا.";
   }
-  return "مرحبًا بك في RAFIQ | رفيق 🌿 أساعدك في رعاية المسنين والمرضى، والتمريض المنزلي، والعلاج الفيزيائي. أخبرني باحتياجك بكلماتك، وسأسألك عن المعلومة التالية الضرورية فقط.";
+  return "مرحبًا بك في " + BOT_DESCRIPTION + " 🌿 البوت الأساسي: " + BOT_USERNAME + " — " + BOT_PUBLIC_URL + ". أساعدك في رعاية المسنين والمرضى، والتمريض المنزلي، والعلاج الفيزيائي. أخبرني باحتياجك بكلماتك، وسأسألك عن المعلومة التالية الضرورية فقط.";
 };
 
 async function getConversation(channel: string, externalId: string): Promise<Conversation | null> {
@@ -99,7 +102,9 @@ async function createEscalation(conversationId: string, reason: string, payload:
   if (error) throw new Error("escalation_create_failed: " + error.message);
 }
 
-const systemPrompt = `أنت وكيل خدمة العملاء والاستقبال لمنصة RAFIQ | رفيق للرعاية المنزلية في لبنان.
+const systemPrompt = `أنت وكيل خدمة العملاء والاستقبال للبوت الرسمي ${BOT_DESCRIPTION}
+معرّف Telegram الأساسي: ${BOT_USERNAME}
+الرابط الرسمي الوحيد: ${BOT_PUBLIC_URL}.
 أجب مباشرة عن سؤال العميل ولا تستبدل الإجابة بقائمة عامة عن الخدمات.
 الخدمات: رعاية المسنين، رعاية المرضى، التمريض المنزلي، العلاج الفيزيائي.
 افهم اللهجات العربية والأخطاء الإملائية البسيطة، واستخدم سياق المحادثة ولا تكرر الأسئلة التي أُجيب عنها.
