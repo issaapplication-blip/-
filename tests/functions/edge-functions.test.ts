@@ -67,7 +67,7 @@ describe("rafiq-agent caller isolation", () => {
       return { ok: true, json: async () => ({ success: true, result: { response: "رد تجريبي" } }) };
     });
     const body: any = await (await f.handler(post({ message: "مرحبا" }))).json();
-    expect(requestedUrl).toContain("/accounts/test-account/ai/run/@cf%2Fmeta%2Fllama-3.1-8b-instruct");
+    expect(requestedUrl).toContain("/accounts/test-account/ai/run/%40cf%2Fmeta%2Fllama-3.1-8b-instruct");
     expect(sent.messages[0].content).toContain("رفيق | RAFIQ — رعاية منزلية آمنة لكبار السن والمرضى في لبنان.");
     expect(sent.messages[0].content).toContain("@RAFIQ_Care_Bot");
     expect(sent.messages[0].content).toContain("https://t.me/RAFIQ_Care_Bot");
