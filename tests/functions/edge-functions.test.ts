@@ -60,7 +60,7 @@ describe("rafiq-agent caller isolation", () => {
       ...BASE,
       CLOUDFLARE_ACCOUNT_ID: "test-account",
       CLOUDFLARE_API_TOKEN: "test-token",
-      CLOUDFLARE_AI_MODEL: "@cf/meta/llama-3.1-8b-instruct",
+      CLOUDFLARE_AI_MODEL: "@cf/meta/llama-3.2-3b-instruct",
     }, async (url, init) => {
       requestedUrl = String(url);
       sent = JSON.parse(init.body);
