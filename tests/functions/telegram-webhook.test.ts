@@ -10,6 +10,14 @@ const source = readFileSync(
   "utf8",
 );
 
+test("Telegram bot and AI agent use the single official RAFIQ identity", () => {
+  expect(source).toContain('const BOT_USERNAME = "@RAFIQ_Care_Bot"');
+  expect(source).toContain('const BOT_PUBLIC_URL = "https://t.me/RAFIQ_Care_Bot"');
+  expect(source).toContain('const BOT_DESCRIPTION = "رفيق | RAFIQ — رعاية منزلية آمنة لكبار السن والمرضى في لبنان."');
+  expect(source).toContain("أنت مساعد خدمة العملاء للبوت الرسمي");
+  expect(source).toContain('BOT_USERNAME + "\\n" + BOT_PUBLIC_URL');
+});
+
 test("Telegram webhook fails closed without bot, Supabase, or secret configuration", () => {
   expect(source).toContain("WEBHOOK_SECRET.length < 32");
   expect(source).toContain('x-telegram-bot-api-secret-token');
