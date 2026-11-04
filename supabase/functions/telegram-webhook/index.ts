@@ -218,7 +218,7 @@ async function notifyManagersOfCancellation(session: any): Promise<void> {
       await sendText(
         delivery.manager_chat_id,
         "⚠️ إلغاء طلب RAFIQ " + session.request_id +
-          "\\nألغى العميل الطلب. يرجى عدم بدء أي إجراء أو متابعة هذا الطلب."
+          "\nألغى العميل الطلب. يرجى عدم بدء أي إجراء أو متابعة هذا الطلب."
       );
       const { error: saveError } = await db!.from("rafiq_telegram_manager_deliveries")
         .update({
