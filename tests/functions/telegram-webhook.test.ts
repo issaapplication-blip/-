@@ -76,6 +76,11 @@ test("manager delivery outbox migration is additive and service-role only", () =
   expect(migration).toContain("grant select, insert, update on public.rafiq_telegram_manager_deliveries to service_role");
 });
 
+test("Telegram request insert matches the tracked request-session schema", () => {
+  expect(source).toContain('language: "ar", status: "collecting"');
+  expect(source).not.toContain("is_test: false");
+});
+
 test("Telegram request submission verifies the conditional state transition before confirming", () => {
   expect(source).toContain('.eq("id", session.id)');
   expect(source).toContain('.eq("status", "collecting")');
