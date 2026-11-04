@@ -138,7 +138,7 @@ async function deliverRequest(env: Env, db: D1Like, chatId: string): Promise<voi
     await sendText(env, managerId, [
       "📝 طلب رعاية جديد — RAFIQ", "رقم الطلب: " + s.request_id,
       "الخدمة: " + (SERVICES[s.service] || s.service), "المنطقة: " + s.area,
-      "الدوام: " + s.schedule, "الحالة: جديد — بانتظار مراجعة الإدارة",
+      "الدوام: " + s.schedule, "Telegram chat ID: " + chatId, "الحالة: جديد — بانتظار مراجعة الإدارة",
     ].join("\n"));
     await db.prepare("INSERT OR IGNORE INTO telegram_request_notifications(request_id,manager_chat_id,sent_at) VALUES(?,?,?)")
       .bind(s.request_id,managerId,Math.floor(Date.now()/1000)).run();
