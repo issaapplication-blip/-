@@ -197,7 +197,15 @@ async function processMessage(env: Env, db: D1Like, message: any): Promise<void>
   await sendText(env,chatId,faq(text));
 }
 async function processUpdate(env: Env, db: D1Like, update: any): Promise<void> {
-  if (update?.callback_query) { await processCallback(env,db,update.callback_query); return; }
+  if (update?.callback_query) {
+    const callbackChat = update.callback_query?.message?.chat;
+    if (callbackChat?.type === 'private' && callbackChat.id !== undefined && !(await allowRate(db, String(callbackChat.id)))) {
+      await telegram(env, 'answerCallbackQuery', { callback_query_id: String(update.callback_query.id || ''), text: 'يرجى المحاولة بعد قليل.' });
+      return;
+    }
+    await processCallback(env,db,update.callback_query);
+    return;
+  }
   const m = update?.message;
   if (!m || m.chat?.type !== "private" || m.from?.is_bot) return;
   if (!(await allowRate(db,String(m.chat.id)))) return;
