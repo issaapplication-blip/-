@@ -67,7 +67,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
     if(command.name==="manager" || command.name==="help"){ await deps.send(input.chatId,helpText()); return true; }    if(command.name==="broadcast" || command.name==="broadcast_test"){
       if(!deps.broadcast){ await deps.send(input.chatId,"⚠️ نظام البث غير متاح حاليًا."); return true; }
       const custom=command.args.join(" ").trim();
-      const body=custom || "🇱🇧 RAFIQ | رفيق\n\nنصل بالحب والأمان لرعاية العائلة.\n\n🌐 https://rafiq-o6qd.onrender.com\n🤖 https://t.me/RAFIQ_Care_Bot\n📢 https://t.me/+a7CDblNyGkw1Yjg8";
+      const body=custom || "🇱🇧 RAFIQ | رفيق\n\nنصل بالحب والأمان لرعاية العائلة.\n\n🤖 https://t.me/RAFIQ_Care_Bot\n📢 قناة Telegram الرسمية: https://t.me/+a7CDblNyGkw1Yjg8\n📱 قناة WhatsApp الرسمية: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
       const report=await deps.broadcast(body,command.name==="broadcast_test");
       await deps.send(input.chatId,[
         command.name==="broadcast_test" ? "🧪 نتيجة بث تجريبي للمدير" : "📣 تقرير البث",
@@ -81,12 +81,13 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
     }
 
     if(command.name==="publish_ads"){
+      if(process.env.TELEGRAM_MARKETING_ENABLED!=="true"){await deps.send(input.chatId,"⚠️ النشر التسويقي متوقف في إعدادات الخادم. لم يتم نشر أي إعلان.");return true;}
       const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
       const invite="https://t.me/+a7CDblNyGkw1Yjg8";
       const ads=[
         "🌿 RAFIQ | رفيق\\n\\nرعاية كبار السن والمرضى تبدأ بخطوة صحيحة.\\nنقدّم خدمات رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\\n\\n💚 انضموا إلى مجتمع رفيق وتابعوا خدماتنا ومستجداتنا.\\n👉 "+invite,
-        "💚 عندما تحتاج عائلتك إلى رعاية منزلية، رفيق معكم بخطوات واضحة وآمنة.\\n\\n👴 كبار السن\\n🏠 المرضى\\n👩‍⚕️ التمريض المنزلي\\n🦿 العلاج الفيزيائي المنزلي\\n\\nانضموا إلى مجموعة RAFIQ: "+invite,
+        "💚 عندما تحتاج عائلتك إلى رعاية منزلية، رفيق معكم بخطوات واضحة وآمنة.\\n\\n👴 كبار السن\\n🏠 المرضى\\n👩‍⚕️ التمريض المنزلي\\n🦿 العلاج الفيزيائي المنزلي\\n\\nتابعوا قناة RAFIQ الرسمية: "+invite,
         "🌱 رعاية أفضل تبدأ بمعلومة صحيحة واختيار مقدم الخدمة المناسب.\\n\\nRAFIQ | رفيق يعمل على تنظيم طلبات الرعاية المنزلية وربطها بالمسار المناسب.\\n\\n📲 انضموا إلينا: "+invite,
         "🤝 رفيق معكم خطوة بخطوة: من السؤال، إلى تحديد الخدمة المطلوبة، إلى متابعة الطلب وفق إجراءات المنصة.\\n\\nللانضمام إلى مجتمع RAFIQ: "+invite,
         "📢 مجتمع RAFIQ يكبر بكم.\\n\\nتابعوا الإعلانات والتحديثات المتعلقة بالرعاية المنزلية، وشاركونا مع من يحتاج إلى رعاية موثوقة ومنظمة.\\n\\n👉 "+invite,
@@ -95,7 +96,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
         "🏠 للعائلات: لا تبقوا وحدكم أمام احتياجات الرعاية المنزلية.\\n\\nاكتبوا طلبكم بوضوح، وسيتم التعامل معه وفق الخدمة المطلوبة ومسار المراجعة المناسب.\\n\\n💚 انضموا إلى RAFIQ: "+invite,
         "🩺 للممرضين ومقدمي الرعاية والمعالجين الفيزيائيين: إذا كنت تبحث عن الانضمام إلى شبكة رفيق، ابدأ من مجتمعنا وتابع خطوات الانتساب.\\n\\n👉 "+invite,
         "🌟 RAFIQ منصة تجمع العائلات وطلبات الرعاية المنزلية ومقدمي الخدمات ضمن مسار منظم.\\n\\nتابعوا المجتمع لتصلكم الإعلانات والتحديثات الجديدة.\\n\\n📲 "+invite,
-        "🚀 هل تريد الانضمام كمقدم رعاية؟\\n\\nابدأ بالتعرّف إلى رفيق وخدماته، ثم تابع إجراءات الانتساب الرسمية عبر المنصة.\\n\\n👉 انضم إلى المجموعة: "+invite,
+        "🚀 هل تريد الانضمام كمقدم رعاية؟\\n\\nابدأ بالتعرّف إلى رفيق وخدماته، ثم تابع إجراءات الانتساب الرسمية عبر المنصة.\\n\\n👉 تابعوا قناة RAFIQ الرسمية: "+invite,
         "👩‍⚕️ ممرض/ة؟ 🦿 معالج/ة فيزيائي/ة؟ 🤝 مقدم/ة رعاية؟\\n\\nرفيق يرحب بطلبات الانتساب ويعمل على مراجعة الملفات وفق الإجراءات المعتمدة.\\n\\nابدأ من هنا: "+invite,
         "💚 تحتاج عائلتكم إلى رعاية منزلية؟\\n\\nتعرّفوا إلى خدمات رفيق وابدؤوا طلبكم بالمعلومات الأساسية، ليتم توجيهكم إلى المسار المناسب.\\n\\n📲 انضموا: "+invite,
         "🔔 خطوة واحدة قد تكون بداية الطريق المناسب للرعاية.\\n\\nتابعوا RAFIQ | رفيق لمعرفة الخدمات، تقديم الطلبات، ومتابعة الإعلانات الجديدة.\\n\\n👉 "+invite,
@@ -110,13 +111,13 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
       return true;
     }
     if(command.name==="publish_specialty_ads"){
+      if(process.env.TELEGRAM_MARKETING_ENABLED!=="true"){await deps.send(input.chatId,"⚠️ النشر التسويقي متوقف في إعدادات الخادم. لم يتم نشر أي إعلان.");return true;}
       const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
-      const site="https://rafiq-o6qd.onrender.com/";
       const bot="https://t.me/RAFIQ_Care_Bot";
-      const group="https://t.me/+a7CDblNyGkw1Yjg8";
+      const channel="https://t.me/+a7CDblNyGkw1Yjg8";
       const wa="https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
-      const footer="\\n\\n🌐 المنصة: "+site+"\\n🤖 بوت Telegram: "+bot+"\\n📢 مجموعة Telegram: "+group+"\\n📱 قناة WhatsApp: "+wa;
+      const footer="\\n\\n🤖 بوت Telegram: "+bot+"\\n📢 قناة Telegram الرسمية: "+channel+"\\n📱 قناة WhatsApp الرسمية: "+wa;
       const ads=[
         "👩‍⚕️ RAFIQ | رفيق — للممرضين والممرضات\\n\\nإذا كنت ممرضًا أو ممرضة وتعمل في مجال الرعاية المنزلية، ندعوك للانضمام إلى RAFIQ وتقديم طلب الانتساب. نعمل على تنظيم الطلبات ومراجعة الملفات ضمن إجراءات المنصة.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,
         "🤝 RAFIQ | رفيق — لمقدمي الرعاية\\n\\nإذا كنت مقدم رعاية وتملك خبرة في رعاية كبار السن أو المرضى، ندعوك للتسجيل وتقديم طلب الانضمام إلى RAFIQ. اجعل خبرتك جزءًا من شبكة الرعاية المنزلية التي نبنيها.\\n\\n🤍 RAFIQ — نصل بالحب والأمان لرعاية العائلة"+footer,

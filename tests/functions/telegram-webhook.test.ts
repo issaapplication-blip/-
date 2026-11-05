@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const legacyIndex = readFileSync(resolve(import.meta.dir, "../../src/index.ts"), "utf8");
 const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram.ts"), "utf8");
+const legacyManager = readFileSync(resolve(import.meta.dir, "../../src/telegram-manager.ts"), "utf8");
 
 const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/telegram-webhook/index.ts"),
@@ -62,4 +63,61 @@ test("legacy Telegram webhook verifier fails closed when the secret is absent or
   expect(legacyTelegram).toContain("expected.length < 32");
   expect(legacyTelegram).toContain("difference |= expected.charCodeAt(i) ^ provided.charCodeAt(i)");
   expect(legacyTelegram).not.toContain("if (!expected) return true");
+});
+
+test("Telegram broadcasts do not require the website or its image assets", () => {
+  expect(legacyIndex).toContain("await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON)");
+  expect(legacyIndex).toContain(": await telegramSendText(recipientId,text,TELEGRAM_BROADCAST_BUTTON)");
+  expect(legacyIndex).toContain('const link=publicBase.startsWith("https://")');
+  expect(legacyIndex).not.toContain('process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com"');
+  expect(legacyIndex).not.toContain("Sitemap: https://rafiq-o6qd.onrender.com/sitemap.xml");
+});
+
+test("Manager broadcast defaults contain no retired Render URL", () => {
+  expect(legacyManager).not.toContain("https://rafiq-o6qd.onrender.com");
+});
+
+test("Scheduled marketing ads require a separate explicit approval flag", () => {
+  expect(legacyIndex).toContain('process.env.RAFIQ_TELEGRAM_SCHEDULED_ADS_APPROVED !== "true"');
+});
+
+test("Unknown Telegram group link is not silently substituted with the official channel", () => {
+  const config = readFileSync(resolve(import.meta.dir, "../../src/rafiq-config.ts"), "utf8");
+  expect(config).toContain('telegramGroupUrl: (process.env.TELEGRAM_GROUP_URL ?? "").trim()');
+  expect(config).toContain('telegramChannelUrl: (process.env.TELEGRAM_CHANNEL_URL ?? "https://t.me/+a7CDblNyGkw1Yjg8").trim()');
+});
+
+test("Meta WhatsApp webhook fails closed when META_APP_SECRET or a valid signature is missing", () => {
+  const start = legacyIndex.indexOf('.post("/api/whatsapp/webhook",async({request,set})=>{');
+  const end = legacyIndex.indexOf('.post("/api/agent/chat"', start);
+  const handler = legacyIndex.slice(start, end);
+  expect(handler).toContain('if(!(await verifyMetaSignature(raw,signature)))');
+  expect(handler).not.toContain('if(process.env.META_APP_SECRET)');
+});
+
+test("Kapso webhooks fail closed without a configured secret and signature", () => {
+  expect(legacyIndex).not.toContain('KAPSO_ALLOW_UNSIGNED==="true"');
+  expect(legacyIndex).toContain('if(!secret||!signature||!(await verifyKapsoSignature(raw,signature)))');
+});
+
+test("Manager notices are durably queued before a request is submitted and can be retried", () => {
+  expect(source).toContain('from("rafiq_telegram_manager_notification_outbox")');
+  expect(source).toContain('onConflict: "request_id,manager_chat_id", ignoreDuplicates: true');
+  expect(source).toContain("dispatchPendingManagerNotifications");
+  expect(source).toContain('status: "pending"');
+  expect(source).toContain('status: "sent"');
+  expect(source).toContain("submit_update_id: updateId");
+  expect(source).toContain("confirmation_sent: false");
+  expect(source).toContain('throw new Error("telegram_manager_notification_delivery_pending")');
+  expect(source).toContain("Number(update?.update_id)");
+  const enqueue = source.indexOf('from("rafiq_telegram_manager_notification_outbox")\n    .upsert(outboxRows');
+  const submit = source.indexOf('status: "submitted", submit_update_id: updateId');
+  expect(enqueue).toBeGreaterThan(-1);
+  expect(submit).toBeGreaterThan(enqueue);
+});
+
+test("Manager notifications require configured admin targets and never silently swallow delivery failures", () => {
+  expect(source).toContain("MANAGER_CHAT_IDS.length === 0");
+  expect(source).toContain('event: "telegram_manager_notice_pending"');
+  expect(source).not.toContain('try { await sendText(managerId, summary); }');
 });

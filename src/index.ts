@@ -57,8 +57,8 @@ const telegramLanguage = (message:any) => {
   if(/[أ-ي]/.test(t)) return "ar";
   return "ar";
 };
-const TELEGRAM_BROADCAST_IMAGE = (process.env.TELEGRAM_BROADCAST_IMAGE_URL || `${RAFIQ_WEBSITE}/assets/rafig-logo.png`).trim();
-const TELEGRAM_BROADCAST_BUTTON = {inline_keyboard:[[{text:"🌐 منصة RAFIQ",url:RAFIQ_WEBSITE}]]};
+const TELEGRAM_BROADCAST_IMAGE = (process.env.TELEGRAM_BROADCAST_IMAGE_URL || (RAFIQ_WEBSITE ? `${RAFIQ_WEBSITE}/assets/rafig-logo.png` : "")).trim();
+const TELEGRAM_BROADCAST_BUTTON = RAFIQ_WEBSITE.startsWith("https://") ? {inline_keyboard:[[{text:"🌐 منصة RAFIQ",url:RAFIQ_WEBSITE}]]} : undefined;
 const sleep = (ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
 const isTelegramBlockedError=(error:any)=>{
   const s=String(error?.telegramDescription||error?.message||"").toLowerCase();
@@ -67,7 +67,9 @@ const isTelegramBlockedError=(error:any)=>{
 const telegramBroadcastOne=async(recipientId:string,text:string)=>{
   for(let attempt=0;attempt<3;attempt++){
     try{
-      return await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON);
+      return TELEGRAM_BROADCAST_IMAGE
+        ? await telegramSendPhoto(recipientId,TELEGRAM_BROADCAST_IMAGE,text,TELEGRAM_BROADCAST_BUTTON)
+        : await telegramSendText(recipientId,text,TELEGRAM_BROADCAST_BUTTON);
     }catch(error:any){
       const retryAfter=Number(error?.retryAfter||0);
       if(retryAfter>0){ await sleep(Math.min(retryAfter*1000,10000)); continue; }
@@ -136,7 +138,7 @@ const TELEGRAM_ANNOUNCEMENT = [
   "",
   "🤖 بوت Telegram: @RAFIQ_Care_Bot",
   "📢 قناة Telegram: " + RAFIQ_TELEGRAM_CHANNEL,
-  "🌐 الموقع: " + RAFIQ_WEBSITE,
+  ...(RAFIQ_WEBSITE ? ["🌐 الموقع: " + RAFIQ_WEBSITE] : []),
   "📱 WhatsApp الرسمي: " + RAFIQ_WHATSAPP_NUMBER + " — " + RAFIQ_WHATSAPP
 ].join("\n");
 const draftInboundReply = async (message: string, senderPhone?: string) => {
@@ -402,7 +404,7 @@ const TELEGRAM_MARKETING_ADS = [
 let lastTelegramMarketingSlot = "";
 const supabaseBroadcastPending=async(key:string,recipientId:string)=>supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:key,recipient_id:recipientId,status:"pending",error_message:null})});
 const telegramMarketingTick = async () => {
-  if(process.env.TELEGRAM_MARKETING_ENABLED !== "true" || !telegramConfigured()) return;
+  if(process.env.TELEGRAM_MARKETING_ENABLED !== "true" || process.env.RAFIQ_TELEGRAM_SCHEDULED_ADS_APPROVED !== "true" || !telegramConfigured()) return;
   const target = TELEGRAM_MARKETING_TARGET();
   const discovered=await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?is_active=eq.true&select=chat_id");
   const targets=Array.from(new Set([
@@ -580,12 +582,16 @@ const telegramAdminApprove=async(ref:string)=>{
   if(!barcode.response.ok)throw new Error("تعذر إصدار الباركود");
   await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",admin_decision_notes:"تم القبول وإصدار الرقم والباركود من إدارة RAFIQ",updated_at:new Date().toISOString()})});
   if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",updated_at:new Date().toISOString()})});
-  const link=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"")+"/barcode.html?code="+encodeURIComponent(code);
+  const publicBase=(process.env.PUBLIC_BASE_URL||process.env.RAFIQ_PUBLIC_BASE_URL||RAFIQ_WEBSITE||"").trim().replace(/\/$/,"");
+  const link=publicBase.startsWith("https://")?publicBase+"/barcode.html?code="+encodeURIComponent(code):"";
   const applicantUsername=String(p.profile?.telegram_username??payload.telegram_username??"").replace(/^@/,"").trim();
   if(applicantUsername){
     const ir=await supabaseServerRest("/rest/v1/rafiq_telegram_identities?username=ilike."+encodeURIComponent(applicantUsername)+"&select=chat_id&order=last_seen_at.desc&limit=1");
     const recipient=Array.isArray(ir.body)?ir.body[0]?.chat_id:null;
-    if(recipient)await telegramSendText(recipient,telegramSigned("🎉 أهلًا بك في RAFIQ | رفيق\\n\\nتم قبول طلبك رسميًا.\\n🪪 رقمك الشخصي: "+memberNumber+"\\n🔖 باركودك: "+code+"\\n🔗 افتح بطاقة الباركود: "+link+"\\n\\nاحتفظ بهذا الرقم والباركود لاستخدامهما ضمن منصة رفيق.")).catch(()=>{});
+    if(recipient){
+      const welcome=["🎉 أهلًا بك في RAFIQ | رفيق","","تم قبول طلبك رسميًا.","🪪 رقمك الشخصي: "+memberNumber,"🔖 باركودك: "+code,...(link?["🔗 افتح بطاقة الباركود: "+link]:[]),"","احتفظ بهذا الرقم والباركود لاستخدامهما عند التواصل مع إدارة رفيق."].join("\\n");
+      await telegramSendText(recipient,telegramSigned(welcome)).catch(()=>{});
+    }
   }
   return{intake,type,memberNumber,code,link};
 };
@@ -741,7 +747,7 @@ const app=new Elysia()
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
   const secret=kapsoWebhookSecret();
-  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  if(!secret||!signature||!(await verifyKapsoSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
   const eventBody=payload?.request_body??payload;
@@ -761,7 +767,7 @@ const app=new Elysia()
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
   const secret=kapsoWebhookSecret();
-  if((!secret&&process.env.KAPSO_ALLOW_UNSIGNED!=="true")||(secret&&(!signature||!(await verifyKapsoSignature(raw,signature))))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
+  if(!secret||!signature||!(await verifyKapsoSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   lastKapsoWebhookAt=new Date().toISOString();
   const eventBody=payload?.request_body??payload;
@@ -1299,9 +1305,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-hub-signature-256");
-  if(process.env.META_APP_SECRET){
-    if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
-  }
+  if(!(await verifyMetaSignature(raw,signature))){set.status=401;return{ok:false,error:"invalid Meta webhook signature"}}
   let payload:any;try{payload=JSON.parse(raw)}catch{set.status=400;return{ok:false,error:"invalid json"}}
   if(String(payload?.object??"")!=="whatsapp_business_account"){set.status=200;return{ok:true,status:"ignored_non_whatsapp_object"}}
   const messages=extractIncomingMessages(payload);
@@ -1344,7 +1348,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 .get("/sitemap.xml",()=>fileResponse("public/sitemap.xml","application/xml; charset=utf-8","no-store"))
 .get("/*",async({request,set})=>{const pathname=new URL(request.url).pathname;if(pathname==="/"||pathname.startsWith("/api/")){set.status=404;return{ok:false,error:"not found"}}let decoded="";try{decoded=decodeURIComponent(pathname)}catch{set.status=400;return{ok:false,error:"invalid path"}}if(!decoded.startsWith("/")||decoded.includes("..")||!/^[A-Za-z0-9._~!$&'()*+,;=:@%\\/-]+$/.test(decoded)){set.status=404;return{ok:false,error:"not found"}}const ext=decoded.split(".").pop()?.toLowerCase()??"";const mime:Record<string,string>={js:"application/javascript; charset=utf-8",css:"text/css; charset=utf-8",json:"application/json; charset=utf-8",webmanifest:"application/manifest+json",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",svg:"image/svg+xml",ico:"image/x-icon",txt:"text/plain; charset=utf-8",xml:"application/xml; charset=utf-8",woff:"font/woff",woff2:"font/woff2",map:"application/json; charset=utf-8"};if(!mime[ext]){set.status=404;return{ok:false,error:"not found"}}const cache=["png","jpg","jpeg","webp","svg","ico","woff","woff2"].includes(ext)?"public, max-age=86400, stale-while-revalidate=604800":["js","css","json","webmanifest","xml"].includes(ext)?"public, max-age=300, stale-while-revalidate=86400":"no-store";return fileResponse("public"+decoded,mime[ext],cache)})
 .get("/:page",({params,set})=>{const page=String(params.page??"");if(!/^[a-z0-9-]+\.html$/i.test(page)||page==="admin.html"){set.status=404;return{ok:false,error:"not found"}}return fileResponse(`public/${page}`,"text/html; charset=utf-8","no-store")})
-.get("/robots.txt",()=>new Response("User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /admin.js\nDisallow: /intake-admin.js\nSitemap: https://rafiq-o6qd.onrender.com/sitemap.xml",{headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
+.get("/robots.txt",()=>new Response("User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /admin.js\nDisallow: /intake-admin.js"+(RAFIQ_WEBSITE?"\nSitemap: "+RAFIQ_WEBSITE+"/sitemap.xml":""),{headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
 .get("/sw.js",()=>fileResponse("public/sw.js","application/javascript","no-cache"))
 .get("/sitemap.xml",()=>fileResponse("public/sitemap.xml","application/xml; charset=utf-8","no-store"))
 .get("/services.html",()=>fileResponse("public/services.html","text/html; charset=utf-8"))
