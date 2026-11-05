@@ -10,6 +10,14 @@ const source = readFileSync(
   "utf8",
 );
 
+test("Telegram bot and AI agent use the single official RAFIQ identity", () => {
+  expect(source).toContain('const BOT_USERNAME = "@RAFIQ_Care_Bot"');
+  expect(source).toContain('const BOT_PUBLIC_URL = "https://t.me/RAFIQ_Care_Bot"');
+  expect(source).toContain('const BOT_DESCRIPTION = "رفيق | RAFIQ — رعاية منزلية آمنة لكبار السن والمرضى في لبنان."');
+  expect(source).toContain("أنت مساعد خدمة العملاء للبوت الرسمي");
+  expect(source).toContain('BOT_USERNAME + "\\n" + BOT_PUBLIC_URL');
+});
+
 test("Telegram webhook fails closed without bot, Supabase, or secret configuration", () => {
   expect(source).toContain("WEBHOOK_SECRET.length < 32");
   expect(source).toContain('x-telegram-bot-api-secret-token');
@@ -34,6 +42,98 @@ test("Telegram requests are stored only after a real session write and never pro
   expect(source).toContain('from("rafiq_telegram_request_sessions")');
 });
 
+test("Telegram request is not reported submitted when admin delivery is unconfigured or fails", () => {
+  expect(source).toContain("if (MANAGER_CHAT_IDS.length === 0)");
+  expect(source).toContain("telegram_manager_destinations_missing");
+  expect(source).toContain("telegram_manager_notice_failed");
+  expect(source).toContain('await sendText(managerId, summary)');
+  expect(source).toContain('status: "submitted"');
+  expect(source).toContain('if (submitError) throw new Error("telegram_request_submit_failed")');
+  expect(source).toContain("لم يكتمل وصول إشعار الإدارة بعد");
+});
+
+test("Telegram request notes are saved once and retries preserve the original answer", () => {
+  expect(source).toContain("retryRequested =");
+  expect(source).toContain("session.notes !== null && session.notes !== undefined");
+  expect(source).toContain("String(session.notes)");
+  expect(source).toContain("notes, updated_at: new Date().toISOString()");
+  expect(source).toContain('throw new Error("telegram_request_notes_save_failed")');
+  expect(source).toContain("أرسل /retry لإعادة محاولة إشعارات الإدارة دون استبدال التفاصيل");
+});
+
+test("manager notifications are tracked independently and successful destinations are not resent", () => {
+  expect(source).toContain('from("rafiq_telegram_manager_deliveries")');
+  expect(source).toContain('onConflict: "request_id,manager_chat_id", ignoreDuplicates: true');
+  expect(source).toContain('if (delivery.status === "sent") continue');
+  expect(source).toContain('status: "sending"');
+  expect(source).toContain('status: "sent"');
+  expect(source).toContain('status: "failed"');
+  expect(source).toContain('.in("manager_chat_id", MANAGER_CHAT_IDS)');
+  expect(source).toContain("MANAGER_CHAT_IDS.every");
+  expect(source).toContain("async function notifyManagersOfCancellation");
+  expect(source).toContain("⚠️ إلغاء طلب RAFIQ");
+  expect(source).toContain("cancellation_notice_status: \"sending\"");
+  expect(source).toContain("async function getCancelledSessions");
+  expect(source).toContain(".range(offset, offset + pageSize - 1)");
+  expect(source).toContain("for (const cancelledSession of cancelledSessions)");
+  expect(source).toContain('command === "/retry" && !(await getActiveSession(String(chatId)))');
+  expect(source).toContain("notices.pending > 0");
+  expect(source).toContain("أرسل /retry لإعادة المحاولة");
+});
+
+test("manager delivery outbox migration is additive and service-role only", () => {
+  const migration = readFileSync(
+    resolve(import.meta.dir, "../../supabase/migrations/20261104190000_telegram_manager_delivery_outbox.sql"),
+    "utf8",
+  );
+  expect(migration).toContain("references public.rafiq_telegram_request_sessions(request_id) on delete cascade");
+  expect(migration).toContain("primary key (request_id, manager_chat_id)");
+  expect(migration).toContain("enable row level security");
+  expect(migration).toContain("revoke all on public.rafiq_telegram_manager_deliveries from anon, authenticated");
+  expect(migration).toContain("grant select, insert, update on public.rafiq_telegram_manager_deliveries to service_role");
+  expect(migration).toContain("cancellation_notice_status text not null default 'pending'");
+  expect(migration).toContain("cancellation_notice_lease_expires_at timestamptz");
+});
+
+test("Telegram request insert matches the tracked request-session schema", () => {
+  expect(source).toContain('language: "ar", status: "collecting"');
+  expect(source).not.toContain("is_test: false");
+});
+
+test("Telegram request submission verifies the conditional state transition before confirming", () => {
+  expect(source).toContain('.eq("id", session.id)');
+  expect(source).toContain('.eq("status", "collecting")');
+  expect(source).toContain('.select("id")');
+  expect(source).toContain("if (!submitted)");
+  expect(source).toContain('current?.status === "cancelled"');
+  expect(source).toContain('await notifyManagersOfCancellation(session)');
+  expect(source).toContain('.eq("status", "collecting")');
+  expect(source).toContain("لم نرسل تأكيدًا بتقديمه إلى الإدارة");
+});
+
+test("Telegram manager delivery stores the message ID from Telegram's result envelope", () => {
+  expect(source).toContain("sent?.result?.message_id");
+  expect(source).not.toContain("sent?.message_id");
+});
+
+test("Arabic-Indic and Persian phone digits are normalized before Telegram AI redaction", () => {
+  expect(source).toContain("function normalizeArabicDigits(text: string)");
+  expect(source).toContain("return normalizeArabicDigits(text)");
+  const normalizeArabicDigits = (value: string) => value.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const code = digit.charCodeAt(0);
+    return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+  });
+  const lebanonNumber = /(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g;
+  const internationalNumber = /\b(?:\+?\d[\d\s().-]{7,}\d)\b/g;
+  for (const phone of ["+٩٦١ ٨١ ٥٠٦ ٢٩٩", "+۳۹ ۳۳۳ ۱۲۳ ۴۵۶۷"]) {
+    const normalized = normalizeArabicDigits(phone);
+    const redacted = normalized
+      .replace(lebanonNumber, "[رقم محجوب]")
+      .replace(internationalNumber, "[رقم محجوب]");
+    expect(redacted.replace(/^\+/, "")).toBe("[رقم محجوب]");
+  }
+});
+
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
   expect(source).toContain("function redactPhones");
   const redactionSource = source.slice(source.indexOf("function redactPhones"), source.indexOf("async function generateFaqReply"));
@@ -44,7 +144,7 @@ test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never ena
   expect("Contact +961 81 506 299 now".replace(lebanonNumber, "[رقم محجوب]")).not.toContain("81 506 299");
   expect("Call +39 333 123 4567".replace(internationalNumber, "[رقم محجوب]")).not.toContain("333 123 4567");
   expect(source).toContain("api.cloudflare.com/client/v4/accounts/");
-  expect(source).toContain("@cf/meta/llama-3.1-8b-instruct");
+  expect(source).toContain("@cf/meta/llama-3.2-3b-instruct");
   expect(source).not.toContain("generativelanguage.googleapis.com");
   expect(source).not.toContain("api.openai.com");
 });

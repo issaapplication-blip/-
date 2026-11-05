@@ -39,22 +39,59 @@ describe("rafiq-agent caller isolation", () => {
     await f.handler(post({ message: "مرحبا", channel: "whatsapp", conversation_id: "meta:1" }, { authorization: "Bearer " + BASE.SUPABASE_SERVICE_ROLE_KEY + "x" }));
     expect(f.calls.find(c => c.op === "upsert")!.args[0].channel).toBe("web");
   });
-  test("no model configured uses guided fallback without provider calls", async () => {
+  test("paid provider credentials are ignored and missing Cloudflare credentials use guided fallback", async () => {
     let calls = 0;
-    const f = loadFunction("rafiq-agent", { ...BASE, OPENAI_API_KEY: "test-key" }, async () => { calls++; throw new Error("provider should not be called without model"); });
+    const f = loadFunction("rafiq-agent", {
+      ...BASE,
+      OPENAI_API_KEY: "must-not-be-used",
+      GEMINI_API_KEY: "must-not-be-used",
+      RAFIQ_AGENT_PROVIDER: "openai",
+      RAFIQ_AGENT_MODEL: "paid-model",
+    }, async () => { calls++; throw new Error("no provider call expected without Cloudflare credentials"); });
     const body: any = await (await f.handler(post({ message: "كم السعر؟" }))).json();
     expect(calls).toBe(0);
     expect(body.mode).toBe("guided");
     expect(body.reply).toContain("التكلفة");
   });
-  test("configured model is sent to provider", async () => {
+  test("configured Cloudflare Workers AI model receives the RAFIQ system identity", async () => {
     let sent: any;
-    const f = loadFunction("rafiq-agent", { ...BASE, OPENAI_API_KEY: "test-key", RAFIQ_AGENT_MODEL: "test-model", RAFIQ_AGENT_PROVIDER: "openai" }, async (_url, init) => {
+    let requestedUrl = "";
+    const f = loadFunction("rafiq-agent", {
+      ...BASE,
+      CLOUDFLARE_ACCOUNT_ID: "test-account",
+      CLOUDFLARE_API_TOKEN: "test-token",
+      CLOUDFLARE_AI_MODEL: "@cf/meta/llama-3.2-3b-instruct",
+    }, async (url, init) => {
+      requestedUrl = String(url);
       sent = JSON.parse(init.body);
-      return { ok: true, json: async () => ({ output_text: "رد تجريبي" }) };
+      return { ok: true, json: async () => ({ success: true, result: { response: "رد تجريبي" } }) };
     });
-    await f.handler(post({ message: "مرحبا" }));
-    expect(sent.model).toBe("test-model");
+    const body: any = await (await f.handler(post({ message: "مرحبا" }))).json();
+    expect(requestedUrl).toContain("/accounts/test-account/ai/run/%40cf%2Fmeta%2Fllama-3.2-3b-instruct");
+    expect(sent.messages[0].content).toContain("رفيق | RAFIQ — رعاية منزلية آمنة لكبار السن والمرضى في لبنان.");
+    expect(sent.messages[0].content).toContain("@RAFIQ_Care_Bot");
+    expect(sent.messages[0].content).toContain("https://t.me/RAFIQ_Care_Bot");
+    expect(body.mode).toBe("cloudflare_workers_ai");
+    expect(body.reply).toBe("رد تجريبي");
+  });
+  test("agent redacts customer phone numbers and email addresses before AI calls", async () => {
+    let sent: any;
+    const f = loadFunction("rafiq-agent", {
+      ...BASE,
+      CLOUDFLARE_ACCOUNT_ID: "test-account",
+      CLOUDFLARE_API_TOKEN: "test-token",
+    }, async (_url, init) => {
+      sent = JSON.parse(init.body);
+      return { ok: true, json: async () => ({ success: true, result: { response: "تم" } }) };
+    });
+    await f.handler(post({ message: "اتصل بي +961 81 506 299 أو +٩٦١ ٨١ ٥٠٦ ٢٩٩ أو +۳۹ ۳۳۳ ۱۲۳ ۴۵۶۷ أو mail@example.com" }));
+    const userMessage = sent.messages[sent.messages.length - 1].content;
+    expect(userMessage).not.toContain("81 506 299");
+    expect(userMessage).not.toContain("٨١ ٥٠٦ ٢٩٩");
+    expect(userMessage).not.toContain("۳۳۳ ۱۲۳ ۴۵۶۷");
+    expect(userMessage).not.toContain("mail@example.com");
+    expect(userMessage).toContain("[رقم محجوب]");
+    expect(userMessage).toContain("[بريد محجوب]");
   });
   test("emergency wording creates an escalation record", async () => {
     const f = loadFunction("rafiq-agent", BASE, async () => { throw new Error("no network expected"); });
