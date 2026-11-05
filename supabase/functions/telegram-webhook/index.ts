@@ -101,8 +101,15 @@ function faq(text: string): string {
   return "";
 }
 
+function normalizeArabicDigits(text: string): string {
+  return text.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const code = digit.charCodeAt(0);
+    return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+  });
+}
+
 function redactPhones(text: string): string {
-  return text
+  return normalizeArabicDigits(text)
     .replace(/(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g, "[رقم محجوب]")
     .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "[رقم محجوب]")
     .slice(0, 1500);
@@ -180,16 +187,24 @@ async function getRequestStatus(sessionId: string): Promise<string | null> {
   return typeof data?.status === "string" ? data.status : null;
 }
 
-async function getLatestCancelledSession(chatId: string) {
-  const { data, error } = await db!.from("rafiq_telegram_request_sessions")
-    .select("id,request_id,service_type,area,schedule,notes,status")
-    .eq("chat_id", chatId)
-    .eq("status", "cancelled")
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error("telegram_cancelled_session_read_failed");
-  return data;
+async function getCancelledSessions(chatId: string) {
+  const sessions: any[] = [];
+  const pageSize = 100;
+  let offset = 0;
+  while (true) {
+    const { data, error } = await db!.from("rafiq_telegram_request_sessions")
+      .select("id,request_id,service_type,area,schedule,notes,status")
+      .eq("chat_id", chatId)
+      .eq("status", "cancelled")
+      .order("updated_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw new Error("telegram_cancelled_session_read_failed");
+    const page = data || [];
+    sessions.push(...page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+  return sessions;
 }
 
 async function notifyManagersOfCancellation(session: any): Promise<{ total: number; pending: number }> {
@@ -546,15 +561,21 @@ async function processUpdate(update: any) {
     return;
   }
   if (command === "/retry" && !(await getActiveSession(String(chatId)))) {
-    const cancelledSession = await getLatestCancelledSession(String(chatId));
-    if (cancelledSession) {
-      const notices = await notifyManagersOfCancellation(cancelledSession);
-      if (notices.total === 0) {
-        await sendText(chatId, "تم إلغاء الطلب، ولم يكن هناك إشعار سابق للمديرين يحتاج إلى إعادة إرسال.");
-      } else if (notices.pending > 0) {
-        await sendText(chatId, "لا يزال هناك " + notices.pending + " تنبيه إلغاء لم يصل إلى الإدارة. يمكنك إرسال /retry للمحاولة مجددًا.");
+    const cancelledSessions = await getCancelledSessions(String(chatId));
+    if (cancelledSessions.length > 0) {
+      let totalNotices = 0;
+      let pendingNotices = 0;
+      for (const cancelledSession of cancelledSessions) {
+        const notices = await notifyManagersOfCancellation(cancelledSession);
+        totalNotices += notices.total;
+        pendingNotices += notices.pending;
+      }
+      if (totalNotices === 0) {
+        await sendText(chatId, "تم إلغاء الطلبات السابقة، ولم يكن هناك إشعار سابق للمديرين يحتاج إلى إعادة إرسال.");
+      } else if (pendingNotices > 0) {
+        await sendText(chatId, "لا يزال هناك " + pendingNotices + " تنبيه إلغاء لم يصل إلى الإدارة عبر الطلبات السابقة. يمكنك إرسال /retry للمحاولة مجددًا.");
       } else {
-        await sendText(chatId, "✅ تم تأكيد وصول تنبيهات إلغاء الطلب إلى جميع المديرين الذين استلموا الطلب الأصلي.");
+        await sendText(chatId, "✅ تم تأكيد وصول جميع تنبيهات الإلغاء المعلّقة إلى المديرين الذين استلموا الطلبات الأصلية.");
       }
       return;
     }
