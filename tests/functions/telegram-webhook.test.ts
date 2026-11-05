@@ -130,7 +130,7 @@ test("Arabic-Indic and Persian phone digits are normalized before Telegram AI re
     const redacted = normalized
       .replace(lebanonNumber, "[رقم محجوب]")
       .replace(internationalNumber, "[رقم محجوب]");
-    expect(redacted.replace(/^\\+/, "")).toBe("[رقم محجوب]");
+    expect(redacted.replace(/^\+/, "")).toBe("[رقم محجوب]");
   }
 });
 
