@@ -123,8 +123,8 @@ test("Arabic-Indic and Persian phone digits are normalized before Telegram AI re
     const code = digit.charCodeAt(0);
     return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
   });
-  const lebanonNumber = /(?:\\+?961[\\s().-]*0?[\\s().-]*[1-9](?:[\\s().-]*\\d){6,7})/g;
-  const internationalNumber = /\\b(?:\\+?\\d[\\d\\s().-]{7,}\\d)\\b/g;
+  const lebanonNumber = /(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g;
+  const internationalNumber = /\b(?:\+?\d[\d\s().-]{7,}\d)\b/g;
   for (const phone of ["+٩٦١ ٨١ ٥٠٦ ٢٩٩", "+۳۹ ۳۳۳ ۱۲۳ ۴۵۶۷"]) {
     const normalized = normalizeArabicDigits(phone);
     const redacted = normalized
