@@ -73,7 +73,9 @@ test("manager notifications are tracked independently and successful destination
   expect(source).toContain("async function notifyManagersOfCancellation");
   expect(source).toContain("⚠️ إلغاء طلب RAFIQ");
   expect(source).toContain("cancellation_notice_status: \"sending\"");
-  expect(source).toContain("async function getLatestCancelledSession");
+  expect(source).toContain("async function getCancelledSessions");
+  expect(source).toContain(".range(offset, offset + pageSize - 1)");
+  expect(source).toContain("for (const cancelledSession of cancelledSessions)");
   expect(source).toContain('command === "/retry" && !(await getActiveSession(String(chatId)))');
   expect(source).toContain("notices.pending > 0");
   expect(source).toContain("أرسل /retry لإعادة المحاولة");
@@ -112,6 +114,24 @@ test("Telegram request submission verifies the conditional state transition befo
 test("Telegram manager delivery stores the message ID from Telegram's result envelope", () => {
   expect(source).toContain("sent?.result?.message_id");
   expect(source).not.toContain("sent?.message_id");
+});
+
+test("Arabic-Indic and Persian phone digits are normalized before Telegram AI redaction", () => {
+  expect(source).toContain("function normalizeArabicDigits(text: string)");
+  expect(source).toContain("return normalizeArabicDigits(text)");
+  const normalizeArabicDigits = (value: string) => value.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const code = digit.charCodeAt(0);
+    return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+  });
+  const lebanonNumber = /(?:\\+?961[\\s().-]*0?[\\s().-]*[1-9](?:[\\s().-]*\\d){6,7})/g;
+  const internationalNumber = /\\b(?:\\+?\\d[\\d\\s().-]{7,}\\d)\\b/g;
+  for (const phone of ["+٩٦١ ٨١ ٥٠٦ ٢٩٩", "+۳۹ ۳۳۳ ۱۲۳ ۴۵۶۷"]) {
+    const normalized = normalizeArabicDigits(phone);
+    const redacted = normalized
+      .replace(lebanonNumber, "[رقم محجوب]")
+      .replace(internationalNumber, "[رقم محجوب]");
+    expect(redacted).toBe("[رقم محجوب]");
+  }
 });
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
