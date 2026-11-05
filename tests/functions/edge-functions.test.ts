@@ -84,9 +84,11 @@ describe("rafiq-agent caller isolation", () => {
       sent = JSON.parse(init.body);
       return { ok: true, json: async () => ({ success: true, result: { response: "تم" } }) };
     });
-    await f.handler(post({ message: "اتصل بي +961 81 506 299 أو mail@example.com" }));
+    await f.handler(post({ message: "اتصل بي +961 81 506 299 أو +٩٦١ ٨١ ٥٠٦ ٢٩٩ أو +۳۹ ۳۳۳ ۱۲۳ ۴۵۶۷ أو mail@example.com" }));
     const userMessage = sent.messages[sent.messages.length - 1].content;
     expect(userMessage).not.toContain("81 506 299");
+    expect(userMessage).not.toContain("٨١ ٥٠٦ ٢٩٩");
+    expect(userMessage).not.toContain("۳۳۳ ۱۲۳ ۴۵۶۷");
     expect(userMessage).not.toContain("mail@example.com");
     expect(userMessage).toContain("[رقم محجوب]");
     expect(userMessage).toContain("[بريد محجوب]");
