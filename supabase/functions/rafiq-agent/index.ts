@@ -116,8 +116,15 @@ const systemPrompt = `أنت وكيل خدمة العملاء والاستقبا
 عند اكتمال المعلومات، لخّص الطلب واذكر أن الإدارة ستراجعه وتؤكد التفاصيل.
 لا تدّعِ أن الطلب أُرسل إلى الإدارة إلا إذا نجح حفظه فعليًا.`;
 
+function normalizeArabicDigits(value: string): string {
+  return value.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const code = digit.charCodeAt(0);
+    return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+  });
+}
+
 function redactAgentText(value: string): string {
-  return value
+  return normalizeArabicDigits(value)
     .replace(/(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g, "[رقم محجوب]")
     .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "[رقم محجوب]")
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[بريد محجوب]")
