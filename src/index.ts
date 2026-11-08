@@ -3,6 +3,7 @@ import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-u
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
+import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramSendText, telegramAnswerCallbackQuery, verifyTelegramWebhookSecret } from "./telegram";
 
 const port = Number(process.env.PORT ?? 7860);
@@ -203,7 +204,6 @@ app.post("/api/public/institution-intake",({set})=>{set.status=410;return{ok:fal
 .get("/admin/",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/admin.html",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/complete.html",()=>fileResponse("public/complete.html","text/html; charset=utf-8","no-store"))
-.get("/admin.js",()=>fileResponse("public/admin.js","application/javascript","public, max-age=300, stale-while-revalidate=86400"))
 .get("/app.js",()=>fileResponse("public/app.js","application/javascript","no-cache"))
 .get("/install-pwa.js",()=>fileResponse("public/install-pwa.js","application/javascript","no-cache")).get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache")).get("/js/rafiq-agent.js",()=>fileResponse("public/js/rafiq-agent.js","application/javascript","no-cache")).get("/js/rafiq-kb.js",()=>fileResponse("public/js/rafiq-kb.js","application/javascript","no-cache")).get("/js/rafiq-welcome.js",()=>fileResponse("public/js/rafiq-welcome.js","application/javascript","no-cache")).get("/assets/rafig-logo.png",()=>fileResponse("public/assets/rafig-logo.png","image/png","no-cache"))
 .get("/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
@@ -214,7 +214,7 @@ app.post("/api/public/institution-intake",({set})=>{set.status=410;return{ok:fal
 .get("/js/locales/it.js",()=>fileResponse("public/js/locales/it.js","application/javascript","no-cache"))
 .get("/js/locales/de.js",()=>fileResponse("public/js/locales/de.js","application/javascript","no-cache"))
 .get("/css/device.css",()=>fileResponse("public/css/device.css","text/css","no-cache"))
-.get("/intake-admin.js",()=>fileResponse("public/intake-admin.js","application/javascript","no-cache")).get("/institution-form.js",()=>fileResponse("public/institution-form.js","application/javascript","no-cache"))
+
 .get("/manifest.webmanifest",()=>fileResponse("public/manifest.webmanifest","application/manifest+json"))
 .get("/sitemap.xml",()=>fileResponse("public/sitemap.xml","application/xml; charset=utf-8","no-store"))
 .get("/*",async({request,set})=>{const pathname=new URL(request.url).pathname;if(pathname==="/"||pathname.startsWith("/api/")){set.status=404;return{ok:false,error:"not found"}}let decoded="";try{decoded=decodeURIComponent(pathname)}catch{set.status=400;return{ok:false,error:"invalid path"}}if(!decoded.startsWith("/")||decoded.includes("..")||!/^[A-Za-z0-9._~!$&'()*+,;=:@%\\/-]+$/.test(decoded)){set.status=404;return{ok:false,error:"not found"}}const ext=decoded.split(".").pop()?.toLowerCase()??"";const mime:Record<string,string>={js:"application/javascript; charset=utf-8",css:"text/css; charset=utf-8",json:"application/json; charset=utf-8",webmanifest:"application/manifest+json",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",svg:"image/svg+xml",ico:"image/x-icon",txt:"text/plain; charset=utf-8",xml:"application/xml; charset=utf-8",woff:"font/woff",woff2:"font/woff2",map:"application/json; charset=utf-8"};if(!mime[ext]){set.status=404;return{ok:false,error:"not found"}}const cache=["png","jpg","jpeg","webp","svg","ico","woff","woff2"].includes(ext)?"public, max-age=86400, stale-while-revalidate=604800":["js","css","json","webmanifest","xml"].includes(ext)?"public, max-age=300, stale-while-revalidate=86400":"no-store";return fileResponse("public"+decoded,mime[ext],cache)})
