@@ -5,8 +5,6 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const BOT_TOKEN = (Deno.env.get("TELEGRAM_BOT_TOKEN") || "").trim();
 const WEBHOOK_SECRET = (Deno.env.get("TELEGRAM_WEBHOOK_SECRET") || "").trim();
-const MANAGER_CHAT_IDS = (Deno.env.get("TELEGRAM_MANAGER_CHAT_IDS") || "")
-  .split(",").map((x) => x.trim()).filter(Boolean);
 const MAX_BODY_BYTES = 512 * 1024;
 const CLOUDFLARE_ACCOUNT_ID = (Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || "").trim();
 const CLOUDFLARE_API_TOKEN = (Deno.env.get("CLOUDFLARE_API_TOKEN") || "").trim();
@@ -103,14 +101,14 @@ function faq(text: string): string {
     return "مناطق الدليل: طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت، وباقي لبنان. ظهور أي مركز مرتبط باعتماد الإدارة.";
   }
   if (/(واتساب|whatsapp|تواصل|رقم الاداره)/.test(t)) {
-    return "للتواصل الإداري: +961 81 506 299. قناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
+    return "للتواصل الإداري: +961 81 506 299. قناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
   }
   return "";
 }
 function redactPhones(text: string): string {
   return text
-    .replace(/(?:\\+?961[\\s().-]*0?[\\s().-]*[1-9](?:[\\s().-]*\\d){6,7})/g, "[رقم محجوب]")
-    .replace(/\\b(?:\\+?\\d[\\d\\s().-]{7,}\\d)\\b/g, "[رقم محجوب]")
+    .replace(/(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g, "[رقم محجوب]")
+    .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "[رقم محجوب]")
     .slice(0, 1500);
 }
 async function generateFaqReply(text: string): Promise<string> {
@@ -157,12 +155,12 @@ async function processUpdate(update: any) {
     }
     await telegram("answerCallbackQuery", { callback_query_id: callback.id });
     if (data === "dir:areas") {
-      await sendText(chatId, "المناطق التي يغطيها دليل RAFIQ:\\n" + AREA_ITEMS.map((x) => "• " + x).join("\\n") + "\\n\\nتظهر المراكز بعد اعتمادها من الإدارة.");
+      await sendText(chatId, "المناطق التي يغطيها دليل RAFIQ:\n" + AREA_ITEMS.map((x) => "• " + x).join("\n") + "\n\nتظهر المراكز بعد اعتمادها من الإدارة.");
       return;
     }
     if (data.startsWith("dir:") && SERVICE_ITEMS[data.slice(4)]) {
       const label = SERVICE_ITEMS[data.slice(4)];
-      await sendText(chatId, "اخترت: " + label + ".\\n\\nتُعرض المراكز بعد مراجعتها واعتمادها من إدارة RAFIQ. لا يوجد اسم مركز أو خصم أو كود مؤكد قبل الاعتماد.");
+      await sendText(chatId, "اخترت: " + label + ".\n\nتُعرض المراكز بعد مراجعتها واعتمادها من إدارة RAFIQ. لا يوجد اسم مركز أو خصم أو كود مؤكد قبل الاعتماد.");
       return;
     }
     return;
@@ -176,9 +174,9 @@ async function processUpdate(update: any) {
     await sendText(chatId, "اكتب سؤالك أو اختر نوع الخدمة من القائمة. لا ترسل بيانات شخصية أو مستندات.");
     return;
   }
-  const command = text.toLowerCase().split(/\\s+/)[0];
+  const command = text.toLowerCase().split(/\s+/)[0];
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\\n\\nنصل بالحب والأمان لرعاية العائلة.\\n\\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\\n\\nلا يستقبل البوت طلبات تقديم أو ملفات. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\\n\\nقناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
+    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nنصل بالحب والأمان لرعاية العائلة.\n\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\n\nلا يستقبل البوت طلبات تقديم أو ملفات. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\n\nقناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
     return;
   }
   if (command === "/services" || command === "/directory") {
@@ -186,7 +184,7 @@ async function processUpdate(update: any) {
     return;
   }
   if (command === "/areas") {
-    await sendText(chatId, "مناطق الدليل:\\n" + AREA_ITEMS.map((x) => "• " + x).join("\\n"));
+    await sendText(chatId, "مناطق الدليل:\n" + AREA_ITEMS.map((x) => "• " + x).join("\n"));
     return;
   }
   if (command === "/request" || command === "/stop" || command === "/apply" || command === "/register") {
