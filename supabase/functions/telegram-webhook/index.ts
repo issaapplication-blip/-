@@ -103,7 +103,7 @@ function faq(text: string): string {
     return "مناطق الدليل: طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت، وباقي لبنان. ظهور أي مركز مرتبط باعتماد الإدارة.";
   }
   if (/(واتساب|whatsapp|تواصل|رقم الاداره)/.test(t)) {
-    return "للتواصل الإداري: +961 81 506 299. قناة Telegram: https://t.me/+a7CDblNyGkw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
+    return "للتواصل الإداري: +961 81 506 299. قناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
   }
   return "";
 }
@@ -178,7 +178,7 @@ async function processUpdate(update: any) {
   }
   const command = text.toLowerCase().split(/\\s+/)[0];
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\\n\\nنصل بالحب والأمان لرعاية العائلة.\\n\\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\\n\\nلا يستقبل البوت طلبات تقديم أو ملفات. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\\n\\nقناة Telegram: https://t.me/+a7CDblNyGkw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
+    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\\n\\nنصل بالحب والأمان لرعاية العائلة.\\n\\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\\n\\nلا يستقبل البوت طلبات تقديم أو ملفات. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\\n\\nقناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
     return;
   }
   if (command === "/services" || command === "/directory") {
