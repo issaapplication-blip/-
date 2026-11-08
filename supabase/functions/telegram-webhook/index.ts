@@ -69,48 +69,55 @@ function normalize(text: string): string {
     .replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+const SERVICE_ITEMS: Record<string,string> = {
+  labs: "المختبرات الطبية",
+  imaging: "مراكز الأشعة والتصوير الطبي",
+  physio: "مراكز العلاج الفيزيائي",
+  equipment_sale: "مراكز بيع المعدات الطبية",
+  equipment_rent: "مراكز تأجير المعدات الطبية",
+};
+const AREA_ITEMS = ["طرابلس","الضنية","زغرتا","الكورة","البترون","بيروت","باقي لبنان"];
+const serviceKeyboard = {
+  inline_keyboard: [
+    [{ text: "🧪 المختبرات الطبية", callback_data: "dir:labs" }],
+    [{ text: "🩻 الأشعة والتصوير الطبي", callback_data: "dir:imaging" }],
+    [{ text: "🧑‍🦽 العلاج الفيزيائي", callback_data: "dir:physio" }],
+    [{ text: "🦽 بيع المعدات الطبية", callback_data: "dir:equipment_sale" }],
+    [{ text: "🦽 تأجير المعدات الطبية", callback_data: "dir:equipment_rent" }],
+    [{ text: "📍 المناطق", callback_data: "dir:areas" }],
+  ],
+};
 function faq(text: string): string {
   const t = normalize(text);
-  if (/(طوارئ|طواري|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(t)) {
+  if (/(طوارئ|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(t)) {
     return "إذا كانت هناك حالة طارئة أو خطر فوري، اتصل فورًا بخدمات الطوارئ المحلية أو بالفريق الطبي المعالج. لا تؤخر الرعاية العاجلة بانتظار رفيق.";
   }
-  if (/(سعر|تكلف|كم|اسعار|الاسعار|price|cost)/.test(t)) {
-    return "لا يوجد سعر موحّد أستطيع تأكيده. تتحدد التكلفة بحسب الخدمة والمنطقة والدوام واحتياجات الحالة وتوفر مقدم الخدمة؛ وتؤكد الإدارة السعر قبل أي اتفاق. اكتب /request لبدء طلب مراجعة.";
+  if (/(خصم|تخفيض|كود|رمز|قسيمه|قسيمة|discount|coupon)/.test(t)) {
+    return "لا أستطيع تأكيد خصم أو إصدار كود قبل اعتماد المركز وقيمة الخصم وشروطه من إدارة RAFIQ. سيظهر فقط العرض الذي تمت الموافقة عليه رسميًا.";
   }
-  if (/(تمريض|ممرض|ممرضة|حقن|ضماد|جرح)/.test(t)) {
-    return "يساعد رفيق في تنظيم طلب التمريض المنزلي. يمكن للإدارة مراجعة المنطقة والمهمة المطلوبة وتأكيد التوفر. اكتب /request لبدء الطلب.";
+  if (/(مختبر|تحاليل|فحوص|laborator)/.test(t)) return "فئة المختبرات الطبية ضمن دليل رفيق. ستُعرض بيانات المراكز بعد مراجعتها واعتمادها من الإدارة.";
+  if (/(اشعه|أشعة|تصوير|رنين|طبقي|radiolog|imaging)/.test(t)) return "فئة مراكز الأشعة والتصوير الطبي ضمن دليل رفيق. لن يظهر أي مركز قبل اعتماد بياناته من الإدارة.";
+  if (/(فيزيائي|طبيعي|فيزيو|physio)/.test(t)) return "فئة مراكز العلاج الفيزيائي ضمن دليل رفيق. ستُنشر المراكز المعتمدة فقط.";
+  if (/(معدات|كرسي|سرير طبي|جهاز طبي|بيع|تأجير)/.test(t)) return "يشمل دليل رفيق مراكز بيع المعدات الطبية وتأجيرها. تُعرض بيانات المركز بعد موافقة الإدارة.";
+  if (/(منطقه|منطقة|وين|اين|تغطيه|تغطية|لبنان|طرابلس|الضنيه|ضنيه|زغرتا|الكوره|البترون|بيروت)/.test(t)) {
+    return "مناطق الدليل: طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت، وباقي لبنان. ظهور أي مركز مرتبط باعتماد الإدارة.";
   }
-  if (/(فيزيائي|طبيعي|فيزيو|physio)/.test(t)) {
-    return "يساعد رفيق في تنظيم طلب العلاج الفيزيائي المنزلي؛ وتُراجع ملاءمة الخدمة والتوفر من الفريق المختص. اكتب /request لبدء الطلب.";
-  }
-  if (/(مسن|كبار السن|كبير السن|والدي|والدتي|جدتي|جدي|مرافق|رعايه منزليه)/.test(t)) {
-    return "رفيق ينظم طلبات رعاية كبار السن داخل المنزل، نهارًا أو ليلًا أو بنظام الإقامة بحسب التوفر. اكتب /request لبدء طلب تراجعه الإدارة.";
-  }
-  if (/(مريض|مريضة|بعد المستشفى|بعد عملية|رعاية المريض)/.test(t)) {
-    return "رفيق يساعد في تنظيم طلب رعاية منزلية للمريض، وتراجع الإدارة احتياجات الحالة من دون تقديم تشخيص أو استبدال الفريق الطبي. اكتب /request لبدء الطلب.";
-  }
-  if (/(منطقة|وين|اين|تغطية|لبنان|طرابلس|الضنيه|ضنيه|زغرتا|الكوره|البترون|بيروت)/.test(t)) {
-    return "نستقبل طلبات من مناطق لبنان، ويُراجع التوفر لكل خدمة ومنطقة على حدة. اكتب /request وحدد المنطقة المطلوبة.";
-  }
-  if (/(تواصل|واتساب|whatsapp|telegram|تلغرام|تيليجرام|رقم الاداره)/.test(t)) {
-    return "للمتابعة الإدارية: WhatsApp ‏+961 81 506 299. ويمكنك متابعة بوت رفيق: https://t.me/RAFIQ_Care_Bot. الردود الآلية على WhatsApp ما زالت متوقفة إلى حين اجتياز اختبار منفصل.";
+  if (/(واتساب|whatsapp|تواصل|رقم الاداره)/.test(t)) {
+    return "للتواصل الإداري: +961 81 506 299. قناة Telegram: https://t.me/+a7CDblNyGkw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
   }
   return "";
 }
-
 function redactPhones(text: string): string {
   return text
-    .replace(/(?:\+?961[\s().-]*0?[\s().-]*[1-9](?:[\s().-]*\d){6,7})/g, "[رقم محجوب]")
-    .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "[رقم محجوب]")
+    .replace(/(?:\\+?961[\\s().-]*0?[\\s().-]*[1-9](?:[\\s().-]*\\d){6,7})/g, "[رقم محجوب]")
+    .replace(/\\b(?:\\+?\\d[\\d\\s().-]{7,}\\d)\\b/g, "[رقم محجوب]")
     .slice(0, 1500);
 }
 async function generateFaqReply(text: string): Promise<string> {
   const known = faq(text);
   if (known) return known;
-  // Workers AI Free allocation is bounded; if it is absent or unavailable, retain guided mode.
-  // Only the text is sent. We never transmit Telegram chat/user IDs, request-session data, or phone numbers.
   if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_API_TOKEN) {
-    return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق، لكن لم أفهم السؤال بدقة. هل تسأل عن رعاية المسنين أو المرضى أو التمريض المنزلي أو العلاج الفيزيائي؟ ويمكنك كتابة /request لبدء طلب تراجعه الإدارة.";
+    return "أهلًا بك في RAFIQ 🇱🇧. يمكنك اختيار نوع الخدمة أو المنطقة من القائمة. لا يستقبل البوت طلبات تقديم أو ملفات، ولا يؤكد خصمًا أو كودًا قبل موافقة الإدارة.";
   }
   try {
     const response = await fetch(
@@ -120,99 +127,25 @@ async function generateFaqReply(text: string): Promise<string> {
         headers: { "authorization": "Bearer " + CLOUDFLARE_API_TOKEN, "content-type": "application/json" },
         body: JSON.stringify({
           messages: [
-            { role: "system", content: "أنت مساعد خدمة العملاء لمنصة RAFIQ للرعاية المنزلية في لبنان. أجب بالعربية بشكل واضح ومفيد عن الخدمات فقط. لا تشخّص ولا تصف أدوية ولا تغيّر علاجًا. لا تخترع سعرًا أو توفرًا أو حجزًا أو ترخيصًا. لا تطلب كلمات مرور أو رموز تحقق أو بيانات صحية تفصيلية أو رقم هاتف. في الطوارئ، اطلب التواصل فورًا مع خدمات الطوارئ أو الفريق الطبي. عند الحاجة إلى ترتيب خدمة، وجّه العميل إلى /request. إذا لم تعرف، قل بوضوح إن الإدارة ستراجع السؤال." },
+            { role: "system", content: "أنت مساعد معلومات ودليل خدمات لمنصة RAFIQ في لبنان. أجب عن المختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، مراكز بيع وتأجير المعدات الطبية، ومناطق الخدمة: طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت وباقي لبنان. لا تجمع بيانات شخصية، ولا تفتح طلبات، ولا تقبل ملفات أو طلبات انتساب، ولا تنشئ حجوزات. لا تخترع أسماء مراكز أو أسعارًا أو خصومات أو أكوادًا أو توفرًا. أكد أن المراكز والعروض لا تظهر إلا بعد اعتماد الإدارة. المريض يدفع للمركز مباشرة. لا تستقبل RAFIQ أموال العملاء. أجب باختصار، ولا توجه المستخدم إلى /request." },
             { role: "user", content: redactPhones(text) }
           ],
-          max_tokens: 350,
+          max_tokens: 300,
           temperature: 0.2
         }),
         signal: AbortSignal.timeout(9000)
       }
     );
-    if (!response.ok) {
-      console.error(JSON.stringify({ event: "telegram_ai_provider_unavailable", status: response.status }));
-      return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
-    }
+    if (!response.ok) return "أستطيع شرح فئات دليل رفيق ومناطقه. اختر الخدمة من القائمة، وسيظهر فقط المركز الذي اعتمدته الإدارة.";
     const payload = await response.json().catch(() => ({}));
     const answer = typeof payload?.result?.response === "string" ? payload.result.response.trim() : "";
-    if (!answer || payload?.success === false) {
-      return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
-    }
-    return answer.slice(0, 3000);
+    if (!answer || payload?.success === false) return "اختر نوع الخدمة أو المنطقة من القائمة. لا تظهر المراكز أو الخصومات إلا بعد اعتماد الإدارة.";
+    return answer.slice(0, 2000);
   } catch (error) {
     console.error(JSON.stringify({ event: "telegram_ai_provider_error", reason: String(error).slice(0, 100) }));
-    return "أستطيع مساعدتك بالمعلومات العامة عن خدمات رفيق. إذا كان سؤالك عن طلب رعاية، اكتب /request؛ وستراجع الإدارة التفاصيل والتوفر.";
+    return "اختر نوع الخدمة أو المنطقة من القائمة. لا تظهر المراكز أو الخصومات إلا بعد اعتماد الإدارة.";
   }
 }
-
-const serviceKeyboard = {
-  inline_keyboard: [
-    [{ text: "رعاية كبار السن", callback_data: "reqsvc:elderly" }, { text: "رعاية المرضى", callback_data: "reqsvc:patient" }],
-    [{ text: "التمريض المنزلي", callback_data: "reqsvc:nurse" }, { text: "العلاج الفيزيائي", callback_data: "reqsvc:physio" }],
-  ],
-};
-
-const serviceNames: Record<string, string> = {
-  elderly: "رعاية كبار السن",
-  patient: "رعاية المرضى",
-  nurse: "التمريض المنزلي",
-  physio: "العلاج الفيزيائي المنزلي",
-};
-
-async function getActiveSession(chatId: string) {
-  const { data, error } = await db!.from("rafiq_telegram_request_sessions")
-    .select("id,request_id,service_type,area,schedule,notes,status")
-    .eq("chat_id", chatId).eq("status", "collecting")
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (error) throw new Error("telegram_request_session_read_failed");
-  return data;
-}
-
-async function processRequestMessage(chatId: string, userId: string, text: string): Promise<boolean> {
-  const session = await getActiveSession(chatId);
-  if (!session) return false;
-
-  if (!session.service_type) {
-    await sendText(chatId, "اختر الخدمة المطلوبة:", serviceKeyboard);
-    return true;
-  }
-  if (!session.area) {
-    const { error } = await db!.from("rafiq_telegram_request_sessions").update({ area: text.slice(0, 180), updated_at: new Date().toISOString() }).eq("id", session.id);
-    if (error) throw new Error("telegram_request_area_save_failed");
-    await sendText(chatId, "في أي وقت أو نظام دوام تحتاجون الخدمة؟ (نهاري، ليلي، أو إقامة)");
-    return true;
-  }
-  if (!session.schedule) {
-    const { error } = await db!.from("rafiq_telegram_request_sessions").update({ schedule: text.slice(0, 180), updated_at: new Date().toISOString() }).eq("id", session.id);
-    if (error) throw new Error("telegram_request_schedule_save_failed");
-    await sendText(chatId, "هل توجد تفاصيل إضافية تريد أن تطّلع عليها الإدارة؟ اكتبها أو أرسل /skip.");
-    return true;
-  }
-
-  const notes = text.trim().toLowerCase() === "/skip" ? null : text.slice(0, 1000);
-  const { error } = await db!.from("rafiq_telegram_request_sessions").update({
-    notes, status: "submitted", updated_at: new Date().toISOString(),
-  }).eq("id", session.id).eq("status", "collecting");
-  if (error) throw new Error("telegram_request_submit_failed");
-
-  const summary = [
-    "📝 طلب رعاية جديد على RAFIQ",
-    "الطلب: " + session.request_id,
-    "الخدمة: " + (serviceNames[session.service_type] || session.service_type),
-    "المنطقة: " + session.area,
-    "الدوام: " + session.schedule,
-    "تفاصيل: " + (notes || "لم تُذكر"),
-    "Chat ID: " + chatId,
-    "Telegram User ID: " + userId,
-  ].join("\n");
-  for (const managerId of MANAGER_CHAT_IDS) {
-    try { await sendText(managerId, summary); }
-    catch (error) { console.error(JSON.stringify({ event: "telegram_manager_notice_failed", error: String(error).slice(0, 120) })); }
-  }
-  await sendText(chatId, "✅ تم حفظ طلبك لدى رفيق بالرقم " + session.request_id + ". ستراجع الإدارة التفاصيل وتؤكد التوفر؛ لا يُعد هذا تأكيدًا لحجز الخدمة.");
-  return true;
-}
-
 async function processUpdate(update: any) {
   const callback = update?.callback_query;
   if (callback) {
@@ -222,24 +155,16 @@ async function processUpdate(update: any) {
       await telegram("answerCallbackQuery", { callback_query_id: callback.id });
       return;
     }
-    if (data.startsWith("reqsvc:")) {
-      const key = data.slice("reqsvc:".length);
-      if (!serviceNames[key]) {
-        await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "اختيار غير صالح" });
-        return;
-      }
-      const session = await getActiveSession(String(chatId));
-      if (!session) {
-        await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "ابدأ طلبًا جديدًا عبر /request" });
-        return;
-      }
-      const { error } = await db!.from("rafiq_telegram_request_sessions").update({ service_type: key, updated_at: new Date().toISOString() }).eq("id", session.id);
-      if (error) throw new Error("telegram_request_service_save_failed");
-      await telegram("answerCallbackQuery", { callback_query_id: callback.id });
-      await sendText(chatId, "تم اختيار " + serviceNames[key] + ". ما المنطقة أو المدينة المطلوبة؟");
+    await telegram("answerCallbackQuery", { callback_query_id: callback.id });
+    if (data === "dir:areas") {
+      await sendText(chatId, "المناطق التي يغطيها دليل RAFIQ:\\n" + AREA_ITEMS.map((x) => "• " + x).join("\\n") + "\\n\\nتظهر المراكز بعد اعتمادها من الإدارة.");
       return;
     }
-    await telegram("answerCallbackQuery", { callback_query_id: callback.id });
+    if (data.startsWith("dir:") && SERVICE_ITEMS[data.slice(4)]) {
+      const label = SERVICE_ITEMS[data.slice(4)];
+      await sendText(chatId, "اخترت: " + label + ".\\n\\nتُعرض المراكز بعد مراجعتها واعتمادها من إدارة RAFIQ. لا يوجد اسم مركز أو خصم أو كود مؤكد قبل الاعتماد.");
+      return;
+    }
     return;
   }
 
@@ -248,47 +173,27 @@ async function processUpdate(update: any) {
   if (chatId === undefined || message?.chat?.type !== "private") return;
   const text = typeof message.text === "string" ? message.text.trim() : "";
   if (!text) {
-    await sendText(chatId, "يمكنك كتابة سؤالك أو استخدام /services و/request. لا ترسل كلمات مرور أو رموز تحقق.");
+    await sendText(chatId, "اكتب سؤالك أو اختر نوع الخدمة من القائمة. لا ترسل بيانات شخصية أو مستندات.");
     return;
   }
-  const command = text.toLowerCase().split(/\s+/)[0];
-  const userId = String(message.from?.id || chatId);
-
+  const command = text.toLowerCase().split(/\\s+/)[0];
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nخدماتنا: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\n\n/services — الخدمات\n/request — تسجيل طلب تراجعه الإدارة\n/stop — إلغاء الطلب الجاري");
+    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\\n\\nنصل بالحب والأمان لرعاية العائلة.\\n\\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\\n\\nلا يستقبل البوت طلبات تقديم أو ملفات. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\\n\\nقناة Telegram: https://t.me/+a7CDblNyGkw1Yjg8\\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
     return;
   }
-  if (command === "/services") {
-    await sendText(chatId, "خدمات رفيق الأساسية:", serviceKeyboard);
+  if (command === "/services" || command === "/directory") {
+    await sendText(chatId, "اختر فئة الدليل:", serviceKeyboard);
     return;
   }
-  if (command === "/stop") {
-    const session = await getActiveSession(String(chatId));
-    if (session) {
-      const { error } = await db!.from("rafiq_telegram_request_sessions").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", session.id);
-      if (error) throw new Error("telegram_request_cancel_failed");
-    }
-    await sendText(chatId, "تم إيقاف الطلب الجاري. يمكنك بدء طلب جديد في أي وقت عبر /request.");
+  if (command === "/areas") {
+    await sendText(chatId, "مناطق الدليل:\\n" + AREA_ITEMS.map((x) => "• " + x).join("\\n"));
     return;
   }
-  if (command === "/request") {
-    const existing = await getActiveSession(String(chatId));
-    if (existing) {
-      await sendText(chatId, "لديك طلب جارٍ بالرقم " + existing.request_id + ". أكمل الإجابات المطلوبة أو أرسل /stop لإلغائه.");
-      return;
-    }
-    const requestId = "RFQ-TG-" + new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14) + "-" + crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
-    const { error } = await db!.from("rafiq_telegram_request_sessions").insert({
-      request_id: requestId, chat_id: String(chatId), telegram_user_id: userId,
-      language: "ar", status: "collecting", is_test: false,
-    });
-    if (error) throw new Error("telegram_request_start_failed");
-    await sendText(chatId, "📝 بدأنا طلب رعاية. رقم الطلب: " + requestId + "\n\nاختر الخدمة المطلوبة:", serviceKeyboard);
+  if (command === "/request" || command === "/stop" || command === "/apply" || command === "/register") {
+    await sendText(chatId, "تم إيقاف مسار الطلبات والتقديم عبر البوت. استخدم /services لتصفح فئات دليل RAFIQ أو /areas لعرض المناطق.");
     return;
   }
-
-  if (await processRequestMessage(String(chatId), userId, text)) return;
-  await sendText(chatId, await generateFaqReply(text));
+  await sendText(chatId, await generateFaqReply(text), serviceKeyboard);
 }
 
 async function markUpdate(updateId: number, status: "completed" | "failed", errorMessage?: string) {
