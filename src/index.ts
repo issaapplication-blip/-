@@ -3,10 +3,8 @@ import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-u
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
-import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
 import { sendMessage } from "./messaging-service";
 import { RAFIQ_CONFIG } from "./rafiq-config";
 import QRCode from "qrcode";
@@ -159,88 +157,7 @@ const draftInboundReply = async (message: string, senderPhone?: string) => {
   }
 };
 const MAX_WEBHOOK_BODY = 512_000;
-const MAX_PUBLIC_INTAKE_BODY = 18 * 1024 * 1024;
-const PUBLIC_INTAKE_RATE_LIMIT_MS = 15_000;
-const PUBLIC_INTAKE_RATE_MAX_KEYS = 10_000;
 const securityHeaders = {"X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Resource-Policy":"same-origin","Content-Security-Policy":"default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https://images.pexels.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://qmuxaehrahfsnabyjens.supabase.co "};
-const timingSafeEqual=(a:Uint8Array,b:Uint8Array)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0};
-const hex=(bytes:ArrayBuffer)=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
-const verifyMetaSignature=async(body:string,signature:string|null)=>{const secret=process.env.META_APP_SECRET;if(!secret||!signature?.startsWith("sha256="))return false;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)))}`;return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(signature))};
-const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessageCore=async(message:any,conversation:any={})=>{
-  const identity=kapsoIdentity(message,conversation);
-  const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
-  const body=typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():"");
-  const destination=identity.phone?{to:identity.phone}:{recipient:identity.bsuid};
-  if(!body||(!destination.to&&!destination.recipient))return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
-  try{
-    const inbound=await recordInboundEvent(message,identity,"kapso");if(inbound?.duplicate){console.log(JSON.stringify({event:"rafig_kapso_duplicate_ignored",messageId:String(message?.id??"")}));return{id:String(message?.id??"unknown"),status:"duplicate_ignored"}}
-    console.log(JSON.stringify({event:"rafig_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
-    await forwardWhatsAppToTelegramManager(message,identity,body);
-    if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING==="true" && (process.env.RAFIQ_WHATSAPP_AUTO_REPLY!=="true" || process.env.WHATSAPP_SENDING_ENABLED!=="true")){
-      await updateInboundEvent(String(message.id??""),"processed");
-      return{id:String(message.id??""),status:"forwarded_to_telegram"};
-    }
-    const result=await draftInboundReply(body,identity.phone||undefined);
-    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
-      try{
-        const outbound=kapsoConfigured()?await kapsoSendText(destination,result.reply):identity.phone?await sendWhatsAppText(identity.phone,result.reply):null;
-        if(!outbound)throw new Error("BSUID-only inbound requires Kapso API configuration");
-        await recordOutboundMessage(identity.phone||"",result.reply,outbound);
-        await updateInboundEvent(String(message.id??""),"processed");
-        console.log(JSON.stringify({event:"rafig_kapso_auto_reply_sent",provider:kapsoConfigured()?"kapso":"meta",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),outboundMessageId:outbound?.messages?.[0]?.id??null}));
-        return{id:String(message.id??""),status:outbound?.messages?.[0]?.id?"auto_replied":"draft_ready"};
-      }catch(error){
-        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
-        console.error(JSON.stringify({event:"rafig_kapso_auto_reply_failed",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),error:String(error)}));
-        return{id:String(message.id??""),status:"draft_ready_send_failed"};
-      }
-    }
-    await updateInboundEvent(String(message.id??""),"processed");
-    return{id:String(message.id??""),status:"draft_ready"};
-  }catch(error){
-    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
-    console.error(JSON.stringify({event:"rafig_kapso_agent_failed",messageId:String(message.id??""),error:String(error)}));
-    return{id:String(message.id??""),status:"draft_failed"};
-  }
-};const processMetaMessageCore=async(message:any)=>{
-  const identity={phone:typeof message?.from==="string"?message.from:""};
-  const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
-  const body=typeof message?.text?.body==="string"?message.text.body.trim():"";
-  if(!body||!identity.phone)return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
-  try{
-    const inbound=await recordInboundEvent(message,identity,"meta");
-    if(inbound?.duplicate)return{id:String(message?.id??"unknown"),status:"duplicate_ignored"};
-    console.log(JSON.stringify({event:"rafig_meta_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
-    await forwardWhatsAppToTelegramManager(message,identity,body);
-    const result=await draftInboundReply(body,identity.phone);
-    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
-      try{
-        const outbound=kapsoConfigured()?await kapsoSendText({to:identity.phone},result.reply):await sendWhatsAppText(identity.phone,result.reply);
-        await recordOutboundMessage(identity.phone,result.reply,outbound);
-        await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
-        return{id:String(message.id??""),status:"auto_replied",outboundMessageId:outbound?.messages?.[0]?.id??null};
-      }catch(error){
-        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
-        return{id:String(message.id??""),status:"draft_ready_send_failed"};
-      }
-    }
-    await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
-    return{id:String(message.id??""),status:"draft_ready"};
-  }catch(error){
-    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
-    console.error(JSON.stringify({event:"rafig_meta_webhook_failed",messageId:String(message?.id??""),error:String(error)}));
-    return{id:String(message?.id??""),status:"draft_failed"};
-  }
-};
-const processMetaMessage=async(message:any)=>{
-  const id=String(message?.id??"");
-  if(id&&kapsoInFlight.has("meta:"+id))return{id,status:"duplicate_in_flight"};
-  if(id)kapsoInFlight.add("meta:"+id);
-  try{return await processMetaMessageCore(message)}finally{if(id)kapsoInFlight.delete("meta:"+id)}
-};
-const kapsoInFlight=new Set<string>();const processKapsoMessage=async(message:any,conversation:any={})=>{const id=String(message?.id??"");if(id&&kapsoInFlight.has(id))return{id,status:"duplicate_in_flight"};if(id)kapsoInFlight.add(id);try{return await processKapsoMessageCore(message,conversation)}finally{if(id)kapsoInFlight.delete(id)}};const extractIncomingMessages=(payload:any)=>{const messages:Array<{from:string;id:string;text?:string;type:string;timestamp?:string}>=[];for(const entry of payload?.entry??[])for(const change of entry?.changes??[])for(const message of change?.value?.messages??[])messages.push({from:String(message.from??""),id:String(message.id??""),text:typeof message.text?.body==="string"?message.text.body:undefined,type:String(message.type??"unknown"),timestamp:message.timestamp?String(message.timestamp):undefined});return messages};
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? "https://qmuxaehrahfsnabyjens.supabase.co").trim().replace(/\/+$/,"");
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "").trim();
@@ -291,7 +208,6 @@ const supabaseRest=async(path:string,token:string,init:RequestInit={})=>{
   return {response,body};
 };
 const requireAdminToken=(request:Request)=>Boolean(process.env.RAFIQ_ADMIN_ACTION_TOKEN&&request.headers.get("x-rafig-admin-token")===process.env.RAFIQ_ADMIN_ACTION_TOKEN);
-const sendWhatsAppText=async(to:string,body:string)=>{const accessToken=process.env.META_ACCESS_TOKEN,phoneNumberId=process.env.META_PHONE_NUMBER_ID,apiVersion=process.env.META_GRAPH_API_VERSION??"v23.0";if(!accessToken||!phoneNumberId)throw new Error("WhatsApp Cloud API server configuration is incomplete");const response=await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,{method:"POST",headers:{Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",recipient_type:"individual",to,type:"text",text:{preview_url:false,body}})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(`Meta WhatsApp API error (${response.status})`);return result};
 const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html","public/barcode.html","public/member.html"]); const RAFIQ_LOGO_STYLE='<style id="rafig-logo-quality">.brand img,.brand-mini img,.hero-logo,.logo,.brand-logo{background:#fff!important;object-fit:contain!important;image-rendering:auto!important;filter:none!important}.brand img,.brand-mini img,.logo,.brand-logo{border-radius:14px!important;padding:6px!important;box-sizing:border-box!important}.hero-logo{display:block;background:#fff!important;border-radius:18px!important;padding:10px!important;box-shadow:0 5px 18px rgba(0,0,0,.08)!important}</style>'; const FILE_CACHE_MAX_BYTES=16*1024*1024; const fileCache=new Map<string,{body:Uint8Array,type:string}>(); let fileCacheBytes=0;
 const fileResponse=async(path:string,type:string,cache="no-store")=>{const cached=fileCache.get(path+"|"+type);if(cached)return new Response(cached.body,{status:200,headers:{"Content-Type":type,"Content-Length":String(cached.body.byteLength),"Cache-Control":cache}});const file=Bun.file(path);if(!(await file.exists()))return new Response("Not Found",{status:404,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});let body:any=await file.arrayBuffer();if(type.startsWith("text/html")&&!PUBLIC_I18N_EXCLUDED.has(path)){let html=new TextDecoder().decode(body);if(type.startsWith("text/html")&&!html.includes("id=\"rafig-logo-quality\"")){html=html.includes("</head>")?html.replace("</head>",RAFIQ_LOGO_STYLE+"</head>"):RAFIQ_LOGO_STYLE+html;}if(!html.includes("/css/device.css")){const marker="</head>";const tag='<link rel="stylesheet" href="/css/device.css?v=72">';html=html.includes(marker)?html.replace(marker,tag+marker):tag+html;}if(!html.includes("/i18n.js")){const marker="</body>";const tag='<script src="/i18n.js?v=3" defer></script>';html=html.includes(marker)?html.replace(marker,tag+marker):html+tag;}body=html;}const bytes=typeof body==="string"?new TextEncoder().encode(body):new Uint8Array(body);if(bytes.byteLength<=FILE_CACHE_MAX_BYTES){const key=path+"|"+type;while(fileCacheBytes+bytes.byteLength>FILE_CACHE_MAX_BYTES&&fileCache.size){const first=fileCache.keys().next().value;if(first){const oldEntry=fileCache.get(first);fileCache.delete(first);fileCacheBytes-=oldEntry?.body.byteLength||0}else break}const stored=new Uint8Array(bytes);fileCache.set(key,{body:stored,type});fileCacheBytes+=stored.byteLength;}return new Response(bytes,{status:200,headers:{"Content-Type":type,"Content-Length":String(bytes.byteLength),"Cache-Control":cache}})};
 const broadcastTelegramAnnouncement = async (announcementKey: string, body: string, cutoffIso?: string) => {
@@ -673,49 +589,10 @@ const telegramAdminCommand=async(message:any)=>{
 const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)applySecurityHeaders(response,securityHeaders)})
 .get("/health",()=>({status:"ok",service:"rafiq-backend",timestamp:new Date().toISOString()}))
-.get("/api/admin/telegram-cv/orders",async({request,set})=>{
-  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
-  const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?order_status=not.in.(completed,cancelled)&order=updated_at.desc&select=*",admin.token);
-  if(!r.response.ok){set.status=502;return{ok:false,error:"could not load CV orders"}}
-  return{ok:true,orders:Array.isArray(r.body)?r.body:[]};
-})
-.post("/api/admin/telegram-cv/confirm-payment",async({request,set})=>{
-  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
-  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
-  const orderId=typeof input?.orderId==="string"?input.orderId.trim():"";
-  if(!/^[0-9a-f-]{36}$/i.test(orderId)){set.status=400;return{ok:false,error:"invalid order id"}}
-  const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId),admin.token,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify({payment_status:"confirmed",order_status:"in_progress",admin_note:typeof input?.note==="string"?input.note.slice(0,1000):null,updated_at:new Date().toISOString()})});
-  if(!r.response.ok){set.status=502;return{ok:false,error:"could not confirm payment"}}
-  return{ok:true,status:"payment_confirmed",order:Array.isArray(r.body)?r.body[0]??null:r.body};
-})
-.post("/api/admin/telegram-cv/reject-payment",async({request,set})=>{
-  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
-  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
-  const orderId=typeof input?.orderId==="string"?input.orderId.trim():"";
-  if(!/^[0-9a-f-]{36}$/i.test(orderId)){set.status=400;return{ok:false,error:"invalid order id"}}
-  const r=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId),admin.token,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify({payment_status:"rejected",order_status:"awaiting_payment",admin_note:typeof input?.note==="string"?input.note.slice(0,1000):"Payment proof rejected",updated_at:new Date().toISOString()})});
-  if(!r.response.ok){set.status=502;return{ok:false,error:"could not reject payment"}}
-  return{ok:true,status:"payment_rejected",order:Array.isArray(r.body)?r.body[0]??null:r.body};
-})
-.post("/api/admin/telegram-cv/deliver",async({request,set})=>{
-  const admin=await requireSupabaseAdmin(request);if(!admin){set.status=403;return{ok:false,error:"admin access required"}}
-  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
-  const orderId=typeof input?.orderId==="string"?input.orderId.trim():"";
-  const fileId=typeof input?.documentFileId==="string"?input.documentFileId.trim():"";
-  if(!/^[0-9a-f-]{36}$/i.test(orderId)||!fileId){set.status=400;return{ok:false,error:"invalid order id or Telegram document file id"}}
-  const loaded=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId)+"&select=id,chat_id,service,payment_status,order_status",admin.token);
-  const order=Array.isArray(loaded.body)?loaded.body[0]:null;
-  if(!loaded.response.ok||!order){set.status=404;return{ok:false,error:"order not found"}}
-  if(order.payment_status!=="confirmed"){set.status=409;return{ok:false,error:"payment must be confirmed before delivery"}}
-  try{
-    const caption="✅ تم تأكيد الدفع وتسليم ملفك النهائي من رفيق | RAFIQ 🇱🇧";
-    const sent=await telegramSendDocument(String(order.chat_id),fileId,caption);
-    const messageId=sent?.result?.message_id??null;
-    const saved=await supabaseRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(orderId),admin.token,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify({final_document_file_id:fileId,final_document_type:"telegram_file_id",order_status:"completed",updated_at:new Date().toISOString()})});
-    if(!saved.response.ok){set.status=502;return{ok:false,error:"document sent but order status update failed",messageId}}
-    return{ok:true,status:"delivered",messageId};
-  }catch(error){set.status=502;return{ok:false,error:"Telegram document delivery failed"}}
-})
+.get("/api/admin/telegram-cv/orders",({set})=>{set.status=410;return{ok:false,error:"CV submission service is retired."}})
+.post("/api/admin/telegram-cv/confirm-payment",({set})=>{set.status=410;return{ok:false,error:"CV submission service is retired."}})
+.post("/api/admin/telegram-cv/reject-payment",({set})=>{set.status=410;return{ok:false,error:"CV submission service is retired."}})
+.post("/api/admin/telegram-cv/deliver",({set})=>{set.status=410;return{ok:false,error:"CV submission service is retired."}})
 .get("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"WhatsApp automation is retired; use the WhatsApp app and channels manually."}})
 .post("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"WhatsApp automation is retired; use the WhatsApp app and channels manually."}})
 .post("/api/kapso/webhook",({set})=>{set.status=410;return{ok:false,error:"Kapso integration is retired."}})
@@ -909,11 +786,7 @@ setTimeout(() => {
 console.log(JSON.stringify({
   event:"rafig_runtime_configuration",
   openAIConfigured:Boolean(process.env.OPENAI_API_KEY),
-  metaWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
-  metaOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
   whatsappSendingEnabled:process.env.WHATSAPP_SENDING_ENABLED==="true",
   whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
   agentModel:effectiveAgentModel(),
-  kapsoConfigured:kapsoConfigured(),
-  kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret())
 }));
