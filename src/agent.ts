@@ -5,13 +5,6 @@ const resolveAgentModel = () => {
   return configured;
 };
 
-type OutreachTarget =
-  | "laboratory"
-  | "medical_equipment_supplier"
-  | "radiology_center"
-  | "physiotherapy"
-  | "nursing";
-
 const SYSTEM_PROMPT = `You are the RAFIQ | رفيق directory information assistant for Lebanon.
 
 ${RAFIQ_SERVICE_KNOWLEDGE}
@@ -117,21 +110,6 @@ const callAgent = async (input: string) => {
   return callOpenAIAgent(input);
 };
 
-const CARE_TRIGGER_RE = /(?:رعاية|مسن|رعاية منزلية|تمريض|ممرض|ممرضة|مريض|مرضى|علاج فيزيائي|مبيت|مستشفى|جلطة|kareh|nurse|caregiver|physio)/i;
-
-const RAFIQ_CARE_INTAKE_REPLY =
-  "أهلاً بك في منصة رفيق 🌿\n\n" +
-  "ما الخدمة التي تحتاجها؟\n\n" +
-  "لخدمة الطلب، أرسل لنا المعلومات التالية:\n" +
-  "1) الاسم\n" +
-  "2) رقم الهاتف\n" +
-  "3) المدينة\n" +
-  "4) نوع الخدمة المطلوبة\n\n" +
-  "وسيتم تحويل طلبك إلى فريق رفيق على الرقم +961 81 506 299.";
-
-const RAFIQ_DEFAULT_INBOUND_REPLY =
-  "مرحباً! أنا وكيل منصة RAFIQ. كيف أستطيع مساعدتك؟";
-
 export const draftAgentReply = async (message: string, languageHint?: string, conversationContext?: string, useKnowledgeBase = true) => {
   const knowledgeReply = useKnowledgeBase && !conversationContext?.includes("TELEGRAM ACTIVE CASE") ? answerRafiqKnowledge(message) : null;
   if (knowledgeReply) return { reply: knowledgeReply, model: "rafiq-knowledge-base" };
@@ -140,20 +118,3 @@ export const draftAgentReply = async (message: string, languageHint?: string, co
   return callAgent(`${context}${history}\n\nCustomer message:\n${message}`);
 };
 
-export const draftInstitutionOutreach = async (
-  target: OutreachTarget,
-  institutionName?: string,
-  languageHint?: string,
-) => {
-  const targetLabel: Record<OutreachTarget, string> = {
-    laboratory: "medical laboratory",
-    medical_equipment_supplier: "medical equipment supplier",
-    radiology_center: "radiology / medical imaging center",
-    physiotherapy: "physiotherapy provider",
-    nursing: "nurse / nursing provider",
-  };
-  const language = languageHint ? `Write the draft in ${languageHint}.` : "Write the draft in Arabic.";
-  const name = institutionName?.trim() ? institutionName.trim() : "the institution";
-  const input = `${language}\n\nPrepare the approved RAFIQ first-contact WhatsApp message for ${name}, a ${targetLabel[target]}.\nUse the institutional outreach baseline in the system instructions. Personalize only the institution name and confirmed specialty/services.\nThe message must introduce RAFIQ, mention free membership, free institutional service advertising, a dedicated barcode/QR, and open discussion of member discount and the price reference (Ministry of Health, insurance/social security, or another agreed reference).\nState the proposed 20% platform commission and end-of-day Whish Money settlement only as terms to be discussed and formalized, not as an existing agreement.\nAsk for the responsible person's name or official email.\nDo not claim any partnership or prior contact.\nReturn only the ready-to-review message.`;
-  return callAgent(input);
-};
