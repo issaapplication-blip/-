@@ -19,6 +19,15 @@ const applicationUpload = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/public-application-upload/index.ts"),
   "utf8",
 );
+const rafiqAgent = readFileSync(
+  resolve(import.meta.dir, "../../supabase/functions/rafiq-agent/index.ts"),
+  "utf8",
+);
+const webAgent = readFileSync(
+  resolve(import.meta.dir, "../../functions/api/agent/chat.ts"),
+  "utf8",
+);
+
 const metaWebhook = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/meta-whatsapp-webhook/index.ts"),
   "utf8",
@@ -71,4 +80,12 @@ test("WhatsApp Meta webhook is retired; messaging runtime is Telegram-only", () 
   expect(legacyIndex).toContain("WhatsApp automation is retired");
   expect(legacyIndex).toContain("Kapso integration is retired");
   expect(legacyIndex).not.toContain("rafiq_telegram_request_sessions");
+});
+
+test("Legacy request agents and web chat endpoints are retired", () => {
+  for (const retiredSource of [rafiqAgent, webAgent]) {
+    expect(retiredSource).toContain("status:410");
+    expect(retiredSource).not.toContain("createClient");
+    expect(retiredSource).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
+  }
 });
