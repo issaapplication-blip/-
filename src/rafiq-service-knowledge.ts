@@ -70,7 +70,7 @@ export function answerRafiqKnowledge(message:string): string | null {
     return "مناطق دليل RAFIQ: طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت، وباقي لبنان. لا يظهر أي مركز قبل اعتماده.";
   if(/(?:واتساب|whatsapp|تواصل|رقم الاداره)/i.test(raw))
     return `WhatsApp الإدارة للمراسلات اليدوية: ${RAFIQ_WHATSAPP_NUMBER} — ${RAFIQ_WHATSAPP}\\nقناة Telegram: ${RAFIQ_TELEGRAM_CHANNEL}\\nقناة WhatsApp: ${RAFIQ_WHATSAPP_CHANNEL}`;
-  if(/(?:خدمات|شنو تقدمون|do you do|تقدمون|/i.test(t))
+  if(/(?:خدمات|شنو تقدمون|do you do|تقدمون)/i.test(t))
     return "خدمات الدليل: المختبرات الطبية، الأشعة والتصوير، العلاج الفيزيائي، بيع المعدات الطبية، وتأجير المعدات الطبية. اختر الفئة والمنطقة لعرض المراكز المعتمدة فقط.";
   if(/(?:مرحبا|اهلا|السلام عليكم|hello|hi)/i.test(t))
     return "أهلًا وسهلًا بكم في RAFIQ 🌿 اختروا نوع الخدمة أو المنطقة من القائمة. لا نستقبل طلبات تقديم أو ملفات عبر البوت.";
