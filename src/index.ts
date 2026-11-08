@@ -805,388 +805,54 @@ const handleTelegramWebhook = async({request,set}:any)=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
   if(!verifyTelegramWebhookSecret(request)){set.status=401;return{ok:false,error:"invalid Telegram webhook secret"}}
   const update=await request.json().catch(()=>null) as any;
+  if(!update){set.status=400;return{ok:false,error:"invalid Telegram update"}}
+  const chatId=update?.message?.chat?.id??update?.callback_query?.message?.chat?.id;
+  const chatType=update?.message?.chat?.type??update?.callback_query?.message?.chat?.type;
+  if(chatId===undefined||chatType!=="private")return{ok:true,status:"ignored_non_private"};
   const callback=update?.callback_query;
-  if(callback?.id){
-    const callbackChatId=callback?.message?.chat?.id;
-    const data=String(callback?.data??"");
-    await telegramAnswerCallbackQuery(String(callback.id)).catch(()=>{});
-    if(callbackChatId){
-      const sessionQ=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(callbackChatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
-      const session=Array.isArray(sessionQ.body)?sessionQ.body[0]:null;
-      if(data.startsWith("svc:")){
-        const service:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
-        const key=data.slice(4);
-        const selectedService=service[key];
-        if(!selectedService){set.status=400;return{ok:false,error:"unknown service"}}
-        const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-        const createdSession=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(callbackChatId),telegram_user_id:String(callback?.from?.id??""),language:telegramLanguage(callback?.message??{}),status:"collecting",service_type:selectedService})});
-        if(!createdSession.response.ok){
-          console.error(JSON.stringify({event:"rafig_telegram_request_session_create_failed",status:createdSession.response.status}));
-          await telegramSendText(callbackChatId,telegramSigned("تعذّر حفظ طلبك الآن. أرسل /request لنبدأ طلبًا جديدًا."));
-          return{ok:true,status:"request_session_create_failed"};
-        }
-        await telegramSendText(callbackChatId,telegramSigned("📝 تم اختيار الخدمة: "+selectedService+"\nرقم الطلب: "+requestId+"\n\nممتاز 🌿 حتى نتابع طلبك بالشكل الصحيح، في أي مدينة أو منطقة تحتاج إلى الخدمة؟"),{inline_keyboard:[
-          [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
-          [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
-          [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
-          [{text:"منطقة أخرى",callback_data:"reqarea:other"}]
-        ]});
-        return{ok:true,status:"callback_service_selected",request_id:requestId};
-      }
-      if(data.startsWith("reqsvc:") && session){
-        const key=data.slice(7);
-        const service:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
-        await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({service_type:service[key]||key,updated_at:new Date().toISOString()})});
-        await telegramSendText(callbackChatId,telegramSigned("ممتاز. اختر المنطقة:"),{inline_keyboard:[
-          [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
-          [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
-          [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
-          [{text:"منطقة أخرى",callback_data:"reqarea:other"}]
-        ]});
-        return{ok:true,status:"request_service_selected"};
-      }
-      if(data.startsWith("reqarea:") && session){
-        const area=data.slice(8);
-        const finalArea=area==="other"?"منطقة أخرى":area;
-        const savedArea=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({area:finalArea,updated_at:new Date().toISOString()})});
-        if(!savedArea.response.ok)throw new Error("could not save Telegram request area");
-        await telegramSendText(callbackChatId,telegramSigned("📍 تم تحديد المنطقة: "+finalArea+"\n\nحتى لا نسجل طلبًا ناقصًا، أجب عن هذه الأسئلة القصيرة خطوة بخطوة.\n\n1/3: هل الطلب لمسن أم لمريض؟ وكم عمره تقريبًا؟"));
-        return{ok:true,status:"request_area_saved",request_id:session.request_id};
-      }
-    }
-    return{ok:true,status:"callback_ignored"};
+  if(callback?.id)await telegramAnswerCallbackQuery(String(callback.id)).catch(()=>{});
+  const rawText=String(update?.message?.text??"").trim();
+  const data=String(callback?.data??"");
+  const categories=[
+    ["🧪 المختبرات الطبية","labs"],
+    ["🩻 مراكز الأشعة والتصوير","imaging"],
+    ["🧑‍🦽 مراكز العلاج الفيزيائي","physio"],
+    ["🦽 بيع المعدات الطبية","equipment_sale"],
+    ["🦽 تأجير المعدات الطبية","equipment_rent"],
+  ];
+  const areas=["طرابلس","الضنية","زغرتا","الكورة","البترون","بيروت","باقي لبنان"];
+  const menu={inline_keyboard:[
+    [{text:categories[0][0],callback_data:"dir:labs"},{text:categories[1][0],callback_data:"dir:imaging"}],
+    [{text:categories[2][0],callback_data:"dir:physio"}],
+    [{text:categories[3][0],callback_data:"dir:equipment_sale"},{text:categories[4][0],callback_data:"dir:equipment_rent"}],
+    [{text:"📍 المناطق",callback_data:"dir:areas"}]
+  ]};
+  if(data==="dir:areas"){
+    await telegramSendText(chatId,telegramSigned("مناطق دليل RAFIQ:\\n"+areas.map(x=>"• "+x).join("\\n")+"\\n\\nتظهر المراكز بعد اعتمادها من الإدارة."));
+    return{ok:true,status:"directory_areas"};
   }
-
-  const channelPost=update?.channel_post;
-  if(channelPost?.chat?.id){
-    const cp=channelPost.chat;
-    if(["group","supergroup","channel"].includes(String(cp.type))){
-      await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({chat_id:String(cp.id),chat_type:String(cp.type),title:cp.title??null,username:cp.username??null,is_active:true,last_seen_at:new Date().toISOString()})}).catch(()=>{});
-    }
-    console.log(JSON.stringify({event:"rafig_telegram_channel_seen",chatId:String(cp.id),title:cp.title??null,username:cp.username??null}));
-    return{ok:true,status:"channel_post_seen",channel_id:String(cp.id)};
+  if(data.startsWith("dir:")){
+    const selected=categories.find(x=>x[1]===data.slice(4));
+    if(selected)await telegramSendText(chatId,telegramSigned("الفئة: "+selected[0]+"\\n\\nسيتم عرض المراكز بعد مراجعتها واعتمادها من إدارة RAFIQ. لا يوجد خصم أو كود مؤكد قبل موافقة الإدارة."));
+    return{ok:true,status:"directory_category"};
   }
-  const message=update?.message;
-  const chatId=message?.chat?.id;
-  if(!chatId)return{ok:true,status:"ignored_no_chat"};
-  if(["group","supergroup","channel"].includes(String(message?.chat?.type))){
-    await supabaseServerRest("/rest/v1/rafiq_telegram_broadcast_targets?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({chat_id:String(chatId),chat_type:String(message.chat.type),title:message.chat.title??null,username:message.chat.username??null,is_active:true,last_seen_at:new Date().toISOString()})}).catch(()=>{});
+  const command=rawText.toLowerCase().split(/\\s+/)[0];
+  if(command==="/start"||command==="/help"||command==="/services"||command==="/directory"){
+    await telegramSendText(chatId,telegramSigned("أهلًا بك في RAFIQ | رفيق 🇱🇧\\nنصل بالحب والأمان لرعاية العائلة.\\n\\nدليل المراكز: المختبرات الطبية، الأشعة والتصوير، العلاج الفيزيائي، بيع المعدات الطبية وتأجيرها.\\n\\nلا يستقبل البوت طلبات تقديم أو ملفات. لا تُنشر المراكز أو الخصومات إلا بعد موافقة الإدارة."),menu);
+    return{ok:true,status:"directory_menu"};
   }
-  const externalConversationId=String(chatId);
-  const senderName=[message?.from?.first_name,message?.from?.last_name].filter(Boolean).join(" ").trim();
-  const username=typeof message?.from?.username==="string"?message.from.username:"";
-  const textBody=typeof message?.text==="string"?message.text.trim():"";
-  try{
-    const existing=await supabaseServerRest("/rest/v1/rafiq_conversations?channel=eq.telegram&external_conversation_id=eq."+encodeURIComponent(externalConversationId)+"&select=id,context&limit=1");
-    const row=Array.isArray(existing.body)?existing.body[0]:null;
-    const previousContext=Array.isArray(row?.context)?row.context:[];
-    const incomingMessageId=String(message?.message_id??"").trim();
-    if(incomingMessageId && previousContext.some((item:any)=>item?.direction==="inbound" && String(item?.message_id??"")===incomingMessageId)){
-      return{ok:true,status:"duplicate_update_ignored",conversation_id:row?.id??null};
-    }
-    const contextMessage={channel:"telegram",direction:"inbound",message_id:incomingMessageId||null,chat_id:chatId,telegram_user_id:message?.from?.id??null,username,sender_name:senderName,text:textBody||null,received_at:new Date().toISOString()};
-    const nextContext=[...previousContext,contextMessage].slice(-20);
-    let conversationId=row?.id??null;
-    if(conversationId){
-      await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:nextContext,updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})});
-    }else{
-      const created=await supabaseServerRest("/rest/v1/rafiq_conversations?on_conflict=channel%2Cexternal_conversation_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify({channel:"telegram",external_conversation_id:externalConversationId,customer_phone:null,language:"ar",context:nextContext,escalation_state:"none",last_message_at:new Date().toISOString()})});
-      const createdRow=Array.isArray(created.body)?created.body[0]:created.body;
-      conversationId=createdRow?.id??null;
-    }
-
-    const reply=async(body:string)=>{const outbound=await telegramSendText(chatId,telegramSigned(body));if(conversationId)await supabaseServerRest("/rest/v1/rafiq_conversations?id=eq."+encodeURIComponent(conversationId),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({context:[...nextContext,{channel:"telegram",direction:"outbound",text:body,sent_at:new Date().toISOString()}].slice(-20),updated_at:new Date().toISOString(),last_message_at:new Date().toISOString()})}).catch(()=>{});return outbound;};
-
-    const contactPhone=typeof message?.contact?.phone_number==="string"?message.contact.phone_number.trim():"";
-    if(contactPhone){
-      const normalizedContact=contactPhone.replace(/\\D/g,"");
-      await supabaseServerRest("/rest/v1/rafiq_telegram_identities?on_conflict=telegram_user_id",{
-        method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
-        body:JSON.stringify({telegram_user_id:String(message?.from?.id??""),chat_id:String(chatId),username:username||null,phone:normalizedContact,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,last_seen_at:new Date().toISOString()})
-      });
-      await reply("✅ تم ربط رقم هاتفك بحساب Telegram في RAFIQ. عند الحاجة سنستخدم Telegram كقناة احتياطية بعد WhatsApp.");
-      return{ok:true,status:"telegram_phone_linked",conversation_id:conversationId};
-    }
-    const orders=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?chat_id=eq."+encodeURIComponent(externalConversationId)+"&order_status=not.in.(completed,cancelled)&select=*&order=updated_at.desc&limit=1");
-    const activeOrder=Array.isArray(orders.body)?orders.body[0]:null;
-
-    const managerChatIds = parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
-    const managerHandled = await handleManagerCommand(
-      { chatId, chatType: message?.chat?.type, text: textBody },
-      {
-        managerChatIds,
-        rpc: async (fn, args) => {
-          const r = await supabaseServerRest("/rest/v1/rpc/" + fn, {
-            method: "POST",
-            body: JSON.stringify(args),
-          });
-          if (r.response.ok) return { data: r.body, error: null };
-
-          // Fallback for read-only manager lists if PostgREST has a stale RPC signature/cache.
-          if (fn === "manager_folder_counts") {
-            const q = await supabaseServerRest("/rest/v1/admin_application_folder_counts?select=category,folder,total&order=category.asc,folder.asc");
-            if (q.response.ok) return { data: q.body, error: null };
-          }
-          if (fn === "manager_list_applications") {
-            const category = String(args.p_category ?? "");
-            const folder = String(args.p_folder ?? "");
-            const limit = Math.min(Math.max(Number(args.p_limit ?? 20), 1), 50);
-            const q = await supabaseServerRest(
-              "/rest/v1/admin_application_folders?select=application_number,membership_number,applicant_name,category,folder,area,specialty,created_at" +
-              "&category=eq." + encodeURIComponent(category) +
-              "&folder=eq." + encodeURIComponent(folder) +
-              "&order=created_at.desc&limit=" + String(limit)
-            );
-            if (q.response.ok) return { data: q.body, error: null };
-          }
-          const detail = typeof r.body === "object" && r.body
-            ? String(r.body.message ?? r.body.error_description ?? r.body.hint ?? "manager RPC failed")
-            : "manager RPC failed";
-          console.error(JSON.stringify({event:"rafig_telegram_manager_rpc_failed",function:fn,status:r.response.status,detail:detail.slice(0,300)}));
-          return { data: null, error: { message: detail } };
-        },
-        send: (c, body) => telegramSendText(c, telegramSigned(body)),
-        photoUrl: async (storagePath) => {
-          const encoded = storagePath.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/");
-          const r = await supabaseServerRest("/storage/v1/object/sign/private_documents/" + encoded, {
-            method: "POST",
-            body: JSON.stringify({ expiresIn: 600 }),
-          });
-          if (!r.response.ok) throw new Error("could not sign manager photo");
-          return r.body?.signedURL ?? r.body?.signedUrl ?? null;
-        },
-        sendPhoto: (c, url, caption) => telegramSendPhoto(c, url, caption),
-        broadcast: telegramBroadcast,
-      },
-    );
-    if (managerHandled) return { ok: true, status: "manager_command_handled" };
-
-    // Backward-compatible manager gate: the owner is allowed by Telegram username
-    // (default @MHDISSA980) even when TELEGRAM_MANAGER_CHAT_IDS is not configured.
-    const legacyAdminHandled = await telegramAdminCommand(message);
-    if (legacyAdminHandled) return { ok: true, status: "legacy_admin_command_handled", message_id: legacyAdminHandled?.result?.message_id ?? null };
-
-    if(textBody && rafiqRequiresHumanReply(textBody)){
-      const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,reason:"human_reply_required",status:"open"};
-      if(conversationId) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_human_reply_required",status:"open",payload})}).catch(()=>{});
-      const managers=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
-      const managerNotice="🔔 طلب يحتاج رد الإدارة\\n\\nمن Telegram: "+(senderName||"غير معروف")+"\\nالمحادثة: "+String(chatId)+"\\n\\nرسالة العميل:\\n"+textBody+"\\n\\n⚠️ لم يتم إرسال رد تلقائي للعميل.";
-      for(const managerId of managers){ await telegramSendText(managerId,telegramSigned(managerNotice)).catch(()=>{}); }
-      return{ok:true,status:"human_reply_required_no_auto_reply",conversation_id:conversationId};
-    }
-
-    const document = message?.document;
-    const photo = Array.isArray(message?.photo) && message.photo.length ? message.photo[message.photo.length-1] : null;
-    if(document || photo){
-      if(activeOrder && activeOrder.order_status==="collecting" && !activeOrder.old_cv_file_id){
-        const fileId=String(document?.file_id??photo?.file_id??"");
-        const upd=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(activeOrder.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({old_cv_file_id:fileId,order_status:"awaiting_payment",updated_at:new Date().toISOString()})});
-        if(!upd.response.ok)throw new Error("could not save old CV file");
-        await reply(cvPaymentText(Number(activeOrder.amount_usd)));
-        return{ok:true,status:"cv_old_file_received",order_id:activeOrder.id};
-      }
-      if(activeOrder && (activeOrder.order_status==="awaiting_payment" || activeOrder.payment_status==="pending_payment")){
-        const fileId=String(document?.file_id??photo?.file_id??"");
-        const proofType=document?"document":"photo";
-        const upd=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(activeOrder.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({payment_proof_file_id:fileId,payment_proof_type:proofType,payment_status:"proof_submitted",order_status:"payment_review",updated_at:new Date().toISOString()})});
-        if(!upd.response.ok)throw new Error("could not save payment proof");
-        await reply("✅ تم استلام إثبات الدفع. طلبك الآن «بانتظار تأكيد الدفع» من إدارة رفيق. لن يتم تسليم النسخة النهائية قبل التأكيد.");
-        return{ok:true,status:"cv_payment_proof_received",order_id:activeOrder.id};
-      }
-      await reply("📎 أرسل الملف ضمن طلب CV بعد اختيار الخدمة، وسأحفظه ضمن الطلب. لا ترسل كلمات مرور أو رموز OTP.");
-      return{ok:true,status:"file_without_active_cv"};
-    }
-
-
-    const language=telegramLanguage(message);
-    if(message?.chat?.type==="private"){
-      const cmd=textBody.toLowerCase().split(/\s+/)[0];
-      if(cmd==="/start" || cmd==="/subscribe"){
-        await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?on_conflict=chat_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({
-          chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),username:username||null,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,
-          language,subscribed_at:new Date().toISOString(),unsubscribed_at:null,is_subscribed:true,updated_at:new Date().toISOString()
-        })}).catch(()=>{});
-      }else if(cmd==="/stop"){
-        await supabaseServerRest("/rest/v1/rafiq_telegram_subscribers?chat_id=eq."+encodeURIComponent(String(chatId)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({is_subscribed:false,unsubscribed_at:new Date().toISOString(),updated_at:new Date().toISOString()})}).catch(()=>{});
-        await reply("⛔ تم إيقاف اشتراكك في إعلانات رفيق. يمكنك العودة في أي وقت عبر /subscribe.");
-        return{ok:true,status:"telegram_unsubscribed",conversation_id:conversationId};
-      }
-    }
-
-    if(!textBody)return{ok:true,status:"ignored_non_text"};
-
-    const command=textBody.toLowerCase().split(/\s+/)[0];
-    if(command==="/subscribe"){
-      const outbound=await reply("✅ تم تفعيل اشتراكك في إعلانات رفيق من جديد.");
-      return{ok:true,status:"telegram_subscribed",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
-    }
-    if(command==="/invite"){
-      const outbound=await reply("📨 شارك بوت رفيق مع جهات اتصالك عبر هذا الرابط:\n\n"+RAFIQ_TELEGRAM_INVITE);
-      return{ok:true,status:"invite_sent",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
-    }
-    if(command==="/services"){
-      const outbound=await telegramSendText(chatId,telegramSigned("خدمات رفيق الأساسية:"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"svc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"svc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"svc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"svc:physio"}]
-      ]});
-      return{ok:true,status:"services_menu",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
-    }
-    if(command==="/request"){
-      const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
-      const outbound=await telegramSendText(chatId,telegramSigned("📝 بدأنا طلب رعاية جديد.\nرقم الطلب: "+requestId+"\n\nاختر الخدمة:"),{inline_keyboard:[
-        [{text:"👴 كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 مريض",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ تمريض",callback_data:"reqsvc:nurse"},{text:"🦿 علاج فيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return{ok:true,status:"request_started",request_id:requestId,message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
-    }
-    if(message?.chat?.type==="private" && textBody && !textBody.startsWith("/")){
-      const requestSessions=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(chatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
-      const requestSession=Array.isArray(requestSessions.body)?requestSessions.body[0]:null;
-      if(requestSession){
-        const sessionUrl="/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(requestSession.id));
-        if(!requestSession.case_type){
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:textBody.slice(0,500),updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not save Telegram request case type");
-          await reply("شكرًا لك 🌿\n\n2/3: ما نظام الرعاية المطلوب؟ مثلًا: نهارًا، ليلًا، مبيت، أو ساعات محددة.");
-          return{ok:true,status:"request_case_type_saved",request_id:requestSession.request_id};
-        }
-        if(!requestSession.schedule){
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({schedule:textBody.slice(0,500),updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not save Telegram request schedule");
-          await reply("وصلتني التفاصيل. 🌿\n\n3/3: ما أهم المساعدة المطلوبة؟ اذكر باختصار ما يحتاجه الشخص يوميًا، وأي حاجة تمريضية أو علاج فيزيائي إن وجدت.");
-          return{ok:true,status:"request_schedule_saved",request_id:requestSession.request_id};
-        }
-        if(!requestSession.notes){
-          const details=textBody.slice(0,2000);
-          const payload={request_id:requestSession.request_id,telegram_chat_id:String(chatId),telegram_user_id:requestSession.telegram_user_id,language:requestSession.language,service_type:requestSession.service_type,area:requestSession.area,case_type:requestSession.case_type,schedule:requestSession.schedule,care_needs:details,source:"telegram"};
-          const created=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:"طلب Telegram — "+String(chatId),phone:null,area:requestSession.area,status:"review",payload,source:"telegram",agent_reply:"طلب رعاية Telegram مكتمل مبدئيًا وينتظر مراجعة الإدارة."})});
-          if(!created.response.ok)throw new Error("could not create Telegram care request");
-          const intake=Array.isArray(created.body)?created.body[0]:created.body;
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({notes:details,status:"submitted",updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not complete Telegram request session");
-          await reply("✅ اكتملت المعلومات الأساسية وسُجّل طلب الرعاية للمراجعة.\n\nالخدمة: "+String(requestSession.service_type||"—")+"\nالمنطقة: "+String(requestSession.area||"—")+"\nنوع الحالة والعمر: "+String(requestSession.case_type)+"\nالدوام: "+String(requestSession.schedule)+"\nالاحتياجات: "+details+"\n\nRequest ID: "+String(requestSession.request_id)+"\nرقم الطلب في RAFIQ: "+String(intake?.application_number??"—")+"\n\nستراجعه إدارة رفيق وتتواصل معكم عبر Telegram. إذا احتجنا رقم هاتف للتنسيق سنطلبه منك لاحقًا.");
-          return{ok:true,status:"request_submitted",request_id:requestSession.request_id,application_number:intake?.application_number??null};
-        }
-      }
-    }
-
-    // Natural-language help should start a structured care intake, even when the AI provider has no credits.
-    if(message?.chat?.type==="private" && /(?:\bhelp\b|need help|assistance|\bplease help\b|\bneed (?:a )?(?:nurse|caregiver|care|home care|elderly care|physiotherapy)\b|\b(?:home nursing|elderly care|patient care|physiotherapy)\b|care for (?:my|the) (?:mother|father|parent|grandmother|grandfather)|(?:my|the) (?:mother|father|parent|grandmother|grandfather) needs care|مساعدة|ساعدني|ساعدونا|بدي ساعد|بدي مساعدة|اريد المساعدة|أريد المساعدة|أحتاج مساعدة|احتاج مساعدة|طلبت المساعدة|طلب مساعدة|محتاج مساعدة|بدي ممرضة|بدي ممرض|بدي رعاية|بدي تمريض|ممرضة ل|ممرض ل|رعاية ل(?:أمي|امي|أبي|ابي|والدتي|والدي)|تمريض منزلي|علاج فيزيائي|رعاية كبار السن|رعاية مريض)/i.test(textBody)){
-      const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      const started=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
-      if(!started.response.ok){
-        console.error(JSON.stringify({event:"rafig_telegram_natural_help_session_failed",status:started.response.status}));
-        await reply("أهلًا بك في رفيق 🌿 أستطيع مساعدتك في رعاية كبار السن، رعاية المرضى، التمريض المنزلي أو العلاج الفيزيائي. تعذّر بدء الطلب آليًا الآن؛ جرّب /request أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
-        return{ok:true,status:"natural_help_session_failed"};
-      }
-      await telegramSendText(chatId,telegramSigned("أهلًا بك في رفيق 🌿 أنا هنا لمساعدتك. لنبدأ طلب الرعاية خطوة بخطوة.\nرقم الطلب: "+requestId+"\n\nما الخدمة التي تحتاجها؟"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return{ok:true,status:"natural_help_intake_started",request_id:requestId};
-    }
-
-    const commandReply=telegramCommandReply(textBody,language);
-    if(commandReply){
-      const welcomeOnStart=command==="/start";
-      const outbound=await reply(welcomeOnStart?telegramCommandReply("/start",language):commandReply);
-      if(welcomeOnStart && message?.chat?.type==="private") await telegramSendContactRequest(chatId).catch(()=>{});
-      return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
-    }
-
-    const choice=cvChoice(textBody);
-    const startsCv=/^(cv|السيرة|cover\s*letter|سيرة ذاتية|1|2|3)$/i.test(textBody.trim()) || choice!==null;
-    if(startsCv && !activeOrder){
-      if(!choice){await reply(cvMenuText());return{ok:true,status:"cv_menu"}}
-      const created=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({chat_id:externalConversationId,telegram_user_id:String(message?.from?.id??""),username,service:choice.service,amount_usd:choice.amount,order_status:"collecting",payment_status:"pending_payment"})});
-      if(!created.response.ok)throw new Error("could not create CV order");
-      const order=Array.isArray(created.body)?created.body[0]:created.body;
-      await reply("✅ اخترت خدمة "+choice.service+".\n\n"+cvPrompt("name"));
-      return{ok:true,status:"cv_started",order_id:order?.id??null};
-    }
-
-    if(activeOrder){
-      if(activeOrder.order_status==="payment_review"){
-        await reply("⏳ إثبات الدفع وصل إلى إدارة رفيق وهو قيد المراجعة. لا حاجة لإرسال دفعة أخرى الآن.");
-        return{ok:true,status:"cv_payment_under_review",order_id:activeOrder.id};
-      }
-      if(activeOrder.order_status==="awaiting_payment"){
-        await reply(cvPaymentText(Number(activeOrder.amount_usd)));
-        return{ok:true,status:"cv_awaiting_payment",order_id:activeOrder.id};
-      }
-      const patch:any={updated_at:new Date().toISOString()};
-      let prompt="";
-      if(!activeOrder.full_name){patch.full_name=textBody;prompt=cvPrompt("target");}
-      else if(!activeOrder.target_job){patch.target_job=textBody;prompt=cvPrompt("experience");}
-      else if(!activeOrder.experience){patch.experience=textBody;prompt=cvPrompt("languages");}
-      else if(activeOrder.extra_language===null || activeOrder.extra_language===undefined){
-        patch.extra_language=/^(لا|لا يوجد|none|no)$/i.test(textBody)?"":textBody;
-        if(patch.extra_language)patch.amount_usd=Number(activeOrder.amount_usd)+20;
-        prompt=cvPrompt("oldcv");
-      }else if(!activeOrder.old_cv_file_id && /^(لا|لا يوجد|none|no)$/i.test(textBody)){
-        patch.order_status="awaiting_payment";prompt=cvPaymentText(Number(activeOrder.amount_usd));
-      }else if(!activeOrder.old_cv_file_id){
-        await reply("📎 أرسل ملف الـCV القديم هنا، أو اكتب «لا يوجد» إذا لم يكن لديك ملف.");
-        return{ok:true,status:"cv_waiting_old_file",order_id:activeOrder.id};
-      }
-      const upd=await supabaseServerRest("/rest/v1/rafiq_telegram_cv_orders?id=eq."+encodeURIComponent(activeOrder.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify(patch)});
-      if(!upd.response.ok)throw new Error("could not update CV order");
-      if(prompt)await reply(prompt);
-      return{ok:true,status:"cv_step_updated",order_id:activeOrder.id};
-    }
-
-    // Natural-language care intake: let Telegram behave like the WhatsApp care assistant.
-    // Do not intercept general questions (e.g. "what services do you offer?"); only start intake
-    // when the person expresses a concrete need for home care.
-    const naturalCareRequest = message?.chat?.type === "private" && !textBody.startsWith("/") &&
-      /(?:بدي|بدنا|اريد|أريد|أحتاج|احتاج|محتاج|محتاجة|نحتاج|ابحث عن|نبحث عن|بحاجة إلى|بحاجه الى|طلب رعاية|ممرض(?:ة)?|ممرضة|ممرض|رعاية لكبير سن|رعاية لوالد|رعاية لوالدتي|رعاية لوالدي|رعاية لأبي|رعاية لأمي|رعاية لجدي|رعاية لجدتي|مريض بالبيت|علاج فيزيائي|need (?:a |an )?(?:nurse|caregiver|home care|home nursing|physiotherapy)|looking for (?:care|a nurse|a caregiver)|need help for (?:my|the) (?:father|mother|parent|grandmother|grandfather)|home care for|besoin de soins|cherche (?:une infirmière|un aide-soignant|des soins)|ho bisogno di (?:assistenza|un infermiere|una badante)|suche (?:eine Pflegekraft|häusliche Pflege))/i.test(textBody);
-    if (naturalCareRequest) {
-      const requestId = "RFQ-TG-" + new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14) + "-" + crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      const created = await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions", {
-        method:"POST",
-        headers:{"Prefer":"return=representation"},
-        body:JSON.stringify({
-          request_id:requestId,
-          chat_id:String(chatId),
-          telegram_user_id:String(message?.from?.id??""),
-          language,
-          status:"collecting"
-        })
-      });
-      if (!created.response.ok) {
-        console.error(JSON.stringify({event:"rafig_telegram_natural_intake_create_failed",status:created.response.status}));
-        await reply("أرغب بمساعدتك 🌿 لكن تعذّر فتح طلبك الآن. أرسل /request للمحاولة مجددًا، أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
-        return {ok:true,status:"natural_intake_create_failed"};
-      }
-      await telegramSendText(chatId,telegramSigned("أكيد، رفيق معك 🌿\nسأتابع طلبك خطوة بخطوة.\n\nاختر الخدمة الأقرب إلى حاجتك:"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return {ok:true,status:"natural_care_intake_started",request_id:requestId};
-    }
-
-    const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
-    let result;
-    const knowledgeReply=answerRafiqKnowledge(textBody);
-    if(knowledgeReply){
-      result={reply:knowledgeReply,model:"rafiq-knowledge-base"};
-    }else{
-      try{result=await draftAgentReply(textBody,language,"TELEGRAM ACTIVE CASE | Chat ID: "+chatId+" | Customer: "+(senderName||"unknown")+" | Recent conversation:\n"+conversationHistory+" | POLICY: Reply in clear natural Arabic. Understand meaning, answer first, ask at most ONE useful next question. Never repeat information already supplied. For human/admin action, clearly provide WhatsApp +961 81 506 299. Never claim payment, approval, transfer, booking or availability without confirmation.")}
-      catch(agentError){
-        console.error(JSON.stringify({event:"rafig_telegram_agent_failed",error:String(agentError).slice(0,300)}));
-        result={reply:rafiqFallback(textBody,conversationHistory),model:"rafig-local-fallback"};
-      }
-    }
-    const escalation=result.reply.includes("WhatsApp")||result.reply.includes("واتساب")||result.reply.includes("الإدارة")||result.reply.includes("ادارة رفيق")||result.reply.includes("قرار إداري")||result.reply.includes("تواصل مع فريق رفيق");
-    const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,draft_reply:result.reply,model:result.model,escalation};
-    if(escalation && conversationId)await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_admin_escalation",status:"open",payload})}).catch(()=>{});
-    const outbound=await reply(result.reply);
-    return{ok:true,status:escalation?"auto_replied_and_escalated":"auto_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
-  }catch(error){
-    console.error(JSON.stringify({event:"rafig_telegram_webhook_failed",error:String(error).slice(0,500)}));
-    set.status=500;return{ok:false,error:"Telegram message processing failed"};
+  if(command==="/areas"){
+    await telegramSendText(chatId,telegramSigned("مناطق الدليل:\\n"+areas.map(x=>"• "+x).join("\\n")));
+    return{ok:true,status:"directory_areas"};
   }
+  if(["/request","/stop","/apply","/register","/join"].includes(command)){
+    await telegramSendText(chatId,telegramSigned("تم إيقاف التسجيل والتقديم واستقبال الطلبات عبر البوت. استخدم /services لتصفح فئات دليل RAFIQ أو /areas لعرض المناطق."));
+    return{ok:true,status:"legacy_intake_disabled"};
+  }
+  if(!rawText)return{ok:true,status:"ignored_non_text"};
+  const answer=answerRafiqKnowledge(rawText)||"اختر فئة الخدمة أو المنطقة من القائمة. لا تُعرض المراكز والخصومات إلا بعد اعتماد الإدارة.";
+  await telegramSendText(chatId,telegramSigned(answer),menu);
+  return{ok:true,status:"directory_reply"};
 };
 app.post("/api/telegram/webhook",async({request,set})=>{
   if(!telegramConfigured()){set.status=503;return{ok:false,error:"Telegram bot is not configured"}}
