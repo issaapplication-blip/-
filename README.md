@@ -16,7 +16,7 @@ pinned: false
 
 - Bun 1.3.10 + Elysia; listens on port 7860 by default.
 - Health check: `GET /health`; status: `GET /api/status`.
-- Outbound WhatsApp sending, WhatsApp auto-replies, Telegram broadcasts/marketing, automatic Telegram webhook registration, and Kapso are disabled by container defaults.
+- WhatsApp is manual-only through the existing app and public channel. Meta Cloud API and Kapso integrations are retired. Telegram remains the only automated messaging bot. Telegram broadcasts and automatic webhook registration stay disabled by default.
 - Keep provider tokens and server-side Supabase credentials in the Space's secret environment settings. Never commit them.
 - Use only the existing Supabase project: `https://qmuxaehrahfsnabyjens.supabase.co`.
 - Never put a Supabase service-role key in static assets or client-visible variables.
