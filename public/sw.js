@@ -6,13 +6,11 @@ self.addEventListener("message", function (e) {
   if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-var CACHE = "rafig-v84-20261015";
+var CACHE = "rafig-directory-v1-20261108";
 var ASSETS = [
   "/",
   "/index.html",
   "/offline.html",
-  "/barcode.html",
-  "/app.html",
   "/faq.html",
   "/services.html",
   "/caregivers.html",
@@ -26,12 +24,6 @@ var ASSETS = [
   "/manifest.webmanifest",
   "/manifest.json",
   "/install-app.js",
-  "/install-pwa.js",
-  "/i18n.js",
-  "/js/rafiq-kb.js",
-  "/js/rafiq-agent.js",
-  "/js/rafiq-welcome.js",
-  "/js/rafig-locations.js",
   "/assets/rafig-logo.png",
   "/icon-192.png",
   "/icon-512.png",

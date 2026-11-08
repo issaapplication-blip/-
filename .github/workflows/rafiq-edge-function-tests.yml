@@ -3,6 +3,7 @@ name: RAFIQ edge function unit tests
 on:
   pull_request:
     paths:
+      - 'functions/api/agent/**'
       - 'supabase/functions/rafiq-agent/**'
       - 'supabase/functions/public-application-intake/**'
       - 'supabase/functions/public-application-upload/**'
@@ -82,13 +83,6 @@ jobs:
           docker rm -f rafiq-backend-ci >/dev/null 2>&1 || true
           docker run --detach --name rafiq-backend-ci --publish 127.0.0.1:17860:7860 \
             --env PORT=7860 --env HOST=0.0.0.0 --env NODE_ENV=production \
-            --env WHATSAPP_SENDING_ENABLED=false \
-            --env RAFIQ_WHATSAPP_AUTO_REPLY=false \
-            --env RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING=false \
-            --env RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false \
-            --env TELEGRAM_MARKETING_ENABLED=false \
-            --env TELEGRAM_BROADCAST_ON_START=false \
-            --env KAPSO_ENABLED=false \
             rafiq-backend:ci
           cleanup() {
             echo "::group::RAFIQ container logs"
