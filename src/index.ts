@@ -205,13 +205,6 @@ app.post("/api/public/institution-intake",({set})=>{set.status=410;return{ok:fal
 .get("/admin.html",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/complete.html",()=>fileResponse("public/complete.html","text/html; charset=utf-8","no-store"))
 .get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache")).get("/assets/rafig-logo.png",()=>fileResponse("public/assets/rafig-logo.png","image/png","no-cache"))
-.get("/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
-.get("/js/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
-.get("/js/locales/ar.js",()=>fileResponse("public/js/locales/ar.js","application/javascript","no-cache"))
-.get("/js/locales/en.js",()=>fileResponse("public/js/locales/en.js","application/javascript","no-cache"))
-.get("/js/locales/fr.js",()=>fileResponse("public/js/locales/fr.js","application/javascript","no-cache"))
-.get("/js/locales/it.js",()=>fileResponse("public/js/locales/it.js","application/javascript","no-cache"))
-.get("/js/locales/de.js",()=>fileResponse("public/js/locales/de.js","application/javascript","no-cache"))
 .get("/css/device.css",()=>fileResponse("public/css/device.css","text/css","no-cache"))
 
 .get("/manifest.webmanifest",()=>fileResponse("public/manifest.webmanifest","application/manifest+json"))
