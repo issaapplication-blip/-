@@ -4,11 +4,10 @@ import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { rafiqFallback } from "./rafiq-local-agent";
-import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
+import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendPhoto, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { sendMessage } from "./messaging-service";
 import { RAFIQ_CONFIG } from "./rafiq-config";
 import QRCode from "qrcode";
-import { handleManagerCommand, parseManagerChatIds } from "./telegram-manager";
 import { RAFIQ_TELEGRAM_BOT, RAFIQ_TELEGRAM_CHANNEL, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_WHATSAPP_CHANNEL, RAFIQ_WHATSAPP_NUMBER, rafiqRequiresHumanReply } from "./rafiq-service-knowledge";
 
 const port = Number(process.env.PORT ?? 7860);
