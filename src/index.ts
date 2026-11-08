@@ -2,7 +2,7 @@ import { applySecurityHeaders } from "./http-cache-policy";
 import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-update-dedup";
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
-import { draftAgentReply, draftInstitutionOutreach } from "./agent";
+import { draftAgentReply } from "./agent";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramSendText, telegramAnswerCallbackQuery, verifyTelegramWebhookSecret } from "./telegram";
 
