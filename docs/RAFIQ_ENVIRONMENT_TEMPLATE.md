@@ -8,13 +8,11 @@
 - `SUPABASE_SERVICE_ROLE_KEY` — سري، للخادم فقط، ولا يوضع في ملفات الواجهة أو GitHub
 - `SUPABASE_DB_URL` — رابط اتصال قاعدة البيانات؛ استخدم إعداد Pooling المناسب من لوحة Supabase ولا تنشر الرابط
 
-## Telegram
-- `TELEGRAM_BOT_TOKEN` — سري
-- `TELEGRAM_WEBHOOK_SECRET` — سري
-- `TELEGRAM_MANAGER_CHAT_IDS` — اختياري؛ عرّف معرّفات المدير في إعدادات الخادم فقط
-- `RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false` — يبقى متوقفًا إلى أن يُختبر البديل ويُعتمد التحويل
-- `TELEGRAM_MARKETING_ENABLED=false`
-- `TELEGRAM_BROADCAST_ON_START=false`
+## Telegram — bot الحالي
+- `TELEGRAM_BOT_TOKEN` — سري، للبوت الحالي `@RAFIQ_Care_Bot`.
+- `TELEGRAM_WEBHOOK_SECRET` — سري، للتحقق من طلبات Telegram الواردة.
+- يبقى Webhook الحالي على Supabase دون إعادة تسجيل أو استبدال.
+- لا يوجد بث تلقائي أو نشر تلقائي؛ الإعلانات تُراجع وتُنشر يدويًا بعد موافقة الإدارة.
 
 ## WhatsApp — manual only
 - لا حاجة إلى مفاتيح API أو إعدادات Meta/Kapso.
