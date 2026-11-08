@@ -16,22 +16,10 @@
 - `TELEGRAM_MARKETING_ENABLED=false`
 - `TELEGRAM_BROADCAST_ON_START=false`
 
-## WhatsApp / Kapso
-- `KAPSO_API_KEY` — سري، أضفه فقط عند اعتماد التكامل
-- `KAPSO_WEBHOOK_SECRET` — سري
-- `WHATSAPP_PHONE_NUMBER_ID=1324609540731383`
-- `WHATSAPP_BUSINESS_ACCOUNT_ID=1571101954509141`
-- `KAPSO_ENABLED=false`
-- `WHATSAPP_SENDING_ENABLED=false`
-- `RAFIQ_WHATSAPP_AUTO_REPLY=false`
-- `RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING=false`
-
-## Meta
-- `META_APP_ID=1087358919742996`
-- `META_BUSINESS_ID=1092569476458172`
-- `META_ACCESS_TOKEN` — سري، فقط عند الحاجة
-- `META_APP_SECRET` — سري، فقط عند الحاجة
-- `META_VERIFY_TOKEN` — سري، فقط عند الحاجة
+## WhatsApp — manual only
+- لا حاجة إلى مفاتيح API أو إعدادات Meta/Kapso.
+- استخدم رقم WhatsApp والقناة الموجودين من تطبيق WhatsApp يدوياً فقط.
+- لا تفعّل إرسال WhatsApp الآلي أو Webhooks أو Cloud API.
 
 ## AI
 - `GEMINI_API_KEY` — سري؛ يضاف فقط إلى Secrets في مساحة Hugging Face عند اختبار الوكيل.
