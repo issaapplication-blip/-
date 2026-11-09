@@ -40,6 +40,7 @@ test("Telegram bot exposes only approved medical-directory categories and no app
   expect(source).not.toContain('from("rafiq_telegram_request_sessions")');
   expect(source).not.toContain("telegram_request_start_failed");
   expect(source).toContain("لا تُنشر إلا بعد موافقة الإدارة");
+  expect(source).toContain('url: "https://t.me/+a7CDblNyGKw1Yjg8"');
 });
 
 test("CV and Cover Letter remains a separate Telegram entry, not a centre/provider application", () => {
