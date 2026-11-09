@@ -718,12 +718,12 @@ const app=new Elysia()
     return{ok:true,status:"delivered",messageId};
   }catch(error){set.status=502;return{ok:false,error:"Telegram document delivery failed"}}
 })
-.get("/api/whatsapp/webhook",({query,set})=>{
+.get("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"WhatsApp automation is retired"};
   const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=(process.env.META_VERIFY_TOKEN??"").trim();
   if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;
   set.status=403;return{ok:false,error:"webhook verification failed"};
 })
-.post("/api/whatsapp/webhook",async({request,set})=>{
+.post("/api/whatsapp/webhook",async({set})=>{set.status=410;return{ok:false,error:"WhatsApp automation is retired"};
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-hub-signature-256");
@@ -736,7 +736,7 @@ const app=new Elysia()
   for(const message of messages)results.push(await processMetaMessage(message));
   return{ok:true,status:"processed",results};
 })
-.post("/api/kapso/webhook",async({request,set})=>{
+.post("/api/kapso/webhook",async({set})=>{set.status=410;return{ok:false,error:"Kapso integration is retired"};
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-kapso-signature")??request.headers.get("x-webhook-signature")??request.headers.get("x-signature");
@@ -1215,19 +1215,7 @@ app.post("/api/telegram/webhook",async({request,set})=>{
     throw error;
   }
 })
-const forwardPublicIntake=async({request,set}:any)=>{
-  const now=Date.now();
-  const ip=(request.headers.get("x-forwarded-for")||request.headers.get("x-real-ip")||"public").split(",")[0].trim();
-  const rateStore=(globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__; const last:Map<string,number>=rateStore||new Map<string,number>(); (globalThis as any).__RAFIQ_PUBLIC_INTAKE_RATE__=last;
-  const previous=last.get(ip)||0; if(now-previous<PUBLIC_INTAKE_RATE_LIMIT_MS){set.status=429;return{ok:false,error:"يرجى الانتظار قليلًا ثم إعادة إرسال الطلب"}} last.set(ip,now);
-  const contentLength=Number(request.headers.get("content-length")||0); if(contentLength>MAX_PUBLIC_INTAKE_BODY){set.status=413;return{ok:false,error:"حجم الطلب يتجاوز الحد المسموح"}}
-  const key=(process.env.SUPABASE_PUBLISHABLE_KEY||process.env.SUPABASE_ANON_KEY||"").trim(); if(!key){set.status=503;return{ok:false,error:"public intake configuration unavailable"}}
-  const contentType=request.headers.get("content-type")||"application/octet-stream";
-  try{
-    const upstream=await fetch(SUPABASE_URL+"/functions/v1/public-intake",{method:"POST",headers:{"Authorization":"Bearer "+key,"apikey":key,"Content-Type":contentType},body:await request.arrayBuffer()});
-    const body=await upstream.json().catch(()=>({ok:false,error:"invalid upstream response"})); set.status=upstream.status; return body;
-  }catch(error){console.error(JSON.stringify({event:"rafig_public_intake_edge_proxy_failed",error:String(error).slice(0,240)}));set.status=502;return{ok:false,error:"تعذر حفظ الطلب الآن. حاول مرة أخرى."}}
-}
+const forwardPublicIntake=async({set}:any)=>{set.status=410;return{ok:false,error:"public_submission_endpoint_retired"}}
 app.post("/api/public/institution-intake",forwardPublicIntake)
 .post("/api/public/intake",forwardPublicIntake)
 .get("/api/intake/complete",async({query,set})=>{
@@ -1293,9 +1281,9 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
   return new Response(png,{status:200,headers:{"Content-Type":"image/png","Cache-Control":"private, max-age=300"}});
 })
 
-.post("/api/kapso/send-text",async({request,set})=>{if(process.env.KAPSO_ENABLED!=="true"){set.status=503;return{ok:false,error:"Kapso sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096||input?.humanApproved!==true){set.status=input?.humanApproved===true?400:409;return{ok:false,error:input?.humanApproved===true?"invalid recipient or message":"human approval required"}}try{const result=await kapsoSendText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"Kapso WhatsApp API request failed"}}})
-.get("/api/whatsapp/webhook",({query,set})=>{const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=process.env.META_VERIFY_TOKEN;if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;set.status=403;return{ok:false,error:"webhook verification failed"}})
-.post("/api/whatsapp/webhook",async({request,set})=>{
+.post("/api/kapso/send-text",async({set})=>{set.status=410;return{ok:false,error:"Kapso integration is retired"};if(process.env.KAPSO_ENABLED!=="true"){set.status=503;return{ok:false,error:"Kapso sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096||input?.humanApproved!==true){set.status=input?.humanApproved===true?400:409;return{ok:false,error:input?.humanApproved===true?"invalid recipient or message":"human approval required"}}try{const result=await kapsoSendText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"Kapso WhatsApp API request failed"}}})
+.get("/api/whatsapp/webhook",({set})=>{set.status=410;return{ok:false,error:"WhatsApp automation is retired"};const mode=query["hub.mode"],token=query["hub.verify_token"],challenge=query["hub.challenge"],verifyToken=process.env.META_VERIFY_TOKEN;if(mode==="subscribe"&&verifyToken&&token===verifyToken&&challenge)return challenge;set.status=403;return{ok:false,error:"webhook verification failed"}})
+.post("/api/whatsapp/webhook",async({set})=>{set.status=410;return{ok:false,error:"WhatsApp automation is retired"};
   const raw=await request.text();
   if(raw.length>MAX_WEBHOOK_BODY){set.status=413;return{ok:false,error:"payload too large"}}
   const signature=request.headers.get("x-hub-signature-256");
