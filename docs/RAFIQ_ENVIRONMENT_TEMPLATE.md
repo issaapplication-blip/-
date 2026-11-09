@@ -4,37 +4,35 @@
 
 ## Supabase — المشروع الحالي فقط
 - `SUPABASE_URL` — https://qmuxaehrahfsnabyjens.supabase.co
-- `SUPABASE_ANON_KEY` — المفتاح العام؛ استخدمه في الواجهة فقط مع سياسات RLS سليمة
-- `SUPABASE_SERVICE_ROLE_KEY` — سري، للخادم فقط، ولا يوضع في ملفات الواجهة أو GitHub
-- `SUPABASE_DB_URL` — رابط اتصال قاعدة البيانات؛ استخدم إعداد Pooling المناسب من لوحة Supabase ولا تنشر الرابط
+- `SUPABASE_ANON_KEY` — المفتاح العام؛ للواجهة فقط مع سياسات RLS سليمة.
+- `SUPABASE_SERVICE_ROLE_KEY` — سري للخادم فقط. لا يوضع في الواجهة أو GitHub.
+- `SUPABASE_DB_URL` — رابط اتصال قاعدة البيانات؛ لا تنشره.
 
-## Telegram — bot الحالي
-- `TELEGRAM_BOT_TOKEN` — سري، للبوت الحالي `@RAFIQ_Care_Bot`.
-- `TELEGRAM_WEBHOOK_SECRET` — سري، للتحقق من طلبات Telegram الواردة.
-- يبقى Webhook الحالي على Supabase دون إعادة تسجيل أو استبدال.
-- لا يوجد بث تلقائي أو نشر تلقائي؛ الإعلانات تُراجع وتُنشر يدويًا بعد موافقة الإدارة.
+## Telegram — البوت الحالي
+- `TELEGRAM_BOT_TOKEN` — سر البوت الحالي `@RAFIQ_Care_Bot`.
+- `TELEGRAM_WEBHOOK_SECRET` — سر التحقق من Telegram، بطول 32–256 حرفاً من الأحرف التي يدعمها Telegram.
+- `TELEGRAM_MANAGER_CHAT_IDS` — غير مطلوب لمسار دليل المراكز الحالي؛ لا تضفه إلا عند اعتماد ميزة إشعار إداري جديدة.
+- رابط الدالة الحالي: `https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/telegram-webhook`.
+- لا تعِد تسجيل Webhook قبل نشر نسخة الدالة والتحقق من عملها وتأكيد `getWebhookInfo`.
+- لا تسجل Webhook إلى Cloudflare D1 أو Render.
 
 ## WhatsApp — manual only
 - لا حاجة إلى مفاتيح API أو إعدادات Meta/Kapso.
-- استخدم رقم WhatsApp والقناة الموجودين من تطبيق WhatsApp يدوياً فقط.
-- لا تفعّل إرسال WhatsApp الآلي أو Webhooks أو Cloud API.
+- استخدم الرقم والقناة الموجودين من تطبيق WhatsApp يدوياً فقط.
+- لا تفعّل Cloud API أو Webhooks أو الإرسال الآلي.
 
 ## AI
-- `GEMINI_API_KEY` — سري؛ يضاف فقط إلى Secrets في مساحة Hugging Face عند اختبار الوكيل.
-- `RAFIQ_AGENT_PROVIDER=gemini` — الافتراضي في خادم RAFIQ؛ لا يحتاج إلى OpenAI API key.
-- `RAFIQ_GEMINI_MODEL=gemini-3.6-flash` — نموذج Gemini المستقر الافتراضي؛ قد تختلف الإتاحة والحدود المجانية حسب حساب Google AI Studio.
-- `RAFIQ_AGENT_MODEL` — مطلوب فقط إذا اختير `RAFIQ_AGENT_PROVIDER=openai` صراحةً، ويجب أن يكون اسم نموذج صالحًا لحسابك.
+- `CLOUDFLARE_ACCOUNT_ID` و`CLOUDFLARE_API_TOKEN` اختياريان لوظيفة Workers AI في Telegram فقط؛ استخدم أقل صلاحية لازمة ولا تسجل القيم.
+- `CLOUDFLARE_AI_MODEL` اختياري؛ القيمة الافتراضية في الشيفرة هي `@cf/meta/llama-3.1-8b-instruct`.
 
 ## Runtime
-- `PLATFORM_URL` أو `RAFIQ_PUBLIC_BASE_URL` — عنوان HTTPS الفعلي للواجهة بعد نشرها؛ اتركه غير مضبوط إلى أن يتوفر عنوان موثّق. لن يعود الخادم إلى عنوان Render القديم.
-- `RAFIQ_PUBLIC_SITE_URL` — أصل الواجهة العام فقط (مثل `https://<project>.pages.dev` دون مسار)، أضفه إلى Secrets الخاصة بـ Supabase Edge Functions بعد التأكد من عنوان Cloudflare النهائي؛ تستخدمه دالتا استقبال الطلبات ورفع المستندات في قائمة CORS المسموح بها.
-- `PORT=7860`
-- `HOST=0.0.0.0`
-- `NODE_ENV=production`
+- `PLATFORM_URL` أو `RAFIQ_PUBLIC_BASE_URL` — عنوان HTTPS الفعلي للواجهة بعد نشرها. لا تستخدم Render.
+- `RAFIQ_PUBLIC_SITE_URL` — أصل الواجهة العام عند الحاجة لقائمة CORS الخاصة بخدمة CV ورفع ملفاتها.
+- `PORT=7860`, `HOST=0.0.0.0`, `NODE_ENV=production`.
 
 ## قواعد أمان
-- ضع القيم السرية في إعدادات Secrets لدى مزود الاستضافة فقط.
-- لا تضع أي مفتاح خدمة أو Token في ملفات `public/` أو السجلات أو محادثات الدعم.
+- الأسرار تبقى في إعدادات Secrets لدى مزود الاستضافة فقط.
+- لا تضع مفاتيح أو Tokens في ملفات `public/` أو السجلات أو محادثات الدعم.
 - لا تستخدم مشروع Supabase القديم `nyrwfxqitxrspfvshejb`.
-- وجود أسماء المتغيرات هنا لا يعني أن بيئة الاستضافة مهيأة أو أن التكامل يعمل.
-- لا تفعّل إرسال WhatsApp أو تسجيل Webhook أو البث قبل اختبار صريح ومراجعة بشرية.
+- لا تنشئ مشروع Supabase جديداً أو قاعدة D1 بديلة.
+- وجود أسماء المتغيرات هنا لا يعني أن البيئة مهيأة أو أن التكامل يعمل.
