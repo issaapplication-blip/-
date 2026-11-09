@@ -28,10 +28,23 @@ test("Telegram webhook uses a server-side rate limit and retryable failures", ()
   expect(source).toContain('markUpdate(updateId, "failed", reason)');
 });
 
-test("Telegram requests are stored only after a real session write and never promise a confirmed booking", () => {
-  expect(source).toContain('status: "submitted"');
-  expect(source).toContain("لا يُعد هذا تأكيدًا لحجز الخدمة");
-  expect(source).toContain('from("rafiq_telegram_request_sessions")');
+test("Telegram bot exposes only approved medical-directory categories and no application session flow", () => {
+  for (const category of ["labs", "imaging", "physio", "equipment_sale", "equipment_rent"]) {
+    expect(source).toContain(category);
+  }
+  expect(source).toContain('command === "/request"');
+  expect(source).toContain("تم إيقاف مسار الطلبات والتقديم عبر البوت");
+  expect(source).not.toContain('from("rafiq_telegram_request_sessions")');
+  expect(source).not.toContain("telegram_request_start_failed");
+  expect(source).toContain("لا تُنشر إلا بعد موافقة الإدارة");
+});
+
+test("CV and Cover Letter remains a separate Telegram entry, not a centre/provider application", () => {
+  expect(source).toContain('command === "/cv"');
+  expect(source).toContain('callback_data: "cv:service"');
+  expect(source).toContain("CV + Cover Letter");
+  expect(source).toContain("لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع");
+  expect(source).toContain("https://wa.me/96181506299");
 });
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
