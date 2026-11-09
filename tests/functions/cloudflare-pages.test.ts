@@ -4,12 +4,20 @@ import { resolve } from "node:path";
 
 const read = (path: string) => readFileSync(resolve(import.meta.dir, "../../" + path), "utf8");
 const webAgent = read("functions/api/agent/chat.ts");
+const cvAdmin = read("public/admin.html");
 const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
 const adminHtml = read("public/admin.html");
 const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
 const sitemap = read("public/sitemap.xml");
+
+test("admin review is limited to CV and Cover Letter and never sends automatic messages", () => {
+  expect(cvAdmin).toContain(".eq('application_type','CV + Cover Letter')");
+  expect(cvAdmin).not.toContain("send-completion-request");
+  expect(cvAdmin).not.toContain("send-approved-welcome");
+  expect(cvAdmin).toContain("notification_attempted:false");
+});
 
 test("legacy web intake assistant is retired", () => {
   expect(webAgent).toContain("status:410");
