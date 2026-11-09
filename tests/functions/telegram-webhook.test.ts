@@ -4,6 +4,9 @@ import { resolve } from "node:path";
 
 const legacyIndex = readFileSync(resolve(import.meta.dir, "../../src/index.ts"), "utf8");
 const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram.ts"), "utf8");
+const legacyKapso = readFileSync(resolve(import.meta.dir, "../../src/kapso.ts"), "utf8");
+const packageJson = readFileSync(resolve(import.meta.dir, "../../package.json"), "utf8");
+const metaWebhook = readFileSync(resolve(import.meta.dir, "../../supabase/functions/meta-whatsapp-webhook/index.ts"), "utf8");
 
 const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/telegram-webhook/index.ts"),
@@ -28,10 +31,23 @@ test("Telegram webhook uses a server-side rate limit and retryable failures", ()
   expect(source).toContain('markUpdate(updateId, "failed", reason)');
 });
 
-test("Telegram requests are stored only after a real session write and never promise a confirmed booking", () => {
-  expect(source).toContain('status: "submitted"');
-  expect(source).toContain("لا يُعد هذا تأكيدًا لحجز الخدمة");
-  expect(source).toContain('from("rafiq_telegram_request_sessions")');
+test("Telegram bot exposes only approved medical-directory categories and no application session flow", () => {
+  for (const category of ["labs", "imaging", "physio", "equipment_sale", "equipment_rent"]) {
+    expect(source).toContain(category);
+  }
+  expect(source).toContain('command === "/request"');
+  expect(source).toContain("تم إيقاف مسار الطلبات والتقديم عبر البوت");
+  expect(source).not.toContain('from("rafiq_telegram_request_sessions")');
+  expect(source).not.toContain("telegram_request_start_failed");
+  expect(source).toContain("لا تُنشر إلا بعد موافقة الإدارة");
+});
+
+test("CV and Cover Letter remains a separate Telegram entry, not a centre/provider application", () => {
+  expect(source).toContain('command === "/cv"');
+  expect(source).toContain('callback_data: "cv:service"');
+  expect(source).toContain("CV + Cover Letter");
+  expect(source).toContain("لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع");
+  expect(source).toContain("https://wa.me/96181506299");
 });
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
@@ -47,6 +63,17 @@ test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never ena
   expect(source).toContain("@cf/meta/llama-3.1-8b-instruct");
   expect(source).not.toContain("generativelanguage.googleapis.com");
   expect(source).not.toContain("api.openai.com");
+});
+
+test("Meta and Kapso WhatsApp automation are retired without outbound API capability", () => {
+  expect(legacyIndex).not.toContain("graph.facebook.com");
+  expect(legacyIndex).not.toContain("api.kapso.ai");
+  expect(legacyIndex).toContain("whatsapp_automation_retired");
+  expect(legacyKapso).toContain("kapsoConfigured = () => false");
+  expect(legacyKapso).toContain("whatsapp_automation_retired");
+  expect(packageJson).not.toContain("@kapso/whatsapp-cloud-api");
+  expect(metaWebhook).toContain("status:410");
+  expect(metaWebhook).toContain("WhatsApp automation is retired");
 });
 
 test("legacy Render process cannot re-register the Telegram webhook unless explicitly opted in", () => {

@@ -1,33 +1,35 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#087f58"><link rel="icon" href="/assets/rafig-logo.png?v=20260928"><title>RAFIQ | مساعد رفيق</title><style>
-*{box-sizing:border-box}body{margin:0;background:#f3f8f5;color:#17372d;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}.wrap{max-width:780px;margin:auto;padding:12px}.card{background:#fff;border:1px solid #dce8e2;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 5px 20px #0000000d}.logo{width:120px;height:120px;object-fit:contain;display:block;margin:auto;border-radius:16px}.chat{height:430px;overflow:auto;border:1px solid #dce8e2;border-radius:14px;padding:12px;background:#fbfdfc}.m{padding:11px 13px;border-radius:14px;margin:8px 0;white-space:pre-wrap;line-height:1.8}.a{background:#edf8f2;margin-left:10%}.u{background:#eaf2ef;margin-right:10%}.composer{display:flex;gap:8px;margin-top:10px}.composer textarea{flex:1;min-height:58px;border:1px solid #cbdad3;border-radius:12px;padding:10px;font:inherit}.btn{border:0;border-radius:11px;padding:11px 16px;background:#087f58;color:#fff;font-weight:800;cursor:pointer}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.alt{background:#eaf2ef;color:#17372d}.status{font-size:13px;color:#66756f;text-align:center}.err{background:#fff8e8;border-right:4px solid #c9a85a;padding:10px;border-radius:10px}@media(max-width:560px){.composer{flex-direction:column}.composer .btn{width:100%}.chat{height:55vh}}</style></head><body><main class="wrap">
-<section class="card" style="text-align:center"><img class="logo" src="/assets/rafig-logo.png?v=20260928" alt="RAFIQ | رفيق"><h1>🤖 مساعد رفيق</h1><p><b>نصل بالحب والأمان لرعاية العائلة</b></p><p class="status">مساعد استقبال للمنصة — لا يقدم تشخيصًا أو وصفًا دوائيًا.</p></section>
-<section class="card"><div id="chat" class="chat" aria-live="polite"><div class="m a">مرحبًا بك في رفيق 👋<br>أنا مساعد رفيق. كيف أستطيع مساعدتك؟</div></div><div class="composer"><textarea id="input" maxlength="1500" placeholder="اكتب سؤالك هنا..."></textarea><button id="send" class="btn">إرسال</button></div><div class="actions"><button class="btn alt q">أريد مقدم رعاية</button><button class="btn alt q">أريد ممرض/ة</button><button class="btn alt q">أريد علاج فيزيائي</button><button class="btn alt q">أريد تقديم طلب</button></div><div id="status" class="status" style="margin-top:10px">المساعد يعمل مباشرة.</div></section>
-<section class="card"><div class="err">للطلبات الحساسة أو العاجلة، تتم إحالتها إلى الإدارة للمراجعة.</div><div class="actions"><a class="btn" href="/app.html">تقديم طلب</a><a class="btn alt" href="/faq.html">الأسئلة الشائعة</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">واتساب RAFIQ</a></div></section>
-</main><script>
-(function(){
-const chat=document.getElementById("chat"),input=document.getElementById("input"),send=document.getElementById("send"),status=document.getElementById("status");
-function add(t,c){const d=document.createElement("div");d.className="m "+c;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
-function fallback(t){
- if(/(صعوبة\s*شديدة\s*بالتنفس|ألم\s*صدر|نزيف\s*شديد|فقدان\s*الوعي|إغماء|تشنج|سكتة|اختناق|chest pain|unconscious|stroke)/i.test(t))return "🚨 إذا كانت هناك حالة طارئة أو خطر فوري، اتصل بالإسعاف أو بأقرب جهة طبية فورًا. لا تنتظر رد رفيق.";
- if(/(دواء|جرعة|تشخيص|وصفة|medication|dose|diagnos|prescription)/i.test(t))return "رفيق لا يشخّص ولا يصف الأدوية ولا يغيّر العلاج. يرجى الرجوع إلى الطبيب أو الفريق المعالج.";
- if(/(خدمات|ماذا تقدم|شو بتقدم|services)/i.test(t))return "خدمات رفيق: رعاية كبار السن، رعاية المرضى، التمريض المنزلي، والعلاج الفيزيائي المنزلي. أخبرني بما تحتاجه وفي أي منطقة.";
- if(/(ممرض|ممرضة|تمريض|nurse)/i.test(t))return "أكيد. ما المنطقة وما الساعات المطلوبة؟ ثم تُراجع الإدارة التوفر المناسب.";
- if(/(فيزيائي|فيزيو|علاج فيزيائي|physio)/i.test(t))return "أكيد. ما المنطقة وما نوع الحاجة أو إعادة التأهيل؟";
- if(/(رعاية|مسن|مريض|مقدم رعاية|caregiver|patient|home care)/i.test(t))return "أكيد 🌿 هل الطلب لمسن أم لمريض؟ وما المدينة أو المنطقة؟";
- return "أفهمك 🌿 أخبرني ما الخدمة التي تحتاجها وفي أي مدينة أو منطقة، وسأساعدك بالخطوة التالية.";
-}
-async function ask(t){
- status.textContent="جارٍ تجهيز الرد…";
- try{
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),9000);
-  const r=await fetch("/api/agent/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:t}),signal:controller.signal});
-  clearTimeout(timer);
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok||!data.reply)throw new Error("agent unavailable");
-  return data.reply;
- }catch(e){return fallback(t)}
-}
-async function go(){const v=input.value.trim();if(!v||send.disabled)return;add(v,"u");input.value="";send.disabled=true;const reply=await ask(v);add(reply,"a");send.disabled=false;status.textContent="المساعد جاهز.";input.focus()}
-send.onclick=go;input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();go()}});document.querySelectorAll(".q").forEach(b=>b.onclick=()=>{input.value=b.textContent;go()});
-})();
-</script><script src="/i18n.js?v=3" defer></script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087f58">
+<meta name="description" content="دليل RAFIQ للمراكز والخدمات الطبية المعتمدة في لبنان.">
+<title>RAFIQ | دليل المراكز الطبية</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f8f5;color:#17372d;font-family:Arial,Tahoma,sans-serif;line-height:1.8}.wrap{max-width:760px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #dce8e2;border-radius:20px;padding:22px;margin:14px 0;box-shadow:0 5px 20px #0000000d}h1,h2{color:#087f58}.logo{display:block;width:125px;height:125px;object-fit:contain;margin:auto}.actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}.btn{display:inline-block;background:#087f58;color:#fff;text-decoration:none;border-radius:11px;padding:11px 16px;font-weight:800}.alt{background:#eaf4ef;color:#17372d}.note{background:#fff8e8;border:1px solid #ead7a8;border-radius:12px;padding:13px}
+</style>
+</head>
+<body><main class="wrap">
+<section class="card" style="text-align:center">
+<img class="logo" src="/assets/rafig-logo.png" alt="RAFIQ | رفيق">
+<h1>RAFIQ | رفيق 🇱🇧</h1>
+<p><strong>نصل بالحب والأمان لرعاية العائلة</strong></p>
+<h2>دليل المراكز والخدمات الطبية</h2>
+<p>هذا المسار لم يعد يستقبل طلبات رعاية أو انتساب أو تسجيل مراكز. تصفّح فئات الدليل من خلال البوت والقنوات الرسمية.</p>
+</section>
+<section class="card">
+<h2>فئات دليل RAFIQ</h2>
+<ul><li>المختبرات الطبية</li><li>مراكز الأشعة والتصوير الطبي</li><li>مراكز العلاج الفيزيائي</li><li>مراكز بيع المعدات الطبية</li><li>مراكز تأجير المعدات الطبية</li></ul>
+<div class="note">لا يظهر أي مركز أو عرض أو خصم إلا بعد مراجعة الإدارة والموافقة المسبقة. لا يقدم RAFIQ تشخيصًا طبيًا أو وعودًا علاجية.</div>
+</section>
+<section class="card">
+<div class="actions">
+<a class="btn" href="https://t.me/RAFIQ_Care_Bot" target="_blank" rel="noopener">🤖 بوت RAFIQ</a>
+<a class="btn alt" href="https://t.me/+a7CDblNyGKw1Yjg8" target="_blank" rel="noopener">📢 قناة Telegram</a>
+<a class="btn alt" href="https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K" target="_blank" rel="noopener">📢 قناة WhatsApp</a>
+<a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">💬 WhatsApp الإدارة</a>
+<a class="btn alt" href="/">العودة إلى المنصة</a>
+</div>
+</section>
+</main></body></html>

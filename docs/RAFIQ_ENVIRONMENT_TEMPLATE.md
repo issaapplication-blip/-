@@ -8,30 +8,16 @@
 - `SUPABASE_SERVICE_ROLE_KEY` — سري، للخادم فقط، ولا يوضع في ملفات الواجهة أو GitHub
 - `SUPABASE_DB_URL` — رابط اتصال قاعدة البيانات؛ استخدم إعداد Pooling المناسب من لوحة Supabase ولا تنشر الرابط
 
-## Telegram
-- `TELEGRAM_BOT_TOKEN` — سري
-- `TELEGRAM_WEBHOOK_SECRET` — سري
-- `TELEGRAM_MANAGER_CHAT_IDS` — اختياري؛ عرّف معرّفات المدير في إعدادات الخادم فقط
-- `RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false` — يبقى متوقفًا إلى أن يُختبر البديل ويُعتمد التحويل
-- `TELEGRAM_MARKETING_ENABLED=false`
-- `TELEGRAM_BROADCAST_ON_START=false`
+## Telegram — bot الحالي
+- `TELEGRAM_BOT_TOKEN` — سري، للبوت الحالي `@RAFIQ_Care_Bot`.
+- `TELEGRAM_WEBHOOK_SECRET` — سري، للتحقق من طلبات Telegram الواردة.
+- يبقى Webhook الحالي على Supabase دون إعادة تسجيل أو استبدال.
+- لا يوجد بث تلقائي أو نشر تلقائي؛ الإعلانات تُراجع وتُنشر يدويًا بعد موافقة الإدارة.
 
-## WhatsApp / Kapso
-- `KAPSO_API_KEY` — سري، أضفه فقط عند اعتماد التكامل
-- `KAPSO_WEBHOOK_SECRET` — سري
-- `WHATSAPP_PHONE_NUMBER_ID=1324609540731383`
-- `WHATSAPP_BUSINESS_ACCOUNT_ID=1571101954509141`
-- `KAPSO_ENABLED=false`
-- `WHATSAPP_SENDING_ENABLED=false`
-- `RAFIQ_WHATSAPP_AUTO_REPLY=false`
-- `RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING=false`
-
-## Meta
-- `META_APP_ID=1087358919742996`
-- `META_BUSINESS_ID=1092569476458172`
-- `META_ACCESS_TOKEN` — سري، فقط عند الحاجة
-- `META_APP_SECRET` — سري، فقط عند الحاجة
-- `META_VERIFY_TOKEN` — سري، فقط عند الحاجة
+## WhatsApp — manual only
+- لا حاجة إلى مفاتيح API أو إعدادات Meta/Kapso.
+- استخدم رقم WhatsApp والقناة الموجودين من تطبيق WhatsApp يدوياً فقط.
+- لا تفعّل إرسال WhatsApp الآلي أو Webhooks أو Cloud API.
 
 ## AI
 - `GEMINI_API_KEY` — سري؛ يضاف فقط إلى Secrets في مساحة Hugging Face عند اختبار الوكيل.

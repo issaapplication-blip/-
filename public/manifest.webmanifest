@@ -2,81 +2,26 @@
   "id": "/",
   "name": "RAFIQ | رفيق",
   "short_name": "رفيق",
-  "description": "نصل بالحب والأمان لرعاية العائلة — رعاية منزلية وخدمات صحية في لبنان",
+  "description": "دليل RAFIQ للمراكز والخدمات الطبية المعتمدة في لبنان، مع خدمة CV وCover Letter مستقلة.",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
-  ],
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   "background_color": "#f3f8f5",
   "theme_color": "#087f58",
   "prefer_related_applications": false,
-  "categories": [
-    "health",
-    "medical",
-    "lifestyle"
-  ],
+  "categories": ["health", "medical", "lifestyle"],
   "icons": [
-    {
-      "src": "/icon-192.png?v=83",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png?v=83",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png?v=83",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    {"src": "/icon-192.png?v=85", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icon-512.png?v=85", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icon-512.png?v=85", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "الرئيسية",
-      "short_name": "الرئيسية",
-      "url": "/",
-      "icons": [
-        {
-          "src": "/icon-192.png?v=83",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "الخدمات",
-      "short_name": "الخدمات",
-      "url": "/services.html",
-      "icons": [
-        {
-          "src": "/assets/rafig-logo.png?v=20261005-logo",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "طلب رعاية أو انتساب",
-      "short_name": "طلب/انتساب",
-      "url": "/app.html",
-      "icons": [
-        {
-          "src": "/assets/rafig-logo.png?v=20261005-logo",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    }
+    {"name": "الرئيسية", "short_name": "الرئيسية", "url": "/", "icons": [{"src": "/icon-192.png?v=85", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "فئات الدليل", "short_name": "الدليل", "url": "/services.html", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "خدمة CV وCover Letter", "short_name": "CV", "url": "/caregivers.html#cv-service", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]}
   ]
 }
