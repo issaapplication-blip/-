@@ -19,8 +19,10 @@
 - WhatsApp contact: https://wa.me/96181506299
 
 ## Important remaining verification
-- The existing Supabase `telegram-webhook` source still contains the older care-request workflow. It has not yet been replaced because the directory-only replacement must be reconciled with the preserved CV workflow first.
-- The live Telegram webhook registration, bot token, channel permissions, and channel posting have not been inspected or changed.
+- The Supabase `telegram-webhook` source on this branch is now directory-only: `/services` and `/areas` show the approved medical-centre categories and regions; `/request`, `/apply`, `/register`, and `/stop` no longer create request sessions.
+- The bot retains a separate `/cv` and CV menu entry that directs users to the preserved CV/cover-letter service and manual admin contact. The full legacy CV module and order migration remain in the repository.
+- The bot replies with the existing Telegram channel invite, but it does not process `channel_post` updates or publish to channels automatically. Channel and WhatsApp-channel publishing remain manual.
+- The live Telegram webhook registration, bot token, channel permissions, and live posting have not been inspected or changed. The source change is not live until separately approved and deployed.
 - No Meta account was accessed. No WhatsApp/Meta/Kapso request or message was sent.
 - No Supabase tables, rows, storage objects, or migrations were changed or applied.
 - No deployment, Render restart, Vercel deployment, or merge to `main` was performed.
