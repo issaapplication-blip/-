@@ -1,25 +1,39 @@
-# RAFIQ integration map
+# RAFIQ integration map — updated 2026-11-09
 
-Audit date: 2026-10-15.
+## Source state
+- PR #86 merged into `main`: `036e12ce1d668f30c79ce2fabc240b81e348da23`.
+- Public platform is now a medical-centre directory: laboratories, imaging/radiology, physiotherapy, and medical-equipment sales/rental.
+- General public care, provider, member, and centre application flows were removed. CV + Cover Letter remains separate.
+- Telegram Edge Function source is directory-only and has a separate `/cv` path.
+- PR #87 adds an explicit channel URL button to the Telegram bot's directory keyboard and is in verification.
 
-| Integration | Current code/documented endpoint | Status / safety |
+## Existing Telegram endpoints
+| Item | Existing value | Current source status |
 |---|---|---|
-| Web API | Bun + Elysia in `src/index.ts`; container port 7860 | Code configured; new hosted runtime not verified |
-| Health | `GET /health`; status `GET /api/status` | Implemented in source; must be tested after deployment |
-| Supabase REST | Existing project `qmuxaehrahfsnabyjens` | Live schema access blocked for this session |
-| Telegram existing webhook | `https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/telegram-webhook` | Existing rollout document reports Edge Function v5 ACTIVE; fresh live verification unavailable |
-| Candidate backend Telegram route | `/api/telegram/webhook` | Do not register until deployed, health-checked, secret configured, and tested |
-| WhatsApp | Existing WhatsApp number and channel | Manual app/channel use only; no API or automatic posting |
-| Meta Cloud API / Kapso | Retired from runtime source | No account access, API calls, webhook processing, or automatic sending |
-| Cloudflare Pages | `ops/build-cloudflare-pages.sh`, `functions/` | Build path documented; actual Pages URL not available yet |
-| Hugging Face Spaces | Docker SDK, port 7860 | Repository connection/deployment not verified |
+| Bot | https://t.me/RAFIQ_Care_Bot | Existing identity retained; main source is directory-only |
+| Channel | https://t.me/+a7CDblNyGKw1Yjg8 | Existing invite retained; bot menu channel shortcut under PR #87 |
+| Supabase project | `qmuxaehrahfsnabyjens` | Existing project only |
+| Edge Function | `telegram-webhook` | Source in `supabase/functions/telegram-webhook/index.ts` |
+| Function URL | `https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/telegram-webhook` | Existing URL; live webhook registration not re-verified |
+| Webhook registration helper | `ops/register-telegram-webhook.sh` | Use only after deployment and signed verification |
 
-## Environment and secret rules
-- `PORT=7860`, `NODE_ENV=production`.
-- Server-only credentials belong in hosting secret settings, not source control.
-- Supabase public/anon key may be used client-side only where intended and with RLS; never use `service_role` in browser code.
-- Telegram secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`; do not paste into chat or commit.
-- Optional Workers AI credentials are documented in the Telegram recovery file; never log their values.
-- Do not configure Meta or Kapso credentials. WhatsApp remains manual-only.
+## Channel and posting policy
+- The bot links users to the existing channel.
+- The current channel posting policy is manual, after admin approval.
+- The bot has not been granted channel administrator rights by this code change.
+- Automatic channel posting is not implemented or enabled.
+- Future automatic posting would require explicit approval, the bot's `can_post_messages` permission, the actual channel chat ID, and a tested approval workflow.
 
-Keep the existing Supabase Telegram webhook until the candidate backend is deployed, verifies Telegram's secret header, and passes an isolated test.
+## WhatsApp
+- Existing number: +961 81 506 299.
+- Existing channel: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K.
+- Manual application/channel use only. Meta Cloud API, Kapso, WhatsApp webhooks, and automated sends are retired.
+
+## Supabase production verification
+The latest attempt to read the user's existing Supabase project, migrations, and Edge Functions returned a connector permission error. No project read, deployment, secret update, database write, migration, or webhook update succeeded in this session. Restore authorized access to the existing project before deploying the merged Telegram source.
+
+## Hosting boundary
+- Do not use Render.
+- Do not create another Supabase project.
+- Do not create a separate Cloudflare D1 database for Telegram.
+- Static platform delivery and the existing Supabase Edge Function remain distinct deployment steps.
