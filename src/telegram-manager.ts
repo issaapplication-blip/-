@@ -67,7 +67,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
     if(command.name==="manager" || command.name==="help"){ await deps.send(input.chatId,helpText()); return true; }    if(command.name==="broadcast" || command.name==="broadcast_test"){
       if(!deps.broadcast){ await deps.send(input.chatId,"⚠️ نظام البث غير متاح حاليًا."); return true; }
       const custom=command.args.join(" ").trim();
-      const body=custom || "🇱🇧 RAFIQ | رفيق\n\nنصل بالحب والأمان لرعاية العائلة.\n\n🌐 https://rafiq-o6qd.onrender.com\n🤖 https://t.me/RAFIQ_Care_Bot\n📢 https://t.me/+a7CDblNyGkw1Yjg8";
+      const body=custom || "🇱🇧 RAFIQ | رفيق\n\nنصل بالحب والأمان لرعاية العائلة.\n\n🌐 https://rafiq-o6qd.onrender.com\n🤖 https://t.me/RAFIQ_Care_Bot\n📢 https://t.me/+a7CDblNyGKw1Yjg8";
       const report=await deps.broadcast(body,command.name==="broadcast_test");
       await deps.send(input.chatId,[
         command.name==="broadcast_test" ? "🧪 نتيجة بث تجريبي للمدير" : "📣 تقرير البث",
@@ -83,7 +83,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
     if(command.name==="publish_ads"){
       const target=String(process.env.TELEGRAM_MARKETING_CHAT_ID||"").trim();
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
-      const invite="https://t.me/+a7CDblNyGkw1Yjg8";
+      const invite="https://t.me/+a7CDblNyGKw1Yjg8";
       const ads=[
         "🌿 RAFIQ | رفيق\\n\\nرعاية كبار السن والمرضى تبدأ بخطوة صحيحة.\\nنقدّم خدمات رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\\n\\n💚 انضموا إلى مجتمع رفيق وتابعوا خدماتنا ومستجداتنا.\\n👉 "+invite,
         "💚 عندما تحتاج عائلتك إلى رعاية منزلية، رفيق معكم بخطوات واضحة وآمنة.\\n\\n👴 كبار السن\\n🏠 المرضى\\n👩‍⚕️ التمريض المنزلي\\n🦿 العلاج الفيزيائي المنزلي\\n\\nانضموا إلى مجموعة RAFIQ: "+invite,
@@ -114,7 +114,7 @@ export async function handleManagerCommand(input:ManagerCommandInput,deps:Manage
       if(!target){await deps.send(input.chatId,"⚠️ TELEGRAM_MARKETING_CHAT_ID غير مضبوط.");return true;}
       const site="https://rafiq-o6qd.onrender.com/";
       const bot="https://t.me/RAFIQ_Care_Bot";
-      const group="https://t.me/+a7CDblNyGkw1Yjg8";
+      const group="https://t.me/+a7CDblNyGKw1Yjg8";
       const wa="https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
       const footer="\\n\\n🌐 المنصة: "+site+"\\n🤖 بوت Telegram: "+bot+"\\n📢 مجموعة Telegram: "+group+"\\n📱 قناة WhatsApp: "+wa;
       const ads=[
