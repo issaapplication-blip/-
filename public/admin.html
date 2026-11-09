@@ -216,63 +216,16 @@ function openRequest(id){
 
 async function reviewRequest(id,status){
   const x=allRequests.find(v=>v.id===id);if(!x)return;
-  const promptText=status==='rejected'?'سبب الرفض (اختياري):':status==='approved'?'ملاحظات الموافقة (اختياري):':'ملاحظات المدير (اختياري):';
+  const promptText=status==='rejected'?'سبب رفض ملف CV (اختياري):':status==='approved'?'ملاحظات اعتماد ملف CV (اختياري):':'ملاحظات المراجعة (اختياري):';
   const notes=prompt(promptText)||null;
-  let data,error;
-  ({data,error}=await db.rpc('admin_approve_application_intake',{p_intake_id:id,p_status:status,p_notes:notes}));
-  if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}
-
-  if(status==='approved' && data?.barcode_code){
-    const box=document.createElement('div');
-    box.className='ok';
-    box.innerHTML='<strong>تم قبول الطلب وإنشاء باركود العضوية.</strong><br><code style="display:block;direction:ltr;white-space:normal;overflow-wrap:anywhere;margin-top:8px">'+esc(data.barcode_code)+'</code><div class="small" style="margin-top:8px">سيتم إرسال إشعار القبول والباركود عبر واتساب بعد الموافقة.</div><button class="btn alt" type="button" id="copyBarcodeNow" style="margin-top:8px">نسخ الباركود</button>';
-    document.querySelector('#modalBody')?.prepend(box);
-    document.getElementById('copyBarcodeNow')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(String(data.barcode_code));showMsg('تم نسخ الباركود.',true)}catch(_){showMsg('تم إنشاء الباركود، لكن تعذر النسخ التلقائي.')}});
-
-    try{
-      const session=(await db.auth.getSession()).data.session;
-      if(!session?.access_token)throw new Error('جلسة المدير غير متاحة');
-      const resp=await fetch('/api/admin/send-approved-welcome',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-        body:JSON.stringify({applicationId:id})
-      });
-      const sendResult=await resp.json().catch(()=>({}));
-      if(!resp.ok && sendResult?.status!=='already_sent'){
-        showMsg('تم قبول الطلب وإنشاء الباركود، لكن تعذر إرسال إشعار واتساب: '+(sendResult?.error||'خطأ غير معروف'));
-      }else{
-        showMsg(sendResult?.status==='already_sent'?'إشعار القبول كان مرسلاً مسبقاً.':'تم إرسال إشعار القبول والباركود عبر واتساب بنجاح.',true);
-      }
-    }catch(e){
-      showMsg('تم قبول الطلب وإنشاء الباركود، لكن تعذر إرسال إشعار واتساب: '+String(e));
-    }
-  }
-
-  await db.from('audit_logs').insert({action:'admin_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes,notification_attempted:status==='approved'}});
+  const {error}=await db.rpc('admin_approve_application_intake',{p_intake_id:id,p_status:status,p_notes:notes});
+  if(error){showMsg('تعذر تسجيل قرار ملف CV: '+error.message);return}
+  await db.from('audit_logs').insert({action:'admin_cv_intake_review_'+status,table_name:'application_intakes',record_id:id,user_id:(await db.auth.getUser()).data.user.id,details:{status,notes,notification_attempted:false}});
   $('modal').classList.add('hidden');
   await loadAll();
-  if(status==='review'){
-    try{
-      const session=(await db.auth.getSession()).data.session;
-      if(session?.access_token){
-        const resp=await fetch('/api/admin/send-completion-request',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-          body:JSON.stringify({applicationId:id,notes})
-        });
-        const sendResult=await resp.json().catch(()=>({}));
-        if(sendResult?.status==='telegram_sent'||sendResult?.status==='whatsapp_sent'){
-          showMsg('تم إرسال رسالة استكمال الملفات عبر '+(sendResult.channel==='telegram'?'Telegram':'WhatsApp')+'.',true);
-        }else{
-          showMsg('تم وضع الطلب قيد المراجعة وتسجيل رسالة الاستكمال للمتابعة.');
-        }
-      }
-    }catch(e){
-      showMsg('تم وضع الطلب قيد المراجعة، وتعذر إرسال رسالة الاستكمال تلقائياً.');
-    }
-  }
-  if(status!=='approved' && status!=='review')showMsg('تم تسجيل قرار المدير بنجاح.',true);
+  showMsg(status==='approved'?'تم اعتماد ملف CV وCover Letter. سيتم التواصل يدويًا عند الحاجة.':status==='rejected'?'تم حفظ رفض ملف CV في الأرشيف.':'تم وضع ملف CV قيد المراجعة. لا تُرسل رسائل تلقائية.');
 }
+
 async function loadRejected(){
   const rows=allRequests.filter(x=>x.status==='rejected');
   $('rejectedList').innerHTML=rows.length?rows.map(x=>'<div class="doc"><strong>طلب #'+esc(x.application_number)+' — '+esc(x.applicant_name||'—')+'</strong><div class="small">'+esc(x.application_type||'')+' · '+esc(x.area||'—')+' · '+esc(formatDate(x.decided_at||x.updated_at||x.created_at))+'</div><div class="small">'+esc(x.admin_decision_notes||'لا توجد ملاحظات قرار.')+'</div></div>').join(''):'<p class="small">لا توجد طلبات مرفوضة.</p>';
