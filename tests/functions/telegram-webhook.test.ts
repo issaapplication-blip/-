@@ -56,6 +56,7 @@ test("legacy Cloudflare D1 Telegram webhook is retired and cannot collect reques
   expect(legacyCloudflareWebhook).toContain("json = (status: number, body:");
   expect(legacyCloudflareWebhook).toContain("telegram_cloudflare_d1_webhook_retired");
   expect(legacyCloudflareWebhook).toContain("json(410,");
+  expect(legacyCloudflareWebhook).toContain("active_receiver");
   expect(legacyCloudflareWebhook).not.toContain("telegram_request_sessions");
   expect(legacyCloudflareWebhook).not.toContain("RAFIQ_DB");
 });
