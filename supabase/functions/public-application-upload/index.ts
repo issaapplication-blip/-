@@ -8,7 +8,7 @@ const cors=(req:Request)=>{
  return {...(allowedOrigins.has(origin)?{"Access-Control-Allow-Origin":origin}:{}),"Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
 };
 const mime=new Set(["application/pdf","image/jpeg","image/png","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
-const cats=new Set(["cv","certificate","experience","id_front","id_back","passport","driver_license","portrait","nursing_license","nursing_certificate","medical_report","family_proof","payment_proof","other"]);
+const cats=new Set(["cv","payment_proof"]);
 const hex=(b:Uint8Array)=>Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");
 async function hash(v:string){return hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v))))}
 Deno.serve(async req=>{
@@ -21,6 +21,7 @@ Deno.serve(async req=>{
   const h=await hash(token);
   const {data:intake,error}=await sb.from("application_intakes").select("id,application_type,status,upload_token_hash,upload_token_expires_at").eq("id",intakeId).single();
   if(error||!intake)throw new Error("invalid_intake_id");
+  if(intake.application_type!=="CV + Cover Letter")throw new Error("unsupported_application_type");
   if(!["pending","review"].includes(intake.status))throw new Error("upload_window_closed");
   if(intake.upload_token_hash!==h)throw new Error("invalid_upload_token");
   if(!intake.upload_token_expires_at||new Date(intake.upload_token_expires_at).getTime()<Date.now())throw new Error("upload_token_expired");
