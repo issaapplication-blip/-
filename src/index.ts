@@ -1358,14 +1358,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 app.listen({ hostname: process.env.HOST ?? "0.0.0.0", port });
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
 void registerTelegramWebhookOnStartup();
-setInterval(() => { void telegramMarketingTick(); }, 30_000);
-void telegramMarketingTick();
-setTimeout(() => {
-  if(process.env.TELEGRAM_BROADCAST_ON_START!=="true") return;
-  void broadcastTelegramAnnouncement(TELEGRAM_ONBOARDING_KEY, TELEGRAM_ONBOARDING_MESSAGE, TELEGRAM_ANNOUNCEMENT_CUTOFF)
-    .then(result => console.log(JSON.stringify({event:"rafig_telegram_onboarding_broadcast",...result})))
-    .catch(error => console.error(JSON.stringify({event:"rafig_telegram_onboarding_broadcast_failed",error:String(error).slice(0,300)})));
-}, 1500);
+// RAFIQ channel publishing is manual-only after admin approval. No scheduled or startup broadcasts.
 
 
 console.log(JSON.stringify({
