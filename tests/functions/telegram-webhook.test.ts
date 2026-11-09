@@ -7,6 +7,7 @@ const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram
 const legacyKapso = readFileSync(resolve(import.meta.dir, "../../src/kapso.ts"), "utf8");
 const packageJson = readFileSync(resolve(import.meta.dir, "../../package.json"), "utf8");
 const metaWebhook = readFileSync(resolve(import.meta.dir, "../../supabase/functions/meta-whatsapp-webhook/index.ts"), "utf8");
+const legacyCloudflareWebhook = readFileSync(resolve(import.meta.dir, "../../functions/api/telegram/webhook.ts"), "utf8");
 
 const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/telegram-webhook/index.ts"),
@@ -49,6 +50,14 @@ test("CV and Cover Letter remains a separate Telegram entry, not a centre/provid
   expect(source).toContain("CV + Cover Letter");
   expect(source).toContain("لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع");
   expect(source).toContain("https://wa.me/96181506299");
+});
+
+test("legacy Cloudflare D1 Telegram webhook is retired and cannot collect requests", () => {
+  expect(legacyCloudflareWebhook).toContain("status, body");
+  expect(legacyCloudflareWebhook).toContain("telegram_cloudflare_d1_webhook_retired");
+  expect(legacyCloudflareWebhook).toContain("status: 410");
+  expect(legacyCloudflareWebhook).not.toContain("telegram_request_sessions");
+  expect(legacyCloudflareWebhook).not.toContain("RAFIQ_DB");
 });
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {
