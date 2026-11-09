@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 const read = (path: string) => readFileSync(resolve(import.meta.dir, "../../" + path), "utf8");
@@ -8,6 +8,8 @@ const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
 const adminHtml = read("public/admin.html");
 const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
+const manifest = JSON.parse(read("public/manifest.webmanifest"));
+const sitemap = read("public/sitemap.xml");
 
 test("legacy web intake assistant is retired", () => {
   expect(webAgent).toContain("status:410");
@@ -28,6 +30,18 @@ test("Cloudflare build requires an HTTPS Pages origin and excludes the legacy au
 test("legacy-host validation scans only the built bundle, not source templates", () => {
   expect(workflow).toContain("grep -RniE 'onrender\\.com|rafiq-o6qd' dist/;");
   expect(workflow).not.toContain("dist/ public/");
+});
+
+test("retired public application pages are absent while CV remains in the PWA", () => {
+  for (const path of ["public/app.html", "public/member.html", "public/caregiver-registration.html", "public/nurses.html", "public/families.html", "public/physiotherapists.html"]) {
+    expect(existsSync(resolve(import.meta.dir, "../../" + path))).toBe(false);
+  }
+  expect(existsSync(resolve(import.meta.dir, "../../public/caregivers.html"))).toBe(true);
+  expect(manifest.shortcuts.some((x: any) => x.url === "/caregivers.html#cv-service")).toBe(true);
+  expect(manifest.shortcuts.some((x: any) => String(x.url).includes("app.html"))).toBe(false);
+  expect(sitemap).not.toContain("nurses.html");
+  expect(sitemap).not.toContain("families.html");
+  expect(sitemap).not.toContain("physiotherapists.html");
 });
 
 test("admin UI never grants access from an email address alone", () => {
