@@ -49,8 +49,8 @@ th{background:#f7fbf9;color:#087f58}
 <section class="card" style="text-align:center">
 <img class="brand" src="/assets/rafig-logo.png?v=20261004" alt="RAFIQ | رفيق">
 <h1>لوحة مدير RAFIQ</h1>
-<p><strong>مراجعة الطلبات والملفات ومتابعتها لحظة بلحظة</strong></p>
-<p class="small">الوصول الفعلي محمي بتسجيل دخول حساب المدير وصلاحية Admin نشطة في Supabase. لا تعتمد المنصة على إخفاء الرابط لحماية البيانات.</p><div class="actions" style="justify-content:center;margin-top:10px"><a class="btn alt" href="https://t.me/RAFIQ_Care_Bot" target="_blank" rel="noopener">🤖 Telegram Bot</a><a class="btn alt" href="https://t.me/+a7CDblNyGKw1Yjg8" target="_blank" rel="noopener">📢 Telegram Channel</a><a class="btn alt" href="https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K" target="_blank" rel="noopener">📢 WhatsApp Channel</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">💬 WhatsApp</a></div>
+<p><strong>إدارة طلبات خدمة CV وCover Letter فقط</strong></p>
+<p class="small">الوصول الفعلي محمي بتسجيل دخول حساب المدير وصلاحية Admin نشطة في Supabase. لا تعتمد المنصة على إخفاء الرابط لحماية البيانات.</p><div class="actions" style="justify-content:center;margin-top:10px"></div>
 </section>
 
 <section class="card" id="auth">
@@ -68,11 +68,11 @@ th{background:#f7fbf9;color:#087f58}
 </div>
 <div id="dashMsg"></div>
 <div class="stats" style="margin-top:12px">
-<div class="stat"><b id="cTotal">0</b>كل طلبات الانتساب والرعاية</div>
+<div class="stat"><b id="cTotal">0</b>طلبات CV وCover Letter</div>
 <div class="stat"><b id="cPending">0</b>طلبات قيد المراجعة</div>
 <div class="stat"><b id="cApproved">0</b>طلبات مقبولة</div>
 <div class="stat"><b id="cRejected">0</b>طلبات مرفوضة</div>
-<div class="stat"><b id="cFiles">0</b>ملفات مقدمة</div>
+<div class="stat"><b id="cFiles">0</b>مرفقات CV وإثباتات الدفع</div>
 <div class="stat"><b id="cInstalls">0</b>عمليات تثبيت مسجلة</div>
 </div>
 <p class="small" id="lastUpdate"></p>
@@ -89,7 +89,7 @@ th{background:#f7fbf9;color:#087f58}
 <div id="fileList"></div>
 </section>
 <section class="card hidden" id="rejectedSection"><h2>❌ المرفوضون — أرشيف محفوظ</h2><p class="small">طلبات CV المرفوضة محفوظة في السجل ولا تعود إلى قائمة المراجعة النشطة.</p><div id="rejectedList"></div></section>
-<section class="card hidden" id="institutionSection"><h2>🏥 المختبرات والأشعة والمعدات الطبية</h2><p class="small">طلبات تسجيل الجهات الصحية محفوظة مستقلة عن ملفات الأفراد والعائلات، مع قرار إداري مستقل وملفاتها الخاصة.</p><div id="institutionList"></div></section>
+
 <section class="card hidden" id="completionSection">
 <h2>🟡 طلبات CV تحتاج استكمال الملفات</h2>
 <p class="small">طلبات CV التي لم تكتمل ملفاتها تحتاج متابعة المدير. لا تُعتبر مقبولة حتى استكمال المستندات ومراجعتها.</p>
@@ -116,7 +116,7 @@ const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let allRequests=[]; let allFiles=[]; let legacyDocuments=[]; let acceptedMembers=[]; let institutionRequests=[]; let liveChannel=null; let showPendingOnly=false; let refreshTimer=null;
+let allRequests=[]; let allFiles=[]; let legacyDocuments=[]; let acceptedMembers=[]; let liveChannel=null; let showPendingOnly=false; let refreshTimer=null;
 
 function showAuthError(text){$('authMsg').innerHTML='<div class="err">'+esc(text)+'</div>'}
 function showMsg(text,ok=false){$('dashMsg').innerHTML='<div class="'+(ok?'ok':'err')+'">'+esc(text)+'</div>'}
@@ -229,31 +229,6 @@ async function reviewRequest(id,status){
 async function loadRejected(){
   const rows=allRequests.filter(x=>x.status==='rejected');
   $('rejectedList').innerHTML=rows.length?rows.map(x=>'<div class="doc"><strong>طلب #'+esc(x.application_number)+' — '+esc(x.applicant_name||'—')+'</strong><div class="small">'+esc(x.application_type||'')+' · '+esc(x.area||'—')+' · '+esc(formatDate(x.decided_at||x.updated_at||x.created_at))+'</div><div class="small">'+esc(x.admin_decision_notes||'لا توجد ملاحظات قرار.')+'</div></div>').join(''):'<p class="small">لا توجد طلبات مرفوضة.</p>';
-}
-function institutionTypeLabel(t){return ({laboratory:'🧪 مختبرات طبية',radiology_center:'🩻 مراكز الأشعة والتصوير',medical_equipment_center:'🦽 مراكز المعدات الطبية'})[t]||t}
-async function loadInstitutions(){
-  const [ir,fr]=await Promise.all([
-    db.from('institution_intakes').select('*').order('created_at',{ascending:false}).limit(500),
-    db.from('institution_intake_files').select('id,institution_intake_id,storage_path,file_name,mime_type,file_size,verification_status,document_category,created_at').order('created_at',{ascending:false}).limit(1000)
-  ]);
-  if(ir.error){$('institutionList').innerHTML='<div class="err">تعذر تحميل ملفات الجهات: '+esc(ir.error.message)+'</div>';return}
-  if(fr.error){$('institutionList').innerHTML='<div class="err">تعذر تحميل مستندات الجهات: '+esc(fr.error.message)+'</div>';return}
-  institutionRequests=ir.data||[];
-  const files=fr.data||[];
-  const groups=['laboratory','radiology_center','medical_equipment_center'];
-  $('institutionList').innerHTML=groups.map(type=>{
-    const rows=institutionRequests.filter(x=>x.institution_type===type);
-    return '<div class="card" style="background:#f8fbf9"><h3>'+institutionTypeLabel(type)+' <span class="badge">'+rows.length+'</span></h3>'+
-      (rows.length?rows.map(x=>{
-        const fs=files.filter(f=>f.institution_intake_id===x.id);
-        const fileHtml=fs.length?fs.map(f=>'<div class="doc"><strong>'+esc(f.file_name)+'</strong><div class="small">'+esc(f.document_category||'مستند')+' · '+esc(f.verification_status)+' · '+Math.round(Number(f.file_size||0)/1024)+' KB</div><div class="actions"><button class="btn alt" data-inst-open="'+esc(f.storage_path)+'">فتح</button><button class="btn alt" data-inst-download="'+esc(f.storage_path)+'" data-name="'+esc(f.file_name)+'">تحميل</button><button class="btn" data-inst-file-status="approved" data-inst-file-id="'+esc(f.id)+'">اعتماد الملف</button><button class="btn danger" data-inst-file-status="rejected" data-inst-file-id="'+esc(f.id)+'">رفض الملف</button></div></div>').join(''):'<p class="small">لا توجد ملفات.</p>';
-        return '<div class="doc"><strong>'+esc(x.institution_name)+'</strong><div class="small">رقم الطلب: '+esc(x.request_id)+' · المسؤول: '+esc(x.contact_name)+' · الهاتف: '+esc(x.phone)+' · '+esc(x.governorate||'')+' / '+esc(x.district||'')+' / '+esc(x.locality||'')+'</div><div class="small">الحالة: <span class="badge '+statusClass(x.status)+'">'+esc(statusLabel(x.status))+'</span> · تاريخ: '+esc(formatDate(x.created_at))+'</div><div class="detail-grid" style="margin-top:8px"><div class="detail"><b>الترخيص</b><br>'+esc(x.license_number||'—')+'</div><div class="detail"><b>الخدمات</b><br>'+esc(x.services||'—')+'</div></div><h4>الملفات</h4>'+fileHtml+'<div class="actions" style="margin-top:10px"><button class="btn gold" data-inst-status="review" data-inst-id="'+esc(x.id)+'">قيد الدراسة</button><button class="btn" data-inst-status="approved" data-inst-id="'+esc(x.id)+'">قبول</button><button class="btn danger" data-inst-status="rejected" data-inst-id="'+esc(x.id)+'">رفض وحفظ</button></div></div>';
-      }).join(''):'<p class="small">لا توجد ملفات.</p>')+'</div>';
-  }).join('');
-  document.querySelectorAll('[data-inst-open]').forEach(b=>b.onclick=async()=>{try{window.open(await signedUrl(b.dataset.instOpen,false),'_blank','noopener,noreferrer')}catch(e){showMsg('تعذر فتح الملف: '+(e?.message||'خطأ غير معروف'))}});
-  document.querySelectorAll('[data-inst-download]').forEach(b=>b.onclick=async()=>{try{location.href=await signedUrl(b.dataset.instDownload,b.dataset.name)}catch(e){showMsg('تعذر تحميل الملف: '+(e?.message||'خطأ غير معروف'))}});
-  document.querySelectorAll('[data-inst-status]').forEach(b=>b.onclick=async()=>{const notes=prompt(b.dataset.instStatus==='rejected'?'سبب الرفض (اختياري):':'ملاحظات المدير (اختياري):')||null;const {error}=await db.rpc('admin_institution_review',{p_institution_id:b.dataset.instId,p_status:b.dataset.instStatus,p_notes:notes});if(error){showMsg('تعذر تسجيل القرار: '+error.message);return}showMsg('تم حفظ قرار الجهة.',true);await loadInstitutions()});
-  document.querySelectorAll('[data-inst-file-status]').forEach(b=>b.onclick=async()=>{const {error}=await db.from('institution_intake_files').update({verification_status:b.dataset.instFileStatus,updated_at:new Date().toISOString()}).eq('id',b.dataset.instFileId);if(error){showMsg('تعذر تحديث الملف: '+error.message);return}showMsg('تم حفظ حالة الملف.',true);await loadInstitutions()});
 }
 async function loadCompletion(){
   const rows=allRequests.filter(x=>x.status==='review');
