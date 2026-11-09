@@ -182,7 +182,7 @@ async function processUpdate(update: any) {
   }
   const command = text.toLowerCase().split(/\s+/)[0];
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nنصل بالحب والأمان لرعاية العائلة.\n\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\n\nلا يستقبل البوت طلبات تقديم أو ملفات. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\n\nقناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
+    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nنصل بالحب والأمان لرعاية العائلة.\n\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\n\nلا يستقبل البوت طلبات رعاية أو انتساب أو تسجيل مراكز. خدمة CV وCover Letter مستقلة ويمكن الوصول إليها عبر /cv. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\n\nقناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
     return;
   }
   if (command === "/cv" || command === "/coverletter") {
