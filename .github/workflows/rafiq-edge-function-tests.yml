@@ -88,7 +88,6 @@ jobs:
             --env RAFIQ_TELEGRAM_AUTO_REGISTER_WEBHOOK=false \
             --env TELEGRAM_MARKETING_ENABLED=false \
             --env TELEGRAM_BROADCAST_ON_START=false \
-            --env KAPSO_ENABLED=false \
             rafiq-backend:ci
           cleanup() {
             echo "::group::RAFIQ container logs"
