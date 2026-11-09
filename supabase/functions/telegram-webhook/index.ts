@@ -88,7 +88,7 @@ const serviceKeyboard = {
 };
 function faq(text: string): string {
   const t = normalize(text);
-  if (/(?:cv|cover\\s*letter|سيره ذاتيه|سيرة ذاتية|رساله تغطيه|رسالة تغطية)/i.test(t)) return "خدمة CV وCover Letter متاحة بشكل مستقل عن دليل المراكز. الأسعار والتفاصيل والتنسيق مع الإدارة عبر WhatsApp: https://wa.me/96181506299. لا ترسل أي ملف شخصي قبل تأكيد الدفع من الإدارة.";
+  if (/(?:cv|cover\s*letter|سيره ذاتيه|سيرة ذاتية|رساله تغطيه|رسالة تغطية)/i.test(t)) return "خدمة CV وCover Letter متاحة بشكل مستقل عن دليل المراكز. الأسعار والتفاصيل والتنسيق مع الإدارة عبر WhatsApp: https://wa.me/96181506299. لا ترسل أي ملف شخصي قبل تأكيد الدفع من الإدارة.";
   if (/(طوارئ|اختناق|ضيق تنفس|الم صدر|نزيف شديد|فقدان وعي|جلطه|تشنج|سكتة)/.test(t)) {
     return "إذا كانت هناك حالة طارئة أو خطر فوري، اتصل فورًا بخدمات الطوارئ المحلية أو بالفريق الطبي المعالج. لا تؤخر الرعاية العاجلة بانتظار رفيق.";
   }
@@ -157,7 +157,7 @@ async function processUpdate(update: any) {
     }
     await telegram("answerCallbackQuery", { callback_query_id: callback.id });
     if (data === "cv:service") {
-      await sendText(chatId, "📄 خدمة CV وCover Letter | RAFIQ\\n\\n• CV احترافي: $25 بدل $35\\n• Cover Letter: $10 بدل $16\\n• CV + Cover Letter: $35 بدل $51\\n• لغة إضافية: +$20 بدل +$28\\n\\nالخدمة مستقلة عن دليل المراكز. للتنسيق مع الإدارة عبر WhatsApp: https://wa.me/96181506299. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع.", serviceKeyboard);
+      await sendText(chatId, "📄 خدمة CV وCover Letter | RAFIQ\n\n• CV احترافي: $25 بدل $35\n• Cover Letter: $10 بدل $16\n• CV + Cover Letter: $35 بدل $51\n• لغة إضافية: +$20 بدل +$28\n\nالخدمة مستقلة عن دليل المراكز. للتنسيق مع الإدارة عبر WhatsApp: https://wa.me/96181506299. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع.", serviceKeyboard);
       return;
     }
     if (data === "dir:areas") {
@@ -186,7 +186,7 @@ async function processUpdate(update: any) {
     return;
   }
   if (command === "/cv" || command === "/coverletter") {
-    await sendText(chatId, "📄 خدمة CV وCover Letter | RAFIQ\\n\\n• CV احترافي: $25 بدل $35\\n• Cover Letter: $10 بدل $16\\n• CV + Cover Letter: $35 بدل $51\\n• لغة إضافية: +$20 بدل +$28\\n\\nللتنسيق مع الإدارة عبر WhatsApp: https://wa.me/96181506299. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع.", serviceKeyboard);
+    await sendText(chatId, "📄 خدمة CV وCover Letter | RAFIQ\n\n• CV احترافي: $25 بدل $35\n• Cover Letter: $10 بدل $16\n• CV + Cover Letter: $35 بدل $51\n• لغة إضافية: +$20 بدل +$28\n\nللتنسيق مع الإدارة عبر WhatsApp: https://wa.me/96181506299. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع.", serviceKeyboard);
     return;
   }
   if (command === "/services" || command === "/directory") {
