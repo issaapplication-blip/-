@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const read = (path: string) => readFileSync(resolve(import.meta.dir, "../../" + path), "utf8");
 const webAgent = read("functions/api/agent/chat.ts");
+const legacyTelegram = read("functions/api/telegram/webhook.ts");
 const cvAdmin = read("public/admin.html");
 const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
@@ -17,6 +18,14 @@ test("admin review is limited to CV and Cover Letter and never sends automatic m
   expect(cvAdmin).not.toContain("send-completion-request");
   expect(cvAdmin).not.toContain("send-approved-welcome");
   expect(cvAdmin).toContain("notification_attempted:false");
+});
+
+test("legacy Cloudflare Telegram receiver is disabled and points to the sole Supabase receiver", () => {
+  expect(legacyTelegram).toContain("telegram_cloudflare_d1_webhook_retired");
+  expect(legacyTelegram).toContain("json(410,");
+  expect(legacyTelegram).toContain("supabase/functions/v1/telegram-webhook");
+  expect(legacyTelegram).not.toContain("RAFIQ_DB");
+  expect(legacyTelegram).not.toContain("telegram_request_sessions");
 });
 
 test("legacy web intake assistant is retired", () => {

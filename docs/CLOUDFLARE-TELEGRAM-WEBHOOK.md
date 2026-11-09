@@ -1,51 +1,46 @@
-# RAFIQ Telegram Bot on Cloudflare Pages (without Supabase)
+# RAFIQ Telegram integration — current architecture (2026-11-09)
 
-Adds POST /api/telegram/webhook and a GET health response. This handler does not call Supabase, Render, WhatsApp, or another external database. Request workflow data is stored in Cloudflare D1 after configuring the binding and migration.
+## Active identity and channel
+- Existing bot: `@RAFIQ_Care_Bot` — https://t.me/RAFIQ_Care_Bot
+- Existing Telegram channel: https://t.me/+a7CDblNyGKw1Yjg8
+- No replacement bot is created.
+- The bot's directory keyboard includes the existing Telegram channel invite as a direct URL button (PR #87); the welcome text also includes the invite.
 
-## Safety and behavior
+## Supported webhook
+The only supported production receiver is the existing Supabase Edge Function in the existing project:
 
-- Only private Telegram chats are processed; group/channel updates are ignored.
-- Requests require Telegram's X-Telegram-Bot-Api-Secret-Token header.
-- Body limit: 256 KiB. Per-chat rate limit: 12 updates/minute. Stalled webhook receipt claims can be reclaimed after 120 seconds.
-- Raw updates, usernames, profile names, phone numbers, and message history are not persisted.
-- A request stores only service, area, schedule, Telegram chat ID, request ID, status, and timestamps.
-- Requests are marked new; they are not bookings and do not trigger WhatsApp messages.
-- Admin notices contain request ID, service, area, schedule, and Telegram chat ID so approved administrators can follow up through the bot. Do not add this ID to public pages or public channels.
-- /stop deletes an unfinished request session. No broadcast/marketing command is included.
+- Project ref: `qmuxaehrahfsnabyjens`
+- Function: `telegram-webhook`
+- URL: `https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/telegram-webhook`
+- Source: `supabase/functions/telegram-webhook/index.ts`
+- Required server-side secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, and the existing Supabase service credential injected into the function runtime.
+- The function validates Telegram's `X-Telegram-Bot-Api-Secret-Token` header itself. Verify the Supabase function's gateway setting is `verify_jwt=false` before relying on Telegram delivery, because Telegram does not send a Supabase user JWT.
 
-## Configure Cloudflare
+Do not create a new Supabase project or a separate D1 database.
 
-1. Create a D1 database in the same Cloudflare account as the Pages project:
-   npx wrangler@latest d1 create rafiq-telegram
-2. Bind it to the RAFIQ Pages project:
-   Dashboard > Workers & Pages > RAFIQ Pages project > Settings > Bindings > Add > D1 database.
-   Variable name: RAFIQ_DB. Select database: rafiq-telegram, then redeploy so the binding takes effect.
-3. Apply the schema from the repository root:
-   npx wrangler@latest d1 execute rafiq-telegram --remote --file=migrations/0001_telegram_d1.sql
-4. Add encrypted secrets in Settings > Variables and Secrets > Add (Production; Preview only with a test bot):
-   TELEGRAM_BOT_TOKEN
-   TELEGRAM_WEBHOOK_SECRET (32–256 chars; A–Z, a–z, 0–9, underscore, hyphen)
-   TELEGRAM_MANAGER_CHAT_IDS (comma-separated numeric admin chat IDs; preserve the minus sign for supergroups)
-5. Deploy this branch to a Pages Preview deployment first. Do not replace the current production webhook until Preview is verified.
+## Bot behavior in main
+- `/start`, `/help`, `/services`, `/directory`, and `/areas` show the medical-directory categories and covered areas.
+- Categories: laboratories, imaging/radiology, physiotherapy, medical-equipment sales, and medical-equipment rental.
+- `/cv` opens the separate CV and Cover Letter contact/pricing path.
+- `/request`, `/apply`, `/register`, and `/stop` no longer create care/provider application sessions.
+- Centre names, offers, discounts, and codes must not be invented; only publish items after admin approval.
+- WhatsApp is manual-only. Do not configure Meta, Kapso, WhatsApp Cloud API, or WhatsApp webhooks.
 
-If using Wrangler configuration instead of Dashboard bindings, add a D1 binding in wrangler.toml with the exact database_id returned by Cloudflare. Never commit placeholders or secrets.
+## Telegram channel publishing
+The current agreed mode is manual publishing after admin approval. A public channel link in the bot menu does not require the bot to be a channel administrator.
 
-## Register only after deployment
+If a later, separately approved feature should publish approved centre advertisements automatically, the channel owner must add the existing bot as an administrator with only the required `can_post_messages` right, and the implementation must store the real channel chat ID in a server-side setting. Do not grant edit/delete/admin-management rights unless separately required and approved. Do not enable automatic publishing by merely adding the bot to the channel.
 
-Run bash ops/register-cloudflare-telegram-webhook.sh from the repository root. It prompts for the token and secret without echoing them and prints only non-secret webhook status. Pending Telegram updates are preserved.
+## Deployment and webhook registration — do this only after Supabase access is restored
+1. Read the deployed `telegram-webhook` function and confirm its `verify_jwt=false` gateway setting. Check the existing `telegram_update_receipts`, `claim_telegram_update`, and `consume_telegram_rate_limit` dependencies; do not run migrations unless a read-only check proves one is missing and the user separately approves the schema change.
+2. Confirm the existing project's secrets `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` are already present. Never copy either value into chat or GitHub. The webhook secret must be 32–256 Telegram-supported characters.
+3. Deploy only `telegram-webhook` from `main` to the existing project. Do not deploy the whole project or touch unrelated functions.
+4. After successful deployment and a signed verification, run `bash ops/register-telegram-webhook.sh` locally. It prompts for secrets without echoing them, registers the existing Supabase URL, keeps `drop_pending_updates=false`, and checks `getWebhookInfo`.
+5. Verify the reported webhook URL equals the Supabase function URL and that Telegram reports no last error. Then test `/start`, `/services`, `/areas`, and `/cv` from the existing bot account.
+6. Never point the bot to `/api/telegram/webhook`, Render, or a placeholder URL.
 
-This changes the bot's single active webhook URL. Run it only after the production Pages endpoint has been deployed and verified. Never use a placeholder or unverified URL.
+## Retired alternative
+The old Cloudflare Pages + D1 webhook was an unused competing path that collected care requests. It is now retired with HTTP 410. Its migration and registration helper are removed. Do not create `RAFIQ_DB`, do not apply `migrations/0001_telegram_d1.sql`, and do not run `ops/register-cloudflare-telegram-webhook.sh`.
 
-## Smoke test
-
-1. Open https://<pages-domain>/api/telegram/webhook; expect an ok JSON health response.
-2. Use a separate test bot token for Preview and send /start; verify welcome reply.
-3. Send /services; verify the four buttons.
-4. Send /request; select service, enter area and schedule. Verify the D1 row and admin notice.
-5. Verify the customer receipt says the request is pending review, not a confirmed booking.
-6. Verify /stop deletes an unfinished session.
-7. Verify a request without the secret returns 401 and an oversized request returns 413.
-
-## Deployment boundary
-
-GitHub commits do not deploy Pages unless the Pages project is configured to build this branch. This is source-only until D1, encrypted variables, Preview deployment, and webhook registration are complete. Existing Supabase functions and data remain untouched.
+## Current verification boundary
+PR #86 is merged to `main`. The Supabase connector rejected project reads in the current session, and the Telepath archive did not expose this bot or the invite-only channel. Therefore the deployed Edge Function version, bot token/secrets, actual webhook registration, and channel administrator permissions remain unverified. No live webhook was changed by this repository cleanup.

@@ -7,6 +7,7 @@ const legacyTelegram = readFileSync(resolve(import.meta.dir, "../../src/telegram
 const legacyKapso = readFileSync(resolve(import.meta.dir, "../../src/kapso.ts"), "utf8");
 const packageJson = readFileSync(resolve(import.meta.dir, "../../package.json"), "utf8");
 const metaWebhook = readFileSync(resolve(import.meta.dir, "../../supabase/functions/meta-whatsapp-webhook/index.ts"), "utf8");
+const legacyCloudflareWebhook = readFileSync(resolve(import.meta.dir, "../../functions/api/telegram/webhook.ts"), "utf8");
 
 const source = readFileSync(
   resolve(import.meta.dir, "../../supabase/functions/telegram-webhook/index.ts"),
@@ -40,6 +41,7 @@ test("Telegram bot exposes only approved medical-directory categories and no app
   expect(source).not.toContain('from("rafiq_telegram_request_sessions")');
   expect(source).not.toContain("telegram_request_start_failed");
   expect(source).toContain("لا تُنشر إلا بعد موافقة الإدارة");
+  expect(source).toContain('url: "https://t.me/+a7CDblNyGKw1Yjg8"');
 });
 
 test("CV and Cover Letter remains a separate Telegram entry, not a centre/provider application", () => {
@@ -48,6 +50,15 @@ test("CV and Cover Letter remains a separate Telegram entry, not a centre/provid
   expect(source).toContain("CV + Cover Letter");
   expect(source).toContain("لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع");
   expect(source).toContain("https://wa.me/96181506299");
+});
+
+test("legacy Cloudflare D1 Telegram webhook is retired and cannot collect requests", () => {
+  expect(legacyCloudflareWebhook).toContain("json = (status: number, body:");
+  expect(legacyCloudflareWebhook).toContain("telegram_cloudflare_d1_webhook_retired");
+  expect(legacyCloudflareWebhook).toContain("json(410,");
+  expect(legacyCloudflareWebhook).toContain("active_receiver");
+  expect(legacyCloudflareWebhook).not.toContain("telegram_request_sessions");
+  expect(legacyCloudflareWebhook).not.toContain("RAFIQ_DB");
 });
 
 test("AI option uses Cloudflare Workers AI, redacts phone numbers, and never enables Gemini/OpenAI", () => {

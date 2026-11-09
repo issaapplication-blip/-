@@ -84,6 +84,7 @@ const serviceKeyboard = {
     [{ text: "🦽 تأجير المعدات الطبية", callback_data: "dir:equipment_rent" }],
     [{ text: "📍 المناطق", callback_data: "dir:areas" }],
     [{ text: "📄 خدمة CV وCover Letter", callback_data: "cv:service" }],
+    [{ text: "📢 قناة RAFIQ على Telegram", url: "https://t.me/+a7CDblNyGKw1Yjg8" }],
   ],
 };
 function faq(text: string): string {

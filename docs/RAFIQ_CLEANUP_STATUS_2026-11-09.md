@@ -1,32 +1,41 @@
-# RAFIQ cleanup status — 2026-11-09
+# RAFIQ cleanup and Telegram status — 2026-11-09
 
-## Scope implemented on this branch
-- Reframed the public home page around the approved medical-centre directory: laboratories, imaging, physiotherapy, and medical-equipment sales/rental.
-- Removed non-CV application links from public navigation, regional pages, guides, services, FAQ, and the old web assistant page.
-- Removed the general public application page and its non-CV registration/confirmation helper files.
-- Retired the general public intake endpoints and legacy web-agent endpoints with HTTP 410 responses.
-- Restricted `public-application-intake` to `CV + Cover Letter` only.
-- Restricted the associated private upload endpoint to CV documents and payment proof only.
-- Refocused the protected admin intake screen so its review list, file list, rejected/completion queues, and accepted list show CV + Cover Letter only. Admin review records decisions without sending automatic WhatsApp or Telegram messages.
-- Preserved the CV service module `src/telegram-cv.ts`, its existing Telegram CV orders migration, and the existing CV pricing/payment workflow source.
-- Retired the Supabase Meta WhatsApp webhook source with HTTP 410. WhatsApp remains manual-only through the existing app, number, and channel.
-- Added hard-off responses to legacy candidate backend Meta/Kapso webhook/send routes and retired its general public intake proxy.
-- Updated environment and integration documentation to describe Telegram automation and manual WhatsApp.
+## Completed and merged
+- PR #86 merged into `main` as commit `036e12ce1d668f30c79ce2fabc240b81e348da23`.
+- Removed public non-CV care/provider/member/centre application flows and links.
+- Preserved the dedicated CV & Cover Letter page, payment workflow, `src/telegram-cv.ts`, and its existing order migration.
+- Restricted public intake/upload code to CV + Cover Letter and payment proof.
+- Restricted the protected admin intake screen to CV records; decision actions do not send automatic WhatsApp/Telegram messages.
+- Updated Supabase Telegram webhook source to medical directory categories/regions, with `/cv` separate and no care-request sessions.
+- Retired Meta/Kapso runtime routes and outbound WhatsApp API sending. WhatsApp remains manual-only.
+- Disabled legacy Telegram manager application/broadcast commands and scheduled/startup broadcasts.
+- Replaced old public member-barcode lookup with a safe notice while a new one-time discount-code verification flow is still to be designed.
+- PWA manifest, service worker, sitemap, and regression tests updated.
 
-## Existing public links retained
+## Telegram channel shortcut
+- PR #87 adds the official Telegram channel URL as a direct button in the bot's directory keyboard.
+- It does not post to the channel or change the bot's administrator permissions.
+- The current channel posting policy remains manual after admin approval.
+
+## Existing public links
 - Telegram bot: https://t.me/RAFIQ_Care_Bot
-- Telegram channel/group invite: https://t.me/+a7CDblNyGKw1Yjg8
+- Telegram channel: https://t.me/+a7CDblNyGKw1Yjg8
 - WhatsApp channel: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K
 - WhatsApp contact: https://wa.me/96181506299
 
-## Important remaining verification
-- The Supabase `telegram-webhook` source on this branch is now directory-only: `/services` and `/areas` show the approved medical-centre categories and regions; `/request`, `/apply`, `/register`, and `/stop` no longer create request sessions.
-- The bot retains a separate `/cv` and CV menu entry that directs users to the preserved CV/cover-letter service and manual admin contact. The full legacy CV module and order migration remain in the repository.
-- The bot replies with the existing Telegram channel invite, but it does not process `channel_post` updates or publish to channels automatically. Channel and WhatsApp-channel publishing remain manual.
-- The live Telegram webhook registration, bot token, channel permissions, and live posting have not been inspected or changed. The source change is not live until separately approved and deployed.
-- No Meta account was accessed. No WhatsApp/Meta/Kapso request or message was sent.
-- No Supabase tables, rows, storage objects, or migrations were changed or applied.
-- No deployment, Render restart, Vercel deployment, or merge to `main` was performed.
+## Outstanding production connection
+The Supabase MCP connector rejected read access to project `qmuxaehrahfsnabyjens` with a permission error. Therefore the following were not verified or changed:
+- Live Edge Function version and `verify_jwt` gateway setting.
+- Existing `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` presence.
+- Actual Telegram webhook URL and `getWebhookInfo`.
+- Actual bot administrator status and channel permissions.
 
-## Safety
-This branch is source-only. Do not deploy or merge until the Telegram directory flow and preserved CV/cover-letter flow are both tested in an isolated environment and approved.
+No Supabase deployment, secret mutation, table/row/storage change, migration, or webhook update was performed. No Meta account was accessed and no real Telegram message or channel post was sent.
+
+## Required safe sequence once Supabase access is restored
+1. Read the current function and its runtime configuration.
+2. Confirm the existing database contains `telegram_update_receipts`, `claim_telegram_update`, and `consume_telegram_rate_limit`; do not add migrations unless a missing dependency is proven and a separate database-change approval is obtained.
+3. Confirm the existing secrets are present without revealing their values.
+4. Deploy only `telegram-webhook` to the existing project, with Telegram-compatible function auth settings.
+5. Register the single Telegram webhook using `ops/register-telegram-webhook.sh`, keep pending updates, and verify the returned URL.
+6. Manually open the bot, test `/start`, `/services`, `/areas`, and `/cv`, and verify the channel shortcut opens the official channel.
