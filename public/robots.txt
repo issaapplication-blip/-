@@ -3,10 +3,9 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /admin.html
-Disallow: /dashboard.html
+Disallow: /admin
 Disallow: /review.html
 Disallow: /barcode.html
-Disallow: /admin.js
 Disallow: /intake-admin.js
 Disallow: /_headers
 Disallow: /migrations/
