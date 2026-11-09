@@ -12,7 +12,7 @@ var ASSETS = [
   "/index.html",
   "/offline.html",
   "/barcode.html",
-  "/app.html",
+  
   "/faq.html",
   "/services.html",
   "/caregivers.html",
