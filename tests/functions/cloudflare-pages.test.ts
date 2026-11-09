@@ -71,7 +71,9 @@ test("public RAFIQ pages keep Telegram and WhatsApp channels outside the platfor
   const cv = read("public/caregivers.html");
   const announcements = read("public/announcements.html");
   for (const page of [home, services, cv, announcements]) {
-    expect(page).not.toMatch(/t\\.me\\/|wa\\.me\\/|whatsapp\\.com/i);
+    expect(page).not.toContain("t.me/");
+    expect(page).not.toContain("wa.me/");
+    expect(page).not.toContain("whatsapp.com");
   }
   expect(home).toContain("/announcements.html");
   expect(announcements).toContain("لا توجد إعلانات معتمدة منشورة حاليًا");
