@@ -70,10 +70,10 @@ test("Meta and Kapso WhatsApp automation are retired without outbound API capabi
   expect(legacyIndex).not.toContain("api.kapso.ai");
   expect(legacyIndex).toContain("whatsapp_automation_retired");
   expect(legacyKapso).toContain("kapsoConfigured = () => false");
-  expect(legacyKapso).toContain("kapso_integration_retired");
+  expect(legacyKapso).toContain("whatsapp_automation_retired");
   expect(packageJson).not.toContain("@kapso/whatsapp-cloud-api");
   expect(metaWebhook).toContain("status:410");
-  expect(metaWebhook).toContain("Meta WhatsApp webhook is retired");
+  expect(metaWebhook).toContain("WhatsApp automation is retired");
 });
 
 test("legacy Render process cannot re-register the Telegram webhook unless explicitly opted in", () => {
