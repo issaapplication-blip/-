@@ -3,33 +3,25 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const read = (path: string) => readFileSync(resolve(import.meta.dir, "../../" + path), "utf8");
-const proxy = read("functions/_lib/public-intake.ts");
 const webAgent = read("functions/api/agent/chat.ts");
 const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
 const adminHtml = read("public/admin.html");
 const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
 
-test("Pages intake proxy uses only the legacy anon key and existing Supabase function", () => {
-  expect(proxy).toContain("SUPABASE_ANON_KEY");
-  expect(proxy).toContain("/functions/v1/public-intake");
-  expect(proxy).toContain("18 * 1024 * 1024");
-  expect(proxy).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
+test("legacy web intake assistant is retired", () => {
+  expect(webAgent).toContain("status:410");
+  expect(webAgent).toContain("Legacy web intake assistant is retired");
+  expect(webAgent).not.toContain("function redactPhones");
 });
 
-test("web chat redacts phone numbers, avoids AI for emergencies and prices, and has offline fallback", () => {
-  expect(webAgent).toContain("function redactPhones");
-  expect(webAgent).toContain("@cf/meta/llama-3.1-8b-instruct");
-  expect(webAgent).toContain("guided-fallback");
-  expect(webAgent).toContain("if (!env.AI || urgent");
-  expect(webAgent).not.toContain("api.openai.com");
-  expect(webAgent).not.toContain("generativelanguage.googleapis.com");
-});
 
 test("Cloudflare build requires an HTTPS Pages origin and excludes the legacy auto-reply poller", () => {
   expect(build).toContain("RAFIQ_PUBLIC_BASE_URL");
   expect(build).toContain('rm -f "$OUT_DIR/auto-reply.mjs"');
   expect(build).toContain("Suspended Render URL remains");
+  expect(build).toContain('test -f "$OUT_DIR/caregivers.html"');
+  expect(build).not.toContain('test -f "$OUT_DIR/app.html"');
   expect(build).toContain('include":["/api/*"]');
 });
 
