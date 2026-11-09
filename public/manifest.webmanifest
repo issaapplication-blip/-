@@ -69,7 +69,7 @@
     {
       "name": "طلب رعاية أو انتساب",
       "short_name": "طلب/انتساب",
-      "url": "/app.html",
+      "url": 
       "icons": [
         {
           "src": "/assets/rafig-logo.png?v=20261005-logo",
