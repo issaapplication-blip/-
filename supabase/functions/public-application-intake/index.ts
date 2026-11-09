@@ -7,7 +7,7 @@ const cors=(req:Request)=>{
  const origin=req.headers.get("Origin")||"";
  return {...(allowedOrigins.has(origin)?{"Access-Control-Allow-Origin":origin}:{}),"Access-Control-Allow-Headers":"authorization, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
 };
-const types=new Set(["طلب رعاية عائلية","انتساب مقدم رعاية","انتساب ممرض/ة","انتساب معالج فيزيائي","CV + Cover Letter","انتساب عام"]);
+const types=new Set(["CV + Cover Letter"]);
 const hex=(b:Uint8Array)=>Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");
 async function hash(v:string){return hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v))))}
 Deno.serve(async req=>{
