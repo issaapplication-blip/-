@@ -2,12 +2,13 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 const sb=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const configuredSiteOrigin=(Deno.env.get("RAFIQ_PUBLIC_SITE_URL")||"").trim().replace(/\/+$/,"");
-const allowedOrigins=new Set(["https://issaapplication-blip.github.io",configuredSiteOrigin].filter(Boolean));
+const allowedOrigins=new Set(["https://issaapplication-blip.github.io","https://index-html.issaapplication.workers.dev",configuredSiteOrigin].filter(Boolean));
 const cors=(req:Request)=>{
  const origin=req.headers.get("Origin")||"";
  return {...(allowedOrigins.has(origin)?{"Access-Control-Allow-Origin":origin}:{}),"Access-Control-Allow-Headers":"authorization, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
 };
 const types=new Set(["CV + Cover Letter"]);
+const SERVICE_PRICES:Record<string,number>={cv:25,cover_letter:10,bundle:35};
 const hex=(b:Uint8Array)=>Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");
 async function hash(v:string){return hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v))))}
 Deno.serve(async req=>{
@@ -21,11 +22,23 @@ Deno.serve(async req=>{
   if(JSON.stringify(payload).length>30000)throw new Error("payload_too_large");
   if(application_type==="CV + Cover Letter"){
    if(String(payload.payment_method||"")!=="Whish Money")throw new Error("cv_payment_must_use_whish_money");
-   if(!String(payload.payment_reference||"").trim())throw new Error("cv_payment_reference_required");
+   const reference=String(payload.payment_reference||"").trim();
+   if(!reference||reference.length>120)throw new Error("cv_payment_reference_required");
+   const servicePackage=String(payload.service_package||"");
+   if(!(servicePackage in SERVICE_PRICES))throw new Error("invalid_cv_service_package");
+   const extraLanguages=Number(payload.extra_languages||0);
+   if(!Number.isInteger(extraLanguages)||extraLanguages<0||extraLanguages>3)throw new Error("invalid_extra_language_count");
+   payload.service_package=servicePackage;
+   payload.extra_languages=extraLanguages;
+   payload.total_amount=SERVICE_PRICES[servicePackage]+(extraLanguages*20);
+   payload.currency="USD";
+   payload.payment_reference=reference;
    payload.payment_status="pending_verification"; payload.payment_required=true;
   }
-  const applicant_name=String(payload.name||[payload.first,payload.last].filter(Boolean).join(" ")||"").slice(0,200);
-  const phone=String(payload.phone||"").slice(0,50); const area=String(payload.area||payload.preferred_location||payload.care_location||"").slice(0,200);
+  const applicant_name=String(payload.name||[payload.first,payload.last].filter(Boolean).join(" ")||"").trim().slice(0,200);
+  const phone=String(payload.phone||"").trim().slice(0,50);
+  if(!applicant_name||!phone)throw new Error("cv_name_and_phone_required");
+  const area=String(payload.area||payload.preferred_location||payload.care_location||"").slice(0,200);
   const token=crypto.randomUUID()+"-"+crypto.randomUUID(); const tokenHash=await hash(token); const expires=new Date(Date.now()+7200000).toISOString();
   const {data,error}=await sb.from("application_intakes").insert({application_type,applicant_name,phone,area,payload,source:"platform",upload_token_hash:tokenHash,upload_token_expires_at:expires}).select("id,application_number,application_type,status,created_at").single();
   if(error)throw error;
