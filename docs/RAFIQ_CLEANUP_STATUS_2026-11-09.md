@@ -7,6 +7,7 @@
 - Retired the general public intake endpoints and legacy web-agent endpoints with HTTP 410 responses.
 - Restricted `public-application-intake` to `CV + Cover Letter` only.
 - Restricted the associated private upload endpoint to CV documents and payment proof only.
+- Refocused the protected admin intake screen so its review list, file list, rejected/completion queues, and accepted list show CV + Cover Letter only. Admin review records decisions without sending automatic WhatsApp or Telegram messages.
 - Preserved the CV service module `src/telegram-cv.ts`, its existing Telegram CV orders migration, and the existing CV pricing/payment workflow source.
 - Retired the Supabase Meta WhatsApp webhook source with HTTP 410. WhatsApp remains manual-only through the existing app, number, and channel.
 - Added hard-off responses to legacy candidate backend Meta/Kapso webhook/send routes and retired its general public intake proxy.
