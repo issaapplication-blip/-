@@ -15,6 +15,9 @@ var ASSETS = [
   
   "/faq.html",
   "/services.html",
+  "/laboratories.html",
+  "/radiology.html",
+  "/medical-equipment.html",
   "/caregivers.html",
   "/regions.html",
   "/guide.html",
