@@ -480,12 +480,15 @@ const registerTelegramWebhookOnStartup = async () => {
 };
 const requireSupabaseAdmin = async (request:Request) => {
   const token=bearerToken(request);
-  if(!token)return null;
+  if(!token||!SUPABASE_PUBLISHABLE_KEY)return null;
   const me=await supabaseRest("/auth/v1/user",token,{headers:{apikey:SUPABASE_PUBLISHABLE_KEY}});
   if(!me.response.ok||!me.body?.id)return null;
-  const prof=await supabaseRest("/rest/v1/profiles?id=eq."+encodeURIComponent(me.body.id)+"&select=id,role,status&limit=1",token);
+  const [prof,adminCheck]=await Promise.all([
+    supabaseRest("/rest/v1/profiles?id=eq."+encodeURIComponent(me.body.id)+"&select=id,role,status&limit=1",token),
+    supabaseRest("/rest/v1/rpc/is_admin",token,{method:"POST",body:"{}"})
+  ]);
   const profile=Array.isArray(prof.body)?prof.body[0]:null;
-  if(!prof.response.ok||profile?.role!=="admin"||profile?.status!=="active")return null;
+  if(!prof.response.ok||!adminCheck.response.ok||adminCheck.body!==true||profile?.role!=="admin"||profile?.status!=="active")return null;
   return {token,userId:me.body.id};
 };
 
