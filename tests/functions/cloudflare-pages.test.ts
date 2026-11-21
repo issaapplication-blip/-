@@ -34,12 +34,15 @@ test("legacy web intake assistant is retired", () => {
 });
 
 
-test("Cloudflare build requires an HTTPS Pages origin and excludes the legacy auto-reply poller", () => {
+test("Cloudflare build publishes an allowlisted directory-only site bundle", () => {
   expect(build).toContain("RAFIQ_PUBLIC_BASE_URL");
-  expect(build).toContain('rm -f "$OUT_DIR/auto-reply.mjs"');
-  expect(build).toContain("Suspended Render URL remains");
-  expect(build).toContain('test -f "$OUT_DIR/caregivers.html"');
-  expect(build).not.toContain('test -f "$OUT_DIR/app.html"');
+  expect(build).toContain("FILES=(");
+  expect(build).toContain("announcements.html");
+  expect(build).toContain("rafiq.invalid");
+  expect(build).toContain("onrender.com");
+  expect(build).toContain('for retired in agent.html dashboard.html barcode.html install.html app.js install-pwa.js manifest.json i18n.js');
+  expect(build).toContain('test -f "$OUT_DIR/announcements.html"');
+  expect(build).not.toContain('cp -R "$PUBLIC_DIR/."');
   expect(build).toContain('include":["/api/*"]');
 });
 
@@ -49,15 +52,31 @@ test("legacy-host validation scans only the built bundle, not source templates",
 });
 
 test("retired public application pages are absent while CV remains in the PWA", () => {
-  for (const path of ["public/app.html", "public/member.html", "public/caregiver-registration.html", "public/nurses.html", "public/families.html", "public/physiotherapists.html"]) {
+  for (const path of ["public/app.html", "public/member.html", "public/caregiver-registration.html", "public/nurses.html", "public/families.html", "public/physiotherapists.html", "public/agent.html", "public/dashboard.html", "public/barcode.html", "public/install.html", "public/app.js", "public/install-pwa.js", "public/manifest.json", "public/i18n.js", "public/js/rafiq-agent.js", "public/js/rafiq-kb.js", "public/js/rafiq-welcome.js"]) {
     expect(existsSync(resolve(import.meta.dir, "../../" + path))).toBe(false);
   }
   expect(existsSync(resolve(import.meta.dir, "../../public/caregivers.html"))).toBe(true);
-  expect(manifest.shortcuts.some((x: any) => x.url === "/caregivers.html#cv-service")).toBe(true);
+  expect(existsSync(resolve(import.meta.dir, "../../public/announcements.html"))).toBe(true);
+  expect(manifest.shortcuts.some((x: any) => x.url === "./caregivers.html#cv-service")).toBe(true);
   expect(manifest.shortcuts.some((x: any) => String(x.url).includes("app.html"))).toBe(false);
-  expect(sitemap).not.toContain("nurses.html");
-  expect(sitemap).not.toContain("families.html");
-  expect(sitemap).not.toContain("physiotherapists.html");
+  expect(sitemap).toContain("/announcements.html");
+  for (const old of ["elderly-care.html", "patient-care.html", "home-nursing.html", "guide.html", "tripoli.html", "beirut.html"]) expect(sitemap).not.toContain(old);
+});
+
+
+test("public directory pages contain no external messaging shortcuts", () => {
+  for (const path of ["public/index.html","public/announcements.html","public/services.html","public/regions.html","public/faq.html","public/caregivers.html","public/laboratories.html","public/radiology.html","public/physiotherapy.html","public/medical-equipment.html"]) {
+    const html=read(path);
+    expect(html).not.toContain("t.me/");
+    expect(html).not.toContain("wa.me/");
+    expect(html).not.toContain("whatsapp.com");
+  }
+});
+
+test("public CV page inline script parses without executing", () => {
+  const html=read("public/caregivers.html");
+  const scripts=html.split("<script").slice(1).map(block=>{const tagEnd=block.indexOf(">");const endTag=block.indexOf("</script>",tagEnd+1);if(tagEnd<0||endTag<0||block.slice(0,tagEnd).includes("src="))return "";return block.slice(tagEnd+1,endTag);}).filter(Boolean);
+  for(const script of scripts)expect(()=>new Function(script)).not.toThrow();
 });
 
 test("obsolete provider-intake admin script is removed", () => {
