@@ -79,6 +79,50 @@ test("public CV page inline script parses without executing", () => {
   for(const script of scripts)expect(()=>new Function(script)).not.toThrow();
 });
 
+test("legacy RAFIQ service and location URLs redirect to the current directory", () => {
+  const targets: Record<string,string> = {
+    "elderly-care.html":"services.html",
+    "patient-care.html":"services.html",
+    "home-nursing.html":"services.html",
+    "lebanon.html":"regions.html",
+    "tripoli.html":"regions.html",
+    "dinniyeh.html":"regions.html",
+    "zgharta.html":"regions.html",
+    "koura.html":"regions.html",
+    "batroun.html":"regions.html",
+    "beirut.html":"regions.html",
+    "guide.html":"faq.html",
+    "guide-after-hospital.html":"faq.html",
+    "guide-caregiver-vs-nurse.html":"faq.html",
+    "guide-choose-caregiver.html":"faq.html",
+    "guide-elderly-home.html":"faq.html"
+  };
+  for(const [path,target] of Object.entries(targets)){
+    const html=read("public/"+path);
+    expect(html).toContain('noindex,follow');
+    expect(html).toContain('location.replace("./'+target+'")');
+  }
+});
+
+test("retired agent, dashboard, barcode and install surfaces return HTTP 410", () => {
+  const source=read("src/index.ts");
+  for(const path of ["agent.html","dashboard.html","barcode.html","install.html"]){
+    expect(source).toContain('.get("/'+path+'"');
+  }
+  expect(source).toContain('status:410');
+  expect(source).not.toContain('fileResponse("public/agent.html"');
+  expect(source).not.toContain('fileResponse("public/dashboard.html"');
+  expect(source).not.toContain('fileResponse("public/barcode.html"');
+});
+
+test("directory PWA cache no longer preloads retired agent or care application pages", () => {
+  const sw=read("public/sw.js");
+  for(const old of ["/js/rafiq-agent.js","/js/rafiq-kb.js","/barcode.html","/agent.html","/dashboard.html","/elderly-care.html","/patient-care.html","/home-nursing.html"]) expect(sw).not.toContain(old);
+  expect(sw).toContain("announcements.html");
+  expect(sw).toContain("caregivers.html");
+});
+
+
 test("obsolete provider-intake admin script is removed", () => {
   expect(existsSync(resolve(import.meta.dir, "../../public/admin.js"))).toBe(false);
   expect(read("src/index.ts")).not.toContain('fileResponse("public/admin.js"');
