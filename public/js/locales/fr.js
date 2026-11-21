@@ -451,6 +451,16 @@
     "rafiq.cv.desc": "Des outils professionnels compatibles ATS, fondés sur les informations fournies, sans inventer d’expérience ni de qualification.",
     "rafiq.about.title": "RAFIQ… rapprocher les services utiles des familles",
     "rafiq.about.desc": "RAFIQ est une plateforme d’information sur les soins à domicile et les services de santé complémentaires au Liban. Nous organisons les informations sur les prestataires partenaires et leurs zones de couverture afin d’aider les familles à identifier clairement les options disponibles. Nous ne posons pas de diagnostic et ne recevons pas de demandes de soins ou d’adhésion sur ce site.",
+    "rafiq.hero.titleStart": "Des soins plus proches,",
+    "rafiq.hero.titleEm": "des informations fiables",
+    "rafiq.hero.titleEnd": "pour les familles.",
+    "rafiq.service.explore": "Voir cette catégorie →",
+    "rafiq.ads.telegram": "Canal Telegram officiel",
+    "rafiq.cv.cta": "Service CV et lettre de motivation →",
+    "rafiq.footer.description": "Des soins à domicile sûrs pour les personnes âgées et les patients au Liban. Un annuaire informatif pour aider les familles à trouver des prestataires de santé et des services partenaires.",
+    "rafiq.footer.quick": "Liens rapides",
+    "rafiq.footer.contact": "Canaux de contact officiels",
+    "rafiq.footer.copyright": "© RAFIQ | Rafiq — Tous droits réservés · Ces informations ne constituent pas un diagnostic médical.",
   };
 
   RAFIQ_I18N.register('fr', dict);
