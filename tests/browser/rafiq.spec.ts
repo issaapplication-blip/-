@@ -30,6 +30,8 @@ test('official communication links remain available',async({page})=>{
  await page.goto(BASE+'/');
  const hrefs=await page.locator('a').evaluateAll(as=>as.map(a=>(a as HTMLAnchorElement).href));
  expect(hrefs.some(x=>x.includes('t.me/RAFIQ_Care_Bot'))).toBeTruthy();
- expect(hrefs.some(x=>x.includes('t.me/+a7CDblNyGKw1Yjg8'))).toBeTruthy();
+ expect(hrefs.some(x=>x.includes('t.me/+a7CDblNyGkw1Yjg8'))).toBeTruthy();
  expect(hrefs.some(x=>x.includes('whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K'))).toBeTruthy();
+ expect(hrefs.some(x=>x.includes('https://chat.whatsapp.com/GYzi4ZfJSx0KAUIPIycp1Z'))).toBeTruthy();
+ expect(hrefs.some(x=>x.includes('https://chat.whatsapp.com/EG1B0hPBtTt5rGVEGqv6Kc'))).toBeTruthy();
 });
