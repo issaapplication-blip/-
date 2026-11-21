@@ -43,7 +43,7 @@ async function load(){
  const [a,p,d,c,ap,cg,nr,ph]=await Promise.all([
   sb.from('applications').select('*').order('created_at',{ascending:false}),
   sb.from('profiles').select('id,first_name,last_name,phone,email,address,role,status,created_at').order('created_at',{ascending:false}),
-  optional(sb.from('documents').select('*').order('created_at',{ascending:false),'documents'),
+  optional(sb.from('documents').select('*').order('created_at',{ascending:false}),'documents'),
   sb.from('care_requests').select('*').order('created_at',{ascending:false}),
   optional(sb.from('application_approvals').select('*'),'application_approvals'),
   optional(sb.from('caregivers').select('*'),'caregivers'),
