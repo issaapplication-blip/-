@@ -70,3 +70,18 @@ test("admin dashboard requires database authorization and an active admin profil
   expect(adminHtml).toContain("db.from('profiles').select('id,email,role,status')");
   expect(adminHtml).toContain("profile?.role!=='admin'||profile?.status!=='active'");
 });
+
+test("admin dashboard inline JavaScript parses without executing", () => {
+  const scripts = [...adminHtml.matchAll(/<script\\b(?![^>]*\\bsrc=)[^>]*>([\\s\\S]*?)<\\/script>/gi)].map(match => match[1]).filter(Boolean);
+  expect(scripts.length).toBeGreaterThan(0);
+  for (const script of scripts) expect(() => new Function(script)).not.toThrow();
+});
+
+test("admin dashboard has no retired provider or institution intake controls", () => {
+  expect(adminHtml).not.toContain("institution_intakes");
+  expect(adminHtml).not.toContain("institution_intake_files");
+  expect(adminHtml).not.toContain("طلبات الانتساب");
+  expect(adminHtml).not.toContain("طلبات الرعاية");
+  expect(adminHtml).toContain("directorySection");
+  expect(adminHtml).toContain("CV وCover Letter");
+});
