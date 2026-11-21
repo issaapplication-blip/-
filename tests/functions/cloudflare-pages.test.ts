@@ -72,7 +72,7 @@ test("admin dashboard requires database authorization and an active admin profil
 });
 
 test("admin dashboard inline JavaScript parses without executing", () => {
-  const scripts = [...adminHtml.matchAll(/<script\\b(?![^>]*\\bsrc=)[^>]*>([\\s\\S]*?)<\\/script>/gi)].map(match => match[1]).filter(Boolean);
+  const scripts = [...adminHtml.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(match => match[1]).filter(Boolean);
   expect(scripts.length).toBeGreaterThan(0);
   for (const script of scripts) expect(() => new Function(script)).not.toThrow();
 });
