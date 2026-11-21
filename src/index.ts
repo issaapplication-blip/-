@@ -294,8 +294,23 @@ const supabaseRest=async(path:string,token:string,init:RequestInit={})=>{
 };
 const requireAdminToken=(request:Request)=>Boolean(process.env.RAFIQ_ADMIN_ACTION_TOKEN&&request.headers.get("x-rafig-admin-token")===process.env.RAFIQ_ADMIN_ACTION_TOKEN);
 const sendWhatsAppText=async(_to:string,_body:string)=>{throw new Error("whatsapp_automation_retired")};
-const PUBLIC_I18N_EXCLUDED = new Set(["public/admin.html","public/dashboard.html","public/barcode.html"]); const RAFIQ_LOGO_STYLE='<style id="rafig-logo-quality">.brand img,.brand-mini img,.hero-logo,.logo,.brand-logo{background:#fff!important;object-fit:contain!important;image-rendering:auto!important;filter:none!important}.brand img,.brand-mini img,.logo,.brand-logo{border-radius:14px!important;padding:6px!important;box-sizing:border-box!important}.hero-logo{display:block;background:#fff!important;border-radius:18px!important;padding:10px!important;box-shadow:0 5px 18px rgba(0,0,0,.08)!important}</style>'; const FILE_CACHE_MAX_BYTES=16*1024*1024; const fileCache=new Map<string,{body:Uint8Array,type:string}>(); let fileCacheBytes=0;
-const fileResponse=async(path:string,type:string,cache="no-store")=>{const cached=fileCache.get(path+"|"+type);if(cached)return new Response(cached.body,{status:200,headers:{"Content-Type":type,"Content-Length":String(cached.body.byteLength),"Cache-Control":cache}});const file=Bun.file(path);if(!(await file.exists()))return new Response("Not Found",{status:404,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});let body:any=await file.arrayBuffer();if(type.startsWith("text/html")&&!PUBLIC_I18N_EXCLUDED.has(path)){let html=new TextDecoder().decode(body);if(type.startsWith("text/html")&&!html.includes("id=\"rafig-logo-quality\"")){html=html.includes("</head>")?html.replace("</head>",RAFIQ_LOGO_STYLE+"</head>"):RAFIQ_LOGO_STYLE+html;}if(!html.includes("/css/device.css")){const marker="</head>";const tag='<link rel="stylesheet" href="/css/device.css?v=72">';html=html.includes(marker)?html.replace(marker,tag+marker):tag+html;}if(!html.includes("/i18n.js")){const marker="</body>";const tag='<script src="/i18n.js?v=3" defer></script>';html=html.includes(marker)?html.replace(marker,tag+marker):html+tag;}body=html;}const bytes=typeof body==="string"?new TextEncoder().encode(body):new Uint8Array(body);if(bytes.byteLength<=FILE_CACHE_MAX_BYTES){const key=path+"|"+type;while(fileCacheBytes+bytes.byteLength>FILE_CACHE_MAX_BYTES&&fileCache.size){const first=fileCache.keys().next().value;if(first){const oldEntry=fileCache.get(first);fileCache.delete(first);fileCacheBytes-=oldEntry?.body.byteLength||0}else break}const stored=new Uint8Array(bytes);fileCache.set(key,{body:stored,type});fileCacheBytes+=stored.byteLength;}return new Response(bytes,{status:200,headers:{"Content-Type":type,"Content-Length":String(bytes.byteLength),"Cache-Control":cache}})};
+const LEGACY_PUBLIC_ORIGIN="https://rafiq-o6qd.onrender.com";
+const PUBLIC_ORIGIN_PLACEHOLDER="https://rafiq.invalid";
+const configuredPublicOrigin=()=>String(process.env.PUBLIC_BASE_URL||RAFIQ_WEBSITE||"").trim().replace(/\/$/,"");
+const rewriteLegacyPublicOrigin=(content:string,path:string)=>{
+  const base=configuredPublicOrigin();
+  const origins=[LEGACY_PUBLIC_ORIGIN,PUBLIC_ORIGIN_PLACEHOLDER];
+  if(base)return origins.reduce((value,origin)=>value.split(origin).join(base),content);
+  if(path==="public/sitemap.xml")return "";
+  return content
+    .replace(/<link\b(?=[^>]*\brel=["']canonical["'])(?=[^>]*\bhref=["']https:\/\/(?:rafiq-o6qd\.onrender\.com|rafiq\.invalid)[^"']*["'])[^>]*>\s*/gi,"")
+    .replace(/<meta\b(?=[^>]*\bproperty=["']og:url["'])(?=[^>]*\bcontent=["']https:\/\/(?:rafiq-o6qd\.onrender\.com|rafiq\.invalid)[^"']*["'])[^>]*>\s*/gi,"")
+    .replace(/,?\s*"(?:url|logo)"\s*:\s*"https:\/\/(?:rafiq-o6qd\.onrender\.com|rafiq\.invalid)[^"]*"/gi,"")
+    .split(LEGACY_PUBLIC_ORIGIN).join("")
+    .split(PUBLIC_ORIGIN_PLACEHOLDER).join("");
+};
+const RAFIQ_LOGO_STYLE='<style id="rafig-logo-quality">.brand img,.brand-mini img,.hero-logo,.logo,.brand-logo{background:#fff!important;object-fit:contain!important;image-rendering:auto!important;filter:none!important}.brand img,.brand-mini img,.logo,.brand-logo{border-radius:14px!important;padding:6px!important;box-sizing:border-box!important}.hero-logo{display:block;background:#fff!important;border-radius:18px!important;padding:10px!important;box-shadow:0 5px 18px rgba(0,0,0,.08)!important}</style>'; const FILE_CACHE_MAX_BYTES=16*1024*1024; const fileCache=new Map<string,{body:Uint8Array,type:string}>(); let fileCacheBytes=0;
+const fileResponse=async(path:string,type:string,cache="no-store")=>{const cached=fileCache.get(path+"|"+type);if(cached)return new Response(cached.body,{status:200,headers:{"Content-Type":type,"Content-Length":String(cached.body.byteLength),"Cache-Control":cache}});const file=Bun.file(path);if(!(await file.exists()))return new Response("Not Found",{status:404,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});let body:any=await file.arrayBuffer();if(type.startsWith("text/")||type.includes("javascript")||type.includes("json")||type.includes("xml")){let text=new TextDecoder().decode(body);if(text.includes(LEGACY_PUBLIC_ORIGIN)||text.includes(PUBLIC_ORIGIN_PLACEHOLDER)){if(path==="public/sitemap.xml"&&!configuredPublicOrigin())return new Response("Sitemap unavailable until RAFIQ_PUBLIC_BASE_URL is configured",{status:503,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});text=rewriteLegacyPublicOrigin(text,path);}body=text;}if(type.startsWith("text/html")){let html=typeof body==="string"?body:new TextDecoder().decode(body);if(!html.includes("id=\"rafig-logo-quality\"")){html=html.includes("</head>")?html.replace("</head>",RAFIQ_LOGO_STYLE+"</head>"):RAFIQ_LOGO_STYLE+html;}body=html;}const bytes=typeof body==="string"?new TextEncoder().encode(body):new Uint8Array(body);if(bytes.byteLength<=FILE_CACHE_MAX_BYTES){const key=path+"|"+type;while(fileCacheBytes+bytes.byteLength>FILE_CACHE_MAX_BYTES&&fileCache.size){const first=fileCache.keys().next().value;if(first){const oldEntry=fileCache.get(first);fileCache.delete(first);fileCacheBytes-=oldEntry?.body.byteLength||0}else break}const stored=new Uint8Array(bytes);fileCache.set(key,{body:stored,type});fileCacheBytes+=stored.byteLength;}return new Response(bytes,{status:200,headers:{"Content-Type":type,"Content-Length":String(bytes.byteLength),"Cache-Control":cache}})};
 const broadcastTelegramAnnouncement = async (announcementKey: string, body: string, cutoffIso?: string) => {
   if (!telegramConfigured()) throw new Error("Telegram bot is not configured");
   const cutoff = cutoffIso ? `&created_at=lt.${encodeURIComponent(cutoffIso)}` : "";
@@ -580,7 +595,8 @@ const telegramAdminApprove=async(ref:string)=>{
   if(!barcode.response.ok)throw new Error("تعذر إصدار الباركود");
   await supabaseServerRest("/rest/v1/application_intakes?id=eq."+encodeURIComponent(intake.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",admin_decision_notes:"تم القبول وإصدار الرقم والباركود من إدارة RAFIQ",updated_at:new Date().toISOString()})});
   if(p.application?.id)await supabaseServerRest("/rest/v1/applications?id=eq."+encodeURIComponent(p.application.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({status:"approved",updated_at:new Date().toISOString()})});
-  const link=(process.env.PUBLIC_BASE_URL??"https://rafiq-o6qd.onrender.com").replace(/\/$/,"")+"/barcode.html?code="+encodeURIComponent(code);
+  const publicBase=(process.env.PUBLIC_BASE_URL||RAFIQ_WEBSITE||"").trim().replace(/\/$/,"");
+  const link=(publicBase?publicBase:"")+"/barcode.html?code="+encodeURIComponent(code);
   const applicantUsername=String(p.profile?.telegram_username??payload.telegram_username??"").replace(/^@/,"").trim();
   if(applicantUsername){
     const ir=await supabaseServerRest("/rest/v1/rafiq_telegram_identities?username=ilike."+encodeURIComponent(applicantUsername)+"&select=chat_id&order=last_seen_at.desc&limit=1");
@@ -597,82 +613,10 @@ const telegramAdminReject=async(ref:string,note:string)=>{
   return intake;
 };
 const telegramAdminMenu=()=>["🔐 <b>لوحة مدير RAFIQ عبر Telegram</b>","","📂 /pending — قيد المراجعة","🤝 /caregivers — مقدمو الرعاية","👩‍⚕️ /nurses — الممرضون/الممرضات","🧑‍🦽 /physios — المعالجون الفيزيائيون","❌ /rejected — المرفوضون","✅ /approved — المقبولون","🔎 /candidate 108 — ملف متقدم","✔️ /approve 108 — قبول وإصدار الرقم والباركود","✖️ /reject 108 السبب — رفض الطلب","🗂️ /cases — حالات الرعاية المفتوحة","📊 /compare <رقم الحالة> — مقارنة المرشحين","ℹ️ /help — المساعدة"].join("\n");
-const telegramAdminCommand=async(message:any)=>{
-  if(!telegramAdminAllowed(message))return null;
-  const chatId=message.chat.id;
-  const textBody=typeof message?.text==="string"?message.text.trim():"";
-  const parts=textBody.split(/\s+/);
-  const cmd=String(parts[0]??"").toLowerCase();
-  if(!["/admin","/pending","/caregivers","/nurses","/physios","/rejected","/approved","/candidate","/approve","/reject","/cases","/compare","/help"].includes(cmd))return null;
-  if(cmd==="/admin"||cmd==="/help")return telegramSendText(chatId,telegramAdminSigned(telegramAdminMenu()));
-  if(cmd==="/candidate"){
-    const intake=await telegramAdminIntake(parts[1]??""); if(!intake)return telegramSendText(chatId,telegramAdminSigned("❌ لم أجد هذا الطلب."));
-    return telegramSendText(chatId,telegramAdminSigned(await telegramAdminFormatIntake(intake)));
-  }
-  if(cmd==="/pending"||cmd==="/caregivers"||cmd==="/nurses"||cmd==="/physios"||cmd==="/rejected"||cmd==="/approved"){
-    const type=cmd==="/caregivers"?"caregiver":cmd==="/nurses"?"nurse":cmd==="/physios"?"physiotherapist":undefined;
-    const statuses=cmd==="/rejected"?["rejected"]:cmd==="/approved"?["approved"]:["pending","review"];
-    const rows=await telegramAdminList(statuses,type);
-    if(!rows.length)return telegramSendText(chatId,telegramAdminSigned("لا توجد ملفات ضمن هذا القسم."));
-    const body=rows.map((x:any)=>"• #"+x.application_number+" — "+(x.applicant_name||"—")+" — "+telegramTypeLabel(telegramMemberType(x.application_type)||x.application_type)+" — "+x.status+"\n  /candidate "+x.application_number).join("\n");
-    return telegramSendText(chatId,telegramAdminSigned(body));
-  }
-  if(cmd==="/approve"){
-    try{
-    await supabaseServerRest("/rest/v1/rafiq_telegram_identities?on_conflict=telegram_user_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({telegram_user_id:String(message?.from?.id??""),chat_id:String(chatId),username:username||null,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,last_seen_at:new Date().toISOString()})}).catch(()=>{});
-
-    const adminHandled=await telegramAdminCommand(message);
-    if(adminHandled)return{ok:true,status:"admin_command",message_id:adminHandled?.result?.message_id??null,admin:true};const out=await telegramAdminApprove(parts[1]??"");return telegramSendText(chatId,telegramAdminSigned("✅ تم اعتماد الملف #"+String(out.intake.application_number)+"\n\n🪪 الرقم الشخصي: "+out.memberNumber+"\n🔖 الباركود: "+out.code+"\n🔗 بطاقة الباركود: "+out.link+"\n\nتم حفظ الملف الكامل في السجل الخاص."));}
-    catch(e){return telegramSendText(chatId,telegramAdminSigned("❌ "+String(e).slice(0,300)));}
-  }
-  if(cmd==="/reject"){
-    try{const out=await telegramAdminReject(parts[1]??"",parts.slice(2).join(" "));return telegramSendText(chatId,telegramAdminSigned("❌ تم رفض الطلب #"+String(out.application_number)+" ونقله إلى ملف المرفوضين."));}
-    catch(e){return telegramSendText(chatId,telegramAdminSigned("❌ "+String(e).slice(0,300)));}
-  }
-  if(cmd==="/cases"){
-    const r=await supabaseServerRest("/rest/v1/care_requests?status=in.(pending,review,matching)&order=created_at.desc&select=id,request_number,service_type,required_provider_type,status,created_at&limit=30");
-    const rows=Array.isArray(r.body)?r.body:[];
-    return telegramSendText(chatId,telegramAdminSigned(rows.length?rows.map((x:any)=>"• الحالة #"+(x.request_number||x.id)+" — "+(x.service_type||"—")+" — "+(x.required_provider_type||"—")+" — "+x.status).join("\n"):"لا توجد حالات مفتوحة حاليًا."));
-  }
-  if(cmd==="/compare"){
-    const ref=String(parts[1]??"").trim();
-    if(!ref || !/^[A-Za-z0-9_-]{1,80}$/.test(ref))return telegramSendText(chatId,telegramAdminSigned("الصيغة: /compare <رقم الحالة>"));
-    let casePath="/rest/v1/care_requests?request_number=eq."+encodeURIComponent(ref)+"&select=id,request_number,service_type,schedule,live_in,required_services,preferred_gender,preferred_languages,contract_type,complexity_level,requires_licensed_nurse,required_provider_type,required_skills,notes,status&limit=1";
-    if(/^[0-9a-f-]{36}$/i.test(ref))casePath="/rest/v1/care_requests?id=eq."+encodeURIComponent(ref)+"&select=id,request_number,service_type,schedule,live_in,required_services,preferred_gender,preferred_languages,contract_type,complexity_level,requires_licensed_nurse,required_provider_type,required_skills,notes,status&limit=1";
-    const caseResult=await supabaseServerRest(casePath);
-    const careCase=Array.isArray(caseResult.body)?caseResult.body[0]:null;
-    if(!caseResult.response.ok || !careCase)return telegramSendText(chatId,telegramAdminSigned("❌ لم أجد حالة رعاية بهذا الرقم."));
-    const providerResult=await supabaseServerRest("/rest/v1/rafiq_provider_registry?status=eq.approved&select=member_number,member_type,full_name,area,specialty,qualification,experience,languages,services,availability&order=approved_at.asc&limit=100");
-    if(!providerResult.response.ok)return telegramSendText(chatId,telegramAdminSigned("⚠️ تعذر تحميل ملفات مقدمي الخدمة للمقارنة."));
-    const providers=Array.isArray(providerResult.body)?providerResult.body:[];
-    const caseType=String(careCase.required_provider_type??"").toLowerCase();
-    const eligible=providers.filter((p:any)=>{
-      const t=String(p.member_type??"").toLowerCase();
-      if(careCase.requires_licensed_nurse && t!=="nurse")return false;
-      const wantsNurse=/(nurse|ممرض|تمريض)/i.test(caseType);
-      const wantsPhysio=/(physio|فيزيائي|علاج فيزيائي)/i.test(caseType);
-      const wantsCaregiver=/(caregiver|مقدم رعاية|مقدم الرعاية)/i.test(caseType);
-      if(wantsNurse && t!=="nurse")return false;
-      if(wantsPhysio && t!=="physiotherapist")return false;
-      if(wantsCaregiver && t!=="caregiver")return false;
-      return true;
-    });
-    if(!eligible.length)return telegramSendText(chatId,telegramAdminSigned("📊 لا يوجد حاليًا مقدم خدمة مقبول ومسجل يطابق نوع الحالة. لم يتم إسناد أي شخص."));
-    const context=[
-      "You are RAFIQ's internal candidate comparison assistant. This is a private manager-only decision-support report.",
-      "Compare only the supplied records. Never invent qualifications, licenses, availability, or experience. Mark missing data as unknown.",
-      "Rank candidates only against the case's service type, required skills, schedule/shift, live-in requirement, complexity, location, language, and licensed-nurse requirement.",
-      "Give a transparent 0-100 fit score with a brief reason for each score. Recommend at most two candidates for manager review, explain risks/data gaps, and explicitly state that no assignment or approval has been made. Never make a clinical diagnosis or decide treatment.",
-      "CARE CASE: "+JSON.stringify(careCase),
-      "APPROVED CANDIDATES ONLY: "+JSON.stringify(eligible)
-    ].join("\n");
-    const report=await draftAgentReply("Prepare a concise Arabic candidate-comparison report for this care case. Do not address the family; this is for the RAFIQ manager.",undefined,context);
-    const prefix="📊 تقرير مقارنة أولي — الحالة "+String(careCase.request_number??ref)+"\n\n";
-    return telegramSendText(chatId,telegramAdminSigned((prefix+(report?.reply??"تعذر إنشاء التقرير؛ راجع الملفات يدويًا." )+"\n\n⚠️ التقرير للمراجعة فقط؛ القرار النهائي للمدير، ولم يتم إسناد أي مقدم خدمة.").slice(0,3900)));
-  }
-  return null;
-};
-const app=new Elysia()
+// Legacy provider-application and care-case Telegram commands are retired.
+// The active manager interface is handleManagerCommand; keep this stub to prevent
+// accidental reactivation of the obsolete approval/rejection workflow.
+const telegramAdminCommand=async(_message:any)=>null;const app=new Elysia()
 .onAfterHandle(({response})=>{if(response instanceof Response)applySecurityHeaders(response,securityHeaders)})
 .get("/health",()=>({status:"ok",service:"rafiq-backend",timestamp:new Date().toISOString()}))
 .get("/api/admin/telegram-cv/orders",async({request,set})=>{
@@ -961,10 +905,6 @@ const handleTelegramWebhook = async({request,set}:any)=>{
     );
     if (managerHandled) return { ok: true, status: "manager_command_handled" };
 
-    // Backward-compatible manager gate: the owner is allowed by Telegram username
-    // (default @MHDISSA980) even when TELEGRAM_MANAGER_CHAT_IDS is not configured.
-    const legacyAdminHandled = await telegramAdminCommand(message);
-    if (legacyAdminHandled) return { ok: true, status: "legacy_admin_command_handled", message_id: legacyAdminHandled?.result?.message_id ?? null };
 
     if(textBody && rafiqRequiresHumanReply(textBody)){
       const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,reason:"human_reply_required",status:"open"};
@@ -1311,50 +1251,44 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 .post("/api/channel/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const topic=typeof input?.topic==="string"?input.topic.trim():"",language=typeof input?.language==="string"?input.language.trim():"ar";if(!topic||topic.length>4000||language.length>40){set.status=400;return{ok:false,error:"invalid topic or language"}}try{const result=await draftAgentReply(`Prepare a public WhatsApp Channel post for the official RAFIQ | رفيق channel.\nLanguage: ${language}\nTopic: ${topic}\nAudience: families, caregivers, nurses, healthcare institutions, laboratories, medical equipment suppliers, and radiology centers.\nThe post must be informative, professional, concise, and suitable for a public one-way channel. Do not claim that a partnership, booking, payment, referral, approval, or service has already happened unless explicitly stated in the topic. Do not expose private information. Return only the ready-to-review channel post.`);return{ok:true,draft:result.reply,model:result.model,channel:"RAFIQ official WhatsApp Channel",publishMode:"manual-admin",humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/whatsapp/send-text",async({request,set})=>{if(process.env.WHATSAPP_SENDING_ENABLED!=="true"){set.status=503;return{ok:false,error:"WhatsApp sending is disabled"}}if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const to=typeof input?.to==="string"?input.to.trim():"",body=typeof input?.body==="string"?input.body.trim():"";if(!to||!/^[0-9]{8,15}$/.test(to)||!body||body.length>4096){set.status=400;return{ok:false,error:"invalid recipient or message"}}if(input?.humanApproved!==true){set.status=409;return{ok:false,error:"human approval required"}}try{const result=await sendWhatsAppText(to,body);return{ok:true,messageId:result?.messages?.[0]?.id??null}}catch{set.status=502;return{ok:false,error:"WhatsApp provider request failed"}}})
 .get("/",()=>fileResponse("public/index.html","text/html; charset=utf-8","no-store"))
-.get("/agent.html",()=>fileResponse("public/agent.html","text/html; charset=utf-8","no-store"))
+.get("/agent.html",()=>new Response("This RAFIQ page has been retired.",{status:410,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
 .get("/admin",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/admin/",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/admin.html",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
-.get("/complete.html",()=>fileResponse("public/complete.html","text/html; charset=utf-8","no-store"))
-.get("/admin.js",()=>fileResponse("public/admin.js","application/javascript","public, max-age=300, stale-while-revalidate=86400"))
-.get("/app.js",()=>fileResponse("public/app.js","application/javascript","no-cache"))
-.get("/install-pwa.js",()=>fileResponse("public/install-pwa.js","application/javascript","no-cache")).get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache")).get("/js/rafiq-agent.js",()=>fileResponse("public/js/rafiq-agent.js","application/javascript","no-cache")).get("/js/rafiq-kb.js",()=>fileResponse("public/js/rafiq-kb.js","application/javascript","no-cache")).get("/js/rafiq-welcome.js",()=>fileResponse("public/js/rafiq-welcome.js","application/javascript","no-cache")).get("/assets/rafig-logo.png",()=>fileResponse("public/assets/rafig-logo.png","image/png","no-cache"))
-.get("/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
-.get("/js/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
-.get("/js/locales/ar.js",()=>fileResponse("public/js/locales/ar.js","application/javascript","no-cache"))
-.get("/js/locales/en.js",()=>fileResponse("public/js/locales/en.js","application/javascript","no-cache"))
-.get("/js/locales/fr.js",()=>fileResponse("public/js/locales/fr.js","application/javascript","no-cache"))
-.get("/js/locales/it.js",()=>fileResponse("public/js/locales/it.js","application/javascript","no-cache"))
-.get("/js/locales/de.js",()=>fileResponse("public/js/locales/de.js","application/javascript","no-cache"))
-.get("/css/device.css",()=>fileResponse("public/css/device.css","text/css","no-cache"))
-.get("/intake-admin.js",()=>fileResponse("public/intake-admin.js","application/javascript","no-cache")).get("/institution-form.js",()=>fileResponse("public/institution-form.js","application/javascript","no-cache"))
+.get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache"))
 .get("/manifest.webmanifest",()=>fileResponse("public/manifest.webmanifest","application/manifest+json"))
-.get("/sitemap.xml",()=>fileResponse("public/sitemap.xml","application/xml; charset=utf-8","no-store"))
 .get("/*",async({request,set})=>{const pathname=new URL(request.url).pathname;if(pathname==="/"||pathname.startsWith("/api/")){set.status=404;return{ok:false,error:"not found"}}let decoded="";try{decoded=decodeURIComponent(pathname)}catch{set.status=400;return{ok:false,error:"invalid path"}}if(!decoded.startsWith("/")||decoded.includes("..")||!/^[A-Za-z0-9._~!$&'()*+,;=:@%\\/-]+$/.test(decoded)){set.status=404;return{ok:false,error:"not found"}}const ext=decoded.split(".").pop()?.toLowerCase()??"";const mime:Record<string,string>={js:"application/javascript; charset=utf-8",css:"text/css; charset=utf-8",json:"application/json; charset=utf-8",webmanifest:"application/manifest+json",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",svg:"image/svg+xml",ico:"image/x-icon",txt:"text/plain; charset=utf-8",xml:"application/xml; charset=utf-8",woff:"font/woff",woff2:"font/woff2",map:"application/json; charset=utf-8"};if(!mime[ext]){set.status=404;return{ok:false,error:"not found"}}const cache=["png","jpg","jpeg","webp","svg","ico","woff","woff2"].includes(ext)?"public, max-age=86400, stale-while-revalidate=604800":["js","css","json","webmanifest","xml"].includes(ext)?"public, max-age=300, stale-while-revalidate=86400":"no-store";return fileResponse("public"+decoded,mime[ext],cache)})
 .get("/:page",({params,set})=>{const page=String(params.page??"");if(!/^[a-z0-9-]+\.html$/i.test(page)||page==="admin.html"){set.status=404;return{ok:false,error:"not found"}}return fileResponse(`public/${page}`,"text/html; charset=utf-8","no-store")})
-.get("/robots.txt",()=>new Response("User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /admin.js\nDisallow: /intake-admin.js\nSitemap: https://rafiq-o6qd.onrender.com/sitemap.xml",{headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
+.get("/robots.txt",()=>{const base=(process.env.PUBLIC_BASE_URL||RAFIQ_WEBSITE||"").trim().replace(/\/$/,"");const lines=["User-agent: *","Allow: /","Disallow: /admin.html","Disallow: /admin.js","Disallow: /intake-admin.js"];if(base)lines.push("Sitemap: "+base+"/sitemap.xml");return new Response(lines.join("\n")+"\n",{headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}})})
 .get("/sw.js",()=>fileResponse("public/sw.js","application/javascript","no-cache"))
 .get("/sitemap.xml",()=>fileResponse("public/sitemap.xml","application/xml; charset=utf-8","no-store"))
 .get("/services.html",()=>fileResponse("public/services.html","text/html; charset=utf-8"))
-.get("/elderly-care.html",()=>fileResponse("public/elderly-care.html","text/html; charset=utf-8"))
-.get("/patient-care.html",()=>fileResponse("public/patient-care.html","text/html; charset=utf-8"))
-.get("/home-nursing.html",()=>fileResponse("public/home-nursing.html","text/html; charset=utf-8"))
+.get("/announcements.html",()=>fileResponse("public/announcements.html","text/html; charset=utf-8"))
+.get("/laboratories.html",()=>fileResponse("public/laboratories.html","text/html; charset=utf-8"))
+.get("/radiology.html",()=>fileResponse("public/radiology.html","text/html; charset=utf-8"))
+.get("/medical-equipment.html",()=>fileResponse("public/medical-equipment.html","text/html; charset=utf-8"))
 .get("/physiotherapy.html",()=>fileResponse("public/physiotherapy.html","text/html; charset=utf-8"))
 .get("/caregivers.html",()=>fileResponse("public/caregivers.html","text/html; charset=utf-8"))
 .get("/regions.html",()=>fileResponse("public/regions.html","text/html; charset=utf-8"))
-.get("/guide.html",()=>fileResponse("public/guide.html","text/html; charset=utf-8"))
-.get("/tripoli.html",()=>fileResponse("public/tripoli.html","text/html; charset=utf-8"))
-.get("/dinniyeh.html",()=>fileResponse("public/dinniyeh.html","text/html; charset=utf-8"))
-.get("/zgharta.html",()=>fileResponse("public/zgharta.html","text/html; charset=utf-8"))
-.get("/koura.html",()=>fileResponse("public/koura.html","text/html; charset=utf-8"))
-.get("/batroun.html",()=>fileResponse("public/batroun.html","text/html; charset=utf-8"))
-.get("/beirut.html",()=>fileResponse("public/beirut.html","text/html; charset=utf-8"))
-.get("/lebanon.html",()=>fileResponse("public/lebanon.html","text/html; charset=utf-8"))
-.get("/guide-choose-caregiver.html",()=>fileResponse("public/guide-choose-caregiver.html","text/html; charset=utf-8"))
-.get("/guide-caregiver-vs-nurse.html",()=>fileResponse("public/guide-caregiver-vs-nurse.html","text/html; charset=utf-8"))
-.get("/guide-elderly-home.html",()=>fileResponse("public/guide-elderly-home.html","text/html; charset=utf-8"))
-.get("/guide-after-hospital.html",()=>fileResponse("public/guide-after-hospital.html","text/html; charset=utf-8"))
-;
+.get("/faq.html",()=>fileResponse("public/faq.html","text/html; charset=utf-8"))
+.get("/elderly-care.html",()=>fileResponse("public/elderly-care.html","text/html; charset=utf-8","no-store"))
+.get("/patient-care.html",()=>fileResponse("public/patient-care.html","text/html; charset=utf-8","no-store"))
+.get("/home-nursing.html",()=>fileResponse("public/home-nursing.html","text/html; charset=utf-8","no-store"))
+.get("/lebanon.html",()=>fileResponse("public/lebanon.html","text/html; charset=utf-8","no-store"))
+.get("/tripoli.html",()=>fileResponse("public/tripoli.html","text/html; charset=utf-8","no-store"))
+.get("/dinniyeh.html",()=>fileResponse("public/dinniyeh.html","text/html; charset=utf-8","no-store"))
+.get("/zgharta.html",()=>fileResponse("public/zgharta.html","text/html; charset=utf-8","no-store"))
+.get("/koura.html",()=>fileResponse("public/koura.html","text/html; charset=utf-8","no-store"))
+.get("/batroun.html",()=>fileResponse("public/batroun.html","text/html; charset=utf-8","no-store"))
+.get("/beirut.html",()=>fileResponse("public/beirut.html","text/html; charset=utf-8","no-store"))
+.get("/guide.html",()=>fileResponse("public/guide.html","text/html; charset=utf-8","no-store"))
+.get("/guide-after-hospital.html",()=>fileResponse("public/guide-after-hospital.html","text/html; charset=utf-8","no-store"))
+.get("/guide-caregiver-vs-nurse.html",()=>fileResponse("public/guide-caregiver-vs-nurse.html","text/html; charset=utf-8","no-store"))
+.get("/guide-choose-caregiver.html",()=>fileResponse("public/guide-choose-caregiver.html","text/html; charset=utf-8","no-store"))
+.get("/guide-elderly-home.html",()=>fileResponse("public/guide-elderly-home.html","text/html; charset=utf-8","no-store"))
+.get("/dashboard.html",()=>new Response("This RAFIQ page has been retired.",{status:410,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
+.get("/barcode.html",()=>new Response("This RAFIQ page has been retired.",{status:410,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
+.get("/install.html",()=>new Response("This RAFIQ page has been retired.",{status:410,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}))
 app.listen({ hostname: process.env.HOST ?? "0.0.0.0", port });
 console.log(`RAFIQ server listening on ${app.server?.hostname}:${app.server?.port}`);
 void registerTelegramWebhookOnStartup();

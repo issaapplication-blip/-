@@ -4,17 +4,18 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /admin.html
 Disallow: /dashboard.html
-Disallow: /review.html
+Disallow: /agent.html
 Disallow: /barcode.html
-Disallow: /admin.js
+Disallow: /install.html
+Disallow: /app.js
+Disallow: /install-pwa.js
+Disallow: /manifest.json
 Disallow: /intake-admin.js
 Disallow: /_headers
 Disallow: /migrations/
 Disallow: /supabase/
 Disallow: /docs/
 Disallow: /_tools/
-
-# The financial number must never be indexed or served publicly.
 Disallow: /*70600157*
 
-Sitemap: https://rafiq-o6qd.onrender.com/sitemap.xml
+Sitemap: https://rafiq.invalid/sitemap.xml

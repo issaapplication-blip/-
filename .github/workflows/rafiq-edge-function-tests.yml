@@ -21,7 +21,7 @@ on:
       - 'src/http-cache-policy.test.ts'
       - 'ops/**'
       - 'functions/**'
-      - 'public/admin.js'
+      - 'public/**'
       - 'wrangler.toml'
       - 'supabase/functions/telegram-webhook/**'
       - 'supabase/migrations/**'
@@ -57,7 +57,7 @@ on:
       - 'public/index.html'
       - 'public/app.html'
       - 'public/manifest.json'
-      - 'public/sw.js'
+      - 'public/**'
       - 'package.json'
       - 'bun.lock'
       - '.dockerignore'
@@ -125,6 +125,18 @@ jobs:
           assert isinstance(data.get("timestamp"), str), data
           print("Docker health smoke test passed")
           PY
+          curl --fail --silent --show-error http://127.0.0.1:17860/ > /tmp/rafiq-home.html
+          if grep -qiE 'onrender\\.com|rafiq-o6qd' /tmp/rafiq-home.html; then
+            echo "Legacy Render host leaked into backend-served home page."
+            exit 1
+          fi
+          curl --fail --silent --show-error http://127.0.0.1:17860/robots.txt > /tmp/rafiq-robots.txt
+          if grep -qiE 'onrender\\.com|rafiq-o6qd' /tmp/rafiq-robots.txt; then
+            echo "Legacy Render host leaked into robots.txt."
+            exit 1
+          fi
+          sitemap_status="$(curl --silent --output /tmp/rafiq-sitemap.txt --write-out '%{http_code}' http://127.0.0.1:17860/sitemap.xml)"
+          test "$sitemap_status" = "503"
       - uses: oven-sh/setup-bun@v2
         if: always()
         with:
@@ -135,6 +147,15 @@ jobs:
       - name: Validate backup script syntax
         if: always()
         run: bash -n ops/backup.sh ops/verify.sh
+      - name: Parse every public JavaScript asset
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            bun build --target browser --outdir /tmp/rafiq-public-js-check "$file" >/dev/null
+          done < <(find public -type f -name '*.js' -print0)
       - name: Validate Cloudflare Pages bundle
         if: always()
         run: |

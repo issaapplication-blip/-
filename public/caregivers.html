@@ -10,7 +10,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <title>خدمة CV وCover Letter | RAFIQ</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f8f6;color:#17372d;font-family:Arial,Tahoma,sans-serif;line-height:1.8}main{max-width:850px;margin:auto;padding:14px}.card{background:#fff;border:1px solid #dce8e2;border-radius:18px;padding:22px;margin:14px 0;box-shadow:0 4px 18px #0000000d}.logo{display:block;width:min(160px,45vw);margin:0 auto 10px}h1,h2{color:#087f58}.prices{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.price{border:1px solid #e8d9ad;background:#fffaf0;border-radius:13px;padding:14px}.price strong{display:block;color:#745719;font-size:19px}.btn{display:inline-block;background:#087f58;color:#fff;text-decoration:none;border-radius:11px;padding:12px 18px;font-weight:900}.alt{background:#eaf4ef;color:#17372d}.note{background:#fff8e8;border:1px solid #ead7a8;border-radius:12px;padding:13px}.actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+*{box-sizing:border-box}body{margin:0;background:#f4f8f6;color:#17372d;font-family:Arial,Tahoma,sans-serif;line-height:1.8}main{max-width:850px;margin:auto;padding:14px}.card{background:#fff;border:1px solid #dce8e2;border-radius:18px;padding:22px;margin:14px 0;box-shadow:0 4px 18px #0000000d}.logo{display:block;width:min(160px,45vw);height:auto;max-height:220px;object-fit:contain;margin:0 auto 10px}h1,h2{color:#087f58}.prices{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.price{border:1px solid #e8d9ad;background:#fffaf0;border-radius:13px;padding:14px}.price strong{display:block;color:#745719;font-size:19px}.btn{display:inline-block;background:#087f58;color:#fff;text-decoration:none;border-radius:11px;padding:12px 18px;font-weight:900}.alt{background:#eaf4ef;color:#17372d}.note{background:#fff8e8;border:1px solid #ead7a8;border-radius:12px;padding:13px}.actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
 </style>
 </head>
 <body><main>
@@ -30,6 +30,18 @@
 </div>
 <p class="note">الدفع المسبق عبر Whish Money فقط. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع من إدارة RAFIQ. لا تشارك كلمة مرور Whish أو رمز OTP.</p>
 <p>يبدأ إعداد الملف بعد مراجعة الإدارة لتأكيد الدفع والاتفاق على الخدمة المطلوبة.</p>
-<div class="actions"><a class="btn" href="https://wa.me/96181506299" target="_blank" rel="noopener">التواصل مع إدارة RAFIQ لخدمة CV</a><a class="btn alt" href="https://t.me/RAFIQ_Care_Bot" target="_blank" rel="noopener">بوت RAFIQ</a></div>
+<div class="actions"><button class="btn" type="button" id="copyCvRequest">نسخ رسالة طلب الخدمة</button></div><p id="copyCvStatus" class="note" aria-live="polite">انسخ الرسالة ثم أرسلها يدويًا إلى قناة التواصل الرسمية التي تعتمدها الإدارة.</p>
+<script>
+(function(){
+  var button=document.getElementById("copyCvRequest");
+  var status=document.getElementById("copyCvStatus");
+  if(!button||!status)return;
+  var message="مرحبًا، أريد الاستفسار عن خدمة إعداد CV وCover Letter من RAFIQ. يرجى تأكيد الخدمة المطلوبة وطريقة الدفع المسبق عبر Whish Money.";
+  button.addEventListener("click",function(){
+    if(!navigator.clipboard||!navigator.clipboard.writeText){status.textContent="تعذر النسخ التلقائي على هذا المتصفح. يرجى تحديد الرسالة ونسخها يدويًا: "+message;return;}
+    navigator.clipboard.writeText(message).then(function(){status.textContent="تم نسخ رسالة الطلب. أرسلها يدويًا إلى الإدارة.";}).catch(function(){status.textContent="تعذر النسخ التلقائي. حاول مرة أخرى أو انسخ النص يدويًا: "+message;});
+  });
+})();
+</script>
 </section>
 </main></body></html>
