@@ -453,6 +453,16 @@
     "rafiq.cv.desc": "Professional, ATS-friendly CV and Cover Letter tools based on the information you provide, without inventing experience or qualifications.",
     "rafiq.about.title": "RAFIQ… bringing useful services closer to families",
     "rafiq.about.desc": "RAFIQ is an information platform for home care and supporting health services in Lebanon. We organise information about contracted providers and their coverage areas so families can clearly find available options. We do not provide diagnoses or accept care or membership applications through this website.",
+    "rafiq.hero.titleStart": "Closer care,",
+    "rafiq.hero.titleEm": "reliable information",
+    "rafiq.hero.titleEnd": "for families.",
+    "rafiq.service.explore": "Explore this category →",
+    "rafiq.ads.telegram": "Official Telegram channel",
+    "rafiq.cv.cta": "CV and Cover Letter service →",
+    "rafiq.footer.description": "Safe home care for older people and patients in Lebanon. An information directory for families to find healthcare providers and contracted services.",
+    "rafiq.footer.quick": "Quick links",
+    "rafiq.footer.contact": "Official contact channels",
+    "rafiq.footer.copyright": "© RAFIQ | Rafiq — All rights reserved · This information is not a medical diagnosis.",
   };
 
   RAFIQ_I18N.register('en', dict);
