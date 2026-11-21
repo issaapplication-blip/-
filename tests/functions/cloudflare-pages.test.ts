@@ -122,6 +122,15 @@ test("directory PWA cache no longer preloads retired agent or care application p
   expect(sw).toContain("caregivers.html");
 });
 
+test("PWA installer controller guard and service-worker registration use the same version and base path", () => {
+  const installer=read("public/install-app.js");
+  expect(installer).toContain("window.__RAFIQ_INSTALL_CONTROLLER_V86__=true;");
+  expect(installer).not.toContain("window.__RAFIQ_INSTALL_CONTROLLER_V83__");
+  expect(installer).toContain('new URL("sw.js?v=86",appBaseUrl)');
+  expect(installer).toContain("scope:appBaseUrl.pathname");
+  expect(read("public/sw.js")).toContain('var CACHE="rafig-v86-20261121"');
+});
+
 
 test("obsolete provider-intake admin script is removed", () => {
   expect(existsSync(resolve(import.meta.dir, "../../public/admin.js"))).toBe(false);
