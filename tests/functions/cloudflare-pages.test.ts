@@ -7,7 +7,6 @@ const webAgent = read("functions/api/agent/chat.ts");
 const legacyTelegram = read("functions/api/telegram/webhook.ts");
 const cvAdmin = read("public/admin.html");
 const build = read("ops/build-cloudflare-pages.sh");
-const admin = read("public/admin.js");
 const adminHtml = read("public/admin.html");
 const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
@@ -61,9 +60,9 @@ test("retired public application pages are absent while CV remains in the PWA", 
   expect(sitemap).not.toContain("physiotherapists.html");
 });
 
-test("admin UI never grants access from an email address alone", () => {
-  expect(admin).toContain("dbAdmin===true&&p?.role==='admin'&&p?.status==='active'");
-  expect(admin).not.toContain("ownerByEmail");
+test("obsolete provider-intake admin script is removed", () => {
+  expect(existsSync(resolve(import.meta.dir, "../../public/admin.js"))).toBe(false);
+  expect(read("src/index.ts")).not.toContain('fileResponse("public/admin.js"');
 });
 
 test("admin dashboard requires database authorization and an active admin profile", () => {
