@@ -2,7 +2,7 @@
 (function(){
   "use strict";
   if(window.__RAFIQ_INSTALL_CONTROLLER_V86__) return;
-  window.__RAFIQ_INSTALL_CONTROLLER_V83__=true;
+  window.__RAFIQ_INSTALL_CONTROLLER_V86__=true;
   var deferredPrompt=null;
   var installerScriptUrl=document.currentScript&&document.currentScript.src;
   var appBaseUrl=installerScriptUrl?new URL(".",installerScriptUrl):new URL("./",window.location.href);
