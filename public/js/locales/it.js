@@ -451,6 +451,16 @@
     "rafiq.cv.desc": "Strumenti professionali compatibili con ATS basati sulle informazioni fornite, senza inventare esperienze o qualifiche.",
     "rafiq.about.title": "RAFIQ… servizi utili più vicini alle famiglie",
     "rafiq.about.desc": "RAFIQ è una piattaforma informativa per l’assistenza domiciliare e i servizi sanitari di supporto in Libano. Organizziamo le informazioni sui fornitori convenzionati e sulle loro aree di copertura per aiutare le famiglie a individuare chiaramente le opzioni disponibili. Non forniamo diagnosi e non riceviamo richieste di assistenza o adesione tramite questo sito.",
+    "rafiq.hero.titleStart": "Assistenza più vicina,",
+    "rafiq.hero.titleEm": "informazioni affidabili",
+    "rafiq.hero.titleEnd": "per le famiglie.",
+    "rafiq.service.explore": "Esplora questa categoria →",
+    "rafiq.ads.telegram": "Canale Telegram ufficiale",
+    "rafiq.cv.cta": "Servizio CV e lettera di presentazione →",
+    "rafiq.footer.description": "Assistenza domiciliare sicura per anziani e pazienti in Libano. Una guida informativa per aiutare le famiglie a trovare fornitori sanitari e servizi convenzionati.",
+    "rafiq.footer.quick": "Link rapidi",
+    "rafiq.footer.contact": "Canali di contatto ufficiali",
+    "rafiq.footer.copyright": "© RAFIQ | Rafiq — Tutti i diritti riservati · Queste informazioni non costituiscono una diagnosi medica.",
   };
 
   RAFIQ_I18N.register('it', dict);
