@@ -78,6 +78,16 @@ th{background:#f7fbf9;color:#087f58}
 <p class="small" id="lastUpdate"></p>
 </section>
 
+<section class="card hidden" id="directorySection">
+<h2>🏥 دليل المراكز والإعلانات</h2>
+<p class="small">هذه اللوحة لا تستقبل طلبات تسجيل مراكز. تُعرض المختبرات ومراكز الأشعة والعلاج الفيزيائي وبيع/تأجير المعدات الطبية بعد مراجعة الإدارة واعتماد الاتفاق والأسعار. إدارة محتوى الدليل تتم حاليًا عبر تحديث صفحات الموقع، ولا يوجد نموذج اعتماد/نشر للمراكز داخل هذه اللوحة.</p>
+<div class="actions">
+<a class="btn alt" href="/laboratories.html" target="_blank" rel="noopener">المختبرات</a>
+<a class="btn alt" href="/radiology.html" target="_blank" rel="noopener">الأشعة والتصوير</a>
+<a class="btn alt" href="/medical-equipment.html" target="_blank" rel="noopener">المعدات الطبية</a>
+<a class="btn alt" href="/services.html" target="_blank" rel="noopener">فئات الخدمات</a>
+</div>
+</section>
 <section class="card hidden" id="requestsSection">
 <div class="actions" style="justify-content:space-between"><div><h2 style="margin:0">📋 طلبات CV وCover Letter</h2><p class="small">تظهر طلبات CV وCover Letter فقط. راجع إثبات الدفع والملفات قبل تسجيل أي قرار. لا تُرسل رسائل تلقائية.</p></div><button class="btn alt" id="showPending">عرض المعلّقة فقط</button></div>
 <div class="table-wrap"><table><thead><tr><th>#</th><th>المتقدم</th><th>نوع الخدمة</th><th>الهاتف</th><th>المنطقة</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="requestRows"></tbody></table></div>
@@ -112,8 +122,12 @@ th{background:#f7fbf9;color:#087f58}
 <script>
 const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co';
 const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
+if(!window.supabase?.createClient){
+  $('authMsg').innerHTML='<div class="err">تعذر تحميل مكتبة الاتصال الآمن. تحقق من الاتصال ثم أعد تحميل الصفحة.</div>';
+  $('login').disabled=true;
+}else{
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let allRequests=[]; let allFiles=[]; let acceptedMembers=[]; let liveChannel=null; let showPendingOnly=false; let refreshTimer=null;
 
@@ -273,7 +287,7 @@ async function enterDashboard(){
   const gate=await isAdmin();
   if(!gate){$('dashboard').classList.add('hidden');$('requestsSection').classList.add('hidden');$('documentsSection').classList.add('hidden');$('auth').classList.remove('hidden');showAuthError('يرجى الدخول بحساب المدير المفعّل.');return}
   $('who').textContent='المدير: '+(gate.profile.email||gate.user.email||'');
-  $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('rejectedSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
+  $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('directorySection').classList.remove('hidden');$('requestsSection').classList.remove('hidden');$('documentsSection').classList.remove('hidden');$('rejectedSection').classList.remove('hidden');$('completionSection').classList.remove('hidden');$('acceptedSection').classList.remove('hidden');
   await loadAll();subscribeLive();if('Notification' in window && Notification.permission==='default')Notification.requestPermission().catch(()=>{});
   clearInterval(refreshTimer);refreshTimer=setInterval(()=>loadAll().catch(()=>{}),30000);
 }
@@ -286,5 +300,6 @@ $('closeModal').onclick=()=>$('modal').classList.add('hidden');
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').classList.add('hidden')});
 db.auth.onAuthStateChange(()=>{setTimeout(()=>enterDashboard(),0)});
 enterDashboard();
+}
 </script>
 </body></html>
