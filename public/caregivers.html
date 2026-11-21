@@ -30,6 +30,18 @@
 </div>
 <p class="note">الدفع المسبق عبر Whish Money فقط. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع من إدارة RAFIQ. لا تشارك كلمة مرور Whish أو رمز OTP.</p>
 <p>يبدأ إعداد الملف بعد مراجعة الإدارة لتأكيد الدفع والاتفاق على الخدمة المطلوبة.</p>
-<div class="actions"><a class="btn" href="https://wa.me/96181506299" target="_blank" rel="noopener">التواصل مع إدارة RAFIQ لخدمة CV</a><a class="btn alt" href="https://t.me/RAFIQ_Care_Bot" target="_blank" rel="noopener">بوت RAFIQ</a></div>
+<div class="actions"><button class="btn" type="button" id="copyCvRequest">نسخ رسالة طلب الخدمة</button></div><p id="copyCvStatus" class="note" aria-live="polite">انسخ الرسالة ثم أرسلها يدويًا إلى قناة التواصل الرسمية التي تعتمدها الإدارة.</p>
+<script>
+(function(){
+  var button=document.getElementById("copyCvRequest");
+  var status=document.getElementById("copyCvStatus");
+  if(!button||!status)return;
+  var message="مرحبًا، أريد الاستفسار عن خدمة إعداد CV وCover Letter من RAFIQ. يرجى تأكيد الخدمة المطلوبة وطريقة الدفع المسبق عبر Whish Money.";
+  button.addEventListener("click",function(){
+    if(!navigator.clipboard||!navigator.clipboard.writeText){status.textContent="تعذر النسخ التلقائي على هذا المتصفح. يرجى تحديد الرسالة ونسخها يدويًا: "+message;return;}
+    navigator.clipboard.writeText(message).then(function(){status.textContent="تم نسخ رسالة الطلب. أرسلها يدويًا إلى الإدارة.";}).catch(function(){status.textContent="تعذر النسخ التلقائي. حاول مرة أخرى أو انسخ النص يدويًا: "+message;});
+  });
+})();
+</script>
 </section>
 </main></body></html>
