@@ -451,6 +451,16 @@
     "rafiq.cv.desc": "Professionelle, ATS-kompatible Tools auf Grundlage Ihrer Angaben, ohne Erfahrungen oder Qualifikationen zu erfinden.",
     "rafiq.about.title": "RAFIQ… hilfreiche Dienstleistungen näher zu Familien bringen",
     "rafiq.about.desc": "RAFIQ ist eine Informationsplattform für häusliche Pflege und ergänzende Gesundheitsdienste im Libanon. Wir ordnen Informationen zu Vertragspartnern und deren Versorgungsgebieten, damit Familien verfügbare Optionen klar finden können. Wir stellen keine Diagnosen und nehmen über diese Website keine Pflege- oder Mitgliedsanträge entgegen.",
+    "rafiq.hero.titleStart": "Nähere Versorgung,",
+    "rafiq.hero.titleEm": "verlässliche Informationen",
+    "rafiq.hero.titleEnd": "für Familien.",
+    "rafiq.service.explore": "Diese Kategorie ansehen →",
+    "rafiq.ads.telegram": "Offizieller Telegram-Kanal",
+    "rafiq.cv.cta": "Service für Lebenslauf und Anschreiben →",
+    "rafiq.footer.description": "Sichere häusliche Pflege für ältere Menschen und Patienten im Libanon. Ein Informationsverzeichnis, das Familien hilft, Gesundheitsanbieter und Vertragsleistungen zu finden.",
+    "rafiq.footer.quick": "Schnellzugriff",
+    "rafiq.footer.contact": "Offizielle Kontaktkanäle",
+    "rafiq.footer.copyright": "© RAFIQ | Rafiq — Alle Rechte vorbehalten · Diese Informationen sind keine medizinische Diagnose.",
   };
 
   RAFIQ_I18N.register('de', dict);
