@@ -1,6 +1,6 @@
 # RAFIQ file inventory
 
-Audit date: 2026-10-15. Source of truth inspected: GitHub `main`.
+Audit date: 2026-11-21. Source of truth inspected: RAFIQ stability branch.
 
 ## Runtime and build
 - `package.json`: Bun scripts and runtime dependencies (Elysia, Kapso WhatsApp SDK, QRCode).
@@ -12,10 +12,8 @@ Audit date: 2026-10-15. Source of truth inspected: GitHub `main`.
 
 ## Public assets
 - `public/index.html`: public home page.
-- `public/app.html`: public application/intake interface.
 - `public/admin.html`: CV and Cover Letter administration only; requires `is_admin()` plus an active admin profile, with data access enforced by Supabase RLS.
 - The obsolete `public/admin.js` provider-intake dashboard and its route have been removed.
-- `public/agent.html`: agent interface.
 - `public/manifest.webmanifest`, `public/sw.js`, `public/install-app.js`: existing PWA implementation.
 - `public/assets/rafig-logo.png`, `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable-512.png`: existing branding/PWA assets.
 - Retired browser-side WhatsApp auto-reply worker removed from the source tree.
