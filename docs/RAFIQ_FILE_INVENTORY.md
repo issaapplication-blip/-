@@ -13,11 +13,12 @@ Audit date: 2026-10-15. Source of truth inspected: GitHub `main`.
 ## Public assets
 - `public/index.html`: public home page.
 - `public/app.html`: public application/intake interface.
-- `public/admin.html`, `public/admin.js`: admin interface; must remain protected by authentication/RLS.
+- `public/admin.html`: CV and Cover Letter administration only; requires `is_admin()` plus an active admin profile, with data access enforced by Supabase RLS.
+- The obsolete `public/admin.js` provider-intake dashboard and its route have been removed.
 - `public/agent.html`: agent interface.
 - `public/manifest.webmanifest`, `public/sw.js`, `public/install-app.js`: existing PWA implementation.
 - `public/assets/rafig-logo.png`, `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable-512.png`: existing branding/PWA assets.
-- `public/auto-reply.mjs`: legacy browser-side file intentionally excluded from the Cloudflare build.
+- Retired browser-side WhatsApp auto-reply worker removed from the source tree.
 
 ## Recovery and deployment
 - `docs/recovery/RAFIQ-CLOUDFLARE-PAGES-SETUP-2026-10-14.md`: current static deployment recipe.
