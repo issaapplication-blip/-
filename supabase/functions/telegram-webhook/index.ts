@@ -84,7 +84,10 @@ const serviceKeyboard = {
     [{ text: "🦽 تأجير المعدات الطبية", callback_data: "dir:equipment_rent" }],
     [{ text: "📍 المناطق", callback_data: "dir:areas" }],
     [{ text: "📄 خدمة CV وCover Letter", callback_data: "cv:service" }],
-    [{ text: "📢 قناة RAFIQ على Telegram", url: "https://t.me/+a7CDblNyGKw1Yjg8" }],
+    [{ text: "📢 قناة RAFIQ على Telegram", url: "https://t.me/+a7CDblNyGkw1Yjg8" }],
+    [{ text: "📢 قناة RAFIQ على WhatsApp", url: "https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K" }],
+    [{ text: "👥 مجموعة WhatsApp الأولى", url: "https://chat.whatsapp.com/GYzi4ZfJSx0KAUIPIycp1Z" }],
+    [{ text: "👥 مجموعة WhatsApp الثانية", url: "https://chat.whatsapp.com/EG1B0hPBtTt5rGVEGqv6Kc" }],
   ],
 };
 function faq(text: string): string {
@@ -104,7 +107,7 @@ function faq(text: string): string {
     return "مناطق الدليل: طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت، وباقي لبنان. ظهور أي مركز مرتبط باعتماد الإدارة.";
   }
   if (/(واتساب|whatsapp|تواصل|رقم الاداره)/.test(t)) {
-    return "للتواصل الإداري: +961 81 506 299. قناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K";
+    return "قنوات RAFIQ الرسمية:\nقناة Telegram: https://t.me/+a7CDblNyGkw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\nمجموعة WhatsApp الأولى: https://chat.whatsapp.com/GYzi4ZfJSx0KAUIPIycp1Z\nمجموعة WhatsApp الثانية: https://chat.whatsapp.com/EG1B0hPBtTt5rGVEGqv6Kc\nالتواصل الإداري: +961 81 506 299";
   }
   return "";
 }
@@ -183,7 +186,7 @@ async function processUpdate(update: any) {
   }
   const command = text.toLowerCase().split(/\s+/)[0];
   if (command === "/start" || command === "/help") {
-    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nنصل بالحب والأمان لرعاية العائلة.\n\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\n\nلا يستقبل البوت طلبات رعاية أو انتساب أو تسجيل مراكز. خدمة CV وCover Letter مستقلة ويمكن الوصول إليها عبر /cv. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\n\nقناة Telegram: https://t.me/+a7CDblNyGKw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
+    await sendText(chatId, "أهلًا بك في RAFIQ | رفيق 🇱🇧\n\nنصل بالحب والأمان لرعاية العائلة.\n\nهذا البوت دليل معلومات للمختبرات الطبية، مراكز الأشعة والتصوير، مراكز العلاج الفيزيائي، ومراكز بيع وتأجير المعدات الطبية.\n\nلا يستقبل البوت طلبات رعاية أو انتساب أو تسجيل مراكز. خدمة CV وCover Letter مستقلة ويمكن الوصول إليها عبر /cv. المراكز والعروض والخصومات لا تُنشر إلا بعد موافقة الإدارة.\n\nقناة Telegram: https://t.me/+a7CDblNyGkw1Yjg8\nقناة WhatsApp: https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K\nمجموعة WhatsApp الأولى: https://chat.whatsapp.com/GYzi4ZfJSx0KAUIPIycp1Z\nمجموعة WhatsApp الثانية: https://chat.whatsapp.com/EG1B0hPBtTt5rGVEGqv6Kc\nWhatsApp الإدارة: +961 81 506 299", serviceKeyboard);
     return;
   }
   if (command === "/cv" || command === "/coverletter") {
