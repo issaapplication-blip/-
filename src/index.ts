@@ -1254,7 +1254,7 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
 .get("/admin/",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/admin.html",()=>fileResponse("public/admin.html","text/html; charset=utf-8"))
 .get("/complete.html",()=>fileResponse("public/complete.html","text/html; charset=utf-8","no-store"))
-.get("/admin.js",()=>fileResponse("public/admin.js","application/javascript","public, max-age=300, stale-while-revalidate=86400"))
+
 .get("/app.js",()=>fileResponse("public/app.js","application/javascript","no-cache"))
 .get("/install-pwa.js",()=>fileResponse("public/install-pwa.js","application/javascript","no-cache")).get("/install-app.js",()=>fileResponse("public/install-app.js","application/javascript","no-cache")).get("/js/rafiq-agent.js",()=>fileResponse("public/js/rafiq-agent.js","application/javascript","no-cache")).get("/js/rafiq-kb.js",()=>fileResponse("public/js/rafiq-kb.js","application/javascript","no-cache")).get("/js/rafiq-welcome.js",()=>fileResponse("public/js/rafiq-welcome.js","application/javascript","no-cache")).get("/assets/rafig-logo.png",()=>fileResponse("public/assets/rafig-logo.png","image/png","no-cache"))
 .get("/i18n.js",()=>fileResponse("public/i18n.js","application/javascript","no-cache"))
