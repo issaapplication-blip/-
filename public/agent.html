@@ -47,7 +47,7 @@ main{max-width:900px;margin:auto;padding:12px}.topbar{position:sticky;top:8px;z-
 <form id="rafiqAsk" class="composer"><input id="rafiqQuestion" type="text" maxlength="400" autocomplete="off" placeholder="اكتب سؤالك هنا…" aria-label="اكتب سؤالك"><button class="btn" type="submit">إرسال</button></form>
 </section>
 <section class="card"><h2>تواصل مباشر</h2><p>للاستفسارات التي تحتاج متابعة من الإدارة، استخدم قنوات RAFIQ الرسمية.</p><div class="actions"><a class="btn" href="https://t.me/RAFIQ_Care_Bot" target="_blank" rel="noopener">بوت RAFIQ على Telegram</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">واتساب الإدارة</a><a class="btn alt" href="/services.html">دليل الخدمات</a></div></section>
-<p class="disclaimer">تنبيه: هذا مساعد إرشادي محلي يعتمد على معلومات ثابتة داخل الموقع، وليس نموذج ذكاء اصطناعي متصلاً بالخادم. لا يقدم تشخيصاً أو وصفات أو تعديلاً للأدوية. في الحالات الطارئة تواصل مع خدمات الطوارئ المحلية أو الطبيب المعالج.</p>
+<p class="disclaimer">تنبيه: يستخدم المساعد خدمة رفيق على خادم المنصة عند توفر الاتصال، ويستعين بإجابات إرشادية محلية عند تعذرها. لا يقدم تشخيصاً أو وصفات أو تعديلاً للأدوية. في الحالات الطارئة تواصل مع خدمات الطوارئ المحلية أو الطبيب المعالج.</p>
 </main>
 <script>
 (function(){
@@ -66,9 +66,13 @@ var rules=[
 {keys:["دواء","جرعة","تشخيص","علاج","أعراض","سكري","ضغط","قرحة"],answer:"لا يستطيع مساعد رفيق تشخيص الحالات أو تحديد جرعات الأدوية. استشر الطبيب المعالج أو ممرضاً مؤهلاً، ولا تغيّر أي دواء أو جرعة من دون تعليمات طبية."},
 {keys:["تواصل","واتساب","اتصال","رقم","إدارة"],answer:"يمكنك التواصل مع إدارة رفيق عبر واتساب على الرقم الرسمي أو استخدام بوت Telegram للاستفسارات.",link:"https://wa.me/96181506299",label:"التواصل عبر واتساب"}
 ];
-function respond(q){var text=q.toLowerCase().trim();var match=null;for(var i=0;i<rules.length;i++){if(rules[i].keys.some(function(k){return text.indexOf(k.toLowerCase())!==-1;})){match=rules[i];break;}}
-if(!match)match={answer:"لم أفهم السؤال بدقة. جرّب السؤال عن الخدمات، مقدم الرعاية، التمريض، العلاج الفيزيائي، CV وCover Letters، المناطق، أو تواصل مع الإدارة عبر القنوات الرسمية.",link:"https://t.me/RAFIQ_Care_Bot",label:"التواصل مع بوت RAFIQ"};
+function localReply(q){var text=q.toLowerCase().trim();var match=null;for(var i=0;i<rules.length;i++){if(rules[i].keys.some(function(k){return text.indexOf(k.toLowerCase())!==-1;})){match=rules[i];break;}}
+if(!match)match={answer:"لم أفهم السؤال بدقة. جرّب السؤال عن دليل الخدمات، مقدم الرعاية، التمريض، العلاج الفيزيائي، CV وCover Letters، المناطق، أو تواصل مع الإدارة عبر القنوات الرسمية.",link:"https://t.me/RAFIQ_Care_Bot",label:"التواصل مع بوت RAFIQ"};
 add(match.answer,"bot");if(match.link){var a=document.createElement("a");a.href=match.link;a.className="btn alt";a.textContent=match.label;a.target=match.link.indexOf("https://")===0?"_blank":"_self";if(a.target==="_blank")a.rel="noopener";box.appendChild(a);}box.scrollTop=box.scrollHeight;}
+async function respond(q){var pending=document.createElement("div");pending.className="msg bot";pending.textContent="لحظة، أراجع معلومات رفيق…";box.appendChild(pending);box.scrollTop=box.scrollHeight;
+try{var response=await fetch("/api/agent/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q})});var payload=await response.json();if(!response.ok||!payload||payload.ok!==true||typeof payload.reply!=="string"||!payload.reply.trim())throw new Error("assistant endpoint unavailable");pending.remove();add(payload.reply.trim(),"bot");}
+catch(error){pending.remove();localReply(q);}
+box.scrollTop=box.scrollHeight;}
 function ask(q){q=(q||"").trim();if(!q)return;add(q,"user");respond(q);input.value="";}
 form.addEventListener("submit",function(e){e.preventDefault();ask(input.value);});
 document.querySelectorAll("[data-question]").forEach(function(b){b.addEventListener("click",function(){ask(b.getAttribute("data-question"));});});
