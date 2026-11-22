@@ -11,7 +11,7 @@
 ## Telegram — البوت الحالي
 - `TELEGRAM_BOT_TOKEN` — سر البوت الحالي `@RAFIQ_Care_Bot`.
 - `TELEGRAM_WEBHOOK_SECRET` — سر التحقق من Telegram، بطول 32–256 حرفاً من الأحرف التي يدعمها Telegram.
-- `TELEGRAM_MANAGER_CHAT_IDS` — غير مطلوب لمسار دليل المراكز الحالي؛ لا تضفه إلا عند اعتماد ميزة إشعار إداري جديدة.
+- `TELEGRAM_MANAGER_CHAT_IDS` — مطلوب لمسار تسليم ملفات طلبات الرعاية من مساعد الموقع إلى إدارة RAFIQ؛ ضع معرّفات محادثات المديرين المصرّح لهم فقط، مفصولة بفواصل. لا تستخدم معرّف قناة أو مجموعة عامة. لا تُفعّل التسليم قبل ضبط هذا المتغير والتحقق من وصول البوت إلى محادثات المديرين.
 - رابط الدالة الحالي: `https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/telegram-webhook`.
 - لا تعِد تسجيل Webhook قبل نشر نسخة الدالة والتحقق من عملها وتأكيد `getWebhookInfo`.
 - لا تسجل Webhook إلى Cloudflare D1 أو Render.
