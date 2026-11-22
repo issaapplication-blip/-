@@ -150,6 +150,26 @@ jobs:
           print('Health contract passed:', d)
           PY
 
+      - name: Prepare lock audit diff for review
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if git diff --quiet -- bun.lock Dockerfile; then
+            printf 'No tracked lockfile or Dockerfile changes were produced.\\n' > rafiq-lock-audit.patch
+          else
+            git diff --binary -- bun.lock Dockerfile > rafiq-lock-audit.patch
+          fi
+
+      - name: Upload lock audit diff
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rafiq-lock-audit-review-diff
+          path: rafiq-lock-audit.patch
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Report lock changes without repository writes
         shell: bash
         run: |
