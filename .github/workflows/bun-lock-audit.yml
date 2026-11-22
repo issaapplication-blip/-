@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: rafiq-bun-lock-audit
@@ -28,10 +28,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: fix/bun-lock-audit
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -149,7 +150,7 @@ jobs:
           print('Health contract passed:', d)
           PY
 
-      - name: Report lock changes and commit verified result
+      - name: Report lock changes without repository writes
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -157,29 +158,5 @@ jobs:
           echo "- Bun: $(bun --version)" >> "$GITHUB_STEP_SUMMARY"
           echo "- SHA256 before: $(cut -d' ' -f1 /tmp/bun-lock-before.sha256)" >> "$GITHUB_STEP_SUMMARY"
           echo "- SHA256 after: $(sha256sum bun.lock | cut -d' ' -f1)" >> "$GITHUB_STEP_SUMMARY"
-          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import re, subprocess
-          from pathlib import Path
-          old=Path('/tmp/bun.lock.before').read_text()
-          new=Path('bun.lock').read_text()
-          pat=re.compile(r'^    "([^"]+)": \["([^"]+)"', re.M)
-          a=dict(pat.findall(old)); b=dict(pat.findall(new))
-          print(f"- Package entries before/after: {len(a)} / {len(b)}")
-          changes=[]
-          for name in sorted(set(a)|set(b)):
-              if a.get(name)!=b.get(name):
-                  changes.append((name,a.get(name,'<added>'),b.get(name,'<removed>')))
-          print("- Version/entry changes (first 10):")
-          for name,x,y in changes[:10]:
-              print(f"  - {name}: {x} -> {y}")
-          print(f"- Total changed entries: {len(changes)}")
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet -- bun.lock Dockerfile; then
-            git add bun.lock Dockerfile
-            git commit -m "fix: regenerate bun lock and enforce frozen Docker install"
-            git push origin fix/bun-lock-audit
-          else
-            echo "No lockfile or Dockerfile changes to commit."
-          fi
+          git diff --stat -- bun.lock Dockerfile >> "$GITHUB_STEP_SUMMARY"
+          echo "No automatic commit or push is permitted from this audit workflow. Review any proposed changes in a separate pull request."
