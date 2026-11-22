@@ -1,4 +1,4 @@
-import { answerRafiqKnowledge, RAFIQ_SERVICE_KNOWLEDGE, RAFIQ_WEBSITE } from "./rafiq-service-knowledge";
+import { answerRafiqKnowledge, RAFIQ_SERVICE_KNOWLEDGE, RAFIQ_WEBSITE, RAFIQ_WHATSAPP, RAFIQ_TELEGRAM_BOT } from "./rafiq-service-knowledge";
 const resolveAgentModel = () => {
   const configured = (process.env.RAFIQ_AGENT_MODEL ?? "").trim();
   if (!configured) throw new Error("RAFIQ_AGENT_MODEL must be set when RAFIQ_AGENT_PROVIDER=openai");
