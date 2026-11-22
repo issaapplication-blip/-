@@ -54,6 +54,23 @@ jobs:
           test "$(identify -format '%wx%h' public/icon-maskable-512.png)" = "512x512"
           test "$(identify -format '%wx%h' public/apple-touch-icon.png)" = "180x180"
 
+      - name: Ensure generated icons match tracked repository assets
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          outputs=(public/icon-192.png public/icon-512.png public/icon-maskable-512.png public/apple-touch-icon.png)
+          for output in "${outputs[@]}"; do
+            git ls-files --error-unmatch "$output" >/dev/null
+          done
+          if ! git diff --exit-code -- "${outputs[@]}"; then
+            echo "::error::Generated PWA icons differ from tracked assets. Update the icon files in this pull request; this workflow will not commit or push them."
+            exit 1
+          fi
+          if [[ -n "$(git ls-files --others --exclude-standard -- "${outputs[@]}")" ]]; then
+            echo "::error::Generated PWA icons are not tracked by Git."
+            exit 1
+          fi
+
       - name: Report generated icons
         shell: bash
         run: |
