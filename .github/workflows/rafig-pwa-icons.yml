@@ -1,14 +1,14 @@
 name: RAFIQ PWA icons
 
 on:
-  push:
+  pull_request:
     branches: [main]
     paths:
       - 'public/assets/rafig-logo.png'
       - '.github/workflows/rafig-pwa-icons.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   generate-icons:
@@ -52,18 +52,10 @@ jobs:
           test "$(identify -format '%wx%h' public/icon-maskable-512.png)" = "512x512"
           test "$(identify -format '%wx%h' public/apple-touch-icon.png)" = "180x180"
 
-      - name: Commit generated icons
+      - name: Report generated icons
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/icon-192.png public/icon-512.png public/icon-maskable-512.png public/apple-touch-icon.png
-          if git diff --cached --quiet; then
-            echo "PWA icons already current."
-            exit 0
-          fi
-          git commit -m "fix: generate exact-size RAFIQ PWA icons"
-          git push
+          echo "PWA icons generated and dimension-checked. This workflow does not commit or push changes." >> "$GITHUB_STEP_SUMMARY"
 
 # PWA icon generation uses the hosted Ubuntu runner ImageMagick package.
