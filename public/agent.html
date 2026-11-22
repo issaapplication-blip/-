@@ -33,14 +33,14 @@ main{max-width:900px;margin:auto;padding:12px}.topbar{position:sticky;top:8px;z-
 <a href="/caregivers.html">خدمات CV وCover Letters</a>
 <a href="/agent.html">مساعد رفيق</a>
 </div></details></header>
-<section class="card" style="text-align:center"><img class="logo" src="/assets/rafig-logo.png?v=20260928" alt="شعار رفيق"><h1>مساعد رفيق الإرشادي</h1><p class="lead">اسأل عن خدمات RAFIQ، دليل المراكز، خدمات CV وCover Letters، أو كيفية التواصل معنا.</p></section>
+<section class="card" style="text-align:center"><img class="logo" src="/assets/rafig-logo.png?v=20260928" alt="شعار رفيق"><h1>مساعد رفيق الإرشادي</h1><p class="lead">اسأل عن الرعاية المنزلية للمسنين، التمريض، العلاج الفيزيائي، دليل المراكز، أو خدمات CV وCover Letters.</p></section>
 <section class="card chat" aria-label="محادثة مساعد رفيق">
-<div id="rafiqMessages" class="messages" role="log" aria-live="polite"><div class="msg bot">مرحباً بك في رفيق. يمكنني إرشادك إلى صفحات الخدمات والمعلومات المتاحة. اختر موضوعاً أو اكتب سؤالك.</div></div>
+<div id="rafiqMessages" class="messages" role="log" aria-live="polite"><div class="msg bot">مرحباً بك في رفيق. يمكنني مساعدتك في تقديم استفسار رعاية منزلية. أخبرني بالخدمة المطلوبة وسأجمع التفاصيل خطوة بخطوة لتحويلها إلى إدارة رفيق.</div></div>
 <div class="quick" aria-label="أسئلة سريعة">
 <button type="button" data-question="ما الخدمات المتاحة؟">الخدمات المتاحة</button>
-<button type="button" data-question="أريد معلومات عن مقدم الرعاية المنزلية">مقدم الرعاية</button>
-<button type="button" data-question="أريد التمريض المنزلي">التمريض المنزلي</button>
-<button type="button" data-question="أريد العلاج الفيزيائي المنزلي">العلاج الفيزيائي</button>
+<button type="button" data-question="أحتاج مقدم رعاية لمسن">طلب رعاية مسن</button>
+<button type="button" data-question="أحتاج ممرض أو ممرضة لمريض">طلب تمريض</button>
+<button type="button" data-question="أحتاج معالج فيزيائي">طلب علاج فيزيائي</button>
 <button type="button" data-question="أريد خدمة CV وCover Letter">CV وCover Letters</button>
 <button type="button" data-question="كيف أتواصل مع رفيق؟">التواصل</button>
 </div>
@@ -52,29 +52,22 @@ main{max-width:900px;margin:auto;padding:12px}.topbar{position:sticky;top:8px;z-
 <script>
 (function(){
 "use strict";
-var box=document.getElementById("rafiqMessages"),form=document.getElementById("rafiqAsk"),input=document.getElementById("rafiqQuestion");
-function add(text,who){var d=document.createElement("div");d.className="msg "+who;d.textContent=text;box.appendChild(d);box.scrollTop=box.scrollHeight;}
-var rules=[
-{keys:["خدمات","مختبر","مختبرات","أشعة","تصوير","معدات","مراكز","دليل"],answer:"يعرض دليل رفيق فئات المختبرات الطبية، ومراكز الأشعة والتصوير، والعلاج الفيزيائي، وبيع وتأجير المعدات الطبية. تُعرض المراكز والعروض بعد مراجعة الإدارة. افتح دليل الخدمات: /services.html",link:"/services.html",label:"فتح دليل الخدمات"},
-{keys:["مقدم الرعاية","رعاية منزلية","حفاض","استحمام","مسن"],answer:"مقدم الرعاية يساعد في أنشطة الحياة اليومية والنظافة والطعام والحركة والرفقة، ولا ينفذ الإجراءات التمريضية الطبية. اقرأ التفاصيل: /caregiver-work.html",link:"/caregiver-work.html",label:"دور مقدم الرعاية"},
-{keys:["تمريض","ممرض","ممرضة","حقن","قسطرة","مصل"],answer:"التمريض المنزلي يقدمه ممرض مؤهل وفق وصفة الطبيب وخطة الرعاية، ويشمل الإجراءات التي تقع ضمن اختصاصه. اقرأ التفاصيل: /nursing-work.html",link:"/nursing-work.html",label:"خدمات التمريض المنزلي"},
-{keys:["فيزيائي","علاج حركي","تأهيل","علاج طبيعي","عملية جراحية"],answer:"العلاج الفيزيائي المنزلي يقيّم الحركة والقدرة الوظيفية ويضع خطة تأهيل تناسب الحالة، بما فيها حالات ما بعد العمليات. اقرأ التفاصيل: /home-physiotherapy.html",link:"/home-physiotherapy.html",label:"العلاج الفيزيائي المنزلي"},
-{keys:["cv","سيرة","cover","خطاب","رسالة تقديم","السيرة الذاتية"],answer:"يوفر رفيق خدمة إعداد CV وCover Letter، مع تنسيق مهني ومراعاة ATS. تفاصيل الخدمات والأسعار: /caregivers.html",link:"/caregivers.html",label:"خدمات CV وCover Letters"},
-{keys:["خصم","كود","رمز"],answer:"تُعلن أكواد الخصم المعتمدة عبر قنوات رفيق الرسمية أو البوت. تُراجع الأكواد وتُستخدم وفق شروط العرض، ولا تعتمد أي رسالة غير صادرة عن قنوات رفيق الرسمية.",link:"https://t.me/RAFIQ_Care_Bot",label:"بوت RAFIQ"},
-{keys:["منطقة","مناطق","طرابلس","بيروت","ضنية","الضنية","زغرتا","الكورة","البترون"],answer:"يمكنك تصفح المناطق والخدمات المتاحة من صفحة المناطق. قد تختلف التغطية بحسب الخدمة والمركز المعتمد.",link:"/regions.html",label:"المناطق"},
-{keys:["طوارئ","ألم صدر","ضيق نفس","إغماء","نزيف"],answer:"إذا كانت الحالة طارئة أو تتضمن ألماً شديداً في الصدر أو ضيقاً حاداً في التنفس أو إغماءً أو نزيفاً شديداً، لا تعتمد على هذا المساعد؛ اتصل بالطوارئ المحلية أو توجّه إلى أقرب قسم طوارئ فوراً."},
-{keys:["دواء","جرعة","تشخيص","علاج","أعراض","سكري","ضغط","قرحة"],answer:"لا يستطيع مساعد رفيق تشخيص الحالات أو تحديد جرعات الأدوية. استشر الطبيب المعالج أو ممرضاً مؤهلاً، ولا تغيّر أي دواء أو جرعة من دون تعليمات طبية."},
-{keys:["تواصل","واتساب","اتصال","رقم","إدارة"],answer:"يمكنك التواصل مع إدارة رفيق عبر واتساب على الرقم الرسمي أو استخدام بوت Telegram للاستفسارات.",link:"https://wa.me/96181506299",label:"التواصل عبر واتساب"}
-];
-function localReply(q){var text=q.toLowerCase().trim();var match=null;for(var i=0;i<rules.length;i++){if(rules[i].keys.some(function(k){return text.indexOf(k.toLowerCase())!==-1;})){match=rules[i];break;}}
-if(!match)match={answer:"لم أفهم السؤال بدقة. جرّب السؤال عن دليل الخدمات، مقدم الرعاية، التمريض، العلاج الفيزيائي، CV وCover Letters، المناطق، أو تواصل مع الإدارة عبر القنوات الرسمية.",link:"https://t.me/RAFIQ_Care_Bot",label:"التواصل مع بوت RAFIQ"};
-add(match.answer,"bot");if(match.link){var a=document.createElement("a");a.href=match.link;a.className="btn alt";a.textContent=match.label;a.target=match.link.indexOf("https://")===0?"_blank":"_self";if(a.target==="_blank")a.rel="noopener";box.appendChild(a);}box.scrollTop=box.scrollHeight;}
-async function respond(q){var pending=document.createElement("div");pending.className="msg bot";pending.textContent="لحظة، أراجع معلومات رفيق…";box.appendChild(pending);box.scrollTop=box.scrollHeight;
-try{var response=await fetch("/api/agent/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q})});var payload=await response.json();if(!response.ok||!payload||payload.ok!==true||typeof payload.reply!=="string"||!payload.reply.trim())throw new Error("assistant endpoint unavailable");pending.remove();add(payload.reply.trim(),"bot");}
-catch(error){pending.remove();localReply(q);}
-box.scrollTop=box.scrollHeight;}
-function ask(q){q=(q||"").trim();if(!q)return;add(q,"user");respond(q);input.value="";}
-form.addEventListener("submit",function(e){e.preventDefault();ask(input.value);});
+var box=document.getElementById("rafiqMessages"),form=document.getElementById("rafiqAsk"),input=document.getElementById("rafiqQuestion"),flow=null;
+var WA="https://wa.me/96181506299";
+var fields={
+elderly:[["name","ما اسمك الكريم؟"],["phone","ما رقم الهاتف أو واتساب الذي يمكن للإدارة التواصل معك عليه؟"],["area","في أي مدينة أو منطقة توجد الحالة؟"],["age","كم عمر الشخص المسن؟"],["condition","ما الحالة العامة للمسن، وما نوع المساعدة التي يحتاجها خلال اليوم؟"],["mobility","هل يستطيع المشي والتحرك وحده، أم يحتاج مساعدة عند الوقوف أو الانتقال؟"],["schedule","ما الدوام المطلوب: 24 ساعة، 12 ساعة، نهاري، ليلي، أم دوام آخر؟"],["start","متى ترغبون ببدء الرعاية؟"],["notes","هل توجد تفاصيل عملية أخرى تود أن تعرفها الإدارة؟ (يمكنك كتابة لا يوجد)"]],
+nursing:[["name","ما اسمك الكريم؟"],["phone","ما رقم الهاتف أو واتساب للتواصل؟"],["area","في أي مدينة أو منطقة يوجد المريض؟"],["age","كم عمر المريض؟"],["condition","ما الحالة العامة للمريض، وما نوع التمريض أو الإجراءات المطلوبة كما وصفها الطبيب؟"],["plan","هل توجد وصفة طبيب أو خطة رعاية؟ (نعم/لا/قيد المتابعة)"],["schedule","ما الدوام المطلوب: 24 ساعة، 12 ساعة، نهاري، ليلي، أم دوام آخر؟"],["start","متى تحتاجون بدء خدمة التمريض؟"],["notes","هل هناك ملاحظات إضافية مهمة للإدارة؟ (يمكنك كتابة لا يوجد)"]],
+physio:[["name","ما اسمك الكريم؟"],["phone","ما رقم الهاتف أو واتساب للتواصل؟"],["area","في أي مدينة أو منطقة توجد الحالة؟"],["age","كم عمر المريض؟"],["condition","ما سبب الحاجة إلى العلاج الفيزيائي؟ وهل الحالة بعد عملية أو إصابة؟"],["mobility","ما الصعوبة الحركية أو الوظيفية التي يعاني منها؟"],["place","هل تفضلون جلسات في المنزل أم في مركز؟"],["schedule","كم مرة أو في أي أوقات ترغبون بالجلسات؟"],["start","متى ترغبون ببدء الجلسات؟"],["notes","هل توجد ملاحظات أخرى تريدون إيصالها للإدارة؟ (يمكنك كتابة لا يوجد)"]]
+};
+function add(t,w){var d=document.createElement("div");d.className="msg "+w;d.textContent=t;box.appendChild(d);box.scrollTop=box.scrollHeight;}
+function detect(q){if(/(ممرض|ممرضة|تمريض|nurs)/i.test(q))return"nursing";if(/(فيزيائي|طبيعي|فيزيو|physio|تأهيل)/i.test(q))return"physio";if(/(مسن|كبير السن|رعاية|مقدم رعاية|caregiver|elderly)/i.test(q))return"elderly";return null;}
+function askNext(){var f=fields[flow.type][flow.index];if(f)add(f[1],"bot");else finish();}
+function start(type){flow={type:type,index:0,data:{}};var label=type==="elderly"?"مقدم رعاية للمسن":type==="nursing"?"ممرض/ة للرعاية المنزلية":"معالج فيزيائي";add("نعم، يمكننا استقبال طلبك بدوام 24 ساعة أو 12 ساعة أو نهاري أو ليلي أو حسب الدوام الذي تحتاجه. 🌿\nسأجمع المعلومات الأساسية وأحوّلك بعدها إلى واتساب إدارة رفيق لمراجعة الحالة واختيار الشخص المناسب.\n\nنوع الطلب: "+label,"bot");askNext();}
+function finish(){var labels={elderly:"رعاية مسن / مقدم رعاية",nursing:"تمريض منزلي",physio:"علاج فيزيائي"},lines=["طلب متابعة جديد — RAFIQ","نوع الخدمة: "+labels[flow.type]];fields[flow.type].forEach(function(f){var v=(flow.data[f[0]]||"").trim();if(v)lines.push(f[1].replace(/[؟?]$/,"")+": "+v);});lines.push("ملاحظة: المعلومات مقدمة من العميل وتحتاج مراجعة الإدارة. لا يوجد تأكيد مسبق لتوفر مقدم الخدمة.");var summary=lines.join("\n");add("تم جمع المعلومات الأساسية. راجع الملخص، ثم اضغط زر واتساب لإرساله إلى إدارة رفيق. لن تُرسل الرسالة تلقائياً؛ يجب أن تضغط إرسال داخل واتساب.\n\n"+summary,"bot");var a=document.createElement("a");a.href=WA+"?text="+encodeURIComponent(summary);a.className="btn";a.target="_blank";a.rel="noopener";a.textContent="إرسال تفاصيل الحالة إلى إدارة رفيق عبر واتساب";box.appendChild(a);flow=null;box.scrollTop=box.scrollHeight;}
+function answer(q){var f=fields[flow.type][flow.index];flow.data[f[0]]=q;flow.index++;askNext();}
+async function normal(q){var p=document.createElement("div");p.className="msg bot";p.textContent="لحظة، أراجع معلومات رفيق…";box.appendChild(p);try{var r=await fetch("/api/agent/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q})}),d=await r.json();if(!r.ok||!d||d.ok!==true||typeof d.reply!=="string")throw Error("unavailable");p.remove();add(d.reply.trim(),"bot");}catch(e){p.remove();add("يمكنك الاستفسار عن رعاية مسن أو تمريض منزلي أو علاج فيزيائي أو خدمات CV. لتقديم طلب رعاية، اكتب نوع الخدمة المطلوبة.","bot");}}
+function ask(q){q=(q||"").trim();if(!q)return;add(q,"user");if(flow){answer(q);return;}var type=detect(q);if(type){start(type);return;}normal(q);}
+form.addEventListener("submit",function(e){e.preventDefault();ask(input.value);input.value="";});
 document.querySelectorAll("[data-question]").forEach(function(b){b.addEventListener("click",function(){ask(b.getAttribute("data-question"));});});
 })();
 </script>
