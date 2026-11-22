@@ -56,6 +56,16 @@ export function answerRafiqKnowledge(message:string): string | null {
   if(!raw) return null;
   const t=normalize(raw);
   if(EMERGENCY.test(raw)) return "🚨 إذا كانت هناك حالة طارئة أو خطر فوري، تواصلوا فورًا مع الإسعاف أو الفريق الطبي المعالج. لا تنتظروا رد رفيق.";
+  if(/(?:\\bcv\\b|cover\\s*letter|cover\\s*letters|سيره ذاتيه|السيره الذاتيه|سيرة ذاتية|سيره مهنيه|خطاب تقديم|رساله تقديم)/i.test(raw))
+    return `خدمة RAFIQ المتاحة للطلب هي إعداد CV وCover Letter. تشمل الصفحة تفاصيل الخدمة والأسعار المنشورة: ${RAFIQ_WEBSITE}caregivers.html — لا نضيف مؤهلات أو خبرات غير موجودة في معلومات العميل.`;
+  if(/(?:تقديم|انتساب|توظيف|تسجيل مقدم|تسجيل ممرض|تسجيل مركز|انضمام مقدم|caregiver application|provider registration)/i.test(raw))
+    return `الموقع لا يستقبل حالياً طلبات انتساب أو توظيف أو تسجيل مقدمي الخدمات والمراكز، ولا ينشئ طلبات رعاية أو حجوزات. يمكنك تصفح المعلومات والخدمات المعتمدة عبر ${RAFIQ_WEBSITE}services.html. الخدمة المباشرة الوحيدة هي إعداد CV وCover Letter: ${RAFIQ_WEBSITE}caregivers.html.`;
+  if(/(?:مقدم الرعايه|مقدم رعاية|caregiver)/i.test(raw))
+    return `صفحة RAFIQ التوعوية تشرح مهام مقدم الرعاية المنزلية وحدود دوره غير الطبي: ${RAFIQ_WEBSITE}caregiver-work.html. الصفحة معلوماتية ولا تنشئ حجزاً أو طلب مطابقة.`;
+  if(/(?:تمريض منزلي|ممرض|ممرضه|nursing|nurse)/i.test(raw))
+    return `تعرف إلى مهام التمريض المنزلي وشروط تنفيذ الإجراءات وفق وصفة الطبيب وخطة الرعاية: ${RAFIQ_WEBSITE}nursing-work.html. هذه معلومات عامة وليست حجزاً لخدمة تمريض.`;
+  if(/(?:علاج فيزيائي منزلي|علاج فيزيائي|علاج طبيعي|physio)/i.test(raw))
+    return `اقرأ معلومات العلاج الفيزيائي المنزلي وفوائده ومتى يُنصح به: ${RAFIQ_WEBSITE}home-physiotherapy.html. دليل المراكز المعتمدة متاح عبر ${RAFIQ_WEBSITE}services.html.`;
   if(/(?:خصم|تخفيض|كود|قسيمه|قسيمة|discount|coupon)/i.test(raw))
     return "لا أستطيع تأكيد خصم أو إصدار كود قبل موافقة إدارة RAFIQ على المركز وقيمة الخصم وشروط الاستخدام. سيظهر فقط العرض المعتمد رسميًا.";
   if(/(?:مختبر|تحاليل|فحوص|laborator)/i.test(raw))
