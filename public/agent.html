@@ -64,7 +64,38 @@ var questions=[["service","ما الخدمة المطلوبة؟ رعاية مس�
 function next(){if(intake.step<questions.length){add((intake.step+1)+"/"+questions.length+" — "+questions[intake.step][1],"bot");return;}finish();}
 function start(q){intake={service:detectService(q),step:detectService(q)?1:0};add("نعم، رفيق يستقبل طلبات الرعاية المنزلية والتمريض والعلاج الفيزيائي، ويمكنك طلب دوام 24/7 أو 12 ساعة أو نهاري أو ليلي أو أي جدول يناسبكم. 🌿\n\nسنأخذ المعلومات خطوة بخطوة، ثم نجهز لك رسالة ترسلها إلى إدارة رفيق عبر واتساب لمراجعة الحالة واختيار الشخص المناسب. استقبال الطلب لا يعني تأكيد توفر مقدم الخدمة قبل مراجعة الإدارة.","bot");next();}
 function answer(q){var key=questions[intake.step][0];if(key==="service")intake.service=q;else intake[key]=q;intake.step++;next();}
-function finish(){var summary=["طلب متابعة حالة — RAFIQ | رفيق","الخدمة: "+(intake.service||"غير محددة"),"لمن الخدمة / العمر: "+(intake.person||"غير مذكور"),"الحالة الصحية / سبب الطلب: "+(intake.condition||"غير مذكور"),"المنطقة: "+(intake.area||"غير محددة"),"الدوام وموعد البدء: "+(intake.schedule||"غير محدد"),"الاحتياجات: "+(intake.needs||"غير مذكورة"),"خطة الطبيب / تفاصيل التمريض أو التأهيل: "+(intake.professional||"غير مذكورة"),"الحركة واحتياطات السلامة: "+(intake.mobility||"غير مذكورة"),"التفضيلات والتفاصيل الإضافية: "+(intake.preferences||"لا يوجد"),"اسم ورقم طالب الخدمة: "+(intake.contact||"غير مذكور"),"المصدر: مساعد رفيق على الموقع"].join("\n");add("اكتملت المعلومات الأولية. راجع الملخص، ثم اضغط زر واتساب وأرسل الرسالة بنفسك إلى إدارة رفيق. بعد استلامها، تدرس الإدارة الحالة وتتحقق من إمكانية توفير الشخص المناسب وتتواصل معك. لم يتم إرسال أي بيانات تلقائياً.","bot");add(summary,"bot");link("https://wa.me/96181506299?text="+encodeURIComponent(summary),"إرسال تفاصيل الحالة إلى إدارة رفيق عبر WhatsApp");add("تابع قنوات رفيق الرسمية للاطلاع على التحديثات والعروض:","bot");addSocial();intake=null;}
+function finish(){
+var summary=[ "طلب متابعة حالة — RAFIQ | رفيق","الخدمة: "+(intake.service||"غير محددة"),"لمن الخدمة / العمر: "+(intake.person||"غير مذكور"),"الحالة الصحية / سبب الطلب: "+(intake.condition||"غير مذكور"),"المنطقة: "+(intake.area||"غير محددة"),"الدوام وموعد البدء: "+(intake.schedule||"غير محدد"),"الاحتياجات: "+(intake.needs||"غير مذكورة"),"خطة الطبيب / تفاصيل التمريض أو التأهيل: "+(intake.professional||"غير مذكورة"),"الحركة واحتياطات السلامة: "+(intake.mobility||"غير مذكورة"),"التفضيلات والتفاصيل الإضافية: "+(intake.preferences||"لا يوجد"),"اسم ورقم طالب الخدمة: "+(intake.contact||"غير مذكور")].join("\\n");
+add("اكتملت المعلومات الأولية. راجع الملخص أدناه. لن نرسله إلى الإدارة إلا بعد موافقتك الصريحة. سنرسل الحد الأدنى اللازم إلى مجموعة إدارة رفيق على Telegram للمراجعة، ثم نوجّهك إلى WhatsApp الإدارة لمتابعة الطلب. لا ترسل تقارير طبية كاملة أو وثائق هوية أو بيانات دفع.","bot");
+add(summary,"bot");
+var consentWrap=document.createElement("div");consentWrap.className="msg bot";
+var label=document.createElement("label");label.style.display="block";label.style.marginBottom="10px";
+var check=document.createElement("input");check.type="checkbox";check.style.marginLeft="8px";
+label.appendChild(check);label.appendChild(document.createTextNode("أوافق على إرسال ملخص هذه الحالة والبيانات التي أدخلتها إلى إدارة رفيق عبر Telegram لمراجعة الطلب والتواصل معي."));
+consentWrap.appendChild(label);
+var send=document.createElement("button");send.type="button";send.className="btn";send.textContent="موافقة وإرسال الملف إلى الإدارة";
+consentWrap.appendChild(send);box.appendChild(consentWrap);box.scrollTop=box.scrollHeight;
+send.addEventListener("click",async function(){
+if(!check.checked){add("يرجى تحديد الموافقة أولاً. لم يتم إرسال أي بيانات.","bot");return;}
+send.disabled=true;send.textContent="جارٍ إرسال الملف إلى الإدارة…";
+try{
+var response=await fetch("/api/care-intake",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({summary:summary,consent:true})});
+var data=await response.json();
+if(!response.ok||!data||data.ok!==true||!data.requestRef)throw new Error(data&&data.error?data.error:"delivery_failed");
+add("✅ تم تسليم ملف الحالة إلى إدارة رفيق عبر Telegram. رقم المتابعة: "+data.requestRef+". لم يتم تأكيد توفر مقدم خدمة بعد؛ الإدارة ستراجع الحالة وتتواصل معك.","bot");
+var follow="مرحباً، أرسلت طلب متابعة إلى إدارة رفيق عبر المساعد. رقم المتابعة: "+data.requestRef+". أرجو متابعة طلبي.";
+link("https://wa.me/96181506299?text="+encodeURIComponent(follow),"الانتقال إلى WhatsApp الإدارة لمتابعة الطلب");
+add("اضغط الرابط لفتح محادثة WhatsApp مع الإدارة، ثم اضغط إرسال لإتمام المتابعة.","bot");
+send.textContent="تم تسليم الملف";
+intake=null;
+}catch(error){
+add("تعذر تأكيد وصول الملف إلى إدارة رفيق، لذلك لم نعتبر الطلب مستلماً ولم نوجّهك على أنه تم التسليم. يمكنك التواصل مباشرة مع الإدارة عبر WhatsApp: +961 81 506 299.","bot");
+link("https://wa.me/96181506299","التواصل اليدوي مع إدارة رفيق");
+send.disabled=false;send.textContent="إعادة محاولة الإرسال";
+}
+});
+intake=null;
+}
 var rules=[
 {keys:["خدمات","مختبر","مختبرات","أشعة","تصوير","معدات","مراكز","دليل"],answer:"يعرض دليل رفيق فئات المختبرات الطبية، ومراكز الأشعة والتصوير، والعلاج الفيزيائي، وبيع وتأجير المعدات الطبية. تُعرض المراكز والعروض بعد مراجعة الإدارة.",url:"/services.html",label:"فتح دليل الخدمات"},
 {keys:["cv","سيرة","cover","خطاب","رسالة تقديم"],answer:"يوفر رفيق خدمة إعداد CV وCover Letter. تفاصيل الخدمات والأسعار:",url:"/caregivers.html",label:"خدمات CV وCover Letters"},
