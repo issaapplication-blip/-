@@ -1324,6 +1324,24 @@ app.post("/api/public/institution-intake",forwardPublicIntake)
   }
   return{ok:true,status:"processed",results};
 })
+.post("/api/care-intake",async({request,set})=>{
+  if(!allowPublicAgentChat(request)){set.status=429;return{ok:false,error:"rate limit exceeded"}}
+  let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}
+  const summary=typeof input?.summary==="string"?input.summary.trim():"";
+  if(input?.consent!==true||!summary||summary.length>8000){set.status=400;return{ok:false,error:"explicit consent and a valid case summary are required"}}
+  const managerIds=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
+  if(!telegramConfigured()||!managerIds.length){set.status=503;return{ok:false,error:"manager Telegram delivery is not configured"}}
+  const requestRef="RFQ-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().slice(0,8).toUpperCase();
+  const notice=["📥 طلب حالة جديد — RAFIQ | رفيق","مرجع الطلب: "+requestRef,"المصدر: مساعد رفيق على الموقع","موافقة العميل على الإرسال: نعم","","ملخص الحالة:",summary,"","⚠️ مراجعة إدارية مطلوبة. لا يوجد مقدم خدمة مؤكد أو حجز تلقائي."].join("\n");
+  let delivered=0;
+  for(const managerId of managerIds){
+    try{await telegramSendText(managerId,notice);delivered++;}
+    catch(error){console.error(JSON.stringify({event:"rafig_care_intake_telegram_delivery_failed",requestRef,managerId,error:String(error).slice(0,180)}));}
+  }
+  if(delivered===0){set.status=502;return{ok:false,error:"Telegram manager delivery failed"}}
+  console.log(JSON.stringify({event:"rafig_care_intake_delivered",requestRef,managerRecipients:delivered}));
+  return{ok:true,status:"delivered_to_management",requestRef,deliveredTo:delivered};
+})
 .post("/api/agent/chat",async({request,set})=>{const started=Date.now();if(!allowPublicAgentChat(request)){set.status=429;return{ok:false,error:"rate limit exceeded"}}console.log(JSON.stringify({event:"rafig_agent_chat_received"}));let input:any;try{input=await request.json()}catch{set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_json"}));return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>4000){set.status=400;console.warn(JSON.stringify({event:"rafig_agent_chat_invalid_message"}));return{ok:false,error:"invalid message"}}try{const result=await draftInboundReply(message);console.log(JSON.stringify({event:"rafig_agent_chat_completed",model:result.model,durationMs:Date.now()-started}));return{ok:true,reply:result.reply,model:result.model}}catch(error){console.error(JSON.stringify({event:"rafig_agent_chat_failed",error:String(error).slice(0,160),durationMs:Date.now()-started}));return{ok:true,reply:rafiqFallback(message),model:"rafig-local-fallback"}}})
 .post("/api/agent/draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const message=typeof input?.message==="string"?input.message.trim():"";if(!message||message.length>8000){set.status=400;return{ok:false,error:"invalid message"}}try{const result=await draftAgentReply(message,typeof input?.language==="string"?input.language:undefined);return{ok:true,draft:result.reply,model:result.model,humanApprovalRequired:true}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
 .post("/api/agent/outreach-draft",async({request,set})=>{if(!requireAdminToken(request)){set.status=401;return{ok:false,error:"unauthorized"}}let input:any;try{input=await request.json()}catch{set.status=400;return{ok:false,error:"invalid json"}}const target=input?.target;if(target!=="laboratory"&&target!=="medical_equipment_supplier"&&target!=="radiology_center"){set.status=400;return{ok:false,error:"invalid outreach target"}}const institutionName=typeof input?.institutionName==="string"?input.institutionName.trim():"",language=typeof input?.language==="string"?input.language.trim():"";if(institutionName.length>200||language.length>40){set.status=400;return{ok:false,error:"invalid input"}}try{const result=await draftInstitutionOutreach(target,institutionName,language||undefined);return{ok:true,target,institutionName:institutionName||null,draft:result.reply,model:result.model,humanApprovalRequired:true,sendingPerformed:false}}catch{set.status=502;return{ok:false,error:"agent provider request failed"}}})
