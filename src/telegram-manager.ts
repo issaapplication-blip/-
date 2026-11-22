@@ -10,13 +10,20 @@ export type ManagerDeps = {
 };
 
 export function parseManagerChatIds(value?: string | null): string[] {
-  return Array.from(new Set((value || "").split(",").map(v => v.trim()).filter(v => /^\d+$/.test(v))));
+  // Telegram supergroups and groups use negative chat IDs (for example -100…).
+  // Preserve the ID as a string; do not coerce it through Number.
+  return Array.from(new Set(
+    (value || "")
+      .split(",")
+      .map(v => v.trim())
+      .filter(v => /^-?\\d+$/.test(v) && v !== "0" && v !== "-0")
+  ));
 }
 
 export async function handleManagerCommand(input: ManagerCommandInput, deps: ManagerDeps): Promise<boolean> {
   const chatId = String(input.chatId);
   if (input.chatType !== "private" || !deps.managerChatIds.includes(chatId) || !input.text) return false;
-  const match = input.text.trim().match(/^\/(\S+)(?:\s+([\s\S]*))?$/);
+  const match = input.text.trim().match(/^\\/(\\S+)(?:\\s+([\\s\\S]*))?$/);
   if (!match) return false;
   const command = match[1].split("@")[0].toLowerCase();
   if (command === "manager" || command === "help") {
@@ -28,7 +35,7 @@ export async function handleManagerCommand(input: ManagerCommandInput, deps: Man
       "تُنشر المراكز والعروض يدويًا بعد موافقة الإدارة فقط.",
       "استخدم /services لعرض فئات الدليل و /areas لعرض المناطق.",
       "خدمة CV وCover Letter مستقلة عبر /cv."
-    ].join("\n"));
+    ].join("\\n"));
     return true;
   }
   if (["broadcast","broadcast_test","publish_ads","publish_specialty_ads","folders","folder","member","assign"].includes(command)) {
