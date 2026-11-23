@@ -66,6 +66,9 @@ describe("RAFIQ current product scope", () => {
     expect(telegramSource).not.toContain("natural_care_intake_started");
     expect(telegramSource).not.toContain("request_submitted");
     expect(telegramSource).toContain("submissions_not_supported");
+    expect(telegramSource).not.toContain("telegramAdminCommand");
+    expect(telegramSource).not.toContain("telegramAdminApprove");
+    expect(telegramSource).not.toContain("telegramSendContactRequest");
   });
 
   test("WhatsApp inbound is forwarded to Telegram only with no automated replies", () => {
