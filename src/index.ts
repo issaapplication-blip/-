@@ -46,17 +46,18 @@ const TELEGRAM_ONBOARDING_KEY = "rafig-telegram-channel-bot-invite-2026-10";
 const RAFIQ_TELEGRAM_INVITE = `${RAFIQ_TELEGRAM_BOT}?start=rafiq`;
 const TELEGRAM_ONBOARDING_MESSAGE = [
   "👋 أهلًا بكم من رفيق | RAFIQ 🇱🇧",
-  "يسرّنا أن نعرّفكم رسميًا بخدمة رفيق للرعاية المنزلية في لبنان.",
+  "رفيق دليل معلومات وإعلانات للمراكز الطبية المعتمدة في لبنان.",
+  "🧪 المختبرات الطبية",
+  "🩻 الأشعة والتصوير",
+  "🦿 مراكز العلاج الفيزيائي",
+  "🦽 بيع وتأجير المعدات الطبية",
+  "📄 خدمة CV وCover Letter متاحة بشكل مستقل.",
   "",
-  "يمكنكم استخدام بوت رفيق للسؤال عن الخدمات أو كتابة طلبكم مباشرة:",
-  "🤖 بوت رفيق: " + RAFIQ_TELEGRAM_BOT,
-  "🔗 رابط الدعوة: " + RAFIQ_TELEGRAM_INVITE,
-  "",
-  "ولمتابعة الإعلانات والأخبار والتحديثات:",
+  "🤖 بوت RAFIQ: " + RAFIQ_TELEGRAM_BOT,
   "📢 قناة رفيق: " + RAFIQ_TELEGRAM_CHANNEL,
+  "📱 للتواصل اليدوي مع الإدارة: WhatsApp +961 81 506 299",
   "",
-  "إذا احتجتم إلى متابعة إدارية أو معلومات حساسة، يمكنكم التواصل مع إدارة رفيق عبر WhatsApp: +961 81 506 299",
-  "",
+  "لا يستقبل RAFIQ طلبات رعاية أو انتساب أو توظيف أو تسجيل مراكز أو حجوزات.",
   "— فريق رفيق | RAFIQ 🇱🇧"
 ].join("\n");
 const RAFIQ_WHATSAPP_CHANNEL_URL = RAFIQ_WHATSAPP_CHANNEL;
