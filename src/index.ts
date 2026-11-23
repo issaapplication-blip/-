@@ -5,7 +5,7 @@ import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
 import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
-import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramSendContactRequest, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
+import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
 import { sendMessage } from "./messaging-service";
 import { RAFIQ_CONFIG } from "./rafiq-config";
@@ -830,50 +830,6 @@ const handleTelegramWebhook = async({request,set}:any)=>{
     const data=String(callback?.data??"");
     if(callbackChatId && /^(?:svc|reqsvc|reqarea):/.test(data)){await telegramSendText(callbackChatId,telegramSigned("هذه القائمة القديمة لطلبات الرعاية لم تعد متاحة. يستخدم RAFIQ حاليًا دليل المراكز الطبية المعتمدة وخدمة CV وCover Letter فقط."));return{ok:true,status:"legacy_care_callback_retired"};}
     await telegramAnswerCallbackQuery(String(callback.id)).catch(()=>{});
-    if(callbackChatId){
-      const sessionQ=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(callbackChatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
-      const session=Array.isArray(sessionQ.body)?sessionQ.body[0]:null;
-      if(data.startsWith("svc:")){
-        const service:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
-        const key=data.slice(4);
-        const selectedService=service[key];
-        if(!selectedService){set.status=400;return{ok:false,error:"unknown service"}}
-        const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-        const createdSession=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(callbackChatId),telegram_user_id:String(callback?.from?.id??""),language:telegramLanguage(callback?.message??{}),status:"collecting",service_type:selectedService})});
-        if(!createdSession.response.ok){
-          console.error(JSON.stringify({event:"rafig_telegram_request_session_create_failed",status:createdSession.response.status}));
-          await telegramSendText(callbackChatId,telegramSigned("تعذّر حفظ طلبك الآن. أرسل /request لنبدأ طلبًا جديدًا."));
-          return{ok:true,status:"request_session_create_failed"};
-        }
-        await telegramSendText(callbackChatId,telegramSigned("📝 تم اختيار الخدمة: "+selectedService+"\nرقم الطلب: "+requestId+"\n\nممتاز 🌿 حتى نتابع طلبك بالشكل الصحيح، في أي مدينة أو منطقة تحتاج إلى الخدمة؟"),{inline_keyboard:[
-          [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
-          [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
-          [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
-          [{text:"منطقة أخرى",callback_data:"reqarea:other"}]
-        ]});
-        return{ok:true,status:"callback_service_selected",request_id:requestId};
-      }
-      if(data.startsWith("reqsvc:") && session){
-        const key=data.slice(7);
-        const service:Record<string,string>={elderly:"رعاية كبار السن",patient:"رعاية المرضى",nurse:"التمريض المنزلي",physio:"العلاج الفيزيائي المنزلي"};
-        await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({service_type:service[key]||key,updated_at:new Date().toISOString()})});
-        await telegramSendText(callbackChatId,telegramSigned("ممتاز. اختر المنطقة:"),{inline_keyboard:[
-          [{text:"طرابلس",callback_data:"reqarea:طرابلس"},{text:"الضنية",callback_data:"reqarea:الضنية"}],
-          [{text:"زغرتا",callback_data:"reqarea:زغرتا"},{text:"الكورة",callback_data:"reqarea:الكورة"}],
-          [{text:"البترون",callback_data:"reqarea:البترون"},{text:"بيروت",callback_data:"reqarea:بيروت"}],
-          [{text:"منطقة أخرى",callback_data:"reqarea:other"}]
-        ]});
-        return{ok:true,status:"request_service_selected"};
-      }
-      if(data.startsWith("reqarea:") && session){
-        const area=data.slice(8);
-        const finalArea=area==="other"?"منطقة أخرى":area;
-        const savedArea=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(session.id)),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({area:finalArea,updated_at:new Date().toISOString()})});
-        if(!savedArea.response.ok)throw new Error("could not save Telegram request area");
-        await telegramSendText(callbackChatId,telegramSigned("📍 تم تحديد المنطقة: "+finalArea+"\n\nحتى لا نسجل طلبًا ناقصًا، أجب عن هذه الأسئلة القصيرة خطوة بخطوة.\n\n1/3: هل الطلب لمسن أم لمريض؟ وكم عمره تقريبًا؟"));
-        return{ok:true,status:"request_area_saved",request_id:session.request_id};
-      }
-    }
     return{ok:true,status:"callback_ignored"};
   }
 
@@ -1056,7 +1012,6 @@ const handleTelegramWebhook = async({request,set}:any)=>{
     if(commandReply){
       const welcomeOnStart=command==="/start";
       const outbound=await reply(welcomeOnStart?telegramCommandReply("/start",language):commandReply);
-      if(welcomeOnStart && message?.chat?.type==="private") await telegramSendContactRequest(chatId).catch(()=>{});
       return{ok:true,status:"command_replied",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
 
