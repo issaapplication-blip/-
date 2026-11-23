@@ -9,8 +9,7 @@ type OutreachTarget =
   | "laboratory"
   | "medical_equipment_supplier"
   | "radiology_center"
-  | "physiotherapy"
-;
+  | "physiotherapy";
 
 const SYSTEM_PROMPT = `You are the official RAFIQ | رفيق public information assistant for Lebanon.
 
@@ -153,6 +152,6 @@ export const draftInstitutionOutreach = async (
   };
   const language = languageHint ? `Write the draft in ${languageHint}.` : "Write the draft in Arabic.";
   const name = institutionName?.trim() ? institutionName.trim() : "the institution";
-  const input = `${language}\n\nPrepare the approved RAFIQ first-contact WhatsApp message for ${name}, a ${targetLabel[target]}.\nUse the institutional outreach baseline in the system instructions. Personalize only the institution name and confirmed specialty/services.\nThe message must introduce RAFIQ, mention free membership, free institutional service advertising, a dedicated barcode/QR, and open discussion of member discount and the price reference (Ministry of Health, insurance/social security, or another agreed reference).\nState the proposed 20% platform commission and end-of-day Whish Money settlement only as terms to be discussed and formalized, not as an existing agreement.\nAsk for the responsible person's name or official email.\nDo not claim any partnership or prior contact.\nReturn only the ready-to-review message.`;
+  const input = `${language}\n\nPrepare the approved RAFIQ first-contact WhatsApp message for ${name}, a ${targetLabel[target]}.\nUse the institutional outreach baseline in the system instructions. Personalize only the institution name and confirmed specialty/services.\nThe message must introduce RAFIQ as an informational advertising directory for approved providers and invite the institution to discuss a listing or advertisement. Do not promise free membership, a barcode/QR, a discount, a commission percentage, payment collection, or settlement terms. Ask management to approve and document any proposed commercial terms before publication.\nAsk for the responsible person's name or official email.\nDo not claim any partnership or prior contact.\nReturn only the ready-to-review message.`;
   return callAgent(input);
 };
