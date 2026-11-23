@@ -49,7 +49,7 @@ th{background:#f7fbf9;color:#087f58}
 <section class="card" style="text-align:center">
 <img class="brand" src="/assets/rafig-logo.png?v=20261004" alt="RAFIQ | رفيق">
 <h1>لوحة مدير RAFIQ</h1>
-<p><strong>مراجعة الطلبات والملفات ومتابعتها لحظة بلحظة</strong></p>
+<p><strong>مراجعة طلبات CV وCover Letter وملفاتها</strong></p>
 <p class="small">الوصول الفعلي محمي بتسجيل دخول حساب المدير وصلاحية Admin نشطة في Supabase. لا تعتمد المنصة على إخفاء الرابط لحماية البيانات.</p><div class="actions" style="justify-content:center;margin-top:10px"><a class="btn alt" href="https://t.me/RAFIQ_Care_Bot" target="_blank" rel="noopener">🤖 Telegram Bot</a><a class="btn alt" href="https://t.me/+a7CDblNyGkw1Yjg8" target="_blank" rel="noopener">📢 Telegram Channel</a><a class="btn alt" href="https://whatsapp.com/channel/0029Vb90gxSC6Zvj6gjLWs1K" target="_blank" rel="noopener">📢 WhatsApp Channel</a><a class="btn alt" href="https://chat.whatsapp.com/GYzi4ZfJSx0KAUIPIycp1Z" target="_blank" rel="noopener">👥 WhatsApp Group 1</a><a class="btn alt" href="https://chat.whatsapp.com/EG1B0hPBtTt5rGVEGqv6Kc" target="_blank" rel="noopener">👥 WhatsApp Group 2</a><a class="btn alt" href="https://wa.me/96181506299" target="_blank" rel="noopener">💬 WhatsApp</a></div>
 </section>
 
@@ -68,7 +68,7 @@ th{background:#f7fbf9;color:#087f58}
 </div>
 <div id="dashMsg"></div>
 <div class="stats" style="margin-top:12px">
-<div class="stat"><b id="cTotal">0</b>كل طلبات الانتساب والرعاية</div>
+<div class="stat"><b id="cTotal">0</b>طلبات CV وCover Letter</div>
 <div class="stat"><b id="cPending">0</b>طلبات قيد المراجعة</div>
 <div class="stat"><b id="cApproved">0</b>طلبات مقبولة</div>
 <div class="stat"><b id="cRejected">0</b>طلبات مرفوضة</div>
@@ -79,7 +79,7 @@ th{background:#f7fbf9;color:#087f58}
 </section>
 
 <section class="card hidden" id="requestsSection">
-<div class="actions" style="justify-content:space-between"><div><h2 style="margin:0">📋 جميع الطلبات</h2><p class="small">الطلبات الجديدة تظهر تلقائيًا عند وصولها. يمكنك فتح التفاصيل ومراجعة الملفات ثم تسجيل القرار.</p></div><button class="btn alt" id="showPending">عرض المعلّقة فقط</button></div>
+<div class="actions" style="justify-content:space-between"><div><h2 style="margin:0">📋 طلبات CV وCover Letter</h2><p class="small">تظهر طلبات CV وCover Letter فقط. يمكنك مراجعة البيانات والملفات وتسجيل قرار الإدارة.</p></div><button class="btn alt" id="showPending">عرض المعلّقة فقط</button></div>
 <div class="table-wrap"><table><thead><tr><th>#</th><th>المتقدم</th><th>نوع الخدمة</th><th>الهاتف</th><th>المنطقة</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="requestRows"></tbody></table></div>
 </section>
 
@@ -286,7 +286,7 @@ function notifyNewApplication(){
     const Ctx=window.AudioContext||window.webkitAudioContext;
     if(Ctx){const ctx=new Ctx(),o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=880;g.gain.value=.06;o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.16);setTimeout(()=>ctx.close(),300);}
   }catch(_){}
-  if('Notification' in window && Notification.permission==='granted')new Notification('RAFIQ — طلب جديد',{body:'وصل طلب CV جديد إلى لوحة المدير.'});
+  if('Notification' in window && Notification.permission==='granted')new Notification('RAFIQ — طلب جديد',{body:'وصل طلب CV أو Cover Letter جديد إلى لوحة المدير.'});
 }
 function subscribeLive(){
   if(liveChannel)db.removeChannel(liveChannel);
