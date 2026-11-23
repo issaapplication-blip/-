@@ -17,7 +17,7 @@ describe("RAFIQ current product scope", () => {
   });
 
   test("provider and institution registration is not accepted", () => {
-    const answer = answerRafiqKnowledge("أريد التسجيل كمقدم رعاية");
+    const answer = answerRafiqKnowledge("أريد انتساب كمقدم رعاية");
     expect(answer).toContain("لا يستقبل RAFIQ");
     expect(answer).toContain("طلبات انتساب");
   });
