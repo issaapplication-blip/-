@@ -158,22 +158,9 @@ const TELEGRAM_ANNOUNCEMENT = [
   "🌐 الموقع: " + RAFIQ_WEBSITE,
   "📱 WhatsApp الرسمي: " + RAFIQ_WHATSAPP_NUMBER + " — " + RAFIQ_WHATSAPP
 ].join("\n");
-const draftInboundReply = async (message: string, senderPhone?: string) => {
-  const key = senderPhone?.trim() || "unknown";
-  const now = Date.now();
-  const previous = careSessions.get(key);
-  const active = Boolean(previous && now - previous.updatedAt < CARE_SESSION_TTL_MS);
-  const careMode = CARE_KEYWORD_RE.test(message) || active;
-  const messages = [...(previous?.messages ?? []), message].slice(-8);
-  if (careMode) careSessions.set(key, { updatedAt: now, messages });
-  const context = careMode ? [
-    "ACTIVE RAFIQ CARE INTAKE: true",
-    senderPhone ? `WhatsApp sender number (known contact, confirm it with the customer): ${senderPhone}` : "WhatsApp sender number unavailable.",
-    "Recent intake conversation:",
-    ...messages.map((item, index) => `${index + 1}. ${item}`),
-  ].join("\n") : undefined;
+const draftInboundReply = async (message: string, _senderPhone?: string) => {
   try {
-    return await draftAgentReply(message, undefined, context);
+    return await draftAgentReply(message);
   } catch (error) {
     console.error(JSON.stringify({event:"rafig_agent_provider_failed",reason:String(error).slice(0,160)}));
     return {reply:rafiqFallback(message),model:"rafig-local-fallback"};
@@ -355,23 +342,23 @@ const broadcastTelegramAnnouncement = async (announcementKey: string, body: stri
 const telegramCommandReply = (command: string, language="ar") => {
   const translations:any={
     ar:{
-      start:"أهلًا بك في رفيق | RAFIQ 🇱🇧\\nأنا مساعد رفيق للرعاية المنزلية. يمكنك السؤال عن الخدمات أو بدء طلب.\\n\\n/services للخدمات\\n/request لطلب رعاية\\n/help للمساعدة\\n/contact للتواصل",
-      services:"خدمات رفيق: رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.",
-      request:"سنبدأ طلبك خطوة بخطوة. اختر الخدمة أو اكتب تفاصيل حاجتك.",
+      start:"أهلًا بك في رفيق | RAFIQ 🇱🇧\\nهذا البوت دليل معلومات للمختبرات الطبية والأشعة ومراكز العلاج الفيزيائي وبيع وتأجير المعدات الطبية. خدمة CV وCover Letter متاحة بشكل مستقل.\\n\\n/services دليل الخدمات\\n/cv خدمة السيرة الذاتية\\n/help للمساعدة\\n/contact للتواصل",
+      services:"دليل RAFIQ: المختبرات الطبية، الأشعة والتصوير، مراكز العلاج الفيزيائي، وبيع وتأجير المعدات الطبية. خدمة CV وCover Letter متاحة بشكل مستقل.",
+      request:"لا يستقبل RAFIQ طلبات رعاية أو انتساب أو توظيف أو تسجيل مراكز أو حجوزات. استخدم /services لدليل المراكز أو /cv لخدمة CV وCover Letter.",
       help:"أهلًا بك 🌿 يمكنك كتابة طلبك مباشرة، مثل: أحتاج ممرضة لوالدتي، أو أريد رعاية لكبير سن. سأساعدك خطوة بخطوة في اختيار الخدمة والمنطقة والتفاصيل.\n\nللبدء اضغط /request، ولعرض الخدمات اضغط /services. القرارات الإدارية والمعلومات الحساسة يتابعها فريق رفيق.",
       contact:"للتواصل مع إدارة رفيق: +961 81 506 299"
     },
     en:{
-      start:"Welcome to RAFIQ | رفيق 🇱🇧\\nI am RAFIQ's home-care assistant. Ask about our services or start a request.\\n\\n/services Services\\n/request Care request\\n/help Help\\n/contact Contact",
-      services:"RAFIQ services: elderly care, in-home patient care, home nursing, and home physiotherapy.",
-      request:"We will build your care request step by step. Choose a service or describe what you need.",
-      help:"Ask your question naturally. If it requires an administrative decision or sensitive information, the RAFIQ team will handle it.",
+      start:"Welcome to RAFIQ | رفيق 🇱🇧\\nThis bot is the RAFIQ information directory for approved medical labs, imaging centers, physiotherapy centers, and medical equipment sales/rental. CV and Cover Letter preparation is a separate service.\\n\\n/services Directory\\n/cv CV service\\n/help Help\\n/contact Contact",
+      services:"RAFIQ directory: medical laboratories, radiology/imaging, physiotherapy centers, and medical equipment sales/rental. CV and Cover Letter preparation is a separate service.",
+      request:"RAFIQ does not accept care, provider-registration, employment, institution-registration, or booking requests. Use /services for the directory or /cv for the CV service.",
+      help:"Ask about the approved directory or CV and Cover Letter service. RAFIQ does not accept care or registration requests or bookings.",
       contact:"RAFIQ administration: +961 81 506 299"
     },
     fr:{
       start:"Bienvenue chez RAFIQ | رفيق 🇱🇧\\nJe suis l’assistant de soins à domicile de RAFIQ. Demandez nos services ou commencez une demande.",
-      services:"Services RAFIQ : soins aux personnes âgées, soins à domicile des patients, soins infirmiers à domicile et physiothérapie à domicile.",
-      request:"Nous allons construire votre demande étape par étape. Choisissez un service ou décrivez votre besoin.",
+      services:"Annuaire RAFIQ : laboratoires médicaux, radiologie/imagerie, centres de physiothérapie et vente/location de matériel médical. Le CV et la lettre de motivation sont un service séparé.",
+      request:"RAFIQ ne reçoit pas de demandes de soins, d’inscription, d’emploi ou de réservation. Utilisez /services pour l’annuaire ou /cv pour le service CV.",
       help:"Posez votre question naturellement. Les décisions administratives et informations sensibles sont traitées par l’équipe RAFIQ.",
       contact:"Administration RAFIQ : +961 81 506 299"
     },
@@ -402,21 +389,11 @@ const telegramCommandReply = (command: string, language="ar") => {
 };
 const TELEGRAM_MARKETING_TARGET = () => String(process.env.TELEGRAM_MARKETING_CHAT_ID || "").trim();
 const TELEGRAM_MARKETING_ADS = [
-  "🌿 RAFIQ | رفيق\\n\\nرعاية كبار السن والمرضى تبدأ بخطوة صحيحة.\\nنقدّم خدمات رعاية كبار السن، رعاية المرضى داخل المنزل، التمريض المنزلي، والعلاج الفيزيائي المنزلي.\\n\\n💚 انضموا إلى مجتمع رفيق وتابعوا خدماتنا ومستجداتنا.\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
-  "💚 عندما تحتاج عائلتك إلى رعاية منزلية، رفيق معكم بخطوات واضحة ومنظمة.\\n\\n👴 كبار السن\\n🏠 المرضى\\n👩‍⚕️ التمريض المنزلي\\n🦿 العلاج الفيزيائي المنزلي\\n\\nانضموا إلى مجتمع رفيق: https://t.me/+a7CDblNyGkw1Yjg8",
-  "🌱 رعاية أفضل تبدأ بمعلومة صحيحة واختيار مسار الخدمة المناسب.\\n\\nRAFIQ | رفيق ينظم طلبات الرعاية المنزلية ويتابعها وفق إجراءات المنصة.\\n\\n📲 انضموا: https://t.me/+a7CDblNyGkw1Yjg8",
-  "🤝 رفيق معكم خطوة بخطوة: من السؤال، إلى تحديد الخدمة المطلوبة، إلى متابعة الطلب وفق مسار المراجعة.\\n\\nللانضمام إلى مجتمع RAFIQ: https://t.me/+a7CDblNyGkw1Yjg8",
-  "📢 مجتمع RAFIQ يكبر بكم.\\n\\nتابعوا الإعلانات والتحديثات المتعلقة بالرعاية المنزلية وشاركونا مع من يحتاج إلى هذه الخدمات.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
-  "📌 ماذا يقدم رفيق؟\\n\\n👴 رعاية كبار السن\\n🏠 رعاية المرضى داخل المنزل\\n👩‍⚕️ التمريض المنزلي\\n🦿 العلاج الفيزيائي المنزلي\\n\\nللمتابعة والانضمام: https://t.me/+a7CDblNyGkw1Yjg8",
-  "👩‍⚕️ لمقدمي الخدمات الصحية والرعاية المنزلية: رفيق يتيح استقبال طلبات الانتساب ومراجعة الملفات ضمن مسار منظم.\\n\\nممرض/ة، مقدم/ة رعاية، أو معالج/ة فيزيائي/ة؟ تابعوا RAFIQ: https://t.me/+a7CDblNyGkw1Yjg8",
-  "🏠 للعائلات: لا تبقوا وحدكم أمام احتياجات الرعاية المنزلية.\\n\\nاكتبوا طلبكم بوضوح ليتم التعامل معه وفق الخدمة المطلوبة ومسار المراجعة المناسب.\\n\\n💚 انضموا: https://t.me/+a7CDblNyGkw1Yjg8",
-  "🩺 للممرضين ومقدمي الرعاية والمعالجين الفيزيائيين: إذا كنتم ترغبون بالانضمام إلى شبكة رفيق، تابعوا خطوات الانتساب الرسمية.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
-  "🌟 RAFIQ منصة تجمع العائلات وطلبات الرعاية المنزلية ومقدمي الخدمات ضمن مسار منظم.\\n\\nتابعوا المجتمع لتصلكم الإعلانات والتحديثات الجديدة.\\n\\n📲 https://t.me/+a7CDblNyGkw1Yjg8",
-  "🚀 هل تريد الانضمام كمقدم رعاية؟\\n\\nابدأ بالتعرّف إلى رفيق وخدماته، ثم تابع إجراءات الانتساب الرسمية عبر المنصة.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
-  "👩‍⚕️ ممرض/ة؟ 🦿 معالج/ة فيزيائي/ة؟ 🤝 مقدم/ة رعاية؟\\n\\nرفيق يرحب بطلبات الانتساب ويعمل على مراجعة الملفات وفق الإجراءات المعتمدة.\\n\\nابدأ من هنا: https://t.me/+a7CDblNyGkw1Yjg8",
-  "💚 تحتاج عائلتكم إلى رعاية منزلية؟\\n\\nتعرّفوا إلى خدمات رفيق وابدؤوا طلبكم بالمعلومات الأساسية ليتم توجيهكم إلى المسار المناسب.\\n\\n📲 https://t.me/+a7CDblNyGkw1Yjg8",
-  "🔔 خطوة واحدة قد تكون بداية الطريق المناسب للرعاية.\\n\\nتابعوا RAFIQ | رفيق لمعرفة الخدمات وتقديم الطلبات ومتابعة الإعلانات الجديدة.\\n\\n👉 https://t.me/+a7CDblNyGkw1Yjg8",
-  "🇱🇧 دعوة لكل من يهتم بالرعاية المنزلية في لبنان: عائلات، ممرضون، مقدمو رعاية، ومعالجون فيزيائيون.\\n\\nكونوا جزءًا من مجتمع RAFIQ.\\n\\n💚 https://t.me/+a7CDblNyGkw1Yjg8"
+  "🇱🇧 RAFIQ | رفيق — دليل المراكز الطبية المعتمدة في لبنان.\\n\\n🧪 المختبرات الطبية\\n🩻 الأشعة والتصوير\\n🦿 مراكز العلاج الفيزيائي\\n🦽 بيع وتأجير المعدات الطبية\\n\\nتصفحوا دليل الخدمات: "+RAFIQ_WEBSITE+"services.html",
+  "📍 دليل RAFIQ يغطي طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت وباقي لبنان بحسب المراكز المعتمدة المنشورة.\\n\\nللاطلاع على المناطق: "+RAFIQ_WEBSITE+"regions.html",
+  "📄 خدمة إعداد CV وCover Letter متاحة بشكل مستقل عن دليل المراكز.\\n\\nالتفاصيل: "+RAFIQ_WEBSITE+"caregivers.html",
+  "🏥 للمختبرات ومراكز الأشعة والعلاج الفيزيائي وموردي المعدات الطبية: يمكنكم التواصل مع إدارة RAFIQ لمراجعة إمكانية إدراج مركز أو إعلان. لا يتم النشر إلا بعد التحقق والموافقة.\\n\\nWhatsApp: "+RAFIQ_WHATSAPP,
+  "💚 لا ينشر RAFIQ مركزًا أو سعرًا أو عرضًا أو خصمًا قبل موافقة الإدارة. لا توجد نسبة خصم موحدة؛ تُراجع كل خدمة وسعرها الفعلي بشكل مستقل.\\n\\nبوت RAFIQ: "+RAFIQ_TELEGRAM_BOT
 ];
 let lastTelegramMarketingSlot = "";
 const supabaseBroadcastPending=async(key:string,recipientId:string)=>supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:key,recipient_id:recipientId,status:"pending",error_message:null})});
