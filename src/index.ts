@@ -828,6 +828,7 @@ const handleTelegramWebhook = async({request,set}:any)=>{
   if(callback?.id){
     const callbackChatId=callback?.message?.chat?.id;
     const data=String(callback?.data??"");
+    if(callbackChatId && /^(?:svc|reqsvc|reqarea):/.test(data)){await telegramSendText(callbackChatId,telegramSigned("هذه القائمة القديمة لطلبات الرعاية لم تعد متاحة. يستخدم RAFIQ حاليًا دليل المراكز الطبية المعتمدة وخدمة CV وCover Letter فقط."));return{ok:true,status:"legacy_care_callback_retired"};}
     await telegramAnswerCallbackQuery(String(callback.id)).catch(()=>{});
     if(callbackChatId){
       const sessionQ=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(callbackChatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
@@ -1044,68 +1045,13 @@ const handleTelegramWebhook = async({request,set}:any)=>{
       return{ok:true,status:"invite_sent",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
     if(command==="/services"){
-      const outbound=await telegramSendText(chatId,telegramSigned("خدمات رفيق الأساسية:"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"svc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"svc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"svc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"svc:physio"}]
-      ]});
-      return{ok:true,status:"services_menu",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
+      const outbound=await reply("دليل RAFIQ يشمل المختبرات الطبية، الأشعة والتصوير، مراكز العلاج الفيزيائي، وبيع وتأجير المعدات الطبية.\n\nدليل الخدمات: "+RAFIQ_WEBSITE+"services.html\nخدمة CV وCover Letter: "+RAFIQ_WEBSITE+"caregivers.html");
+      return{ok:true,status:"directory_menu",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
-    if(command==="/request"){
-      const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
-      const outbound=await telegramSendText(chatId,telegramSigned("📝 بدأنا طلب رعاية جديد.\nرقم الطلب: "+requestId+"\n\nاختر الخدمة:"),{inline_keyboard:[
-        [{text:"👴 كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 مريض",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ تمريض",callback_data:"reqsvc:nurse"},{text:"🦿 علاج فيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return{ok:true,status:"request_started",request_id:requestId,message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
+    if(command==="/request" || command==="/apply" || command==="/register"){
+      const outbound=await reply("لا يستقبل RAFIQ طلبات رعاية أو انتساب أو توظيف أو تسجيل مراكز أو حجوزات. يمكنكم تصفح دليل المراكز المعتمدة عبر "+RAFIQ_WEBSITE+"services.html أو خدمة CV وCover Letter عبر "+RAFIQ_WEBSITE+"caregivers.html.");
+      return{ok:true,status:"submissions_not_supported",message_id:outbound?.result?.message_id??null,conversation_id:conversationId};
     }
-    if(message?.chat?.type==="private" && textBody && !textBody.startsWith("/")){
-      const requestSessions=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions?chat_id=eq."+encodeURIComponent(String(chatId))+"&status=eq.collecting&order=updated_at.desc&limit=1&select=*");
-      const requestSession=Array.isArray(requestSessions.body)?requestSessions.body[0]:null;
-      if(requestSession){
-        const sessionUrl="/rest/v1/rafiq_telegram_request_sessions?id=eq."+encodeURIComponent(String(requestSession.id));
-        if(!requestSession.case_type){
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({case_type:textBody.slice(0,500),updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not save Telegram request case type");
-          await reply("شكرًا لك 🌿\n\n2/3: ما نظام الرعاية المطلوب؟ مثلًا: نهارًا، ليلًا، مبيت، أو ساعات محددة.");
-          return{ok:true,status:"request_case_type_saved",request_id:requestSession.request_id};
-        }
-        if(!requestSession.schedule){
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({schedule:textBody.slice(0,500),updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not save Telegram request schedule");
-          await reply("وصلتني التفاصيل. 🌿\n\n3/3: ما أهم المساعدة المطلوبة؟ اذكر باختصار ما يحتاجه الشخص يوميًا، وأي حاجة تمريضية أو علاج فيزيائي إن وجدت.");
-          return{ok:true,status:"request_schedule_saved",request_id:requestSession.request_id};
-        }
-        if(!requestSession.notes){
-          const details=textBody.slice(0,2000);
-          const payload={request_id:requestSession.request_id,telegram_chat_id:String(chatId),telegram_user_id:requestSession.telegram_user_id,language:requestSession.language,service_type:requestSession.service_type,area:requestSession.area,case_type:requestSession.case_type,schedule:requestSession.schedule,care_needs:details,source:"telegram"};
-          const created=await supabaseServerRest("/rest/v1/application_intakes",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({application_type:"طلب رعاية عائلية",applicant_name:"طلب Telegram — "+String(chatId),phone:null,area:requestSession.area,status:"review",payload,source:"telegram",agent_reply:"طلب رعاية Telegram مكتمل مبدئيًا وينتظر مراجعة الإدارة."})});
-          if(!created.response.ok)throw new Error("could not create Telegram care request");
-          const intake=Array.isArray(created.body)?created.body[0]:created.body;
-          const saved=await supabaseServerRest(sessionUrl,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({notes:details,status:"submitted",updated_at:new Date().toISOString()})});
-          if(!saved.response.ok)throw new Error("could not complete Telegram request session");
-          await reply("✅ اكتملت المعلومات الأساسية وسُجّل طلب الرعاية للمراجعة.\n\nالخدمة: "+String(requestSession.service_type||"—")+"\nالمنطقة: "+String(requestSession.area||"—")+"\nنوع الحالة والعمر: "+String(requestSession.case_type)+"\nالدوام: "+String(requestSession.schedule)+"\nالاحتياجات: "+details+"\n\nRequest ID: "+String(requestSession.request_id)+"\nرقم الطلب في RAFIQ: "+String(intake?.application_number??"—")+"\n\nستراجعه إدارة رفيق وتتواصل معكم عبر Telegram. إذا احتجنا رقم هاتف للتنسيق سنطلبه منك لاحقًا.");
-          return{ok:true,status:"request_submitted",request_id:requestSession.request_id,application_number:intake?.application_number??null};
-        }
-      }
-    }
-
-    // Natural-language help should start a structured care intake, even when the AI provider has no credits.
-    if(message?.chat?.type==="private" && /(?:\bhelp\b|need help|assistance|\bplease help\b|\bneed (?:a )?(?:nurse|caregiver|care|home care|elderly care|physiotherapy)\b|\b(?:home nursing|elderly care|patient care|physiotherapy)\b|care for (?:my|the) (?:mother|father|parent|grandmother|grandfather)|(?:my|the) (?:mother|father|parent|grandmother|grandfather) needs care|مساعدة|ساعدني|ساعدونا|بدي ساعد|بدي مساعدة|اريد المساعدة|أريد المساعدة|أحتاج مساعدة|احتاج مساعدة|طلبت المساعدة|طلب مساعدة|محتاج مساعدة|بدي ممرضة|بدي ممرض|بدي رعاية|بدي تمريض|ممرضة ل|ممرض ل|رعاية ل(?:أمي|امي|أبي|ابي|والدتي|والدي)|تمريض منزلي|علاج فيزيائي|رعاية كبار السن|رعاية مريض)/i.test(textBody)){
-      const requestId="RFQ-TG-"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      const started=await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({request_id:requestId,chat_id:String(chatId),telegram_user_id:String(message?.from?.id??""),language,status:"collecting"})});
-      if(!started.response.ok){
-        console.error(JSON.stringify({event:"rafig_telegram_natural_help_session_failed",status:started.response.status}));
-        await reply("أهلًا بك في رفيق 🌿 أستطيع مساعدتك في رعاية كبار السن، رعاية المرضى، التمريض المنزلي أو العلاج الفيزيائي. تعذّر بدء الطلب آليًا الآن؛ جرّب /request أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
-        return{ok:true,status:"natural_help_session_failed"};
-      }
-      await telegramSendText(chatId,telegramSigned("أهلًا بك في رفيق 🌿 أنا هنا لمساعدتك. لنبدأ طلب الرعاية خطوة بخطوة.\nرقم الطلب: "+requestId+"\n\nما الخدمة التي تحتاجها؟"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return{ok:true,status:"natural_help_intake_started",request_id:requestId};
-    }
-
     const commandReply=telegramCommandReply(textBody,language);
     if(commandReply){
       const welcomeOnStart=command==="/start";
@@ -1153,36 +1099,6 @@ const handleTelegramWebhook = async({request,set}:any)=>{
       if(!upd.response.ok)throw new Error("could not update CV order");
       if(prompt)await reply(prompt);
       return{ok:true,status:"cv_step_updated",order_id:activeOrder.id};
-    }
-
-    // Natural-language care intake: let Telegram behave like the WhatsApp care assistant.
-    // Do not intercept general questions (e.g. "what services do you offer?"); only start intake
-    // when the person expresses a concrete need for home care.
-    const naturalCareRequest = message?.chat?.type === "private" && !textBody.startsWith("/") &&
-      /(?:بدي|بدنا|اريد|أريد|أحتاج|احتاج|محتاج|محتاجة|نحتاج|ابحث عن|نبحث عن|بحاجة إلى|بحاجه الى|طلب رعاية|ممرض(?:ة)?|ممرضة|ممرض|رعاية لكبير سن|رعاية لوالد|رعاية لوالدتي|رعاية لوالدي|رعاية لأبي|رعاية لأمي|رعاية لجدي|رعاية لجدتي|مريض بالبيت|علاج فيزيائي|need (?:a |an )?(?:nurse|caregiver|home care|home nursing|physiotherapy)|looking for (?:care|a nurse|a caregiver)|need help for (?:my|the) (?:father|mother|parent|grandmother|grandfather)|home care for|besoin de soins|cherche (?:une infirmière|un aide-soignant|des soins)|ho bisogno di (?:assistenza|un infermiere|una badante)|suche (?:eine Pflegekraft|häusliche Pflege))/i.test(textBody);
-    if (naturalCareRequest) {
-      const requestId = "RFQ-TG-" + new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14) + "-" + crypto.randomUUID().replace(/-/g,"").slice(0,6).toUpperCase();
-      const created = await supabaseServerRest("/rest/v1/rafiq_telegram_request_sessions", {
-        method:"POST",
-        headers:{"Prefer":"return=representation"},
-        body:JSON.stringify({
-          request_id:requestId,
-          chat_id:String(chatId),
-          telegram_user_id:String(message?.from?.id??""),
-          language,
-          status:"collecting"
-        })
-      });
-      if (!created.response.ok) {
-        console.error(JSON.stringify({event:"rafig_telegram_natural_intake_create_failed",status:created.response.status}));
-        await reply("أرغب بمساعدتك 🌿 لكن تعذّر فتح طلبك الآن. أرسل /request للمحاولة مجددًا، أو تواصل مع الإدارة عبر WhatsApp: +961 81 506 299.");
-        return {ok:true,status:"natural_intake_create_failed"};
-      }
-      await telegramSendText(chatId,telegramSigned("أكيد، رفيق معك 🌿\nسأتابع طلبك خطوة بخطوة.\n\nاختر الخدمة الأقرب إلى حاجتك:"),{inline_keyboard:[
-        [{text:"👴 رعاية كبار السن",callback_data:"reqsvc:elderly"},{text:"🏠 رعاية المرضى",callback_data:"reqsvc:patient"}],
-        [{text:"👩‍⚕️ التمريض المنزلي",callback_data:"reqsvc:nurse"},{text:"🦿 العلاج الفيزيائي",callback_data:"reqsvc:physio"}]
-      ]});
-      return {ok:true,status:"natural_care_intake_started",request_id:requestId};
     }
 
     const conversationHistory=nextContext.map((item:any)=>item.direction==="outbound"?`RAFIQ: ${item.text}`:`Customer: ${item.text}`).join("\n");
