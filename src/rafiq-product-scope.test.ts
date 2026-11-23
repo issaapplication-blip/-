@@ -68,6 +68,20 @@ describe("RAFIQ current product scope", () => {
     expect(telegramSource).toContain("submissions_not_supported");
   });
 
+  test("WhatsApp inbound is forwarded to Telegram only with no automated replies", () => {
+    const kapsoStart = telegramSource.indexOf("const processKapsoMessageCore=");
+    const metaStart = telegramSource.indexOf("const processMetaMessageCore=");
+    const metaEnd = telegramSource.indexOf("const processMetaMessage=", metaStart);
+    const kapsoCore = telegramSource.slice(kapsoStart, metaStart);
+    const metaCore = telegramSource.slice(metaStart, metaEnd);
+    expect(kapsoCore).toContain("forwardWhatsAppToTelegramManager");
+    expect(metaCore).toContain("forwardWhatsAppToTelegramManager");
+    expect(kapsoCore).not.toContain("draftInboundReply");
+    expect(metaCore).not.toContain("draftInboundReply");
+    expect(telegramSource).not.toContain("RAFIQ_WHATSAPP_AUTO_REPLY");
+    expect(telegramSource).not.toContain("kapsoSendText");
+  });
+
   test("generic public intake endpoint is retired while CV intake is restricted to CV + Cover Letter", () => {
     expect(publicIntake).toContain("status:410");
     expect(applicationIntake).toContain('new Set(["CV + Cover Letter"])');
