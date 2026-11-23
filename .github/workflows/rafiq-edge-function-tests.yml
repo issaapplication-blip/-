@@ -29,6 +29,8 @@ on:
       - 'docs/recovery/**'
       - 'ops/**'
       - '.github/workflows/rafiq-edge-function-tests.yml'
+      - 'AGENTS.md'
+      - 'docs/superpowers/**'
       - '.github/workflows/keep-alive.yml'
       - 'supabase/functions/telegram-webhook/**'
       - 'supabase/migrations/**'
