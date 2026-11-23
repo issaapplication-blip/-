@@ -1,3 +1,4 @@
+import { RAFIQ_WEBSITE } from "./rafiq-service-knowledge";
 const emergency=/(صعوبة\s*شديدة\s*بالتنفس|ضيق\s*تنفس\s*شديد|ألم\s*صدر|نزيف\s*شديد|فقدان\s*الوعي|إغماء|تشنج|سكتة|اختناق|emergency|urgent|chest pain|unconscious|stroke)/i;
 const medical=/(دواء|جرعة|تشخيص|وصفة|أوقف\s*العلاج|غيّر\s*العلاج|medication|dose|diagnos|prescription|wound|dressing)/i;
 const sensitive=/(سعر|تكلف|بكم|دفع|whish|price|cost|payment|فاتورة|تحويل|متوفر|متاحة|حجز|booking|available|شكوى|عقد|قانون|محامي|complaint|dispute)/i;
