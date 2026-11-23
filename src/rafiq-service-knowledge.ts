@@ -57,7 +57,7 @@ export function answerRafiqKnowledge(message:string): string | null {
   if(EMERGENCY.test(raw))
     return "🚨 إذا كانت هناك حالة طارئة أو خطر فوري، تواصلوا فورًا مع الإسعاف أو الفريق الطبي المعالج. لا تنتظروا رد رفيق.";
 
-  if(/(?:\\bcv\\b|cover\\s*letter|cover\\s*letters|سيره ذاتيه|السيره الذاتيه|سيرة ذاتية|سيره مهنيه|خطاب تقديم|رساله تقديم)/i.test(raw))
+  if(/(?:\bcv\b|cover\s*letter|cover\s*letters|سيره ذاتيه|السيره الذاتيه|سيرة ذاتية|سيره مهنيه|خطاب تقديم|رساله تقديم)/i.test(raw))
     return `خدمة RAFIQ المتاحة للأفراد هي إعداد CV وCover Letter. التفاصيل والأسعار المنشورة هنا: ${RAFIQ_WEBSITE}caregivers.html. لا نضيف مؤهلات أو خبرات غير موجودة في معلومات العميل.`;
 
   if(/(?:تقديم|انتساب|توظيف|تسجيل مقدم|تسجيل ممرض|تسجيل مركز|انضمام مقدم|caregiver application|provider registration|apply|register)/i.test(raw))
