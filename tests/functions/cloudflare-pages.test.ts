@@ -9,6 +9,8 @@ const cvAdmin = read("public/admin.html");
 const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
 const adminHtml = read("public/admin.html");
+const backend = read("src/index.ts");
+const adminMigration = read("supabase/migrations/20261120110000_require_active_admin_profile.sql");
 const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
 const sitemap = read("public/sitemap.xml");
@@ -71,3 +73,21 @@ test("admin dashboard requires database authorization and an active admin profil
   expect(adminHtml).toContain("db.from('profiles').select('id,email,role,status')");
   expect(adminHtml).toContain("profile?.role!=='admin'||profile?.status!=='active'");
 });
+
+
+test("backend admin API validates the user, database admin RPC, and active profile", () => {
+  expect(backend).toContain('supabaseRest("/auth/v1/user",token');
+  expect(backend).toContain('supabaseRest("/rest/v1/rpc/is_admin",token,{method:"POST",body:"{}"})');
+  expect(backend).toContain("adminCheck.body!==true");
+  expect(backend).toContain('profile?.role!=="admin"||profile?.status!=="active"');
+});
+
+ 
+test("database admin authorization requires a signed-in active admin profile", () => {
+  expect(adminMigration).toContain("public.is_admin()");
+  expect(adminMigration).toContain("auth.uid()");
+  expect(adminMigration).toContain("lower(coalesce(p.role, '')) = 'admin'");
+  expect(adminMigration).toContain("lower(coalesce(p.status, '')) = 'active'");
+  expect(adminMigration).not.toContain("issaapplication@gmail.com");
+});
+
