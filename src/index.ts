@@ -22,9 +22,6 @@ const effectiveAgentModel = () => {
   if (provider === "gemini") return (process.env.RAFIQ_GEMINI_MODEL ?? "gemini-3.6-flash").trim();
   return (process.env.RAFIQ_AGENT_MODEL ?? "not-configured").trim() || "not-configured";
 };
-const CARE_KEYWORD_RE = /رعاية|مسن|رعاية منزلية|تمريض|\bkareh\b|\bnurse\b/i;
-const CARE_SESSION_TTL_MS = 30 * 60 * 1000;
-const careSessions = new Map<string, { updatedAt: number; messages: string[] }>();
 const publicAgentChatWindows = new Map<string, { startedAt: number; count: number }>();
 const allowPublicAgentChat = (request: Request) => {
   const forwarded = request.headers.get("x-forwarded-for") || "";
