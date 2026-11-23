@@ -593,7 +593,7 @@ const handleTelegramWebhook = async({request,set}:any)=>{
   if(callback?.id){
     const callbackChatId=callback?.message?.chat?.id;
     const data=String(callback?.data??"");
-    if(callbackChatId && /^(?:svc|reqsvc|reqarea):/.test(data)){await telegramSendText(callbackChatId,telegramSigned("هذه القائمة القديمة لطلبات الرعاية لم تعد متاحة. يستخدم RAFIQ حاليًا دليل المراكز الطبية المعتمدة وخدمة CV وCover Letter فقط."));return{ok:true,status:"legacy_care_callback_retired"};}
+    if(callbackChatId && /^(?:svc|reqsvc|reqarea):/.test(data)){await telegramAnswerCallbackQuery(String(callback.id)).catch(()=>{});await telegramSendText(callbackChatId,telegramSigned("هذه القائمة القديمة لطلبات الرعاية لم تعد متاحة. يستخدم RAFIQ حاليًا دليل المراكز الطبية المعتمدة وخدمة CV وCover Letter فقط."));return{ok:true,status:"legacy_care_callback_retired"};}
     await telegramAnswerCallbackQuery(String(callback.id)).catch(()=>{});
     return{ok:true,status:"callback_ignored"};
   }
