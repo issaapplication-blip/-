@@ -125,7 +125,7 @@ const forwardWhatsAppToTelegramManager=async(message:any,identity:any,body:strin
   const managerChatIds=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
   if(!managerChatIds.length){console.warn(JSON.stringify({event:"rafig_whatsapp_to_telegram_no_manager_ids"}));return{status:"no_manager_ids",delivered:0};}
   const messageType=typeof message?.type==="string"?message.type:"text";
-  const notice=telegramSigned(["📲 رسالة WhatsApp واردة إلى RAFIQ","","👤 رقم العميل: "+(identity.phone||"غير متوفر"),"💬 نوع الرسالة: "+messageType,"💬 الرسالة:",body||"[رسالة غير نصية]","","🟡 الحالة: بانتظار متابعة المدير","⚠️ لا يوجد رد تلقائي على WhatsApp.","يمكن للمدير مراجعة الرسالة والتواصل يدويًا إذا لزم الأمر."].join("\\n"));
+  const notice=telegramSigned(["📲 رسالة WhatsApp واردة إلى RAFIQ","","👤 رقم العميل: "+(identity.phone||"غير متوفر"),"💬 نوع الرسالة: "+messageType,"💬 الرسالة:",body||"[رسالة غير نصية]","","🟡 الحالة: بانتظار متابعة المدير","⚠️ لا يوجد رد تلقائي على WhatsApp.","يمكن للمدير مراجعة الرسالة والتواصل يدويًا إذا لزم الأمر."].join("\n"));
   let delivered=0;
   for(const managerId of managerChatIds){try{await telegramSendText(managerId,notice);delivered++;}catch(error){console.error(JSON.stringify({event:"rafig_whatsapp_to_telegram_send_failed",managerId,error:String(error).slice(0,240)}));}}
   return{status:delivered?"forwarded_to_telegram":"telegram_delivery_failed",delivered};
@@ -134,7 +134,7 @@ const TELEGRAM_WELCOME = [
   "أهلًا وسهلًا بك في رفيق | RAFIQ 🇱🇧",
   "هذا البوت دليل معلومات للمختبرات الطبية والأشعة ومراكز العلاج الفيزيائي وبيع وتأجير المعدات الطبية. خدمة CV وCover Letter متاحة بشكل مستقل.",
   "",
-  "🧪 المختبرات الطبية\\n🩻 الأشعة والتصوير\\n🦿 مراكز العلاج الفيزيائي\\n🦽 بيع وتأجير المعدات الطبية",
+  "🧪 المختبرات الطبية\n🩻 الأشعة والتصوير\n🦿 مراكز العلاج الفيزيائي\n🦽 بيع وتأجير المعدات الطبية",
   "",
   "📢 قناة رفيق: " + RAFIQ_TELEGRAM_CHANNEL,
   "🤖 رابط البوت: " + RAFIQ_TELEGRAM_INVITE,
@@ -177,7 +177,7 @@ const verifyMetaSignature=async(body:string,signature:string|null)=>{const secre
 const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessageCore=async(message:any,conversation:any={})=>{
   const identity=kapsoIdentity(message,conversation);
   const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
+  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
   const body=typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():"");
   const id=String(message?.id??"unknown");
   if(!body||(!identity.phone&&!identity.bsuid))return{id,status:"ignored_missing_identity_or_text"};
@@ -196,7 +196,7 @@ const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secr
 const processMetaMessageCore=async(message:any)=>{
   const identity={phone:typeof message?.from==="string"?message.from:""};
   const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
+  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
   const body=typeof message?.text?.body==="string"?message.text.body.trim():"";
   const id=String(message?.id??"unknown");
   if(!body||!identity.phone)return{id,status:"ignored_missing_identity_or_text"};
@@ -312,35 +312,35 @@ const broadcastTelegramAnnouncement = async (announcementKey: string, body: stri
 const telegramCommandReply = (command: string, language="ar") => {
   const translations:any={
     ar:{
-      start:"أهلًا بك في رفيق | RAFIQ 🇱🇧\\nهذا البوت دليل معلومات للمختبرات الطبية والأشعة ومراكز العلاج الفيزيائي وبيع وتأجير المعدات الطبية. خدمة CV وCover Letter متاحة بشكل مستقل.\\n\\n/services دليل الخدمات\\n/cv خدمة السيرة الذاتية\\n/help للمساعدة\\n/contact للتواصل",
+      start:"أهلًا بك في رفيق | RAFIQ 🇱🇧\nهذا البوت دليل معلومات للمختبرات الطبية والأشعة ومراكز العلاج الفيزيائي وبيع وتأجير المعدات الطبية. خدمة CV وCover Letter متاحة بشكل مستقل.\n\n/services دليل الخدمات\n/cv خدمة السيرة الذاتية\n/help للمساعدة\n/contact للتواصل",
       services:"دليل RAFIQ: المختبرات الطبية، الأشعة والتصوير، مراكز العلاج الفيزيائي، وبيع وتأجير المعدات الطبية. خدمة CV وCover Letter متاحة بشكل مستقل.",
       request:"لا يستقبل RAFIQ طلبات رعاية أو انتساب أو توظيف أو تسجيل مراكز أو حجوزات. استخدم /services لدليل المراكز أو /cv لخدمة CV وCover Letter.",
       help:"أهلًا بك 🌿 يمكنك كتابة طلبك مباشرة، مثل: أحتاج ممرضة لوالدتي، أو أريد رعاية لكبير سن. سأساعدك خطوة بخطوة في اختيار الخدمة والمنطقة والتفاصيل.\n\nللبدء اضغط /request، ولعرض الخدمات اضغط /services. القرارات الإدارية والمعلومات الحساسة يتابعها فريق رفيق.",
       contact:"للتواصل مع إدارة رفيق: +961 81 506 299"
     },
     en:{
-      start:"Welcome to RAFIQ | رفيق 🇱🇧\\nThis bot is the RAFIQ information directory for approved medical labs, imaging centers, physiotherapy centers, and medical equipment sales/rental. CV and Cover Letter preparation is a separate service.\\n\\n/services Directory\\n/cv CV service\\n/help Help\\n/contact Contact",
+      start:"Welcome to RAFIQ | رفيق 🇱🇧\nThis bot is the RAFIQ information directory for approved medical labs, imaging centers, physiotherapy centers, and medical equipment sales/rental. CV and Cover Letter preparation is a separate service.\n\n/services Directory\n/cv CV service\n/help Help\n/contact Contact",
       services:"RAFIQ directory: medical laboratories, radiology/imaging, physiotherapy centers, and medical equipment sales/rental. CV and Cover Letter preparation is a separate service.",
       request:"RAFIQ does not accept care, provider-registration, employment, institution-registration, or booking requests. Use /services for the directory or /cv for the CV service.",
       help:"Ask about the approved directory or CV and Cover Letter service. RAFIQ does not accept care or registration requests or bookings.",
       contact:"RAFIQ administration: +961 81 506 299"
     },
     fr:{
-      start:"Bienvenue chez RAFIQ | رفيق 🇱🇧\\nCet outil est un annuaire d’information pour les laboratoires médicaux, centres d’imagerie, centres de physiothérapie et la vente/location de matériel médical. Le CV et la lettre de motivation sont un service séparé.",
+      start:"Bienvenue chez RAFIQ | رفيق 🇱🇧\nCet outil est un annuaire d’information pour les laboratoires médicaux, centres d’imagerie, centres de physiothérapie et la vente/location de matériel médical. Le CV et la lettre de motivation sont un service séparé.",
       services:"Annuaire RAFIQ : laboratoires médicaux, radiologie/imagerie, centres de physiothérapie et vente/location de matériel médical. Le CV et la lettre de motivation sont un service séparé.",
       request:"RAFIQ ne reçoit pas de demandes de soins, d’inscription, d’emploi ou de réservation. Utilisez /services pour l’annuaire ou /cv pour le service CV.",
       help:"Posez vos questions sur l’annuaire approuvé ou le service CV et lettre de motivation. RAFIQ ne reçoit pas de demandes de soins ou de réservation.",
       contact:"Administration RAFIQ : +961 81 506 299"
     },
     it:{
-      start:"Benvenuto in RAFIQ | رفيق 🇱🇧\\nQuesta è la directory informativa RAFIQ per laboratori medici, radiologia, centri di fisioterapia e vendita/noleggio di attrezzature mediche. CV e lettera di presentazione sono un servizio separato.",
+      start:"Benvenuto in RAFIQ | رفيق 🇱🇧\nQuesta è la directory informativa RAFIQ per laboratori medici, radiologia, centri di fisioterapia e vendita/noleggio di attrezzature mediche. CV e lettera di presentazione sono un servizio separato.",
       services:"Directory RAFIQ: laboratori medici, radiologia/diagnostica per immagini, centri di fisioterapia e vendita/noleggio di attrezzature mediche.",
       request:"RAFIQ non accetta richieste di assistenza, registrazione, lavoro o prenotazione. Usa /services per la directory o /cv per il servizio CV.",
       help:"Chiedi informazioni sulla directory approvata o sul servizio CV. RAFIQ non accetta richieste di assistenza o prenotazioni.",
       contact:"Amministrazione RAFIQ: +961 81 506 299"
     },
     de:{
-      start:"Willkommen bei RAFIQ | رفيق 🇱🇧\\nDieses Angebot ist ein Informationsverzeichnis für medizinische Labore, Radiologie/Bildgebung, Physiotherapiezentren sowie Verkauf und Vermietung medizinischer Geräte. CV und Anschreiben sind ein separater Service.",
+      start:"Willkommen bei RAFIQ | رفيق 🇱🇧\nDieses Angebot ist ein Informationsverzeichnis für medizinische Labore, Radiologie/Bildgebung, Physiotherapiezentren sowie Verkauf und Vermietung medizinischer Geräte. CV und Anschreiben sind ein separater Service.",
       services:"RAFIQ-Verzeichnis: medizinische Labore, Radiologie/Bildgebung, Physiotherapiezentren sowie Verkauf und Vermietung medizinischer Geräte.",
       request:"RAFIQ nimmt keine Pflege-, Registrierungs-, Beschäftigungs- oder Buchungsanfragen an. Verwenden Sie /services für das Verzeichnis oder /cv für den CV-Service.",
       help:"Fragen Sie nach dem freigegebenen Verzeichnis oder dem CV-Service. RAFIQ nimmt keine Pflege- oder Buchungsanfragen an.",
@@ -359,11 +359,11 @@ const telegramCommandReply = (command: string, language="ar") => {
 };
 const TELEGRAM_MARKETING_TARGET = () => String(process.env.TELEGRAM_MARKETING_CHAT_ID || "").trim();
 const TELEGRAM_MARKETING_ADS = [
-  "🇱🇧 RAFIQ | رفيق — دليل المراكز الطبية المعتمدة في لبنان.\\n\\n🧪 المختبرات الطبية\\n🩻 الأشعة والتصوير\\n🦿 مراكز العلاج الفيزيائي\\n🦽 بيع وتأجير المعدات الطبية\\n\\nتصفحوا دليل الخدمات: "+RAFIQ_WEBSITE+"services.html",
-  "📍 دليل RAFIQ يغطي طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت وباقي لبنان بحسب المراكز المعتمدة المنشورة.\\n\\nللاطلاع على المناطق: "+RAFIQ_WEBSITE+"regions.html",
-  "📄 خدمة إعداد CV وCover Letter متاحة بشكل مستقل عن دليل المراكز.\\n\\nالتفاصيل: "+RAFIQ_WEBSITE+"caregivers.html",
-  "🏥 للمختبرات ومراكز الأشعة والعلاج الفيزيائي وموردي المعدات الطبية: يمكنكم التواصل مع إدارة RAFIQ لمراجعة إمكانية إدراج مركز أو إعلان. لا يتم النشر إلا بعد التحقق والموافقة.\\n\\nWhatsApp: "+RAFIQ_WHATSAPP,
-  "💚 لا ينشر RAFIQ مركزًا أو سعرًا أو عرضًا أو خصمًا قبل موافقة الإدارة. لا توجد نسبة خصم موحدة؛ تُراجع كل خدمة وسعرها الفعلي بشكل مستقل.\\n\\nبوت RAFIQ: "+RAFIQ_TELEGRAM_BOT
+  "🇱🇧 RAFIQ | رفيق — دليل المراكز الطبية المعتمدة في لبنان.\n\n🧪 المختبرات الطبية\n🩻 الأشعة والتصوير\n🦿 مراكز العلاج الفيزيائي\n🦽 بيع وتأجير المعدات الطبية\n\nتصفحوا دليل الخدمات: "+RAFIQ_WEBSITE+"services.html",
+  "📍 دليل RAFIQ يغطي طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت وباقي لبنان بحسب المراكز المعتمدة المنشورة.\n\nللاطلاع على المناطق: "+RAFIQ_WEBSITE+"regions.html",
+  "📄 خدمة إعداد CV وCover Letter متاحة بشكل مستقل عن دليل المراكز.\n\nالتفاصيل: "+RAFIQ_WEBSITE+"caregivers.html",
+  "🏥 للمختبرات ومراكز الأشعة والعلاج الفيزيائي وموردي المعدات الطبية: يمكنكم التواصل مع إدارة RAFIQ لمراجعة إمكانية إدراج مركز أو إعلان. لا يتم النشر إلا بعد التحقق والموافقة.\n\nWhatsApp: "+RAFIQ_WHATSAPP,
+  "💚 لا ينشر RAFIQ مركزًا أو سعرًا أو عرضًا أو خصمًا قبل موافقة الإدارة. لا توجد نسبة خصم موحدة؛ تُراجع كل خدمة وسعرها الفعلي بشكل مستقل.\n\nبوت RAFIQ: "+RAFIQ_TELEGRAM_BOT
 ];
 let lastTelegramMarketingSlot = "";
 const supabaseBroadcastPending=async(key:string,recipientId:string)=>supabaseServerRest("/rest/v1/rafiq_telegram_broadcasts?on_conflict=announcement_key%2Crecipient_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({announcement_key:key,recipient_id:recipientId,status:"pending",error_message:null})});
@@ -640,7 +640,7 @@ const handleTelegramWebhook = async({request,set}:any)=>{
 
     const contactPhone=typeof message?.contact?.phone_number==="string"?message.contact.phone_number.trim():"";
     if(contactPhone){
-      const normalizedContact=contactPhone.replace(/\\D/g,"");
+      const normalizedContact=contactPhone.replace(/\D/g,"");
       await supabaseServerRest("/rest/v1/rafiq_telegram_identities?on_conflict=telegram_user_id",{
         method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
         body:JSON.stringify({telegram_user_id:String(message?.from?.id??""),chat_id:String(chatId),username:username||null,phone:normalizedContact,first_name:message?.from?.first_name??null,last_name:message?.from?.last_name??null,last_seen_at:new Date().toISOString()})
@@ -706,7 +706,7 @@ const handleTelegramWebhook = async({request,set}:any)=>{
       const payload={channel:"telegram",chat_id:chatId,message_id:message?.message_id??null,username,sender_name:senderName,incoming_text:textBody,reason:"human_reply_required",status:"open"};
       if(conversationId) await supabaseServerRest("/rest/v1/whatsapp_pending_approvals",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({conversation_id:conversationId,reason:"telegram_human_reply_required",status:"open",payload})}).catch(()=>{});
       const managers=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
-      const managerNotice="🔔 طلب يحتاج رد الإدارة\\n\\nمن Telegram: "+(senderName||"غير معروف")+"\\nالمحادثة: "+String(chatId)+"\\n\\nرسالة العميل:\\n"+textBody+"\\n\\n⚠️ لم يتم إرسال رد تلقائي للعميل.";
+      const managerNotice="🔔 طلب يحتاج رد الإدارة\n\nمن Telegram: "+(senderName||"غير معروف")+"\nالمحادثة: "+String(chatId)+"\n\nرسالة العميل:\n"+textBody+"\n\n⚠️ لم يتم إرسال رد تلقائي للعميل.";
       for(const managerId of managers){ await telegramSendText(managerId,telegramSigned(managerNotice)).catch(()=>{}); }
       return{ok:true,status:"human_reply_required_no_auto_reply",conversation_id:conversationId};
     }
