@@ -3,7 +3,7 @@ import { classifyTelegramUpdateClaim, parseTelegramUpdateId } from "./telegram-u
 import { Elysia } from "elysia";
 import { answerRafiqKnowledge } from "./rafiq-service-knowledge";
 import { draftAgentReply, draftInstitutionOutreach } from "./agent";
-import { kapsoConfigured, kapsoSendText, kapsoWebhookSecret } from "./kapso";
+import { kapsoConfigured, kapsoWebhookSecret } from "./kapso";
 import { rafiqFallback } from "./rafiq-local-agent";
 import { telegramConfigured, telegramGetWebhookInfo, telegramSendText, telegramSendDocument, telegramSendPhoto, telegramAnswerCallbackQuery, telegramSetWebhook, telegramWebhookSecret, verifyTelegramWebhookSecret } from "./telegram";
 import { cvChoice, cvMenuText, cvPaymentText, cvPrompt } from "./telegram-cv";
@@ -1017,7 +1017,6 @@ console.log(JSON.stringify({
   metaWebhookConfigured:Boolean(process.env.META_VERIFY_TOKEN && process.env.META_APP_SECRET),
   metaOutboundConfigured:Boolean(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID),
   whatsappSendingEnabled:process.env.WHATSAPP_SENDING_ENABLED==="true",
-  whatsappAutoReply:process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true",
   agentModel:effectiveAgentModel(),
   kapsoConfigured:kapsoConfigured(),
   kapsoWebhookSecretConfigured:Boolean(kapsoWebhookSecret())
