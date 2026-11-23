@@ -353,24 +353,24 @@ const telegramCommandReply = (command: string, language="ar") => {
       contact:"RAFIQ administration: +961 81 506 299"
     },
     fr:{
-      start:"Bienvenue chez RAFIQ | رفيق 🇱🇧\\nJe suis l’assistant de soins à domicile de RAFIQ. Demandez nos services ou commencez une demande.",
+      start:"Bienvenue chez RAFIQ | رفيق 🇱🇧\\nCet outil est un annuaire d’information pour les laboratoires médicaux, centres d’imagerie, centres de physiothérapie et la vente/location de matériel médical. Le CV et la lettre de motivation sont un service séparé.",
       services:"Annuaire RAFIQ : laboratoires médicaux, radiologie/imagerie, centres de physiothérapie et vente/location de matériel médical. Le CV et la lettre de motivation sont un service séparé.",
       request:"RAFIQ ne reçoit pas de demandes de soins, d’inscription, d’emploi ou de réservation. Utilisez /services pour l’annuaire ou /cv pour le service CV.",
-      help:"Posez votre question naturellement. Les décisions administratives et informations sensibles sont traitées par l’équipe RAFIQ.",
+      help:"Posez vos questions sur l’annuaire approuvé ou le service CV et lettre de motivation. RAFIQ ne reçoit pas de demandes de soins ou de réservation.",
       contact:"Administration RAFIQ : +961 81 506 299"
     },
     it:{
-      start:"Benvenuto in RAFIQ | رفيق 🇱🇧\\nSono l’assistente per l’assistenza domiciliare RAFIQ. Chiedi dei servizi o avvia una richiesta.",
-      services:"Servizi RAFIQ: assistenza agli anziani, assistenza domiciliare ai pazienti, infermieristica domiciliare e fisioterapia domiciliare.",
-      request:"Costruiremo la richiesta passo dopo passo. Scegli un servizio o descrivi ciò di cui hai bisogno.",
-      help:"Fai la tua domanda naturalmente. Le decisioni amministrative e le informazioni sensibili vengono gestite dal team RAFIQ.",
+      start:"Benvenuto in RAFIQ | رفيق 🇱🇧\\nQuesta è la directory informativa RAFIQ per laboratori medici, radiologia, centri di fisioterapia e vendita/noleggio di attrezzature mediche. CV e lettera di presentazione sono un servizio separato.",
+      services:"Directory RAFIQ: laboratori medici, radiologia/diagnostica per immagini, centri di fisioterapia e vendita/noleggio di attrezzature mediche.",
+      request:"RAFIQ non accetta richieste di assistenza, registrazione, lavoro o prenotazione. Usa /services per la directory o /cv per il servizio CV.",
+      help:"Chiedi informazioni sulla directory approvata o sul servizio CV. RAFIQ non accetta richieste di assistenza o prenotazioni.",
       contact:"Amministrazione RAFIQ: +961 81 506 299"
     },
     de:{
-      start:"Willkommen bei RAFIQ | رفيق 🇱🇧\\nIch bin der Assistent für häusliche Pflege von RAFIQ. Fragen Sie nach unseren Leistungen oder starten Sie eine Anfrage.",
-      services:"RAFIQ-Leistungen: Seniorenbetreuung, häusliche Patientenbetreuung, häusliche Krankenpflege und Physiotherapie zu Hause.",
-      request:"Wir erstellen Ihre Pflegeanfrage Schritt für Schritt. Wählen Sie einen Service oder beschreiben Sie Ihren Bedarf.",
-      help:"Stellen Sie Ihre Frage natürlich. Administrative Entscheidungen und sensible Informationen werden vom RAFIQ-Team bearbeitet.",
+      start:"Willkommen bei RAFIQ | رفيق 🇱🇧\\nDieses Angebot ist ein Informationsverzeichnis für medizinische Labore, Radiologie/Bildgebung, Physiotherapiezentren sowie Verkauf und Vermietung medizinischer Geräte. CV und Anschreiben sind ein separater Service.",
+      services:"RAFIQ-Verzeichnis: medizinische Labore, Radiologie/Bildgebung, Physiotherapiezentren sowie Verkauf und Vermietung medizinischer Geräte.",
+      request:"RAFIQ nimmt keine Pflege-, Registrierungs-, Beschäftigungs- oder Buchungsanfragen an. Verwenden Sie /services für das Verzeichnis oder /cv für den CV-Service.",
+      help:"Fragen Sie nach dem freigegebenen Verzeichnis oder dem CV-Service. RAFIQ nimmt keine Pflege- oder Buchungsanfragen an.",
       contact:"RAFIQ-Verwaltung: +961 81 506 299"
     }
   };
