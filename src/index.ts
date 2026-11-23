@@ -121,12 +121,14 @@ const telegramBroadcast=async(text:string,testOnly=false)=>{
 };
 
 const forwardWhatsAppToTelegramManager=async(message:any,identity:any,body:string)=>{
-  if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING!=="true")return;
+  if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING!=="true")return{status:"forwarding_disabled",delivered:0};
   const managerChatIds=parseManagerChatIds(process.env.TELEGRAM_MANAGER_CHAT_IDS);
-  if(!managerChatIds.length){console.warn(JSON.stringify({event:"rafig_whatsapp_to_telegram_no_manager_ids"}));return;}
+  if(!managerChatIds.length){console.warn(JSON.stringify({event:"rafig_whatsapp_to_telegram_no_manager_ids"}));return{status:"no_manager_ids",delivered:0};}
   const messageType=typeof message?.type==="string"?message.type:"text";
-  const notice=telegramSigned(["📲 رسالة WhatsApp واردة إلى RAFIQ","","👤 رقم العميل: "+(identity.phone||"غير متوفر"),"💬 نوع الرسالة: "+messageType,"💬 الرسالة:",body||"[رسالة غير نصية]","","🟡 الحالة: بانتظار متابعة المدير","⚠️ لا يوجد رد تلقائي على WhatsApp حاليًا.","يمكن للمدير نسخ الرد المناسب وإرساله يدويًا عبر WhatsApp."].join("\n"));
-  for(const managerId of managerChatIds){await telegramSendText(managerId,notice).catch(error=>console.error(JSON.stringify({event:"rafig_whatsapp_to_telegram_send_failed",managerId,error:String(error).slice(0,240)})));}
+  const notice=telegramSigned(["📲 رسالة WhatsApp واردة إلى RAFIQ","","👤 رقم العميل: "+(identity.phone||"غير متوفر"),"💬 نوع الرسالة: "+messageType,"💬 الرسالة:",body||"[رسالة غير نصية]","","🟡 الحالة: بانتظار متابعة المدير","⚠️ لا يوجد رد تلقائي على WhatsApp.","يمكن للمدير مراجعة الرسالة والتواصل يدويًا إذا لزم الأمر."].join("\\n"));
+  let delivered=0;
+  for(const managerId of managerChatIds){try{await telegramSendText(managerId,notice);delivered++;}catch(error){console.error(JSON.stringify({event:"rafig_whatsapp_to_telegram_send_failed",managerId,error:String(error).slice(0,240)}));}}
+  return{status:delivered?"forwarded_to_telegram":"telegram_delivery_failed",delivered};
 };
 const TELEGRAM_WELCOME = [
   "أهلًا وسهلًا بك في رفيق | RAFIQ 🇱🇧",
@@ -175,69 +177,39 @@ const verifyMetaSignature=async(body:string,signature:string|null)=>{const secre
 const verifyKapsoSignature=async(body:string,signature:string|null)=>{const secret=kapsoWebhookSecret();if(!secret||!signature)return false;const normalized=signature.startsWith("sha256=")?signature.slice(7):signature;const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(body)));return timingSafeEqual(new TextEncoder().encode(expected),new TextEncoder().encode(normalized))};const kapsoIdentity=(message:any,conversation:any={})=>({phone:typeof message?.from==="string"&&message.from?message.from:(typeof conversation?.phone_number==="string"&&conversation.phone_number?conversation.phone_number:""),bsuid:typeof message?.from_user_id==="string"&&message.from_user_id?message.from_user_id:(typeof conversation?.business_scoped_user_id==="string"&&conversation.business_scoped_user_id?conversation.business_scoped_user_id:""),username:typeof message?.username==="string"?message.username:(typeof conversation?.username==="string"?conversation.username:"")});const processKapsoMessageCore=async(message:any,conversation:any={})=>{
   const identity=kapsoIdentity(message,conversation);
   const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
+  if(identity.phone?.replace(/\\D/g,"").endsWith(forbiddenDigits)){console.warn(JSON.stringify({event:"rafig_forbidden_number_blocked",fromSuffix:identity.phone.slice(-4)}));return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"}}
   const body=typeof message?.text?.body==="string"?message.text.body.trim():(typeof message?.kapso?.content==="string"?message.kapso.content.trim():"");
-  const destination=identity.phone?{to:identity.phone}:{recipient:identity.bsuid};
-  if(!body||(!destination.to&&!destination.recipient))return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
+  const id=String(message?.id??"unknown");
+  if(!body||(!identity.phone&&!identity.bsuid))return{id,status:"ignored_missing_identity_or_text"};
   try{
-    const inbound=await recordInboundEvent(message,identity,"kapso");if(inbound?.duplicate){console.log(JSON.stringify({event:"rafig_kapso_duplicate_ignored",messageId:String(message?.id??"")}));return{id:String(message?.id??"unknown"),status:"duplicate_ignored"}}
-    console.log(JSON.stringify({event:"rafig_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
-    await forwardWhatsAppToTelegramManager(message,identity,body);
-    if(process.env.RAFIQ_WHATSAPP_TO_TELEGRAM_FORWARDING==="true" && (process.env.RAFIQ_WHATSAPP_AUTO_REPLY!=="true" || process.env.WHATSAPP_SENDING_ENABLED!=="true")){
-      await updateInboundEvent(String(message.id??""),"processed");
-      return{id:String(message.id??""),status:"forwarded_to_telegram"};
-    }
-    const result=await draftInboundReply(body,identity.phone||undefined);
-    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
-      try{
-        const outbound=kapsoConfigured()?await kapsoSendText(destination,result.reply):identity.phone?await sendWhatsAppText(identity.phone,result.reply):null;
-        if(!outbound)throw new Error("BSUID-only inbound requires Kapso API configuration");
-        await recordOutboundMessage(identity.phone||"",result.reply,outbound);
-        await updateInboundEvent(String(message.id??""),"processed");
-        console.log(JSON.stringify({event:"rafig_kapso_auto_reply_sent",provider:kapsoConfigured()?"kapso":"meta",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),outboundMessageId:outbound?.messages?.[0]?.id??null}));
-        return{id:String(message.id??""),status:outbound?.messages?.[0]?.id?"auto_replied":"draft_ready"};
-      }catch(error){
-        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
-        console.error(JSON.stringify({event:"rafig_kapso_auto_reply_failed",fromSuffix:identity.phone?identity.phone.slice(-4):null,businessScopedUserId:identity.bsuid||null,inboundMessageId:String(message.id??""),error:String(error)}));
-        return{id:String(message.id??""),status:"draft_ready_send_failed"};
-      }
-    }
-    await updateInboundEvent(String(message.id??""),"processed");
-    return{id:String(message.id??""),status:"draft_ready"};
+    const inbound=await recordInboundEvent(message,identity,"kapso");
+    if(inbound?.duplicate)return{id,status:"duplicate_ignored"};
+    const delivery=await forwardWhatsAppToTelegramManager(message,identity,body);
+    await updateInboundEvent(id,delivery.delivered?"processed":"failed",delivery.delivered?undefined:delivery.status);
+    return{id,status:delivery.status,deliveredTo:delivery.delivered};
   }catch(error){
-    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500)).catch(()=>{});
-    console.error(JSON.stringify({event:"rafig_kapso_agent_failed",messageId:String(message.id??""),error:String(error)}));
-    return{id:String(message.id??""),status:"draft_failed"};
+    await updateInboundEvent(id,"failed",String(error).slice(0,500)).catch(()=>{});
+    console.error(JSON.stringify({event:"rafig_kapso_forward_failed",messageId:id,error:String(error)}));
+    return{id,status:"telegram_forward_failed"};
   }
-};const processMetaMessageCore=async(message:any)=>{
+};
+const processMetaMessageCore=async(message:any)=>{
   const identity={phone:typeof message?.from==="string"?message.from:""};
   const forbiddenDigits="70600157";
-  if(identity.phone?.replace(/\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
+  if(identity.phone?.replace(/\\D/g,"").endsWith(forbiddenDigits))return{id:String(message?.id??"unknown"),status:"blocked_forbidden_number"};
   const body=typeof message?.text?.body==="string"?message.text.body.trim():"";
-  if(!body||!identity.phone)return{id:String(message?.id??"unknown"),status:"ignored_missing_identity_or_text"};
+  const id=String(message?.id??"unknown");
+  if(!body||!identity.phone)return{id,status:"ignored_missing_identity_or_text"};
   try{
     const inbound=await recordInboundEvent(message,identity,"meta");
-    if(inbound?.duplicate)return{id:String(message?.id??"unknown"),status:"duplicate_ignored"};
-    console.log(JSON.stringify({event:"rafig_meta_inbound_persisted",messageId:String(message.id??""),inboundId:inbound?.id??null}));
-    await forwardWhatsAppToTelegramManager(message,identity,body);
-    const result=await draftInboundReply(body,identity.phone);
-    if(process.env.RAFIQ_WHATSAPP_AUTO_REPLY==="true"&&process.env.WHATSAPP_SENDING_ENABLED==="true"){
-      try{
-        const outbound=kapsoConfigured()?await kapsoSendText({to:identity.phone},result.reply):await sendWhatsAppText(identity.phone,result.reply);
-        await recordOutboundMessage(identity.phone,result.reply,outbound);
-        await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
-        return{id:String(message.id??""),status:"auto_replied",outboundMessageId:outbound?.messages?.[0]?.id??null};
-      }catch(error){
-        await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
-        return{id:String(message.id??""),status:"draft_ready_send_failed"};
-      }
-    }
-    await updateInboundEvent(String(message.id??""),"processed",undefined,"meta");
-    return{id:String(message.id??""),status:"draft_ready"};
+    if(inbound?.duplicate)return{id,status:"duplicate_ignored"};
+    const delivery=await forwardWhatsAppToTelegramManager(message,identity,body);
+    await updateInboundEvent(id,delivery.delivered?"processed":"failed",delivery.delivered?undefined:delivery.status,"meta");
+    return{id,status:delivery.status,deliveredTo:delivery.delivered};
   }catch(error){
-    await updateInboundEvent(String(message.id??""),"failed",String(error).slice(0,500),"meta").catch(()=>{});
-    console.error(JSON.stringify({event:"rafig_meta_webhook_failed",messageId:String(message?.id??""),error:String(error)}));
-    return{id:String(message?.id??""),status:"draft_failed"};
+    await updateInboundEvent(id,"failed",String(error).slice(0,500),"meta").catch(()=>{});
+    console.error(JSON.stringify({event:"rafig_meta_forward_failed",messageId:id,error:String(error)}));
+    return{id,status:"telegram_forward_failed"};
   }
 };
 const processMetaMessage=async(message:any)=>{
