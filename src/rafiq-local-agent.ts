@@ -1,7 +1,7 @@
 const emergency=/(صعوبة\s*شديدة\s*بالتنفس|ضيق\s*تنفس\s*شديد|ألم\s*صدر|نزيف\s*شديد|فقدان\s*الوعي|إغماء|تشنج|سكتة|اختناق|emergency|urgent|chest pain|unconscious|stroke)/i;
 const medical=/(دواء|جرعة|تشخيص|وصفة|أوقف\s*العلاج|غيّر\s*العلاج|medication|dose|diagnos|prescription|wound|dressing)/i;
 const sensitive=/(سعر|تكلف|بكم|دفع|whish|price|cost|payment|فاتورة|تحويل|متوفر|متاحة|حجز|booking|available|شكوى|عقد|قانون|محامي|complaint|dispute)/i;
-export const rafiqFallback=(message:string)=>{
+export const rafiqFallback=(message:string, _conversationContext?:string)=>{
  const m=message.trim();
  if(!m)return "أهلًا بك في رفيق 🌿 يمكنني مساعدتك في معلومات دليل المراكز أو خدمة CV وCover Letter.";
  if(emergency.test(m))return "🚨 إذا كانت هناك حالة طارئة أو خطر فوري، تواصلوا فورًا مع الإسعاف أو الفريق الطبي المعالج. لا تنتظروا رد رفيق.";
