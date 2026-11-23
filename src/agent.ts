@@ -150,7 +150,6 @@ export const draftInstitutionOutreach = async (
     medical_equipment_supplier: "medical equipment supplier",
     radiology_center: "radiology / medical imaging center",
     physiotherapy: "physiotherapy provider",
-    nursing: "nurse / nursing provider",
   };
   const language = languageHint ? `Write the draft in ${languageHint}.` : "Write the draft in Arabic.";
   const name = institutionName?.trim() ? institutionName.trim() : "the institution";
