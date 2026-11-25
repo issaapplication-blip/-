@@ -210,7 +210,18 @@ const RAFIQ_I18N = (function () {
     "📢 قناة WhatsApp": "home.directory.whatsappChannel",
     "💬 WhatsApp الإدارة": "home.directory.whatsappAdmin",
     "المراسلات الرسمية: +961 81 506 299 · تفاصيل التحويلات المالية تُعطى من الإدارة عند الحاجة.": "home.directory.footer",
-    "© RAFIQ | رفيق · issaapplication@gmail.com": "home.directory.copyright"
+    "© RAFIQ | رفيق · issaapplication@gmail.com": "home.directory.copyright",
+    "💬 واتساب RAFIQ": "home.directory.whatsapp",
+    "CV احترافي + Cover Letter": "home.directory.cvCombo",
+    "الباقة: 35$": "home.directory.bundlePrice",
+    "إضافة لغة أخرى متاحة حسب الخدمة المطلوبة.": "home.directory.extraLanguage",
+    "👥 مجموعة WhatsApp الأولى": "home.directory.groupOne",
+    "👥 مجموعة WhatsApp الثانية": "home.directory.groupTwo",
+    "— نصل بالحب والأمان لرعاية العائلة": "home.directory.footerTagline",
+    "شريط RAFIQ الرئيسي": "home.directory.topbarLabel",
+    "القائمة": "home.directory.menuLabel",
+    "RAFIQ | رفيق — الشعار الرسمي": "home.directory.logoAlt",
+    "تثبيت تطبيق رفيق": "home.directory.installLabel"
   };
 
   function normalizeSource(s) {
