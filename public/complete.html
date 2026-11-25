@@ -28,16 +28,16 @@ h1{color:#087f58}.field{margin:14px 0}label{display:block;font-weight:800;margin
  fetch("/api/intake/complete?token="+encodeURIComponent(token)).then(r=>r.json()).then(data=>{
    if(!data.ok)throw new Error(data.error||"تعذر تحميل الطلب");
    intro.innerHTML="الطلب رقم <b>"+esc(data.application_number)+"</b> — "+esc(data.applicant_name||"")+"<br>الحالة الحالية: <b>قيد المراجعة</b>";
-   form.hidden=false;
- }).catch(e=>intro.textContent=e.message);
+   form.hidden=false;document.dispatchEvent(new CustomEvent("rafiq:i18n:refresh"));
+ }).catch(e=>{intro.textContent=e.message;document.dispatchEvent(new CustomEvent("rafiq:i18n:refresh"));});
  form.addEventListener("submit",async e=>{
-   e.preventDefault();msg.textContent="جارٍ الإرسال...";
+   e.preventDefault();msg.setAttribute("data-rafig-source-text","جارٍ الإرسال...");msg.textContent=window.RAFIQ_I18N?.translateText("جارٍ الإرسال...")||"جارٍ الإرسال...";
    const fd=new FormData();fd.append("token",token);fd.append("note",document.getElementById("note").value);
    for(const f of document.getElementById("files").files)fd.append("files",f);
    const r=await fetch("/api/intake/complete",{method:"POST",body:fd});const data=await r.json().catch(()=>({}));
-   if(!r.ok||!data.ok){msg.className="err";msg.textContent=data.error||"تعذر إرسال الاستكمال";return}
-   form.hidden=true;msg.className="ok";msg.textContent="تم استلام الاستكمال والملفات بنجاح. ستقوم إدارة RAFIQ بمراجعتها.";
+   if(!r.ok||!data.ok){msg.className="err";msg.setAttribute("data-rafig-source-text",data.error||"تعذر إرسال الاستكمال");msg.textContent=window.RAFIQ_I18N?.translateText(data.error||"تعذر إرسال الاستكمال")||data.error||"تعذر إرسال الاستكمال";document.dispatchEvent(new CustomEvent("rafiq:i18n:refresh"));return}
+   form.hidden=true;msg.className="ok";msg.setAttribute("data-rafig-source-text","تم استلام الاستكمال والملفات بنجاح. ستقوم إدارة RAFIQ بمراجعتها.");msg.textContent=window.RAFIQ_I18N?.translateText("تم استلام الاستكمال والملفات بنجاح. ستقوم إدارة RAFIQ بمراجعتها.")||"تم استلام الاستكمال والملفات بنجاح. ستقوم إدارة RAFIQ بمراجعتها.";document.dispatchEvent(new CustomEvent("rafiq:i18n:refresh"));
  });
 })();
 </script>
-</body></html>
+<script src="/i18n.js?v=3" defer></script></body></html>
