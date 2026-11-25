@@ -34,6 +34,12 @@ const RAFIQ_I18N = (function () {
   var KEY = 'rafiq.lang';
   var bundles = {};      // code -> { key: text }
   var current = DEFAULT;
+  // Keep immutable source text/attributes so every language switch starts
+  // from the original Arabic DOM, never from a previously translated value.
+  var originalText = new WeakMap();
+  var originalAttributes = new WeakMap();
+  var originalMarkedText = new WeakMap();
+  var originalTitle = document.title;
 
   function langMeta(code) {
     for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i];
@@ -179,7 +185,6 @@ const RAFIQ_I18N = (function () {
   }
 
   function translateLegacyPage(lang) {
-    if (lang === DEFAULT) return 0;
     rebuildSourceIndex();
     var changed = 0;
     var root = document.querySelector('main') || document.body;
@@ -189,21 +194,16 @@ const RAFIQ_I18N = (function () {
     while ((node = walker.nextNode())) {
       var parent = node.parentElement;
       if (!parent || parent.closest('script,style,template,.ra-lang,[data-i18n]')) continue;
-      var raw = node.nodeValue;
-      var translated = translateSource(raw, lang);
-      if (translated && normalizeSource(raw) === normalizeSource(translated)) continue;
-      if (translated) {
-        var leading = raw.match(/^\\s*/)?.[0] || '';
-        var trailing = raw.match(/\\s*$/)?.[0] || '';
-        node.nodeValue = leading + translated + trailing;
-        changed++;
-      }
+      if (!originalText.has(node)) originalText.set(node, node.nodeValue);
+      var raw = originalText.get(node);
+      var translated = lang === DEFAULT ? raw : translateSource(raw, lang);
+      var next = translated || raw;
+      if (node.nodeValue !== next) { node.nodeValue = next; changed++; }
     }
     return changed;
   }
 
   function translateAttributes(lang) {
-    if (lang === DEFAULT) return 0;
     var changed = 0;
     var attrs = ['title','alt','aria-label'];
     var els = document.querySelectorAll('[title],[alt],[aria-label]');
@@ -213,9 +213,12 @@ const RAFIQ_I18N = (function () {
       for (var j = 0; j < attrs.length; j++) {
         var name = attrs[j];
         if (!el.hasAttribute(name)) continue;
-        var raw = el.getAttribute(name);
-        var val = translateSource(raw, lang);
-        if (val && val !== raw) { el.setAttribute(name, val); changed++; }
+        var cache = originalAttributes.get(el);
+        if (!cache) { cache = Object.create(null); originalAttributes.set(el, cache); }
+        if (!Object.prototype.hasOwnProperty.call(cache, name)) cache[name] = el.getAttribute(name);
+        var raw = cache[name];
+        var val = lang === DEFAULT ? raw : (translateSource(raw, lang) || raw);
+        if (el.getAttribute(name) !== val) { el.setAttribute(name, val); changed++; }
       }
     }
     return changed;
@@ -237,7 +240,7 @@ const RAFIQ_I18N = (function () {
     // a translated <title> when we have one
     var titleKey = document.body.getAttribute('data-i18n-title');
     var t = titleKey ? translate(titleKey, code) : null;
-    if (t) document.title = t;
+    document.title = t || originalTitle;
 
     // fill every marked string; anything without a translation keeps
     // whatever the page already had, which is the Arabic original
@@ -246,9 +249,11 @@ const RAFIQ_I18N = (function () {
     for (var i = 0; i < marked.length; i++) {
       var el = marked[i];
       var key = el.getAttribute('data-i18n');
-      var val = translate(key, code);
-      if (val !== null && val !== '') { el.textContent = val; filled++; }
-      else { missing++; }
+      if (!originalMarkedText.has(el)) originalMarkedText.set(el, el.textContent);
+      var sourceText = originalMarkedText.get(el);
+      var val = code === DEFAULT ? sourceText : translate(key, code);
+      if (val !== null && val !== '') { if (el.textContent !== val) el.textContent = val; filled++; }
+      else { el.textContent = sourceText; missing++; }
     }
 
     // Translate legacy pages that predate data-i18n markers.
@@ -259,15 +264,19 @@ const RAFIQ_I18N = (function () {
     // placeholder attributes, so inputs are never in the wrong language
     var ph = document.querySelectorAll('[data-i18n-placeholder]');
     for (var j = 0; j < ph.length; j++) {
-      var p = translate(ph[j].getAttribute('data-i18n-placeholder'), code);
-      if (p) ph[j].setAttribute('placeholder', p);
+      var sourcePlaceholder = ph[j].getAttribute('data-i18n-placeholder-source') || ph[j].getAttribute('placeholder') || '';
+      if (!ph[j].hasAttribute('data-i18n-placeholder-source')) ph[j].setAttribute('data-i18n-placeholder-source', sourcePlaceholder);
+      var p = code === DEFAULT ? sourcePlaceholder : translate(ph[j].getAttribute('data-i18n-placeholder'), code);
+      ph[j].setAttribute('placeholder', p || sourcePlaceholder);
     }
 
     // aria-labels
     var al = document.querySelectorAll('[data-i18n-aria]');
     for (var k = 0; k < al.length; k++) {
-      var a = translate(al[k].getAttribute('data-i18n-aria'), code);
-      if (a) al[k].setAttribute('aria-label', a);
+      var sourceAria = al[k].getAttribute('data-i18n-aria-source') || al[k].getAttribute('aria-label') || '';
+      if (!al[k].hasAttribute('data-i18n-aria-source')) al[k].setAttribute('data-i18n-aria-source', sourceAria);
+      var a = code === DEFAULT ? sourceAria : translate(al[k].getAttribute('data-i18n-aria'), code);
+      al[k].setAttribute('aria-label', a || sourceAria);
     }
 
     // tell the page - and anything that renders its own text, such as the
@@ -438,6 +447,7 @@ const RAFIQ_I18N = (function () {
   }
 
   function setLanguage(code) {
+    if (!isKnown(code)) code = DEFAULT;
     var run = function () {
       var r = apply(code);
       var w = document.querySelector('.ra-lang');
@@ -481,7 +491,7 @@ const RAFIQ_I18N = (function () {
     LANGS: LANGS,
     get current() { return current; },
     get detected() { return detected; },
-    version: '3'
+    version: '4'
   };
 })();
 
