@@ -15,13 +15,29 @@
     upload_failed: "تعذر حفظ أحد الملفات. لم يُعتمد الطلب؛ يرجى إعادة المحاولة.",
     request_failed: "تعذر حفظ الطلب الآن. حاول مرة أخرى لاحقًا."
   }[value] || value || "تعذر إرسال الطلب. حاول مرة أخرى.");
+  function localizeMessage(source){
+    const api=globalThis.RAFIQ_I18N;
+    if(!api||typeof api.translateSource!=="function")return source;
+    const requestPrefix="تم استلام طلبك وسنتواصل معك بعد مراجعة الإدارة. رقم الطلب:";
+    if(source.startsWith(requestPrefix)){
+      const translated=api.translateSource(requestPrefix,api.current);
+      return translated?translated+" "+source.slice(requestPrefix.length).trim():source;
+    }
+    return api.translateSource(source,api.current)||source;
+  }
   function showMessage(target,message,success){
     if(!target)return;
     target.hidden=false;
     target.className=success?"form-message success":"form-message error";
-    target.textContent=message;
+    target.dataset.sourceMessage=String(message||"");
+    target.textContent=localizeMessage(target.dataset.sourceMessage);
     target.setAttribute("role",success?"status":"alert");
   }
+  document.addEventListener("rafiq:i18n",()=>{
+    document.querySelectorAll("[data-form-message][data-source-message]").forEach(target=>{
+      target.textContent=localizeMessage(target.dataset.sourceMessage||"");
+    });
+  });
   function validateFiles(form){
     const inputs=Array.from(form.querySelectorAll('input[type="file"][data-document-category]'));
     const selected=[];
