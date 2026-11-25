@@ -925,6 +925,17 @@
     "ui.extra.0510": "Si l’installation directe n’est pas disponible, RAFIQ affichera les étapes adaptées à votre appareil.",
     "ui.extra.0511": "Retour à la plateforme RAFIQ",
 
+    "ui.extra.0512": "Choisir le gouvernorat",
+    "ui.extra.0513": "Choisir le district",
+    "ui.extra.0514": "Choisir la zone principale",
+    "ui.extra.0515": "Choisir la zone",
+    "ui.extra.0516": "Impossible de charger les zones. Veuillez actualiser la page.",
+    "ui.extra.0517": "Districts",
+    "ui.extra.0518": "Zones / localités répertoriées",
+    "ui.extra.0519": "Zone",
+    "ui.extra.0520": "Total des zones / localités répertoriées :",
+    "ui.extra.0521": "District",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
