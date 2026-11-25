@@ -891,6 +891,12 @@
     "ui.extra.0478": "Registrierung eines Radiologie- und Bildgebungszentrums",
     "ui.extra.0479": "Registrierung eines Zentrums für medizinische Geräte",
 
+    "ui.extra.0480": "Häufige Fragen zur häuslichen Betreuung im Libanon | RAFIQ",
+    "ui.extra.0481": "Pflegeleitfaden | RAFIQ",
+    "ui.extra.0482": "RAFIQ | Rafiq — Offizielles Logo",
+    "ui.extra.0483": "RAFIQ-App installieren",
+    "ui.extra.0484": "Warme häusliche Betreuung und Begleitung älterer Menschen",
+
   };
 
   RAFIQ_I18N.register('de', dict);
