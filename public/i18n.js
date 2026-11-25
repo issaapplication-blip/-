@@ -448,6 +448,8 @@ const RAFIQ_I18N = (function () {
     document.documentElement.setAttribute('dir', m.dir);
     document.documentElement.classList.toggle('ra-ltr', m.dir === 'ltr');
 
+    // Build the source index before translating the title as well as body text.
+    rebuildSourceIndex();
     // a translated <title> when we have one
     var titleKey = document.body.getAttribute('data-i18n-title');
     var t = titleKey ? translate(titleKey, code) : null;
