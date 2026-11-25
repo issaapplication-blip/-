@@ -936,6 +936,16 @@
     "ui.extra.0520": "Gesamtzahl der aufgeführten Gebiete / Ortschaften:",
     "ui.extra.0521": "Bezirk",
 
+    "ui.extra.0522": "🚨 Bei einem Notfall oder unmittelbarer Gefahr wenden Sie sich sofort an den Rettungsdienst oder den nächstgelegenen medizinischen Dienst. Warten Sie nicht auf eine Antwort von RAFIQ.",
+    "ui.extra.0523": "RAFIQ stellt keine Diagnosen, verschreibt keine Medikamente und ändert keine Behandlung. Bitte wenden Sie sich an Ihren Arzt oder Ihr Behandlungsteam.",
+    "ui.extra.0524": "RAFIQ-Leistungen: Betreuung älterer Menschen, Patientenbetreuung, häusliche Krankenpflege und Physiotherapie zu Hause. Teilen Sie mir Ihren Bedarf und Ihren Standort mit.",
+    "ui.extra.0525": "Gerne. In welchem Gebiet und zu welchen Zeiten benötigen Sie Unterstützung? Die Leitung prüft anschließend die Verfügbarkeit.",
+    "ui.extra.0526": "Gerne. In welchem Gebiet und für welchen Bedarf oder welche Rehabilitation?",
+    "ui.extra.0527": "Gerne 🌿 Geht es um eine ältere Person oder einen Patienten? In welcher Stadt oder welchem Gebiet?",
+    "ui.extra.0528": "Ich verstehe 🌿 Teilen Sie mir mit, welche Leistung Sie benötigen und in welcher Stadt oder welchem Gebiet; ich helfe Ihnen beim nächsten Schritt.",
+    "ui.extra.0529": "Ihre Antwort wird vorbereitet …",
+    "ui.extra.0530": "Der Assistent ist bereit.",
+
   };
 
   RAFIQ_I18N.register('de', dict);
