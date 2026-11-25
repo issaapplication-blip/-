@@ -706,7 +706,7 @@ const RAFIQ_I18N = (function () {
     LANGS: LANGS,
     get current() { return current; },
     get detected() { return detected; },
-    version: '5'
+    version: '6'
   };
 })();
 
