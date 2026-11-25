@@ -397,7 +397,7 @@ const RAFIQ_I18N = (function () {
 
   function translateAttributes(lang) {
     var changed = 0;
-    var attrs = ['title','alt','aria-label'];
+    var attrs = ['title','alt','aria-label','placeholder'];
     var els = document.querySelectorAll('[title],[alt],[aria-label]');
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
