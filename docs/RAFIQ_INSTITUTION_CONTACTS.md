@@ -53,7 +53,7 @@
 | الاسم / المؤسسة | الهاتف المنشور | البريد الإلكتروني | المنطقة / العنوان | المصدر والملاحظات | الحالة |
 |---|---|---|---|---|---|
 | Home Care Lebanon — Medical Equipment | +961 1 511 101 | غير مستخرج | العنوان التفصيلي يحتاج تأكيدًا | [صفحة المعدات الرسمية](https://homecarelebanon.com/services/medical-equipment-rental-supplies/)؛ معدات رعاية منزلية وأسرّة ومستلزمات | مرشح — تحقق من العرض |
-| HHC Lebanon | +961 3 497 497 | info@hhclebanon.com | الحمرا، شارع المعماري، Speciality Clinics Center، جناح 10A، بيروت | [الموقع الرسمي](https://www.hhclebanon.com/)؛ [صفحة المعدات](https://www.hhclebanon.com/services/healthcare-equipment/)؛ كراسٍ متحركة وأسرّة وأجهزة تنفس منزلية للبيع أو التأجير بحسب الصفحة | مرشح — تحقق من العرض |
+| HHC Lebanon | +961 3 497 497 | info@hhclebanon.com | الحمرا، شارع المعمري، Speciality Clinics Center، جناح 10A، بيروت | [الموقع الرسمي](https://www.hhclebanon.com/)؛ [صفحة المعدات](https://www.hhclebanon.com/services/healthcare-equipment/)؛ كراسٍ متحركة وأسرّة وأجهزة تنفس منزلية للبيع أو التأجير بحسب الصفحة | مرشح — تحقق من العرض |
 | Medical Care Supplies | +961 70 885 864 | غير متاح | العنوان التفصيلي غير منشور | [الموقع الرسمي](https://www.medicalcaresupplies-lb.com/)؛ كراسٍ متحركة وأسرّة ومساعدات حركة ودعامات، مع خيارات بيع وتأجير بحسب الموقع | مرشح — تحقق من العنوان والعرض |
 | Atallah Co. | غير مستخرج | info@atallahco.com | مكلّس، المتن، لبنان | [الموقع الرسمي](https://www.atallahco.com/)؛ معدات مستشفيات ورعاية منزلية وخدمات تأجير وصيانة | مرشح — بيانات ناقصة |
 | Quality Med / كواليتي ميد | +961 3 183 372 | غير متاح | تغطية معظم المناطق وفق السجل السابق | يلزم تأكيد الاسم القانوني والعنوان والمنتجات | مرشح — إعادة تحقق |
