@@ -891,6 +891,12 @@
     "ui.extra.0478": "Registrazione di un centro di radiologia e diagnostica per immagini",
     "ui.extra.0479": "Registrazione di un centro di attrezzature mediche",
 
+    "ui.extra.0480": "Domande frequenti sull’assistenza domiciliare in Libano | RAFIQ",
+    "ui.extra.0481": "Guida all’assistenza | RAFIQ",
+    "ui.extra.0482": "RAFIQ | Rafiq — Logo ufficiale",
+    "ui.extra.0483": "Installa l’app RAFIQ",
+    "ui.extra.0484": "Assistenza e compagnia calorosa a domicilio per gli anziani",
+
   };
 
   RAFIQ_I18N.register('it', dict);
