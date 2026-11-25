@@ -925,6 +925,17 @@
     "ui.extra.0510": "Falls die direkte Installation nicht verfügbar ist, zeigt RAFIQ die passenden Installationsschritte für Ihr Gerät an.",
     "ui.extra.0511": "Zurück zur RAFIQ-Plattform",
 
+    "ui.extra.0512": "Gouvernement auswählen",
+    "ui.extra.0513": "Bezirk auswählen",
+    "ui.extra.0514": "Hauptgebiet auswählen",
+    "ui.extra.0515": "Gebiet auswählen",
+    "ui.extra.0516": "Gebiete konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.",
+    "ui.extra.0517": "Bezirke",
+    "ui.extra.0518": "Aufgeführte Gebiete / Ortschaften",
+    "ui.extra.0519": "Gebiet",
+    "ui.extra.0520": "Gesamtzahl der aufgeführten Gebiete / Ortschaften:",
+    "ui.extra.0521": "Bezirk",
+
   };
 
   RAFIQ_I18N.register('de', dict);
