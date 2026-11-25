@@ -936,6 +936,16 @@
     "ui.extra.0520": "Total des zones / localités répertoriées :",
     "ui.extra.0521": "District",
 
+    "ui.extra.0522": "🚨 En cas d’urgence ou de danger immédiat, contactez une ambulance ou le service médical le plus proche. N’attendez pas une réponse de RAFIQ.",
+    "ui.extra.0523": "RAFIQ ne pose pas de diagnostic, ne prescrit pas de médicaments et ne modifie pas les traitements. Veuillez consulter votre médecin ou votre équipe soignante.",
+    "ui.extra.0524": "Services RAFIQ : soins aux personnes âgées, soins aux patients, soins infirmiers à domicile et kinésithérapie à domicile. Indiquez-moi votre besoin et votre région.",
+    "ui.extra.0525": "Bien sûr. Dans quelle zone et pour quels horaires ? La direction vérifiera ensuite les disponibilités.",
+    "ui.extra.0526": "Bien sûr. Dans quelle zone et pour quel besoin ou type de rééducation ?",
+    "ui.extra.0527": "Bien sûr 🌿 La demande concerne-t-elle une personne âgée ou un patient ? Dans quelle ville ou région ?",
+    "ui.extra.0528": "Je comprends 🌿 Indiquez-moi le service dont vous avez besoin et votre ville ou région ; je vous aiderai pour la prochaine étape.",
+    "ui.extra.0529": "Préparation de votre réponse…",
+    "ui.extra.0530": "L’assistant est prêt.",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
