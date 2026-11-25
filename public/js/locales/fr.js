@@ -472,6 +472,11 @@
     "home.directory.groupTwo": "👥 Groupe WhatsApp 2",
     "home.directory.footerTagline": "— Relier les familles aux soins, à l’amour et à la sécurité",
 
+    "home.directory.topbarLabel": "Barre de navigation principale RAFIQ",
+    "home.directory.menuLabel": "Menu",
+    "home.directory.logoAlt": "RAFIQ | Rafiq — logo officiel",
+    "home.directory.installLabel": "Installer l’application RAFIQ",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
