@@ -891,6 +891,12 @@
     "ui.extra.0478": "Inscription d’un centre de radiologie et d’imagerie",
     "ui.extra.0479": "Inscription d’un centre de matériel médical",
 
+    "ui.extra.0480": "Questions fréquentes sur les soins à domicile au Liban | RAFIQ",
+    "ui.extra.0481": "Guide des soins | RAFIQ",
+    "ui.extra.0482": "RAFIQ | Rafiq — Logo officiel",
+    "ui.extra.0483": "Installer l’application RAFIQ",
+    "ui.extra.0484": "Soins chaleureux et compagnie à domicile pour les personnes âgées",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
