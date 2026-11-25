@@ -482,6 +482,11 @@
     "home.directory.groupTwo": "👥 مجموعة WhatsApp الثانية",
     "home.directory.footerTagline": "— نصل بالحب والأمان لرعاية العائلة",
 
+    "home.directory.topbarLabel": "شريط RAFIQ الرئيسي",
+    "home.directory.menuLabel": "القائمة",
+    "home.directory.logoAlt": "RAFIQ | رفيق — الشعار الرسمي",
+    "home.directory.installLabel": "تثبيت تطبيق رفيق",
+
   };
 
   RAFIQ_I18N.register('ar', dict);
