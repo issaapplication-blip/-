@@ -887,6 +887,10 @@
     "ui.extra.0475": "Numéro de demande :",
     "ui.extra.0476": "Impossible d’envoyer la demande. Veuillez réessayer.",
 
+    "ui.extra.0477": "Inscription d’un laboratoire médical",
+    "ui.extra.0478": "Inscription d’un centre de radiologie et d’imagerie",
+    "ui.extra.0479": "Inscription d’un centre de matériel médical",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
