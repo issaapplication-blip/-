@@ -927,6 +927,17 @@
     "ui.extra.0510": "If direct installation is not available, RAFIQ will show the installation steps for your device.",
     "ui.extra.0511": "Return to the RAFIQ platform",
 
+    "ui.extra.0512": "Choose governorate",
+    "ui.extra.0513": "Choose district",
+    "ui.extra.0514": "Choose main area",
+    "ui.extra.0515": "Choose area",
+    "ui.extra.0516": "Unable to load areas. Please refresh the page.",
+    "ui.extra.0517": "Districts",
+    "ui.extra.0518": "Listed areas / localities",
+    "ui.extra.0519": "Area",
+    "ui.extra.0520": "Total listed areas / localities:",
+    "ui.extra.0521": "District",
+
   };
 
   RAFIQ_I18N.register('en', dict);
