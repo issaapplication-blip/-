@@ -19,7 +19,9 @@
     if(!target)return;
     target.hidden=false;
     target.className=success?"form-message success":"form-message error";
-    target.textContent=message;
+    target.setAttribute("data-rafig-source-text",message);
+    const translated=window.RAFIQ_I18N?.translateText(message);
+    target.textContent=translated||message;
     target.setAttribute("role",success?"status":"alert");
   }
   function validateFiles(form){
