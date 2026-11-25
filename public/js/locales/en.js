@@ -938,6 +938,16 @@
     "ui.extra.0520": "Total listed areas / localities:",
     "ui.extra.0521": "District",
 
+    "ui.extra.0522": "🚨 In an emergency or immediate danger, contact an ambulance or the nearest medical service now. Do not wait for a reply from RAFIQ.",
+    "ui.extra.0523": "RAFIQ does not diagnose, prescribe medication, or change treatment. Please consult your doctor or care team.",
+    "ui.extra.0524": "RAFIQ services: elderly care, patient care, home nursing, and home physiotherapy. Tell me what you need and which area you are in.",
+    "ui.extra.0525": "Certainly. Which area and hours do you need? Management will then review availability.",
+    "ui.extra.0526": "Certainly. Which area, and what type of need or rehabilitation are you looking for?",
+    "ui.extra.0527": "Certainly 🌿 Is the request for an older adult or a patient? Which city or area?",
+    "ui.extra.0528": "I understand 🌿 Tell me which service you need and in which city or area, and I’ll help with the next step.",
+    "ui.extra.0529": "Preparing your reply…",
+    "ui.extra.0530": "The assistant is ready.",
+
   };
 
   RAFIQ_I18N.register('en', dict);
