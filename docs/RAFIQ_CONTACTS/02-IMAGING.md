@@ -6,7 +6,7 @@
 |---|---|---|---|---|---|
 | د. هيثم صلتية — Portable X-Ray | +961 71 823 764 | غير متاح | خدمة تصوير منزلي؛ نطاق التغطية يحتاج تأكيدًا | تصوير أشعة متنقل للمنازل والعيادات وفق السجل السابق | محفوظ من المستخدم — يحتاج تأكيدًا |
 | Batroun Center for Medical Imaging | غير متاح | غير متاح | البترون، لبنان؛ العنوان التفصيلي غير مستخرج | سجل وزارة الصحة: https://www.moph.gov.lb/en/HealthFacilities/view/0/42273/71319/batroun-center-for-medical-imaging | الاسم مدرج في سجل رسمي؛ بيانات الاتصال ناقصة |
-| Modern Radiology Center of Tripoli | +961 6 441 040 | غير متاح | طرابلس، لبنان؛ العنوان التفصيلي غير متاح | المصدر المتاح صفحة اجتماعية: https://www.facebook.com/p/Mrct-Modern-Radiology-Center-of-Tripoli-100066981996950/ | رقم من مصدر اجتماعي؛ يحتاج تأكيدًا مباشرًا |
+| Modern Radiology Center of Tripoli — MRCT | +961 6 441 040 | info@mrctlb.com (من دليل عام؛ يلزم تأكيد) | الطابق الأرضي، مركز دنّاوي، شارع مار مارون، طرابلس، لبنان | صفحة دليل عامة: https://www.indexoflebanon.com/directory/m/companies-in-lebanon/lebanon-company-in-tripoli_modern-radiology-center-of-tripoli.php؛ رقم الهاتف والعنوان متطابقان مع نتيجة دليل أعمال محلي | مصدر ثانوي؛ يحتاج تأكيدًا مباشرًا من المركز |
 
 ## جهات متعددة الاختصاصات مسجلة في ملف المختبرات
 
