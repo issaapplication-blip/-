@@ -34,6 +34,11 @@ const RAFIQ_I18N = (function () {
   var KEY = 'rafiq.lang';
   var bundles = {};      // code -> { key: text }
   var current = DEFAULT;
+  var originalText = new WeakMap();
+  var originalAttributes = new WeakMap();
+  var originalMarkedText = new WeakMap();
+  var originalTitle = document.title;
+  var I18N_ASSET_VERSION = '84';
 
   function langMeta(code) {
     for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i];
@@ -90,7 +95,7 @@ const RAFIQ_I18N = (function () {
     if (bundles[code]) return Promise.resolve(bundles[code]);
     return new Promise(function (resolve) {
       var s = document.createElement('script');
-      s.src = '/js/locales/' + code + '.js?v=' + RAFIQ_VERSION;
+      s.src = '/js/locales/' + code + '.js?v=' + I18N_ASSET_VERSION;
       s.async = true;
       s.onload = function () {
         resolve(bundles[code] || null);
@@ -152,7 +157,60 @@ const RAFIQ_I18N = (function () {
     'التسجيل': 'care.i1.h',
     'وظائف الرعاية': 'care.i2.h',
     'CV احترافي ATS': 'care.i3.h',
-    'بدون اشتراك': 'care.i4.h'
+    'بدون اشتراك': 'care.i4.h',
+    "RAFIQ | رفيق — دليل المراكز الطبية في لبنان": "home.directory.title",
+    "دليل المراكز والخدمات": "home.directory.menu",
+    "المختبرات الطبية": "home.directory.labs",
+    "الأشعة والتصوير": "home.directory.radiology",
+    "مراكز العلاج الفيزيائي": "home.directory.physio",
+    "المعدات الطبية": "home.directory.equipment",
+    "المناطق": "home.directory.areas",
+    "خدمة CV وCover Letter": "home.directory.cvnav",
+    "مساعد رفيق": "home.directory.assistant",
+    "دليل RAFIQ للمراكز والخدمات الطبية في لبنان": "home.directory.heroLead",
+    "يعرّف العائلات بالمختبرات الطبية ومراكز الأشعة والتصوير والعلاج الفيزيائي ومراكز بيع وتأجير المعدات الطبية، ولا يعرض إلا المراكز والعروض التي تعتمدها الإدارة.": "home.directory.heroDesc",
+    "📲 تثبيت تطبيق رفيق": "home.directory.install",
+    "استكشف الخدمات": "home.directory.explore",
+    "خدمات ودليل RAFIQ الطبي": "home.directory.imageAlt",
+    "رفيق | RAFIQ 🇱🇧": "home.directory.caption",
+    "دليل المراكز الطبية المعتمدة وخدماتها، مع معلومات واضحة وتواصل مباشر مع الجهة المقدمة للخدمة.": "home.directory.captionDesc",
+    "خدمات RAFIQ باختصار": "home.directory.servicesH",
+    "ملخص سريع لكل حالة. الصورة والشرح المفصل موجودان داخل صفحة كل اختصاص.": "home.directory.servicesP",
+    "المختبرات الطبية": "home.directory.labH",
+    "التعريف بالمختبرات الطبية المعتمدة وخدمات التحاليل والفحوص بحسب المنطقة.": "home.directory.labP",
+    "الأشعة والتصوير الطبي": "home.directory.radiologyH",
+    "مراكز الأشعة والتصوير الطبي التي تمت مراجعتها واعتماد بياناتها.": "home.directory.radiologyP",
+    "مراكز العلاج الفيزيائي": "home.directory.physioH",
+    "دليل مراكز العلاج والتأهيل الفيزيائي المعتمدة، مع ترك التقييم والخطة للاختصاصي.": "home.directory.physioP",
+    "بيع وتأجير المعدات الطبية": "home.directory.equipmentH",
+    "مراكز بيع وتجهيز وتأجير المعدات الطبية بعد مراجعة بيانات المركز والعروض.": "home.directory.equipmentP",
+    "عرض الفئة": "home.directory.viewCategory",
+    "📄 خدمة إعداد الـCV من RAFIQ": "home.directory.cvTitle",
+    "إعداد ملف مهني واضح ومرتب للباحثين عن فرص العمل.": "home.directory.cvDesc",
+    "📄 اطلب إعداد الـCV الآن": "home.directory.cvButton",
+    "كيف يعمل دليل RAFIQ؟": "home.directory.howH",
+    "معلومات واضحة عن المراكز والخدمات المعتمدة، دون استقبال طلبات انتساب أو رعاية أو حجوزات.": "home.directory.howP",
+    "🧪 تصفح الفئات": "home.directory.browseH",
+    "اختر المختبرات أو الأشعة والتصوير أو مراكز العلاج الفيزيائي أو المعدات الطبية.": "home.directory.browseP",
+    "📍 اختر المنطقة": "home.directory.areaH",
+    "ابحث ضمن طرابلس والضنية وزغرتا والكورة والبترون وبيروت وباقي لبنان بحسب المراكز المعتمدة.": "home.directory.areaP",
+    "🏥 المراكز والإعلانات": "home.directory.adsH",
+    "لا ننشر اسم مركز أو عرضًا أو سعرًا إلا بعد التحقق وموافقة إدارة رفيق.": "home.directory.adsP",
+    "📄 خدمة CV وCover Letter": "home.directory.cvHowH",
+    "خدمة مستقلة لإعداد السيرة الذاتية وخطاب التقديم بالاعتماد على معلومات العميل الفعلية.": "home.directory.cvHowP",
+    "تفاصيل خدمة CV": "home.directory.cvDetails",
+    "إعلانات المراكز المعتمدة": "home.directory.adsTitle",
+    "يمكن للمختبرات ومراكز الأشعة والعلاج الفيزيائي وموردي المعدات الطبية التواصل مع الإدارة لمراجعة إمكانية الإعلان أو إدراج الخدمات. لا يُعد التواصل قبولًا أو اعتمادًا تلقائيًا.": "home.directory.adsDesc",
+    "التواصل مع إدارة RAFIQ": "home.directory.contact",
+    "تصفح دليل الخدمات": "home.directory.browseServices",
+    "📲 قنوات RAFIQ الرسمية": "home.directory.channels",
+    "للاستفسارات والتحديثات والتواصل المباشر.": "home.directory.channelsDesc",
+    "🤖 بوت Telegram": "home.directory.telegramBot",
+    "📢 قناة Telegram": "home.directory.telegramChannel",
+    "📢 قناة WhatsApp": "home.directory.whatsappChannel",
+    "💬 WhatsApp الإدارة": "home.directory.whatsappAdmin",
+    "المراسلات الرسمية: +961 81 506 299 · تفاصيل التحويلات المالية تُعطى من الإدارة عند الحاجة.": "home.directory.footer",
+    "© RAFIQ | رفيق · issaapplication@gmail.com": "home.directory.copyright"
   };
 
   function normalizeSource(s) {
@@ -189,23 +247,18 @@ const RAFIQ_I18N = (function () {
     while ((node = walker.nextNode())) {
       var parent = node.parentElement;
       if (!parent || parent.closest('script,style,template,.ra-lang,[data-i18n]')) continue;
-      var raw = node.nodeValue;
-      var translated = translateSource(raw, lang);
-      if (translated && normalizeSource(raw) === normalizeSource(translated)) continue;
-      if (translated) {
-        var leading = raw.match(/^\\s*/)?.[0] || '';
-        var trailing = raw.match(/\\s*$/)?.[0] || '';
-        node.nodeValue = leading + translated + trailing;
-        changed++;
-      }
+      if (!originalText.has(node)) originalText.set(node, node.nodeValue);
+      var raw = originalText.get(node);
+      var translated = lang === DEFAULT ? raw : translateSource(raw, lang);
+      var next = translated || raw;
+      if (node.nodeValue !== next) { node.nodeValue = next; changed++; }
     }
     return changed;
   }
 
   function translateAttributes(lang) {
-    if (lang === DEFAULT) return 0;
     var changed = 0;
-    var attrs = ['title','alt','aria-label'];
+    var attrs = ['title','alt','aria-label','placeholder'];
     var els = document.querySelectorAll('[title],[alt],[aria-label]');
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
@@ -213,9 +266,12 @@ const RAFIQ_I18N = (function () {
       for (var j = 0; j < attrs.length; j++) {
         var name = attrs[j];
         if (!el.hasAttribute(name)) continue;
-        var raw = el.getAttribute(name);
-        var val = translateSource(raw, lang);
-        if (val && val !== raw) { el.setAttribute(name, val); changed++; }
+        var cache = originalAttributes.get(el);
+        if (!cache) { cache = Object.create(null); originalAttributes.set(el, cache); }
+        if (!Object.prototype.hasOwnProperty.call(cache, name)) cache[name] = el.getAttribute(name);
+        var raw = cache[name];
+        var val = lang === DEFAULT ? raw : (translateSource(raw, lang) || raw);
+        if (el.getAttribute(name) !== val) { el.setAttribute(name, val); changed++; }
       }
     }
     return changed;
@@ -236,8 +292,10 @@ const RAFIQ_I18N = (function () {
 
     // a translated <title> when we have one
     var titleKey = document.body.getAttribute('data-i18n-title');
+    rebuildSourceIndex();
     var t = titleKey ? translate(titleKey, code) : null;
-    if (t) document.title = t;
+    if (!t && code !== DEFAULT) t = translateSource(originalTitle, code);
+    document.title = t || originalTitle;
 
     // fill every marked string; anything without a translation keeps
     // whatever the page already had, which is the Arabic original
@@ -481,7 +539,7 @@ const RAFIQ_I18N = (function () {
     LANGS: LANGS,
     get current() { return current; },
     get detected() { return detected; },
-    version: '3'
+    version: '4'
   };
 })();
 
