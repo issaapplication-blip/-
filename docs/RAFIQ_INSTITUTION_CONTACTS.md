@@ -10,6 +10,7 @@
 | التصوير الطبي والأشعة | [02-IMAGING.md](./RAFIQ_CONTACTS/02-IMAGING.md) |
 | العلاج الفيزيائي وإعادة التأهيل | [03-PHYSIOTHERAPY.md](./RAFIQ_CONTACTS/03-PHYSIOTHERAPY.md) |
 | المعدات الطبية والأطراف الاصطناعية | [04-MEDICAL-EQUIPMENT.md](./RAFIQ_CONTACTS/04-MEDICAL-EQUIPMENT.md) |
+| حالة تدقيق البيانات | [00-VERIFICATION-STATUS.md](./RAFIQ_CONTACTS/00-VERIFICATION-STATUS.md) |
 
 ## قواعد إزالة التكرار
 - رقم الهاتف بعد توحيده إلى الصيغة الدولية هو مفتاح المطابقة الأول.
