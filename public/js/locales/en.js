@@ -889,6 +889,10 @@
     "ui.extra.0475": "Request number:",
     "ui.extra.0476": "The request could not be submitted. Please try again.",
 
+    "ui.extra.0477": "Medical laboratory registration",
+    "ui.extra.0478": "Radiology and imaging center registration",
+    "ui.extra.0479": "Medical equipment center registration",
+
   };
 
   RAFIQ_I18N.register('en', dict);
