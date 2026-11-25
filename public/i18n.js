@@ -201,7 +201,11 @@ const RAFIQ_I18N = (function () {
       var source = candidates[i];
       if (normalized.indexOf(source + ' ') === 0) {
         var prefix = inlineTextTranslations[source][target];
-        if (prefix) return prefix + normalized.slice(source.length);
+        if (prefix) {
+          var suffix = normalized.slice(source.length).trim();
+          var translatedSuffix = suffix ? translateSource(suffix, target) : '';
+          return prefix + (suffix ? ' ' + (translatedSuffix || suffix) : '');
+        }
       }
     }
     return null;
@@ -292,12 +296,8 @@ const RAFIQ_I18N = (function () {
     var messages = document.querySelectorAll('[data-rafig-source-text]');
     for (var i = 0; i < messages.length; i++) {
       var source = messages[i].getAttribute('data-rafig-source-text') || '';
-      var lines = source.split('\\n');
-      var translatedLines = lines.map(function (line) {
-        var value = translateSource(line, lang);
-        return value == null || value === '' ? line : value;
-      });
-      messages[i].textContent = translatedLines.join('\\n');
+      var translated = lang === DEFAULT ? source : translateSource(source, lang);
+      messages[i].textContent = translated == null || translated === '' ? source : translated;
     }
   }
 
@@ -305,6 +305,7 @@ const RAFIQ_I18N = (function () {
   function apply(code, opts) {
     opts = opts || {};
     if (!isKnown(code)) code = DEFAULT;
+    rebuildSourceIndex();
     current = code;
     write(code);
 
