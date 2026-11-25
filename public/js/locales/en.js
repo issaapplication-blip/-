@@ -893,6 +893,12 @@
     "ui.extra.0478": "Radiology and imaging center registration",
     "ui.extra.0479": "Medical equipment center registration",
 
+    "ui.extra.0480": "Frequently asked questions about home care in Lebanon | RAFIQ",
+    "ui.extra.0481": "Care guide | RAFIQ",
+    "ui.extra.0482": "RAFIQ | Rafiq — Official logo",
+    "ui.extra.0483": "Install RAFIQ app",
+    "ui.extra.0484": "Warm home care and companionship for older adults",
+
   };
 
   RAFIQ_I18N.register('en', dict);
