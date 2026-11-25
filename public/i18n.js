@@ -214,7 +214,7 @@ const RAFIQ_I18N = (function () {
   };
 
   function normalizeSource(s) {
-    return String(s == null ? '' : s).replace(/\\s+/g, ' ').trim();
+    return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   }
 
   function rebuildSourceIndex() {
