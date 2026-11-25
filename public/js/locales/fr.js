@@ -464,6 +464,14 @@
     "home.directory.footer": "Correspondance officielle : +961 81 506 299 · Les détails de transfert sont fournis par la direction si nécessaire.",
     "home.directory.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
 
+    "home.directory.whatsapp": "💬 RAFIQ sur WhatsApp",
+    "home.directory.cvCombo": "CV professionnel + lettre de motivation",
+    "home.directory.bundlePrice": "Forfait : 35 $",
+    "home.directory.extraLanguage": "Une langue supplémentaire est disponible selon le service demandé.",
+    "home.directory.groupOne": "👥 Groupe WhatsApp 1",
+    "home.directory.groupTwo": "👥 Groupe WhatsApp 2",
+    "home.directory.footerTagline": "— Relier les familles aux soins, à l’amour et à la sécurité",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
