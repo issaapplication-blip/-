@@ -367,7 +367,22 @@ const RAFIQ_I18N = (function () {
     "العربية، الإنجليزية، الفرنسية...": ["Arabic, English, French...", "Arabe, anglais, français...", "Arabo, inglese, francese...", "Arabisch, Englisch, Französisch..."],
     "اكتب الخدمات المتاحة والأسعار كما تعتمدها منشأتك.": ["Enter the services available and the prices approved by your facility.", "Indiquez les services disponibles et les tarifs approuvés par votre établissement.", "Inserisci i servizi disponibili e i prezzi approvati dalla tua struttura.", "Geben Sie die verfügbaren Leistungen und die von Ihrer Einrichtung genehmigten Preise ein."],
     "الأيام والساعات": ["Days and hours", "Jours et heures", "Giorni e orari", "Tage und Uhrzeiten"],
-    "وصف عام مختصر دون تفاصيل طبية حساسة.": ["A brief general description without sensitive medical details.", "Une brève description générale sans détails médicaux sensibles.", "Una breve descrizione generale senza dettagli medici sensibili.", "Eine kurze allgemeine Beschreibung ohne sensible medizinische Angaben."]
+    "وصف عام مختصر دون تفاصيل طبية حساسة.": ["A brief general description without sensitive medical details.", "Une brève description générale sans détails médicaux sensibles.", "Una breve descrizione generale senza dettagli medici sensibili.", "Eine kurze allgemeine Beschreibung ohne sensible medizinische Angaben."],
+    "نوع الملف غير مسموح. ارفع PDF أو JPG أو PNG فقط.": ["File type not allowed. Upload PDF, JPG, or PNG only.", "Type de fichier non autorisé. Téléversez uniquement un PDF, JPG ou PNG.", "Tipo di file non consentito. Carica solo PDF, JPG o PNG.", "Dateityp nicht zulässig. Laden Sie nur PDF, JPG oder PNG hoch."],
+    "حجم الملف يتجاوز 8 ميغابايت.": ["The file exceeds 8 MB.", "Le fichier dépasse 8 Mo.", "Il file supera 8 MB.", "Die Datei überschreitet 8 MB."],
+    "يمكن إرفاق 8 ملفات كحد أقصى.": ["You can attach up to 8 files.", "Vous pouvez joindre jusqu’à 8 fichiers.", "Puoi allegare fino a 8 file.", "Sie können bis zu 8 Dateien anhängen."],
+    "يرجى الموافقة على مراجعة البيانات قبل الإرسال.": ["Please consent to the review of your information before submitting.", "Veuillez accepter l’examen de vos informations avant l’envoi.", "Acconsenti alla revisione dei tuoi dati prima dell’invio.", "Bitte stimmen Sie der Prüfung Ihrer Angaben vor dem Absenden zu."],
+    "تم تجاوز عدد المحاولات. يرجى الانتظار قليلًا ثم إعادة المحاولة.": ["Too many attempts. Please wait a moment and try again.", "Trop de tentatives. Veuillez patienter un instant puis réessayer.", "Troppi tentativi. Attendi qualche istante e riprova.", "Zu viele Versuche. Bitte warten Sie kurz und versuchen Sie es erneut."],
+    "خدمة استقبال الطلبات غير جاهزة حاليًا. يرجى المحاولة لاحقًا.": ["The request service is temporarily unavailable. Please try again later.", "Le service de réception des demandes est temporairement indisponible. Veuillez réessayer plus tard.", "Il servizio di ricezione delle richieste non è al momento disponibile. Riprova più tardi.", "Der Anfrage-Service ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut."],
+    "تعذر حفظ أحد الملفات. لم يُعتمد الطلب؛ يرجى إعادة المحاولة.": ["A file could not be saved. The request was not accepted; please try again.", "Un fichier n’a pas pu être enregistré. La demande n’a pas été acceptée ; veuillez réessayer.", "Non è stato possibile salvare un file. La richiesta non è stata accettata; riprova.", "Eine Datei konnte nicht gespeichert werden. Die Anfrage wurde nicht angenommen; bitte versuchen Sie es erneut."],
+    "تعذر حفظ الطلب الآن. حاول مرة أخرى لاحقًا.": ["The request could not be saved right now. Please try again later.", "La demande n’a pas pu être enregistrée pour le moment. Veuillez réessayer plus tard.", "Impossibile salvare la richiesta al momento. Riprova più tardi.", "Die Anfrage konnte derzeit nicht gespeichert werden. Bitte versuchen Sie es später erneut."],
+    "تعذر إرسال الطلب. حاول مرة أخرى.": ["The request could not be sent. Please try again.", "La demande n’a pas pu être envoyée. Veuillez réessayer.", "Impossibile inviare la richiesta. Riprova.", "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut."],
+    "حجم الملف يجب أن يكون أكبر من صفر وألا يتجاوز 8 ميغابايت.": ["The file must be larger than zero and no larger than 8 MB.", "Le fichier doit dépasser zéro et ne pas dépasser 8 Mo.", "Il file deve essere maggiore di zero e non superare 8 MB.", "Die Datei muss größer als null und darf höchstens 8 MB groß sein."],
+    "يرجى إرفاق جميع الوثائق المطلوبة قبل الإرسال.": ["Please attach all required documents before submitting.", "Veuillez joindre tous les documents requis avant l’envoi.", "Allega tutti i documenti richiesti prima dell’invio.", "Bitte fügen Sie vor dem Absenden alle erforderlichen Dokumente bei."],
+    "تم استلام الطلب.": ["Request received.", "Demande reçue.", "Richiesta ricevuta.", "Anfrage erhalten."],
+    "جارٍ إرسال طلبك إلى إدارة RAFIQ للمراجعة…": ["Your request is being sent to RAFIQ management for review…", "Votre demande est transmise à la direction de RAFIQ pour examen…", "La tua richiesta viene inviata alla direzione RAFIQ per la revisione…", "Ihre Anfrage wird zur Prüfung an die RAFIQ-Leitung gesendet…"],
+    "تم استلام طلبك وسنتواصل معك بعد مراجعة الإدارة.": ["Your request has been received. We will contact you after management review.", "Votre demande a été reçue. Nous vous contacterons après examen par la direction.", "La tua richiesta è stata ricevuta. Ti contatteremo dopo la revisione della direzione.", "Ihre Anfrage ist eingegangen. Wir kontaktieren Sie nach Prüfung durch die Leitung."],
+    "تم استلام طلبك وسنتواصل معك بعد مراجعة الإدارة. رقم الطلب:": ["Your request has been received. We will contact you after management review. Request number:", "Votre demande a été reçue. Nous vous contacterons après examen par la direction. Numéro de demande :", "La tua richiesta è stata ricevuta. Ti contatteremo dopo la revisione della direzione. Numero richiesta:", "Ihre Anfrage ist eingegangen. Wir kontaktieren Sie nach Prüfung durch die Leitung. Anfragenummer:"]
   };
 
   function translateSource(text, lang) {
@@ -682,6 +697,7 @@ const RAFIQ_I18N = (function () {
     apply: apply,
     register: register,
     translate: translate,
+    translateSource: translateSource,
     langMeta: langMeta,
     isKnown: isKnown,
     detect: detect,
