@@ -22,7 +22,9 @@
 </main><script>
 (function(){
 const chat=document.getElementById("chat"),input=document.getElementById("input"),send=document.getElementById("send"),status=document.getElementById("status");
-function add(t,c){const d=document.createElement("div");d.className="m "+c;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+function localize(t){const lang=window.RAFIQ_I18N?.current||document.documentElement.lang||"ar";return window.RAFIQ_I18N?.translateText?.(t,lang)||t}
+function setStatus(t){status.setAttribute("data-rafig-source-text",t);status.textContent=localize(t)}
+function add(t,c){const d=document.createElement("div");d.className="m "+c;if(c==="a"){d.setAttribute("data-rafig-source-text",t);d.textContent=localize(t)}else d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
 function fallback(t){
  if(/(صعوبة\s*شديدة\s*بالتنفس|ألم\s*صدر|نزيف\s*شديد|فقدان\s*الوعي|إغماء|تشنج|سكتة|اختناق|chest pain|unconscious|stroke)/i.test(t))return "🚨 إذا كانت هناك حالة طارئة أو خطر فوري، اتصل بالإسعاف أو بأقرب جهة طبية فورًا. لا تنتظر رد رفيق.";
  if(/(دواء|جرعة|تشخيص|وصفة|medication|dose|diagnos|prescription)/i.test(t))return "رفيق لا يشخّص ولا يصف الأدوية ولا يغيّر العلاج. يرجى الرجوع إلى الطبيب أو الفريق المعالج.";
@@ -33,17 +35,17 @@ function fallback(t){
  return "أفهمك 🌿 أخبرني ما الخدمة التي تحتاجها وفي أي مدينة أو منطقة، وسأساعدك بالخطوة التالية.";
 }
 async function ask(t){
- status.textContent="جارٍ تجهيز الرد…";
+ setStatus("جارٍ تجهيز الرد…");
  try{
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),9000);
-  const r=await fetch("/api/agent/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:t}),signal:controller.signal});
+  const r=await fetch("/api/agent/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:t,locale:window.RAFIQ_I18N?.current||document.documentElement.lang||"ar"}),signal:controller.signal});
   clearTimeout(timer);
   const data=await r.json().catch(()=>({}));
   if(!r.ok||!data.reply)throw new Error("agent unavailable");
   return data.reply;
  }catch(e){return fallback(t)}
 }
-async function go(){const v=input.value.trim();if(!v||send.disabled)return;add(v,"u");input.value="";send.disabled=true;const reply=await ask(v);add(reply,"a");send.disabled=false;status.textContent="المساعد جاهز.";input.focus()}
+async function go(){const v=input.value.trim();if(!v||send.disabled)return;add(v,"u");input.value="";send.disabled=true;const reply=await ask(v);add(reply,"a");send.disabled=false;setStatus("المساعد جاهز.");input.focus()}
 send.onclick=go;input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();go()}});document.querySelectorAll(".q").forEach(b=>b.onclick=()=>{input.value=b.textContent;go()});
 })();
 </script><script src="/i18n.js?v=3" defer></script></body></html>
