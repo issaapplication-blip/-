@@ -887,6 +887,10 @@
     "ui.extra.0475": "Anfragenummer:",
     "ui.extra.0476": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
 
+    "ui.extra.0477": "Registrierung eines medizinischen Labors",
+    "ui.extra.0478": "Registrierung eines Radiologie- und Bildgebungszentrums",
+    "ui.extra.0479": "Registrierung eines Zentrums für medizinische Geräte",
+
   };
 
   RAFIQ_I18N.register('de', dict);
