@@ -237,7 +237,6 @@ const RAFIQ_I18N = (function () {
   }
 
   function translateLegacyPage(lang) {
-    if (lang === DEFAULT) return 0;
     rebuildSourceIndex();
     var changed = 0;
     var root = document.querySelector('main') || document.body;
