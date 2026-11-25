@@ -474,6 +474,14 @@
     "home.directory.footer": "المراسلات الرسمية: +961 81 506 299 · تفاصيل التحويلات المالية تُعطى من الإدارة عند الحاجة.",
     "home.directory.copyright": "© RAFIQ | رفيق · issaapplication@gmail.com",
 
+    "home.directory.whatsapp": "💬 واتساب RAFIQ",
+    "home.directory.cvCombo": "CV احترافي + Cover Letter",
+    "home.directory.bundlePrice": "الباقة: 35$",
+    "home.directory.extraLanguage": "إضافة لغة أخرى متاحة حسب الخدمة المطلوبة.",
+    "home.directory.groupOne": "👥 مجموعة WhatsApp الأولى",
+    "home.directory.groupTwo": "👥 مجموعة WhatsApp الثانية",
+    "home.directory.footerTagline": "— نصل بالحب والأمان لرعاية العائلة",
+
   };
 
   RAFIQ_I18N.register('ar', dict);
