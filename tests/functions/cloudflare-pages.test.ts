@@ -147,3 +147,64 @@ test("current RAFIQ homepage copy has non-empty translations in all five support
     }
   }
 });
+
+
+const directoryI18n = read("public/i18n.js");
+const directoryPages = [
+  "public/index.html",
+  "public/services.html",
+  "public/regions.html",
+  "public/laboratories.html",
+  "public/radiology.html",
+  "public/physiotherapy.html",
+  "public/medical-equipment.html",
+  "public/caregivers.html",
+  "public/faq.html",
+  "public/guide.html",
+  "public/offline.html",
+  "public/patient-care.html"
+];
+
+test("public directory and information pages load the refreshed five-language engine", () => {
+  for (const path of directoryPages) {
+    expect(read(path)).toContain("/i18n.js?v=6");
+  }
+});
+
+test("directory, category, FAQ, guide, and CV copy has explicit English, French, Italian, and German translations", () => {
+  for (const source of [
+    "دليل المراكز والخدمات الطبية المعتمدة",
+    "منصة RAFIQ معلوماتية وإعلانية. تعرض المراكز والخدمات التي راجعتها الإدارة واعتمدت بياناتها فقط.",
+    "المختبرات الطبية",
+    "الأشعة والتصوير",
+    "مراكز العلاج الفيزيائي",
+    "المعدات الطبية",
+    "الأسئلة الشائعة حول دليل RAFIQ",
+    "كيف تستخدم دليل RAFIQ؟",
+    "الدفع المسبق عبر Whish Money فقط. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع من إدارة RAFIQ. لا تشارك كلمة مرور Whish أو رمز OTP."
+  ]) {
+    const start = directoryI18n.indexOf("'" + source + "': {");
+    expect(start).toBeGreaterThanOrEqual(0);
+    const end = directoryI18n.indexOf("}", start);
+    const translation = directoryI18n.slice(start, end);
+    for (const language of ["en", "fr", "it", "de"]) {
+      expect(translation).toContain(language + ":");
+    }
+  }
+});
+
+test("Lebanon regions directory localizes generated district and locality labels", () => {
+  const regions = read("public/regions.html");
+  for (const language of ["ar", "en", "fr", "it", "de"]) {
+    expect(regions).toContain(language + ":{districts:");
+  }
+  expect(regions).toContain("document.addEventListener('rafiq:i18n',render)");
+});
+
+test("public language engine parses as valid JavaScript", () => {
+  expect(() => new Function(directoryI18n)).not.toThrow();
+});
+
+test("switching the directory language back to Arabic restores the original page title", () => {
+  expect(directoryI18n).toContain("if (code === DEFAULT) document.title = originalDocumentTitle;");
+});
