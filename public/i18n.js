@@ -280,7 +280,7 @@ const RAFIQ_I18N = (function () {
     'مراكز العلاج الفيزيائي | RAFIQ': {en:'Physiotherapy centres | RAFIQ',fr:'Centres de physiothérapie | RAFIQ',it:'Centri di fisioterapia | RAFIQ',de:'Physiotherapiezentren | RAFIQ'},
     'المعدات الطبية | RAFIQ': {en:'Medical equipment | RAFIQ',fr:'Équipements médicaux | RAFIQ',it:'Attrezzature mediche | RAFIQ',de:'Medizinische Geräte | RAFIQ'},
     'الأسئلة الشائعة | RAFIQ': {en:'Frequently asked questions | RAFIQ',fr:'Questions fréquentes | RAFIQ',it:'Domande frequenti | RAFIQ',de:'Häufige Fragen | RAFIQ'},
-    'دليل استخدام RAFIQ | رفيق': {en:'How to use RAFIQ | Rafiq',fr:'Comment utiliser RAFIQ | Rafiq',it:'Come usare RAFIQ | Rafiq',de:'So verwenden Sie RAFIQ | Rafiq'}
+    'دليل استخدام RAFIQ | رفيق': {en:'How to use RAFIQ | Rafiq',fr:'Comment utiliser RAFIQ | Rafiq',it:'Come usare RAFIQ | Rafiq',de:'So verwenden Sie RAFIQ | Rafiq'},
 
 
     'خدمات CV وCover Letters | RAFIQ': {en:'CV and cover-letter services | RAFIQ',fr:'Services CV et lettres de motivation | RAFIQ',it:'Servizi CV e lettere di presentazione | RAFIQ',de:'Lebenslauf- und Anschreibenservices | RAFIQ'},
