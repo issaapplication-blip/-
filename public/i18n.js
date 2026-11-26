@@ -280,6 +280,16 @@ const RAFIQ_I18N = (function () {
     'الدليل والخدمات': {en:'Directory and services',fr:'Annuaire et services',it:'Elenco e servizi',de:'Verzeichnis und Dienste'},
     'فئات الدليل': {en:'Directory categories',fr:'Catégories de l’annuaire',it:'Categorie dell’elenco',de:'Verzeichniskategorien'},
     'دليل استخدام RAFIQ لتصفح المراكز الطبية والعروض المعتمدة في لبنان.': {en:'A guide to using RAFIQ to browse approved medical centres and offers in Lebanon.',fr:'Guide d’utilisation de RAFIQ pour consulter les centres médicaux et offres agréés au Liban.',it:'Guida all’uso di RAFIQ per consultare centri medici e offerte approvati in Libano.',de:'Anleitung zur Nutzung von RAFIQ für die Suche nach zugelassenen medizinischen Zentren und Angeboten im Libanon.'}
+
+    'دليل المراكز والخدمات الطبية | RAFIQ': {en:'Medical centres and services directory | RAFIQ',fr:'Annuaire des centres et services médicaux | RAFIQ',it:'Elenco dei centri e servizi medici | RAFIQ',de:'Verzeichnis medizinischer Zentren und Dienste | RAFIQ'},
+    'مناطق لبنان | RAFIQ': {en:'Areas of Lebanon | RAFIQ',fr:'Régions du Liban | RAFIQ',it:'Regioni del Libano | RAFIQ',de:'Regionen des Libanon | RAFIQ'},
+    'المختبرات الطبية | RAFIQ': {en:'Medical laboratories | RAFIQ',fr:'Laboratoires médicaux | RAFIQ',it:'Laboratori medici | RAFIQ',de:'Medizinische Labore | RAFIQ'},
+    'الأشعة والتصوير الطبي | RAFIQ': {en:'Radiology and medical imaging | RAFIQ',fr:'Radiologie et imagerie médicale | RAFIQ',it:'Radiologia e diagnostica per immagini | RAFIQ',de:'Radiologie und medizinische Bildgebung | RAFIQ'},
+    'مراكز العلاج الفيزيائي | RAFIQ': {en:'Physiotherapy centres | RAFIQ',fr:'Centres de physiothérapie | RAFIQ',it:'Centri di fisioterapia | RAFIQ',de:'Physiotherapiezentren | RAFIQ'},
+    'المعدات الطبية | RAFIQ': {en:'Medical equipment | RAFIQ',fr:'Équipements médicaux | RAFIQ',it:'Attrezzature mediche | RAFIQ',de:'Medizinische Geräte | RAFIQ'},
+    'الأسئلة الشائعة | RAFIQ': {en:'Frequently asked questions | RAFIQ',fr:'Questions fréquentes | RAFIQ',it:'Domande frequenti | RAFIQ',de:'Häufige Fragen | RAFIQ'},
+    'دليل استخدام RAFIQ | رفيق': {en:'How to use RAFIQ | Rafiq',fr:'Comment utiliser RAFIQ | Rafiq',it:'Come usare RAFIQ | Rafiq',de:'So verwenden Sie RAFIQ | Rafiq'}
+
   };
 
   function normalizeSource(s) {
