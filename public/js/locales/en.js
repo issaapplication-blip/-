@@ -559,6 +559,11 @@
     "regions.description": "The list shows Lebanon's administrative divisions to make it easier to browse areas and connect them with medical centres approved by RAFIQ management.",
     "regions.loading": "Loading all regions of Lebanon…",
 
+    "directory.navServices": "Services directory",
+    "regions.pageTitle": "Regions of Lebanon | RAFIQ",
+    "care.pageTitle": "CV & Cover Letter Services | RAFIQ",
+    "agent.pageTitle": "RAFIQ Assistant | RAFIQ",
+
   };
 
   RAFIQ_I18N.register('en', dict);
