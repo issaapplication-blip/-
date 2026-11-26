@@ -588,6 +588,26 @@
     "agent.openDirectory": "Ouvrir l’annuaire des services",
     "agent.cvLink": "Services CV et lettres de motivation",
 
+    "faq.directoryTitle": "FAQ | RAFIQ",
+    "faq.directoryHeading": "Questions fréquentes sur l’annuaire RAFIQ",
+    "faq.directoryQ1": "Quels services figurent dans l’annuaire ?",
+    "faq.directoryA1": "Laboratoires médicaux, centres de radiologie et d’imagerie, centres de physiothérapie et centres de vente et de location de matériel médical.",
+    "faq.directoryQ2": "Chaque centre ou offre affiché sur la plateforme est-il agréé ?",
+    "faq.directoryA2": "Aucun centre, offre ou réduction n’est publié avant examen et approbation par la direction de RAFIQ.",
+    "faq.directoryQ3": "Comment vérifier le montant de la réduction ?",
+    "faq.directoryA3": "Le montant et les conditions de la réduction sont affichés après approbation de la direction. Ne vous fiez à aucun montant qui n’est pas publié officiellement dans l’annuaire RAFIQ.",
+    "faq.directoryQ4": "Le client paie-t-il RAFIQ ?",
+    "faq.directoryA4": "Non. Le client paie directement le centre. RAFIQ ne reçoit pas l’argent des clients et n’effectue pas de transferts en leur nom.",
+    "faq.directoryQ5": "Un code de réduction peut-il être émis ?",
+    "faq.directoryA5": "Le code est émis après approbation par la direction du montant, des conditions et du centre. Il est à usage unique et est désactivé après confirmation de la prestation.",
+    "faq.directoryQ6": "Quelles régions l’annuaire couvre-t-il ?",
+    "faq.directoryA6": "Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beyrouth et le reste du Liban, au fur et à mesure de l’ajout des centres agréés.",
+    "faq.directoryQ7": "RAFIQ fournit-il des diagnostics ou des prescriptions ?",
+    "faq.directoryA7": "Non. L’annuaire ne pose pas de diagnostic, ne prescrit pas de médicaments et ne modifie pas les traitements. En cas d’urgence, contactez immédiatement les secours ou l’équipe médicale traitante.",
+    "faq.directoryQ8": "Le site accepte-t-il les demandes d’inscription ou d’adhésion ?",
+    "faq.directoryA8": "Non. Les formulaires publics de candidature et d’inscription ont été supprimés. Le service CV et lettre de motivation reste indépendant de l’annuaire des centres.",
+    "faq.contactManagement": "Contacter directement la direction",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
