@@ -562,6 +562,12 @@
     "care.pageTitle": "Lebenslauf- und Anschreibendienste | RAFIQ",
     "agent.pageTitle": "RAFIQ-Assistent | RAFIQ",
 
+    "regions.districtCount": "{count} Bezirke • {total} Gebiete/Ortschaften aufgeführt",
+    "regions.district": "Bezirk {name}",
+    "regions.areaCount": "{count} Gebiete",
+    "regions.totalCount": "Insgesamt aufgeführte Gebiete/Ortschaften: {count}",
+    "regions.loadError": "Regionen konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.",
+
   };
 
   RAFIQ_I18N.register('de', dict);
