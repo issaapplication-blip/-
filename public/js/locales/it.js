@@ -588,6 +588,26 @@
     "agent.openDirectory": "Apri l’elenco dei servizi",
     "agent.cvLink": "Servizi CV e lettere di presentazione",
 
+    "faq.directoryTitle": "Domande frequenti | RAFIQ",
+    "faq.directoryHeading": "Domande frequenti sull’elenco RAFIQ",
+    "faq.directoryQ1": "Quali servizi sono inclusi nell’elenco?",
+    "faq.directoryA1": "Laboratori medici, centri di radiologia e diagnostica per immagini, centri di fisioterapia e centri di vendita e noleggio di attrezzature mediche.",
+    "faq.directoryQ2": "Ogni centro o offerta mostrato sulla piattaforma è approvato?",
+    "faq.directoryA2": "Nessun centro, offerta o sconto viene pubblicato prima della verifica e dell’approvazione della direzione RAFIQ.",
+    "faq.directoryQ3": "Come posso verificare l’importo dello sconto?",
+    "faq.directoryA3": "L’importo e le condizioni dello sconto vengono mostrati dopo l’approvazione della direzione. Non fare affidamento su importi non pubblicati ufficialmente nell’elenco RAFIQ.",
+    "faq.directoryQ4": "Il cliente paga RAFIQ?",
+    "faq.directoryA4": "No. Il cliente paga direttamente il centro. RAFIQ non riceve denaro dai clienti né effettua trasferimenti per loro conto.",
+    "faq.directoryQ5": "È possibile emettere un codice sconto?",
+    "faq.directoryA5": "Il codice viene emesso dopo l’approvazione della direzione dell’importo, delle condizioni e del centro. È monouso e viene disattivato dopo la conferma del servizio.",
+    "faq.directoryQ6": "Quali aree copre l’elenco?",
+    "faq.directoryA6": "Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut e il resto del Libano man mano che vengono aggiunti i centri approvati.",
+    "faq.directoryQ7": "RAFIQ fornisce diagnosi o prescrizioni?",
+    "faq.directoryA7": "No. L’elenco non formula diagnosi, non prescrive farmaci e non modifica le terapie. In caso di emergenza, contattare immediatamente i servizi di emergenza o l’équipe medica curante.",
+    "faq.directoryQ8": "Il sito accetta richieste di registrazione o adesione?",
+    "faq.directoryA8": "No. I moduli pubblici di candidatura e registrazione sono stati rimossi. Il servizio CV e lettera di presentazione resta separato dall’elenco dei centri.",
+    "faq.contactManagement": "Contattare direttamente la direzione",
+
   };
 
   RAFIQ_I18N.register('it', dict);
