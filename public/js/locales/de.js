@@ -431,7 +431,9 @@
     "current.home.cv.title": "📄 Lebenslauf-Erstellung durch RAFIQ",
     "current.home.cv.subtitle": "Ein klares, gut strukturiertes berufliches Dokument für Arbeitssuchende.",
     "current.home.cv.bundle": "Professioneller Lebenslauf + Anschreiben",
-    "current.home.cv.price": "Lebenslauf: 25 $ · Anschreiben: 10 $ · Paket: 35 $",
+    "current.home.cv.price.cv": "Lebenslauf: 25 $",
+    "current.home.cv.price.cover": "Anschreiben: 10 $",
+    "current.home.cv.price.bundle": "Paket: 35 $",
     "current.home.cv.language": "Eine zusätzliche Sprache ist auf Anfrage verfügbar.",
     "current.home.cv.cta": "📄 Lebenslauf-Erstellung anfragen",
     "current.home.how.title": "Wie funktioniert das RAFIQ-Verzeichnis?",
@@ -453,6 +455,7 @@
     "current.home.footer.tagline": "Familien durch Fürsorge und Sicherheit verbinden",
     "current.home.footer.contact": "Offizielle Korrespondenz: +961 81 506 299 · Überweisungsdaten werden bei Bedarf von der Leitung mitgeteilt.",
     "current.home.footer.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
+    "current.home.footer.slogan": "— Familien durch Fürsorge und Sicherheit verbinden",
   };
 
   RAFIQ_I18N.register('de', dict);
