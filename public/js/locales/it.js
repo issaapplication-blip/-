@@ -568,6 +568,26 @@
     "regions.totalCount": "Totale aree/località elencate: {count}",
     "regions.loadError": "Impossibile caricare le regioni. Aggiorna la pagina.",
 
+    "agent.answerDirectory": "L’elenco RAFIQ comprende laboratori medici, centri di radiologia e diagnostica per immagini, centri di fisioterapia e vendita e noleggio di attrezzature mediche. I centri sono elencati dopo la verifica della direzione.",
+    "agent.answerCV": "RAFIQ offre la preparazione di CV e lettere di presentazione utilizzando solo le informazioni fornite.",
+    "agent.answerDiscount": "Non esiste una percentuale di sconto standard. La direzione esamina il tipo di esame o diagnostica e il prezzo effettivo del centro, quindi decide se è disponibile uno sconto e ne stabilisce valore e condizioni. Nessun codice viene emesso prima dell’approvazione; ogni codice approvato è monouso.",
+    "agent.answerRegions": "Aree dell’elenco RAFIQ: Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut e il resto del Libano.",
+    "agent.answerCare": "RAFIQ al momento non accetta richieste di assistenza domiciliare, infermieristica o prenotazioni e non fornisce direttamente assistenti. La piattaforma è dedicata all’elenco dei centri medici approvati e al servizio CV e lettera di presentazione.",
+    "agent.answerMembership": "RAFIQ non accetta richieste di adesione, reclutamento o registrazione di persone o centri. Puoi consultare l’elenco dei centri approvati o chiedere informazioni sul servizio CV e lettera di presentazione.",
+    "agent.answerEmergency": "In caso di emergenza, dolore toracico intenso, grave difficoltà respiratoria, svenimento o emorragia importante, contattare immediatamente i servizi di emergenza locali.",
+    "agent.answerSafety": "L’assistente RAFIQ non può diagnosticare condizioni o stabilire dosaggi di farmaci. Consulta il medico curante e non modificare medicinali o dosi senza indicazioni mediche.",
+    "agent.answerFallback": "Posso guidarti all’elenco dei centri approvati o al servizio CV e lettera di presentazione. Per richieste amministrative, usa i canali ufficiali RAFIQ.",
+    "agent.emergencyAlert": "🚨 In caso di pericolo immediato, contattare i servizi di emergenza locali o recarsi subito al pronto soccorso più vicino. Non attendere una risposta da RAFIQ.",
+    "agent.thinking": "Un momento, sto controllando le informazioni RAFIQ…",
+    "agent.groupTelegram": "Gruppo Telegram RAFIQ",
+    "agent.channelTelegram": "Canale Telegram RAFIQ",
+    "agent.channelWhatsapp": "Canale WhatsApp",
+    "agent.groupWhatsapp1": "Gruppo WhatsApp 1",
+    "agent.groupWhatsapp2": "Gruppo WhatsApp 2",
+    "agent.whatsappAdmin": "WhatsApp della direzione RAFIQ",
+    "agent.openDirectory": "Apri l’elenco dei servizi",
+    "agent.cvLink": "Servizi CV e lettere di presentazione",
+
   };
 
   RAFIQ_I18N.register('it', dict);
