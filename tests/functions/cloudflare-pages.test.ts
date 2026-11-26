@@ -91,3 +91,59 @@ test("database admin authorization requires a signed-in active admin profile", (
   expect(adminMigration).not.toContain("issaapplication@gmail.com");
 });
 
+const currentPublicCopyKeys = [
+  "current.site.title",
+  "current.home.intro.title",
+  "current.home.intro.description",
+  "current.home.whatsapp",
+  "current.home.explore",
+  "current.home.hero.caption",
+  "current.home.hero.alt",
+  "current.home.services.title",
+  "current.home.services.subtitle",
+  "current.home.labs.title",
+  "current.home.labs.description",
+  "current.home.radiology.title",
+  "current.home.radiology.description",
+  "current.home.physio.title",
+  "current.home.physio.description",
+  "current.home.equipment.title",
+  "current.home.equipment.description",
+  "current.home.cv.title",
+  "current.home.cv.subtitle",
+  "current.home.cv.bundle",
+  "current.home.cv.price.cv",
+  "current.home.cv.price.cover",
+  "current.home.cv.price.bundle",
+  "current.home.footer.slogan",
+  "current.home.cv.language",
+  "current.home.cv.cta",
+  "current.home.how.title",
+  "current.home.how.subtitle",
+  "current.home.how.categories",
+  "current.home.how.categories.description",
+  "current.home.how.regions",
+  "current.home.how.regions.description",
+  "current.home.how.ads",
+  "current.home.how.ads.description",
+  "current.home.how.cv",
+  "current.home.how.cv.description",
+  "current.home.ads.title",
+  "current.home.ads.description",
+  "current.home.ads.contact",
+  "current.home.ads.browse",
+  "current.home.channels.title",
+  "current.home.channels.subtitle",
+  "current.home.footer.tagline",
+  "current.home.footer.contact",
+  "current.home.footer.copyright"
+];
+
+test("current RAFIQ homepage copy has non-empty translations in all five supported languages", () => {
+  for (const language of ["ar", "en", "fr", "it", "de"]) {
+    const bundle = read(`public/js/locales/${language}.js`);
+    for (const key of currentPublicCopyKeys) {
+      expect(bundle).toContain(JSON.stringify(key));
+    }
+  }
+});
