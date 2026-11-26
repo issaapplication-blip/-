@@ -568,6 +568,26 @@
     "regions.totalCount": "Total des zones/localités répertoriées : {count}",
     "regions.loadError": "Impossible de charger les régions. Veuillez actualiser la page.",
 
+    "agent.answerDirectory": "L’annuaire RAFIQ comprend les laboratoires médicaux, les centres de radiologie et d’imagerie, de physiothérapie, ainsi que la vente et la location de matériel médical. Les centres sont répertoriés après examen par la direction.",
+    "agent.answerCV": "RAFIQ propose la création de CV et de lettres de motivation en utilisant uniquement les informations que vous fournissez.",
+    "agent.answerDiscount": "Il n’existe pas de taux de réduction uniforme. La direction examine le type d’examen ou d’imagerie et le prix réel du centre, puis décide si une réduction est possible et en fixe la valeur et les conditions. Aucun code n’est émis avant approbation ; chaque code approuvé est à usage unique.",
+    "agent.answerRegions": "Régions de l’annuaire RAFIQ : Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beyrouth et le reste du Liban.",
+    "agent.answerCare": "RAFIQ n’accepte actuellement aucune demande de soins à domicile, de soins infirmiers ou de réservation de services et ne fournit pas directement de prestataires de soins. La plateforme est consacrée à l’annuaire des centres médicaux agréés et au service CV et lettre de motivation.",
+    "agent.answerMembership": "RAFIQ n’accepte pas les demandes d’adhésion, de recrutement ou d’inscription de personnes ou de centres. Vous pouvez consulter l’annuaire des centres agréés ou vous renseigner sur le service CV et lettre de motivation.",
+    "agent.answerEmergency": "En cas d’urgence, de douleur thoracique intense, de difficulté respiratoire aiguë, de perte de connaissance ou d’hémorragie importante, contactez immédiatement les services d’urgence locaux.",
+    "agent.answerSafety": "L’assistant RAFIQ ne peut pas diagnostiquer une affection ni déterminer des doses de médicaments. Consultez votre médecin et ne modifiez aucun médicament ni dosage sans avis médical.",
+    "agent.answerFallback": "Je peux vous orienter vers l’annuaire des centres agréés ou le service CV et lettre de motivation. Pour les demandes administratives, utilisez les canaux officiels de RAFIQ.",
+    "agent.emergencyAlert": "🚨 En cas de danger immédiat, contactez les services d’urgence locaux ou rendez-vous immédiatement au service d’urgence le plus proche. N’attendez pas une réponse de RAFIQ.",
+    "agent.thinking": "Un instant, je vérifie les informations de RAFIQ…",
+    "agent.groupTelegram": "Groupe Telegram RAFIQ",
+    "agent.channelTelegram": "Chaîne Telegram RAFIQ",
+    "agent.channelWhatsapp": "Chaîne WhatsApp",
+    "agent.groupWhatsapp1": "Groupe WhatsApp 1",
+    "agent.groupWhatsapp2": "Groupe WhatsApp 2",
+    "agent.whatsappAdmin": "WhatsApp de la direction RAFIQ",
+    "agent.openDirectory": "Ouvrir l’annuaire des services",
+    "agent.cvLink": "Services CV et lettres de motivation",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
