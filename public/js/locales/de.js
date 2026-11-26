@@ -568,6 +568,26 @@
     "regions.totalCount": "Insgesamt aufgeführte Gebiete/Ortschaften: {count}",
     "regions.loadError": "Regionen konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.",
 
+    "agent.answerDirectory": "Das RAFIQ-Verzeichnis umfasst medizinische Labore, Radiologie- und Bildgebungszentren, Physiotherapiezentren sowie den Verkauf und die Vermietung medizinischer Geräte. Zentren werden nach Prüfung durch die Leitung aufgeführt.",
+    "agent.answerCV": "RAFIQ erstellt Lebensläufe und Anschreiben ausschließlich anhand Ihrer Angaben.",
+    "agent.answerDiscount": "Es gibt keinen einheitlichen Rabattsatz. Die Leitung prüft die Art der Untersuchung oder Bildgebung und den tatsächlichen Preis des Zentrums und entscheidet dann über Verfügbarkeit, Höhe und Bedingungen eines Rabatts. Vor der Genehmigung wird kein Code ausgegeben; jeder genehmigte Code ist einmalig verwendbar.",
+    "agent.answerRegions": "Gebiete des RAFIQ-Verzeichnisses: Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut und der übrige Libanon.",
+    "agent.answerCare": "RAFIQ nimmt derzeit keine Anfragen zu häuslicher Pflege, Krankenpflege oder Dienstleistungsbuchungen an und stellt keine Betreuungskräfte direkt bereit. Die Plattform dient dem Verzeichnis zugelassener medizinischer Zentren sowie dem Lebenslauf- und Anschreibendienst.",
+    "agent.answerMembership": "RAFIQ nimmt keine Anfragen zu Mitgliedschaft, Personalvermittlung oder Registrierung von Personen oder Zentren an. Sie können das Verzeichnis zugelassener Zentren durchsuchen oder sich nach dem Lebenslauf- und Anschreibendienst erkundigen.",
+    "agent.answerEmergency": "Bei einem Notfall, starken Brustschmerzen, akuter Atemnot, Ohnmacht oder starken Blutungen wenden Sie sich sofort an den örtlichen Rettungsdienst.",
+    "agent.answerSafety": "Der RAFIQ-Assistent kann keine Krankheiten diagnostizieren oder Medikamentendosierungen festlegen. Wenden Sie sich an Ihren behandelnden Arzt und ändern Sie keine Medikamente oder Dosierungen ohne ärztliche Anweisung.",
+    "agent.answerFallback": "Ich kann Sie zum Verzeichnis zugelassener Zentren oder zum Lebenslauf- und Anschreibendienst führen. Für administrative Anfragen nutzen Sie die offiziellen RAFIQ-Kanäle.",
+    "agent.emergencyAlert": "🚨 Bei unmittelbarer Gefahr wenden Sie sich sofort an den örtlichen Rettungsdienst oder die nächste Notaufnahme. Warten Sie nicht auf eine Antwort von RAFIQ.",
+    "agent.thinking": "Einen Moment, ich prüfe die RAFIQ-Informationen…",
+    "agent.groupTelegram": "RAFIQ-Telegram-Gruppe",
+    "agent.channelTelegram": "RAFIQ-Telegram-Kanal",
+    "agent.channelWhatsapp": "WhatsApp-Kanal",
+    "agent.groupWhatsapp1": "WhatsApp-Gruppe 1",
+    "agent.groupWhatsapp2": "WhatsApp-Gruppe 2",
+    "agent.whatsappAdmin": "WhatsApp der RAFIQ-Leitung",
+    "agent.openDirectory": "Dienstleistungsverzeichnis öffnen",
+    "agent.cvLink": "Lebenslauf- und Anschreibendienste",
+
   };
 
   RAFIQ_I18N.register('de', dict);
