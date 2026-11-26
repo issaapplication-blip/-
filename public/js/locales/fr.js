@@ -557,6 +557,11 @@
     "regions.description": "La liste présente les divisions administratives du Liban afin de faciliter la navigation par région et leur association aux centres médicaux approuvés par la direction de RAFIQ.",
     "regions.loading": "Chargement de toutes les régions du Liban…",
 
+    "directory.navServices": "Annuaire des services",
+    "regions.pageTitle": "Régions du Liban | RAFIQ",
+    "care.pageTitle": "Services CV et lettres de motivation | RAFIQ",
+    "agent.pageTitle": "Assistant RAFIQ | RAFIQ",
+
   };
 
   RAFIQ_I18N.register('fr', dict);
