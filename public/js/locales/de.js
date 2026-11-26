@@ -588,6 +588,26 @@
     "agent.openDirectory": "Dienstleistungsverzeichnis öffnen",
     "agent.cvLink": "Lebenslauf- und Anschreibendienste",
 
+    "faq.directoryTitle": "Häufige Fragen | RAFIQ",
+    "faq.directoryHeading": "Häufige Fragen zum RAFIQ-Verzeichnis",
+    "faq.directoryQ1": "Welche Dienstleistungen umfasst das Verzeichnis?",
+    "faq.directoryA1": "Medizinische Labore, Radiologie- und Bildgebungszentren, Physiotherapiezentren sowie Verkaufs- und Vermietungszentren für medizinische Geräte.",
+    "faq.directoryQ2": "Ist jedes auf der Plattform angezeigte Zentrum oder Angebot zugelassen?",
+    "faq.directoryA2": "Kein Zentrum, Angebot oder Rabatt wird vor Prüfung und Genehmigung durch die RAFIQ-Leitung veröffentlicht.",
+    "faq.directoryQ3": "Wie kann ich die Rabatthöhe bestätigen?",
+    "faq.directoryA3": "Höhe und Bedingungen des Rabatts werden nach Genehmigung durch die Leitung angezeigt. Verlassen Sie sich nicht auf Beträge, die nicht offiziell im RAFIQ-Verzeichnis veröffentlicht wurden.",
+    "faq.directoryQ4": "Zahlt der Kunde an RAFIQ?",
+    "faq.directoryA4": "Nein. Der Kunde bezahlt das Zentrum direkt. RAFIQ nimmt keine Kundengelder entgegen und führt keine Überweisungen in deren Namen durch.",
+    "faq.directoryQ5": "Kann ein Rabattcode ausgegeben werden?",
+    "faq.directoryA5": "Ein Code wird ausgegeben, nachdem die Leitung Rabattbetrag, Bedingungen und Zentrum genehmigt hat. Er ist einmalig verwendbar und wird nach bestätigter Leistung deaktiviert.",
+    "faq.directoryQ6": "Welche Gebiete deckt das Verzeichnis ab?",
+    "faq.directoryA6": "Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut und der übrige Libanon, sobald zugelassene Zentren aufgenommen werden.",
+    "faq.directoryQ7": "Stellt RAFIQ Diagnosen oder Rezepte aus?",
+    "faq.directoryA7": "Nein. Das Verzeichnis stellt keine Diagnosen, verschreibt keine Medikamente und ändert keine Behandlung. Im Notfall wenden Sie sich sofort an den Rettungsdienst oder das behandelnde medizinische Team.",
+    "faq.directoryQ8": "Nimmt die Website Registrierungs- oder Mitgliedschaftsanfragen entgegen?",
+    "faq.directoryA8": "Nein. Öffentliche Bewerbungs- und Registrierungsformulare wurden entfernt. Der Lebenslauf- und Anschreibendienst bleibt vom Zentrumsverzeichnis getrennt.",
+    "faq.contactManagement": "Die Leitung direkt kontaktieren",
+
   };
 
   RAFIQ_I18N.register('de', dict);
