@@ -567,6 +567,11 @@
     "regions.description": "القائمة تعرض التقسيم الإداري للبنان لتسهيل تصفح المناطق وربطها بالمراكز الطبية التي تعتمدها إدارة RAFIQ.",
     "regions.loading": "جارٍ تحميل كامل مناطق لبنان…",
 
+    "directory.navServices": "دليل الخدمات",
+    "regions.pageTitle": "مناطق لبنان | RAFIQ",
+    "care.pageTitle": "خدمات CV وCover Letters | RAFIQ",
+    "agent.pageTitle": "مساعد رفيق | RAFIQ",
+
   };
 
   RAFIQ_I18N.register('ar', dict);
