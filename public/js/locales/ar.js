@@ -487,6 +487,11 @@
     "home.directory.logoAlt": "RAFIQ | رفيق — الشعار الرسمي",
     "home.directory.installLabel": "تثبيت تطبيق رفيق",
 
+    "home.directory.brand": "رفيق | RAFIQ",
+    "home.directory.heroTail": "يعرّف العائلات بالمختبرات الطبية ومراكز الأشعة والتصوير والعلاج الفيزيائي ومراكز بيع وتأجير المعدات الطبية، ولا يعرض إلا المراكز والعروض التي تعتمدها الإدارة.",
+    "home.directory.cvPrice": "CV: 25$",
+    "home.directory.coverPrice": "Cover Letter: 10$",
+
   };
 
   RAFIQ_I18N.register('ar', dict);
