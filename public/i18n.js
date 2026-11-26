@@ -40,6 +40,13 @@ const RAFIQ_I18N = (function () {
   var originalMarkedText = new WeakMap();
   var originalTitle = document.title;
   var I18N_ASSET_VERSION = '88';
+  var LOAD_ERROR = {
+    ar: 'تعذر تحميل ملف اللغة. تم الإبقاء على اللغة السابقة؛ أعد المحاولة بعد تحديث الصفحة.',
+    en: 'The language file could not be loaded. Your previous language is unchanged; refresh and try again.',
+    fr: 'Le fichier de langue n’a pas pu être chargé. La langue précédente est conservée ; actualisez puis réessayez.',
+    it: 'Impossibile caricare il file della lingua. La lingua precedente è mantenuta; aggiorna e riprova.',
+    de: 'Die Sprachdatei konnte nicht geladen werden. Die vorherige Sprache bleibt aktiv; bitte aktualisieren und erneut versuchen.'
+  };
 
   function langMeta(code) {
     for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i];
@@ -519,7 +526,12 @@ const RAFIQ_I18N = (function () {
                     '<span class="tick" aria-hidden="true">✓</span>';
       b.addEventListener('click', function () {
         close();
-        setLanguage(L.code);
+        setLanguage(L.code).catch(function (error) {
+          console.error('[RAFIQ i18n] language switch failed', error);
+          note.textContent = LOAD_ERROR[current] || LOAD_ERROR.ar;
+          menu.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
+        });
       });
       menu.appendChild(b);
     });
@@ -673,7 +685,7 @@ const RAFIQ_I18N = (function () {
     LANGS: LANGS,
     get current() { return current; },
     get detected() { return detected; },
-    version: '7'
+    version: '8'
   };
 })();
 
