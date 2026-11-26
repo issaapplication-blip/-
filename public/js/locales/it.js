@@ -562,6 +562,12 @@
     "care.pageTitle": "Servizi CV e lettere di presentazione | RAFIQ",
     "agent.pageTitle": "Assistente RAFIQ | RAFIQ",
 
+    "regions.districtCount": "{count} distretti • {total} aree/località elencate",
+    "regions.district": "Distretto {name}",
+    "regions.areaCount": "{count} aree",
+    "regions.totalCount": "Totale aree/località elencate: {count}",
+    "regions.loadError": "Impossibile caricare le regioni. Aggiorna la pagina.",
+
   };
 
   RAFIQ_I18N.register('it', dict);
