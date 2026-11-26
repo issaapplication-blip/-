@@ -564,6 +564,12 @@
     "care.pageTitle": "CV & Cover Letter Services | RAFIQ",
     "agent.pageTitle": "RAFIQ Assistant | RAFIQ",
 
+    "regions.districtCount": "{count} districts • {total} areas/localities listed",
+    "regions.district": "District {name}",
+    "regions.areaCount": "{count} areas",
+    "regions.totalCount": "Total listed areas/localities: {count}",
+    "regions.loadError": "Unable to load regions. Please refresh the page.",
+
   };
 
   RAFIQ_I18N.register('en', dict);
