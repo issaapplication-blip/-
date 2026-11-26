@@ -477,6 +477,11 @@
     "home.directory.logoAlt": "RAFIQ | Rafiq — offizielles Logo",
     "home.directory.installLabel": "RAFIQ-App installieren",
 
+    "home.directory.brand": "Rafiq | RAFIQ",
+    "home.directory.heroTail": "Es stellt Familien medizinische Labore, Radiologie- und Bildgebungszentren, Physiotherapiezentren sowie Anbieter für den Verkauf und die Vermietung medizinischer Geräte vor. Angezeigt werden nur von der Leitung genehmigte Zentren und Angebote.",
+    "home.directory.cvPrice": "Lebenslauf: 25 $",
+    "home.directory.coverPrice": "Anschreiben: 10 $",
+
   };
 
   RAFIQ_I18N.register('de', dict);
