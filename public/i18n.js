@@ -258,7 +258,11 @@ const RAFIQ_I18N = (function () {
     "المصدر الإداري: بيانات لبنان الإدارية المحدثة، مع مراجعة قوائم البلديات الرسمية.": "regions.source",
     "مهم:": "regions.important",
     "القائمة تعرض التقسيم الإداري للبنان لتسهيل تصفح المناطق وربطها بالمراكز الطبية التي تعتمدها إدارة RAFIQ.": "regions.description",
-    "جارٍ تحميل كامل مناطق لبنان…": "regions.loading"
+    "جارٍ تحميل كامل مناطق لبنان…": "regions.loading",
+    "دليل الخدمات": "directory.navServices",
+    "مناطق لبنان | RAFIQ": "regions.pageTitle",
+    "خدمات CV وCover Letters | RAFIQ": "care.pageTitle",
+    "مساعد رفيق | RAFIQ": "agent.pageTitle"
   };
 
   function normalizeSource(s) {
