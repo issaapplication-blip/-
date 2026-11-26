@@ -33,12 +33,13 @@ const RAFIQ_I18N = (function () {
   var DEFAULT = 'ar';
   var KEY = 'rafiq.lang';
   var bundles = {};      // code -> { key: text }
+  var pendingLoads = Object.create(null); // one in-flight request per locale
   var current = DEFAULT;
   var originalText = new WeakMap();
   var originalAttributes = new WeakMap();
   var originalMarkedText = new WeakMap();
   var originalTitle = document.title;
-  var I18N_ASSET_VERSION = '87';
+  var I18N_ASSET_VERSION = '88';
 
   function langMeta(code) {
     for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i];
@@ -92,19 +93,30 @@ const RAFIQ_I18N = (function () {
   }
 
   function loadScript(code) {
+    if (!isKnown(code)) return Promise.reject(new Error('Unsupported language: ' + code));
     if (bundles[code]) return Promise.resolve(bundles[code]);
-    return new Promise(function (resolve) {
+    if (pendingLoads[code]) return pendingLoads[code];
+
+    pendingLoads[code] = new Promise(function (resolve, reject) {
       var s = document.createElement('script');
+      var settled = false;
+      function finish(error) {
+        if (settled) return;
+        settled = true;
+        s.onload = null;
+        s.onerror = null;
+        delete pendingLoads[code];
+        if (error) reject(error);
+        else if (bundles[code]) resolve(bundles[code]);
+        else reject(new Error('Locale bundle did not register: ' + code));
+      }
       s.src = '/js/locales/' + code + '.js?v=' + I18N_ASSET_VERSION;
       s.async = true;
-      s.onload = function () {
-        resolve(bundles[code] || null);
-      };
-      s.onerror = function () {
-        resolve(null);          // a missing translation is not a crash
-      };
+      s.onload = function () { finish(null); };
+      s.onerror = function () { finish(new Error('Failed to load locale bundle: ' + code)); };
       document.head.appendChild(s);
     });
+    return pendingLoads[code];
   }
 
   /* Register a bundle: called by every js/locales/<lang>.js file */
@@ -566,15 +578,20 @@ const RAFIQ_I18N = (function () {
   }
 
   function setLanguage(code) {
+    if (!isKnown(code)) return Promise.reject(new Error('Unsupported language: ' + code));
     var run = function () {
+      if (!bundles[code]) throw new Error('Locale bundle unavailable: ' + code);
       var r = apply(code);
       var w = document.querySelector('.ra-lang');
       if (w) paintButton(w.querySelector('.ra-lang-btn'), w.querySelector('.ra-lang-menu'),
                          w.querySelector('.note'), code);
       return r;
     };
-    if (bundles[code] || code === DEFAULT) return run();
-    return loadScript(code).then(function () { return run(); });
+    if (bundles[code] && bundles[DEFAULT]) {
+      try { return Promise.resolve(run()); } catch (error) { return Promise.reject(error); }
+    }
+    return Promise.all([loadScript(DEFAULT), code === DEFAULT ? Promise.resolve(bundles[DEFAULT]) : loadScript(code)])
+      .then(run);
   }
 
   /* Public pages may render directory records or assistant messages after boot.
@@ -616,21 +633,31 @@ const RAFIQ_I18N = (function () {
     var auto = false;
     var want;
     if (saved && isKnown(saved)) {
-      want = saved;                     // an explicit choice always wins
+      want = saved;
     } else {
-      want = detect();                  // first visit: follow the browser
+      want = detect();
       auto = detected !== null;
-      write(want);                      // and remember it from now on
     }
     buildButton();
-    return Promise.all([loadScript(DEFAULT), loadScript(want)]).then(function () {
-      return Promise.resolve(setLanguage(want)).then(function (r) {
-        r.auto = auto;
-        r.detected = detected;
+    return Promise.all([loadScript(DEFAULT), want === DEFAULT ? Promise.resolve(bundles[DEFAULT]) : loadScript(want)])
+      .then(function () {
+        var result = apply(want, { silent: true });
+        write(want);
+        var w = document.querySelector('.ra-lang');
+        if (w) paintButton(w.querySelector('.ra-lang-btn'), w.querySelector('.ra-lang-menu'), w.querySelector('.note'), want);
+        result.auto = auto;
+        result.detected = detected;
         observeDynamicContent();
-        return r;
+        return result;
+      })
+      .catch(function (error) {
+        console.error('[RAFIQ i18n] locale initialization failed', error);
+        if (!bundles[DEFAULT]) return { lang: DEFAULT, dir: 'rtl', error: 'default-locale-unavailable' };
+        var fallback = apply(DEFAULT, { silent: true });
+        write(DEFAULT);
+        observeDynamicContent();
+        return Object.assign(fallback, { error: 'requested-locale-unavailable', requested: want });
       });
-    });
   }
 
   return {
