@@ -431,7 +431,9 @@
     "current.home.cv.title": "📄 Préparation de CV par RAFIQ",
     "current.home.cv.subtitle": "Un document professionnel clair et bien structuré pour les personnes en recherche d’emploi.",
     "current.home.cv.bundle": "CV professionnel + lettre de motivation",
-    "current.home.cv.price": "CV : 25 $ · Lettre de motivation : 10 $ · Offre groupée : 35 $",
+    "current.home.cv.price.cv": "CV : 25 $",
+    "current.home.cv.price.cover": "Lettre de motivation : 10 $",
+    "current.home.cv.price.bundle": "Offre groupée : 35 $",
     "current.home.cv.language": "Une langue supplémentaire est disponible sur demande.",
     "current.home.cv.cta": "📄 Demander la préparation d’un CV",
     "current.home.how.title": "Comment fonctionne l’annuaire RAFIQ ?",
@@ -453,6 +455,7 @@
     "current.home.footer.tagline": "Relier les familles par le soin et la sécurité",
     "current.home.footer.contact": "Correspondance officielle : +961 81 506 299 · Les détails de transfert sont communiqués par la direction si nécessaire.",
     "current.home.footer.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
+    "current.home.footer.slogan": "— Relier les familles par le soin et la sécurité",
   };
 
   RAFIQ_I18N.register('fr', dict);
