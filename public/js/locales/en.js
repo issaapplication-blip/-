@@ -433,7 +433,9 @@
     "current.home.cv.title": "📄 CV preparation by RAFIQ",
     "current.home.cv.subtitle": "A clear, well-structured professional document for job seekers.",
     "current.home.cv.bundle": "Professional CV + Cover Letter",
-    "current.home.cv.price": "CV: $25 · Cover Letter: $10 · Bundle: $35",
+    "current.home.cv.price.cv": "CV: $25",
+    "current.home.cv.price.cover": "Cover Letter: $10",
+    "current.home.cv.price.bundle": "Bundle: $35",
     "current.home.cv.language": "An additional language is available on request.",
     "current.home.cv.cta": "📄 Request CV preparation",
     "current.home.how.title": "How does the RAFIQ directory work?",
@@ -455,6 +457,7 @@
     "current.home.footer.tagline": "Connecting families through care and safety",
     "current.home.footer.contact": "Official correspondence: +961 81 506 299 · Transfer details are provided by management when needed.",
     "current.home.footer.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
+    "current.home.footer.slogan": "— Connecting families through care and safety",
   };
 
   RAFIQ_I18N.register('en', dict);
