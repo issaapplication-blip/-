@@ -183,10 +183,13 @@ test("directory, category, FAQ, guide, and CV copy has explicit English, French,
     "كيف تستخدم دليل RAFIQ؟",
     "الدفع المسبق عبر Whish Money فقط. لا ترسل ملفات CV أو مستندات شخصية قبل تأكيد الدفع من إدارة RAFIQ. لا تشارك كلمة مرور Whish أو رمز OTP."
   ]) {
-    expect(directoryI18n).toContain("'" + source + "': {");
-  }
-  for (const language of ["en", "fr", "it", "de"]) {
-    expect(directoryI18n).toContain(language + ":");
+    const start = directoryI18n.indexOf("'" + source + "': {");
+    expect(start).toBeGreaterThanOrEqual(0);
+    const end = directoryI18n.indexOf("}", start);
+    const translation = directoryI18n.slice(start, end);
+    for (const language of ["en", "fr", "it", "de"]) {
+      expect(translation).toContain(language + ":");
+    }
   }
 });
 
