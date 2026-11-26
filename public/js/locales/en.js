@@ -479,6 +479,11 @@
     "home.directory.logoAlt": "RAFIQ | Rafiq — official logo",
     "home.directory.installLabel": "Install RAFIQ app",
 
+    "home.directory.brand": "Rafiq | RAFIQ",
+    "home.directory.heroTail": "It introduces families to medical laboratories, radiology and imaging centres, physiotherapy centres, and medical equipment sales and rental providers. Only centres and offers approved by management are listed.",
+    "home.directory.cvPrice": "CV: $25",
+    "home.directory.coverPrice": "Cover Letter: $10",
+
   };
 
   RAFIQ_I18N.register('en', dict);
