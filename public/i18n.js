@@ -38,7 +38,7 @@ const RAFIQ_I18N = (function () {
   var originalAttributes = new WeakMap();
   var originalMarkedText = new WeakMap();
   var originalTitle = document.title;
-  var I18N_ASSET_VERSION = '86';
+  var I18N_ASSET_VERSION = '87';
 
   function langMeta(code) {
     for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i];
@@ -646,7 +646,7 @@ const RAFIQ_I18N = (function () {
     LANGS: LANGS,
     get current() { return current; },
     get detected() { return detected; },
-    version: '6'
+    version: '7'
   };
 })();
 
