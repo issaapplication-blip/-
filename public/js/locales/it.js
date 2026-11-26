@@ -557,6 +557,11 @@
     "regions.description": "L’elenco mostra le suddivisioni amministrative del Libano per facilitare la ricerca delle aree e il collegamento con i centri medici approvati dalla direzione RAFIQ.",
     "regions.loading": "Caricamento di tutte le regioni del Libano…",
 
+    "directory.navServices": "Elenco dei servizi",
+    "regions.pageTitle": "Regioni del Libano | RAFIQ",
+    "care.pageTitle": "Servizi CV e lettere di presentazione | RAFIQ",
+    "agent.pageTitle": "Assistente RAFIQ | RAFIQ",
+
   };
 
   RAFIQ_I18N.register('it', dict);
