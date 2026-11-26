@@ -99,9 +99,19 @@ const RAFIQ_I18N = (function () {
     return DEFAULT;
   }
 
+  function bundleReady(code) {
+    var dict = bundles[code];
+    if (!dict) return false;
+    var required = ['nav.home', 'home.directory.brand', 'home.directory.heroLead', 'home.directory.servicesH'];
+    return required.every(function (key) {
+      return typeof dict[key] === 'string' && dict[key].trim().length > 0;
+    });
+  }
+
   function loadScript(code) {
     if (!isKnown(code)) return Promise.reject(new Error('Unsupported language: ' + code));
-    if (bundles[code]) return Promise.resolve(bundles[code]);
+    if (bundleReady(code)) return Promise.resolve(bundles[code]);
+    if (bundles[code]) delete bundles[code];
     if (pendingLoads[code]) return pendingLoads[code];
 
     pendingLoads[code] = new Promise(function (resolve, reject) {
@@ -114,8 +124,8 @@ const RAFIQ_I18N = (function () {
         s.onerror = null;
         delete pendingLoads[code];
         if (error) reject(error);
-        else if (bundles[code]) resolve(bundles[code]);
-        else reject(new Error('Locale bundle did not register: ' + code));
+        else if (bundleReady(code)) resolve(bundles[code]);
+        else reject(new Error('Locale bundle is missing required translations: ' + code));
       }
       s.src = '/js/locales/' + code + '.js?v=' + I18N_ASSET_VERSION;
       s.async = true;
@@ -393,9 +403,11 @@ const RAFIQ_I18N = (function () {
     for (var i = 0; i < marked.length; i++) {
       var el = marked[i];
       var key = el.getAttribute('data-i18n');
+      if (!originalMarkedText.has(el)) originalMarkedText.set(el, el.textContent);
+      var sourceText = originalMarkedText.get(el);
       var val = translate(key, code);
       if (val !== null && val !== '') { el.textContent = val; filled++; }
-      else { missing++; }
+      else { el.textContent = sourceText; missing++; }
     }
 
     // Translate legacy pages that predate data-i18n markers.
@@ -592,14 +604,14 @@ const RAFIQ_I18N = (function () {
   function setLanguage(code) {
     if (!isKnown(code)) return Promise.reject(new Error('Unsupported language: ' + code));
     var run = function () {
-      if (!bundles[code]) throw new Error('Locale bundle unavailable: ' + code);
+      if (!bundleReady(code) || !bundleReady(DEFAULT)) throw new Error('Locale bundle unavailable or incomplete: ' + code);
       var r = apply(code);
       var w = document.querySelector('.ra-lang');
       if (w) paintButton(w.querySelector('.ra-lang-btn'), w.querySelector('.ra-lang-menu'),
                          w.querySelector('.note'), code);
       return r;
     };
-    if (bundles[code] && bundles[DEFAULT]) {
+    if (bundleReady(code) && bundleReady(DEFAULT)) {
       try { return Promise.resolve(run()); } catch (error) { return Promise.reject(error); }
     }
     return Promise.all([loadScript(DEFAULT), code === DEFAULT ? Promise.resolve(bundles[DEFAULT]) : loadScript(code)])
@@ -622,8 +634,11 @@ const RAFIQ_I18N = (function () {
         var marked = document.querySelectorAll('[data-i18n]');
         for (var i = 0; i < marked.length; i++) {
           var el = marked[i];
+          if (!originalMarkedText.has(el)) originalMarkedText.set(el, el.textContent);
+          var sourceText = originalMarkedText.get(el);
           var value = translate(el.getAttribute('data-i18n'), current);
-          if (value !== null && value !== '' && el.textContent !== value) el.textContent = value;
+          var nextText = value !== null && value !== '' ? value : sourceText;
+          if (el.textContent !== nextText) el.textContent = nextText;
         }
         translateLegacyPage(current);
         translateAttributes(current);
