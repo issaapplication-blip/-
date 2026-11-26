@@ -118,6 +118,8 @@ const RAFIQ_I18N = (function () {
      by looking it up in the Arabic source bundle. This keeps old pages
      compatible without rewriting their SEO/content structure. */
   var sourceToKey = Object.create(null);
+  var originalTextNodes = new WeakMap();
+  var originalAttributes = new WeakMap();
   var legacyKeys = {
     'RAFIQ | رفيق': 'home.h1',
     'نصل بالحب والأمان لرعاية العائلة': 'home.tagline',
@@ -179,7 +181,6 @@ const RAFIQ_I18N = (function () {
   }
 
   function translateLegacyPage(lang) {
-    if (lang === DEFAULT) return 0;
     rebuildSourceIndex();
     var changed = 0;
     var root = document.querySelector('main') || document.body;
@@ -203,7 +204,6 @@ const RAFIQ_I18N = (function () {
   }
 
   function translateAttributes(lang) {
-    if (lang === DEFAULT) return 0;
     var changed = 0;
     var attrs = ['title','alt','aria-label'];
     var els = document.querySelectorAll('[title],[alt],[aria-label]');
@@ -213,9 +213,14 @@ const RAFIQ_I18N = (function () {
       for (var j = 0; j < attrs.length; j++) {
         var name = attrs[j];
         if (!el.hasAttribute(name)) continue;
-        var raw = el.getAttribute(name);
-        var val = translateSource(raw, lang);
-        if (val && val !== raw) { el.setAttribute(name, val); changed++; }
+        var saved = originalAttributes.get(el) || {};
+        if (!Object.prototype.hasOwnProperty.call(saved, name)) {
+          saved[name] = el.getAttribute(name);
+          originalAttributes.set(el, saved);
+        }
+        var raw = saved[name];
+        var val = lang === DEFAULT ? raw : translateSource(raw, lang);
+        if (val !== null && val !== el.getAttribute(name)) { el.setAttribute(name, val); changed++; }
       }
     }
     return changed;
