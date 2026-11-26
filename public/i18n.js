@@ -158,7 +158,7 @@ const RAFIQ_I18N = (function () {
   };
 
   function normalizeSource(s) {
-    return String(s == null ? '' : s).replace(/\\s+/g, ' ').trim();
+    return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   }
 
   function rebuildSourceIndex() {
@@ -194,8 +194,8 @@ const RAFIQ_I18N = (function () {
       var translated = translateSource(raw, lang);
       if (translated && normalizeSource(raw) === normalizeSource(translated)) continue;
       if (translated) {
-        var leading = raw.match(/^\\s*/)?.[0] || '';
-        var trailing = raw.match(/\\s*$/)?.[0] || '';
+        var leading = raw.match(/^\s*/)?.[0] || '';
+        var trailing = raw.match(/\s*$/)?.[0] || '';
         node.nodeValue = leading + translated + trailing;
         changed++;
       }
