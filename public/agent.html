@@ -62,9 +62,10 @@ var socials=[
 ["مجموعة WhatsApp الأولى","https://chat.whatsapp.com/GYzi4ZfJSx0KAUIPIycp1Z"],
 ["مجموعة WhatsApp الثانية","https://chat.whatsapp.com/EG1B0hPBtTt5rGVEGqv6Kc"]
 ];
-function add(t,c){var e=document.createElement("div");e.className="msg "+c;e.textContent=t;box.appendChild(e);box.scrollTop=box.scrollHeight;return e;}
-function link(url,label){var a=document.createElement("a");a.href=url;a.className="btn alt";a.textContent=label;a.target="_blank";a.rel="noopener";box.appendChild(a);}
-function addSocial(){var w=document.createElement("div");w.className="quick";socials.forEach(function(x){var a=document.createElement("a");a.href=x[1];a.textContent=x[0];a.className="btn alt";a.target="_blank";a.rel="noopener";a.style.fontSize="12px";w.appendChild(a);});box.appendChild(w);}
+function localizeSource(s){var api=window.RAFIQ_I18N;return api&&api.translateSource?api.translateSource(s,api.current)||s:s;}function add(t,c){var e=document.createElement("div");e.className="msg "+c;if(c==="bot"){e.setAttribute("data-source-message",t);e.textContent=localizeSource(t);}else{e.textContent=t;}box.appendChild(e);box.scrollTop=box.scrollHeight;return e;}
+function link(url,label){var a=document.createElement("a");a.href=url;a.className="btn alt";a.setAttribute("data-source-label",label);a.textContent=localizeSource(label);a.target="_blank";a.rel="noopener";box.appendChild(a);}
+function addSocial(){var w=document.createElement("div");w.className="quick";socials.forEach(function(x){var a=document.createElement("a");a.href=x[1];a.setAttribute("data-source-label",x[0]);a.textContent=localizeSource(x[0]);a.className="btn alt";a.target="_blank";a.rel="noopener";a.style.fontSize="12px";w.appendChild(a);});box.appendChild(w);}
+document.addEventListener("rafiq:i18n",function(){box.querySelectorAll("[data-source-message]").forEach(function(e){e.textContent=localizeSource(e.getAttribute("data-source-message"));});box.querySelectorAll("[data-source-label]").forEach(function(e){e.textContent=localizeSource(e.getAttribute("data-source-label"));});});
 function isEmergency(q){return /(?:طوارئ|طارئ|ضيق نفس شديد|صعوبة تنفس|ألم صدر|وجع صدر|نزيف شديد|فقدان الوعي|إغماء|تشنج|اختناق|سكتة|emergency|severe breathing|chest pain|unconscious|stroke)/i.test(q);}
 var rules=[
 {keys:["خدمات","مختبر","مختبرات","أشعة","تصوير","معدات","مراكز","دليل"],answer:"دليل رفيق يشمل المختبرات الطبية، ومراكز الأشعة والتصوير، والعلاج الفيزيائي، وبيع وتأجير المعدات الطبية. تُعرض المراكز بعد مراجعة الإدارة.",url:"/services.html",label:"فتح دليل الخدمات"},
