@@ -477,6 +477,11 @@
     "home.directory.logoAlt": "RAFIQ | Rafiq — logo ufficiale",
     "home.directory.installLabel": "Installa l’app RAFIQ",
 
+    "home.directory.brand": "Rafiq | RAFIQ",
+    "home.directory.heroTail": "Presenta alle famiglie laboratori medici, centri di radiologia e diagnostica per immagini, centri di fisioterapia e fornitori di vendita e noleggio di attrezzature mediche. Sono elencati solo i centri e le offerte approvati dalla direzione.",
+    "home.directory.cvPrice": "CV: 25 $",
+    "home.directory.coverPrice": "Lettera di presentazione: 10 $",
+
   };
 
   RAFIQ_I18N.register('it', dict);
