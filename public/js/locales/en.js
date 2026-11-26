@@ -590,6 +590,26 @@
     "agent.openDirectory": "Open services directory",
     "agent.cvLink": "CV & Cover Letter services",
 
+    "faq.directoryTitle": "FAQ | RAFIQ",
+    "faq.directoryHeading": "Frequently Asked Questions About the RAFIQ Directory",
+    "faq.directoryQ1": "Which services are included in the directory?",
+    "faq.directoryA1": "Medical laboratories, radiology and imaging centres, physiotherapy centres, and medical equipment sales and rental centres.",
+    "faq.directoryQ2": "Is every centre or offer shown on the platform approved?",
+    "faq.directoryA2": "No centre, offer or discount is published before review and approval by RAFIQ management.",
+    "faq.directoryQ3": "How can I confirm the discount amount?",
+    "faq.directoryA3": "The discount amount and conditions are displayed after management approval. Do not rely on any amount not officially published in the RAFIQ directory.",
+    "faq.directoryQ4": "Does the customer pay RAFIQ?",
+    "faq.directoryA4": "No. The customer pays the centre directly. RAFIQ does not receive customer funds or make transfers on their behalf.",
+    "faq.directoryQ5": "Can a discount code be issued?",
+    "faq.directoryA5": "A code is issued after management approves the discount amount, its conditions and the centre. It is valid for one use and is closed after service completion is confirmed.",
+    "faq.directoryQ6": "Which areas does the directory cover?",
+    "faq.directoryA6": "Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut and the rest of Lebanon as approved centres are added.",
+    "faq.directoryQ7": "Does RAFIQ provide diagnoses or prescriptions?",
+    "faq.directoryA7": "No. The directory does not diagnose, prescribe medication or change treatment. In an emergency, contact emergency services or the treating medical team immediately.",
+    "faq.directoryQ8": "Does the website accept registration or membership requests?",
+    "faq.directoryA8": "No. Public application and registration forms have been removed. The CV and Cover Letter service remains separate from the centre directory.",
+    "faq.contactManagement": "Contact management directly",
+
   };
 
   RAFIQ_I18N.register('en', dict);
