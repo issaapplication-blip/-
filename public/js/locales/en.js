@@ -570,6 +570,26 @@
     "regions.totalCount": "Total listed areas/localities: {count}",
     "regions.loadError": "Unable to load regions. Please refresh the page.",
 
+    "agent.answerDirectory": "The RAFIQ directory includes medical laboratories, radiology and imaging centres, physiotherapy centres, and medical equipment sales and rentals. Centres are listed after management review.",
+    "agent.answerCV": "RAFIQ provides CV and Cover Letter preparation using only the information you provide.",
+    "agent.answerDiscount": "There is no standard discount rate. Management reviews the test or imaging service and the centre's actual price, then decides whether a discount is available and sets its value and conditions. No code is issued before approval; each approved code is single-use.",
+    "agent.answerRegions": "RAFIQ directory areas: Tripoli, Dinniyeh, Zgharta, Koura, Batroun, Beirut and the rest of Lebanon.",
+    "agent.answerCare": "RAFIQ currently does not accept home-care, nursing or service-booking requests, and does not directly provide caregivers. The platform is dedicated to its approved medical centre directory and CV and Cover Letter service.",
+    "agent.answerMembership": "RAFIQ does not accept membership, recruitment, or individual or centre registration requests. You can browse the approved centre directory or enquire about the CV and Cover Letter service.",
+    "agent.answerEmergency": "If this is an emergency or involves severe chest pain, acute breathing difficulty, fainting or heavy bleeding, contact local emergency services immediately.",
+    "agent.answerSafety": "RAFIQ Assistant cannot diagnose conditions or determine medication doses. Consult your treating clinician and do not change any medicine or dose without medical instructions.",
+    "agent.answerFallback": "I can guide you to the approved centre directory or the CV and Cover Letter service. For administrative enquiries, use RAFIQ's official channels.",
+    "agent.emergencyAlert": "🚨 If there is immediate danger, contact local emergency services or go to the nearest emergency department now. Do not wait for a RAFIQ reply.",
+    "agent.thinking": "One moment, checking RAFIQ information…",
+    "agent.groupTelegram": "RAFIQ Telegram group",
+    "agent.channelTelegram": "RAFIQ Telegram channel",
+    "agent.channelWhatsapp": "WhatsApp channel",
+    "agent.groupWhatsapp1": "WhatsApp group 1",
+    "agent.groupWhatsapp2": "WhatsApp group 2",
+    "agent.whatsappAdmin": "RAFIQ management on WhatsApp",
+    "agent.openDirectory": "Open services directory",
+    "agent.cvLink": "CV & Cover Letter services",
+
   };
 
   RAFIQ_I18N.register('en', dict);
