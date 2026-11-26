@@ -2,11 +2,11 @@
 (function(){
 function e(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 const labels={
-ar:{districts:'أقضية',listed:'مناطق/محلات مدرجة',district:'قضاء',area:'منطقة',total:'إجمالي المناطق/المحلات المدرجة: '},
-en:{districts:'districts',listed:'listed areas/localities',district:'District',area:'areas',total:'Total listed areas/localities: '},
-fr:{districts:'districts',listed:'zones/localités répertoriées',district:'District',area:'zones',total:'Total des zones/localités répertoriées : '},
-it:{districts:'distretti',listed:'aree/località elencate',district:'Distretto',area:'aree',total:'Totale aree/località elencate: '},
-de:{districts:'Bezirke',listed:'aufgeführte Gebiete/Ortschaften',district:'Bezirk',area:'Gebiete',total:'Gesamtzahl der aufgeführten Gebiete/Ortschaften: '}
+ar:{districts:'أقضية',listed:'مناطق/محلات مدرجة',district:'قضاء',area:'منطقة',total:'إجمالي المناطق/المحلات المدرجة: ',loadError:'تعذر تحميل المناطق. حاول تحديث الصفحة.'},
+en:{districts:'districts',listed:'listed areas/localities',district:'District',area:'areas',total:'Total listed areas/localities: ',loadError:'The areas could not be loaded. Please refresh the page.'},
+fr:{districts:'districts',listed:'zones/localités répertoriées',district:'District',area:'zones',total:'Total des zones/localités répertoriées : ',loadError:'Impossible de charger les régions. Veuillez actualiser la page.'},
+it:{districts:'distretti',listed:'aree/località elencate',district:'Distretto',area:'aree',total:'Totale aree/località elencate: ',loadError:'Impossibile caricare le aree. Aggiorna la pagina.'},
+de:{districts:'Bezirke',listed:'aufgeführte Gebiete/Ortschaften',district:'Bezirk',area:'Gebiete',total:'Gesamtzahl der aufgeführten Gebiete/Ortschaften: ',loadError:'Die Regionen konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.'}
 };
 function tr(key){const code=window.RAFIQ_I18N&&window.RAFIQ_I18N.current||'ar';return (labels[code]||labels.ar)[key]||labels.ar[key]}
 function render(){
