@@ -557,6 +557,11 @@
     "regions.description": "Die Liste zeigt die Verwaltungsgliederung des Libanon, um die Suche nach Gebieten und die Zuordnung zu von der RAFIQ-Leitung zugelassenen medizinischen Zentren zu erleichtern.",
     "regions.loading": "Alle Regionen des Libanon werden geladen…",
 
+    "directory.navServices": "Dienstleistungsverzeichnis",
+    "regions.pageTitle": "Regionen des Libanon | RAFIQ",
+    "care.pageTitle": "Lebenslauf- und Anschreibendienste | RAFIQ",
+    "agent.pageTitle": "RAFIQ-Assistent | RAFIQ",
+
   };
 
   RAFIQ_I18N.register('de', dict);
