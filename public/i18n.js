@@ -38,7 +38,7 @@ const RAFIQ_I18N = (function () {
   var originalAttributes = new WeakMap();
   var originalMarkedText = new WeakMap();
   var originalTitle = document.title;
-  var I18N_ASSET_VERSION = '85';
+  var I18N_ASSET_VERSION = '86';
 
   function langMeta(code) {
     for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i];
@@ -517,6 +517,40 @@ const RAFIQ_I18N = (function () {
     return loadScript(code).then(function () { return run(); });
   }
 
+  /* Public pages may render directory records or assistant messages after boot.
+     Translate newly inserted content as well as the initial document. */
+  function observeDynamicContent() {
+    var root = document.querySelector('main') || document.body;
+    if (!root || typeof MutationObserver === 'undefined') return;
+    var queued = false;
+    var observer = new MutationObserver(function (records) {
+      var added = records.some(function (record) { return record.addedNodes && record.addedNodes.length; });
+      if (!added || queued) return;
+      queued = true;
+      Promise.resolve().then(function () {
+        queued = false;
+        rebuildSourceIndex();
+        var marked = document.querySelectorAll('[data-i18n]');
+        for (var i = 0; i < marked.length; i++) {
+          var el = marked[i];
+          var value = translate(el.getAttribute('data-i18n'), current);
+          if (value !== null && value !== '' && el.textContent !== value) el.textContent = value;
+        }
+        translateLegacyPage(current);
+        translateAttributes(current);
+        var placeholders = document.querySelectorAll('[data-i18n-placeholder]');
+        for (var j = 0; j < placeholders.length; j++) {
+          var placeholder = translate(placeholders[j].getAttribute('data-i18n-placeholder'), current);
+          if (placeholder && placeholders[j].getAttribute('placeholder') !== placeholder) placeholders[j].setAttribute('placeholder', placeholder);
+        }
+        document.dispatchEvent(new CustomEvent('rafiq:i18n', {
+          detail: { lang: current, dir: langMeta(current).dir, dynamic: true }
+        }));
+      });
+    });
+    observer.observe(root, { childList: true, subtree: true });
+  }
+
   function start() {
     var saved = read();
     var auto = false;
@@ -530,10 +564,12 @@ const RAFIQ_I18N = (function () {
     }
     buildButton();
     return Promise.all([loadScript(DEFAULT), loadScript(want)]).then(function () {
-      var r = setLanguage(want);
-      r.auto = auto;
-      r.detected = detected;
-      return r;
+      return Promise.resolve(setLanguage(want)).then(function (r) {
+        r.auto = auto;
+        r.detected = detected;
+        observeDynamicContent();
+        return r;
+      });
     });
   }
 
@@ -549,7 +585,7 @@ const RAFIQ_I18N = (function () {
     LANGS: LANGS,
     get current() { return current; },
     get detected() { return detected; },
-    version: '5'
+    version: '6'
   };
 })();
 
