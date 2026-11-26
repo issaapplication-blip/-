@@ -441,12 +441,14 @@
     "current.home.cv.title": "📄 خدمة إعداد الـCV من RAFIQ",
     "current.home.cv.subtitle": "إعداد ملف مهني واضح ومرتب للباحثين عن فرص العمل.",
     "current.home.cv.bundle": "CV احترافي + Cover Letter",
-    "current.home.cv.price": "CV: 25$ · Cover Letter: 10$ · الباقة: 35$",
+    "current.home.cv.price.cv": "CV: 25$",
+    "current.home.cv.price.cover": "Cover Letter: 10$",
+    "current.home.cv.price.bundle": "الباقة: 35$",
     "current.home.cv.language": "إضافة لغة أخرى متاحة حسب الخدمة المطلوبة.",
     "current.home.cv.cta": "📄 اطلب إعداد الـCV الآن",
     "current.home.how.title": "كيف يعمل دليل RAFIQ؟",
     "current.home.how.subtitle": "معلومات واضحة عن المراكز والخدمات المعتمدة، دون استقبال طلبات انتساب أو رعاية أو حجوزات.",
-    "current.home.how.categories": "🧪 Browse categories",
+    "current.home.how.categories": "🧪 تصفح الفئات",
     "current.home.how.categories.description": "اختر المختبرات أو الأشعة والتصوير أو مراكز العلاج الفيزيائي أو المعدات الطبية.",
     "current.home.how.regions": "📍 اختر المنطقة",
     "current.home.how.regions.description": "ابحث ضمن طرابلس والضنية وزغرتا والكورة والبترون وبيروت وباقي لبنان بحسب المراكز المعتمدة.",
@@ -463,6 +465,7 @@
     "current.home.footer.tagline": "نصل بالحب والأمان لرعاية العائلة",
     "current.home.footer.contact": "المراسلات الرسمية: +961 81 506 299 · تفاصيل التحويلات المالية تُعطى من الإدارة عند الحاجة.",
     "current.home.footer.copyright": "© RAFIQ | رفيق · issaapplication@gmail.com",
+    "current.home.footer.slogan": "— نصل بالحب والأمان لرعاية العائلة",
   };
 
   RAFIQ_I18N.register('ar', dict);
