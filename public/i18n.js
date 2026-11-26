@@ -196,7 +196,7 @@ const RAFIQ_I18N = (function () {
         if (node.nodeValue !== raw) { node.nodeValue = raw; changed++; }
         continue;
       }
-      var translated = translateSource(raw, lang);
+      var translated = lang === DEFAULT ? raw : (translateSource(raw, lang) || raw);
       if (translated) {
         var leading = raw.match(/^\s*/)?.[0] || '';
         var trailing = raw.match(/\s*$/)?.[0] || '';
@@ -223,7 +223,7 @@ const RAFIQ_I18N = (function () {
           originalAttributes.set(el, saved);
         }
         var raw = saved[name];
-        var val = lang === DEFAULT ? raw : translateSource(raw, lang);
+        var val = lang === DEFAULT ? raw : (translateSource(raw, lang) || raw);
         if (val !== null && val !== el.getAttribute(name)) {
           el.setAttribute(name, val);
           changed++;
