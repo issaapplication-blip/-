@@ -572,6 +572,12 @@
     "care.pageTitle": "خدمات CV وCover Letters | RAFIQ",
     "agent.pageTitle": "مساعد رفيق | RAFIQ",
 
+    "regions.districtCount": "{count} أقضية • {total} مناطق/محلات مدرجة",
+    "regions.district": "قضاء {name}",
+    "regions.areaCount": "{count} منطقة",
+    "regions.totalCount": "إجمالي المناطق/المحلات المدرجة: {count}",
+    "regions.loadError": "تعذر تحميل المناطق. حاول تحديث الصفحة.",
+
   };
 
   RAFIQ_I18N.register('ar', dict);
