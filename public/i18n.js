@@ -299,8 +299,7 @@ const RAFIQ_I18N = (function () {
     'القائمة تعرض التقسيم الإداري للبنان لتسهيل تصفح المناطق وربطها بالمراكز الطبية التي تعتمدها إدارة RAFIQ.': {en:'This list shows Lebanon’s administrative divisions to make it easier to browse areas and connect them with medical centres approved by RAFIQ management.',fr:'Cette liste présente le découpage administratif du Liban afin de faciliter la recherche par région et le lien avec les centres médicaux agréés par l’administration RAFIQ.',it:'Questo elenco mostra la suddivisione amministrativa del Libano per facilitare la consultazione delle aree e il collegamento con i centri medici approvati dall’amministrazione RAFIQ.',de:'Diese Liste zeigt die Verwaltungsgliederung des Libanon, damit Regionen leichter durchsucht und mit von der RAFIQ-Verwaltung zugelassenen medizinischen Zentren verknüpft werden können.'},
     'جارٍ تحميل كامل مناطق لبنان…': {en:'Loading all areas of Lebanon…',fr:'Chargement de toutes les régions du Liban…',it:'Caricamento di tutte le aree del Libano…',de:'Alle Regionen des Libanon werden geladen…'},
     'تعذر تحميل المناطق. حاول تحديث الصفحة.': {en:'The areas could not be loaded. Please refresh the page.',fr:'Impossible de charger les régions. Veuillez actualiser la page.',it:'Impossibile caricare le aree. Aggiorna la pagina.',de:'Die Regionen konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.'},
-    'إجمالي المناطق/المحلات المدرجة: ': {en:'Total listed areas/localities: ',fr:'Total des zones/localités répertoriées : ',it:'Totale aree/località elencate: ',de:'Gesamtzahl der aufgeführten Gebiete/Ortschaften: '}
-
+    'إجمالي المناطق/المحلات المدرجة: ': {en:'Total listed areas/localities: ',fr:'Total des zones/localités répertoriées : ',it:'Totale aree/località elencate: ',de:'Gesamtzahl der aufgeführten Gebiete/Ortschaften: '},
 
     'دليل المراكز والخدمات': {en:'Medical centres and services directory',fr:'Annuaire des centres et services médicaux',it:'Elenco dei centri e servizi medici',de:'Verzeichnis medizinischer Zentren und Dienste'},
     'دليل الخدمات': {en:'Service directory',fr:'Annuaire des services',it:'Elenco dei servizi',de:'Dienstleistungsverzeichnis'},
@@ -412,7 +411,8 @@ const RAFIQ_I18N = (function () {
     var titleKey = document.body.getAttribute('data-i18n-title');
     if (!originalDocumentTitle) originalDocumentTitle = document.title;
     var t = titleKey ? translate(titleKey, code) : translateSource(originalDocumentTitle, code);
-    if (t) document.title = t;
+    if (code === DEFAULT) document.title = originalDocumentTitle;
+    else if (t) document.title = t;
 
     // fill every marked string; anything without a translation keeps
     // whatever the page already had, which is the Arabic original
