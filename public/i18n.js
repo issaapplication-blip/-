@@ -262,7 +262,26 @@ const RAFIQ_I18N = (function () {
     "دليل الخدمات": "directory.navServices",
     "مناطق لبنان | RAFIQ": "regions.pageTitle",
     "خدمات CV وCover Letters | RAFIQ": "care.pageTitle",
-    "مساعد رفيق | RAFIQ": "agent.pageTitle"
+    "مساعد رفيق | RAFIQ": "agent.pageTitle",
+    "دليل رفيق يشمل المختبرات الطبية، ومراكز الأشعة والتصوير، والعلاج الفيزيائي، وبيع وتأجير المعدات الطبية. تُعرض المراكز بعد مراجعة الإدارة.": "agent.answerDirectory",
+    "يوفر رفيق خدمة إعداد CV وCover Letter باستخدام المعلومات التي تقدمها فقط.": "agent.answerCV",
+    "لا توجد نسبة خصم موحدة. تراجع الإدارة نوع الفحص أو التصوير والسعر الفعلي لدى المركز، ثم تقرر إن كان الخصم متاحًا وتحدد قيمته وشروطه. لا يصدر كود قبل الموافقة ويكون صالحًا لاستخدام واحد.": "agent.answerDiscount",
+    "مناطق دليل رفيق: طرابلس، الضنية، زغرتا، الكورة، البترون، بيروت، وباقي لبنان.": "agent.answerRegions",
+    "لا يستقبل RAFIQ حاليًا طلبات رعاية منزلية أو تمريض أو حجز خدمات، ولا يوفر مقدمي رعاية مباشرة. المنصة مخصصة لدليل المراكز الطبية المعتمدة وخدمة CV وCover Letter.": "agent.answerCare",
+    "لا يستقبل RAFIQ طلبات انتساب أو توظيف أو تسجيل أفراد أو مراكز. يمكنك تصفح دليل المراكز المعتمدة أو الاستفسار عن خدمة CV وCover Letter.": "agent.answerMembership",
+    "إذا كانت الحالة طارئة أو تتضمن ألمًا شديدًا في الصدر أو ضيقًا حادًا في التنفس أو إغماءً أو نزيفًا شديدًا، اتصل بالطوارئ المحلية فورًا.": "agent.answerEmergency",
+    "لا يستطيع مساعد رفيق تشخيص الحالات أو تحديد جرعات الأدوية. استشر الطبيب المعالج ولا تغيّر أي دواء أو جرعة دون تعليمات طبية.": "agent.answerSafety",
+    "يمكنني إرشادك إلى دليل المراكز المعتمدة أو خدمة CV وCover Letter. للاستفسارات الإدارية استخدم قنوات RAFIQ الرسمية.": "agent.answerFallback",
+    "🚨 إذا كان هناك خطر فوري، اتصلوا بالطوارئ المحلية أو توجّهوا إلى أقرب قسم طوارئ فورًا. لا تنتظروا رد رفيق.": "agent.emergencyAlert",
+    "لحظة، أراجع معلومات رفيق…": "agent.thinking",
+    "مجموعة RAFIQ على Telegram": "agent.groupTelegram",
+    "قناة RAFIQ على Telegram": "agent.channelTelegram",
+    "قناة WhatsApp": "agent.channelWhatsapp",
+    "مجموعة WhatsApp الأولى": "agent.groupWhatsapp1",
+    "مجموعة WhatsApp الثانية": "agent.groupWhatsapp2",
+    "WhatsApp الإدارة": "agent.whatsappAdmin",
+    "فتح دليل الخدمات": "agent.openDirectory",
+    "خدمات CV وCover Letters": "agent.cvLink"
   };
 
   function normalizeSource(s) {
@@ -620,6 +639,7 @@ const RAFIQ_I18N = (function () {
     apply: apply,
     register: register,
     translate: translate,
+    translateSource: translateSource,
     langMeta: langMeta,
     isKnown: isKnown,
     detect: detect,
