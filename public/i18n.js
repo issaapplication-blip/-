@@ -109,18 +109,10 @@ const RAFIQ_I18N = (function () {
   }
 
   function translate(key, lang) {
-    var code = lang || current;
-    var d = bundles[code];
+    var d = bundles[lang || current];
     if (d && Object.prototype.hasOwnProperty.call(d, key)) return d[key];
-    var extra = extraTranslationsByKey[key];
-    return extra && extra[code] ? extra[code] : null;
+    return null;
   }
-
-  var extraTranslationsByKey = Object.create(null);
-  Object.keys(extraTranslations).forEach(function (source) {
-    var key = 'extra.' + Object.keys(extraTranslationsByKey).length;
-    extraTranslationsByKey[key] = extraTranslations[source];
-  });
 
   /* Some older public pages were written before data-i18n markers were
      added. Their Arabic copy is still valid source copy, so translate it
@@ -289,6 +281,25 @@ const RAFIQ_I18N = (function () {
     'المعدات الطبية | RAFIQ': {en:'Medical equipment | RAFIQ',fr:'Équipements médicaux | RAFIQ',it:'Attrezzature mediche | RAFIQ',de:'Medizinische Geräte | RAFIQ'},
     'الأسئلة الشائعة | RAFIQ': {en:'Frequently asked questions | RAFIQ',fr:'Questions fréquentes | RAFIQ',it:'Domande frequenti | RAFIQ',de:'Häufige Fragen | RAFIQ'},
     'دليل استخدام RAFIQ | رفيق': {en:'How to use RAFIQ | Rafiq',fr:'Comment utiliser RAFIQ | Rafiq',it:'Come usare RAFIQ | Rafiq',de:'So verwenden Sie RAFIQ | Rafiq'}
+
+
+    'خدمات CV وCover Letters | RAFIQ': {en:'CV and cover-letter services | RAFIQ',fr:'Services CV et lettres de motivation | RAFIQ',it:'Servizi CV e lettere di presentazione | RAFIQ',de:'Lebenslauf- und Anschreibenservices | RAFIQ'},
+    'دليل المختبرات الطبية المعتمدة ضمن RAFIQ في لبنان.': {en:'Directory of approved medical laboratories in Lebanon by RAFIQ.',fr:'Annuaire des laboratoires médicaux agréés par RAFIQ au Liban.',it:'Elenco dei laboratori medici approvati da RAFIQ in Libano.',de:'Verzeichnis der von RAFIQ zugelassenen medizinischen Labore im Libanon.'},
+    'دليل مراكز الأشعة والتصوير الطبي المعتمدة ضمن RAFIQ في لبنان.': {en:'Directory of radiology and medical imaging centres approved by RAFIQ in Lebanon.',fr:'Annuaire des centres de radiologie et d’imagerie médicale agréés par RAFIQ au Liban.',it:'Elenco dei centri di radiologia e diagnostica per immagini approvati da RAFIQ in Libano.',de:'Verzeichnis der von RAFIQ zugelassenen Radiologie- und Bildgebungszentren im Libanon.'},
+    'دليل مراكز العلاج الفيزيائي المعتمدة ضمن RAFIQ في لبنان.': {en:'Directory of physiotherapy centres approved by RAFIQ in Lebanon.',fr:'Annuaire des centres de physiothérapie agréés par RAFIQ au Liban.',it:'Elenco dei centri di fisioterapia approvati da RAFIQ in Libano.',de:'Verzeichnis der von RAFIQ zugelassenen Physiotherapiezentren im Libanon.'},
+    'دليل مراكز بيع وتأجير المعدات الطبية المعتمدة ضمن RAFIQ في لبنان.': {en:'Directory of medical equipment sales and rental centres approved by RAFIQ in Lebanon.',fr:'Annuaire des centres de vente et de location de matériel médical agréés par RAFIQ au Liban.',it:'Elenco dei centri di vendita e noleggio di attrezzature mediche approvati da RAFIQ in Libano.',de:'Verzeichnis der von RAFIQ zugelassenen Verkaufs- und Verleihzentren für medizinische Geräte im Libanon.'},
+    '🧪 المختبرات الطبية': {en:'🧪 Medical laboratories',fr:'🧪 Laboratoires médicaux',it:'🧪 Laboratori medici',de:'🧪 Medizinische Labore'},
+    '🩻 مراكز الأشعة والتصوير الطبي': {en:'🩻 Radiology and medical imaging centres',fr:'🩻 Centres de radiologie et d’imagerie médicale',it:'🩻 Centri di radiologia e diagnostica per immagini',de:'🩻 Radiologie- und Bildgebungszentren'},
+    '🦿 مراكز العلاج الفيزيائي': {en:'🦿 Physiotherapy centres',fr:'🦿 Centres de physiothérapie',it:'🦿 Centri di fisioterapia',de:'🦿 Physiotherapiezentren'},
+    '🦽 المعدات الطبية': {en:'🦽 Medical equipment',fr:'🦽 Équipements médicaux',it:'🦽 Attrezzature mediche',de:'🦽 Medizinische Geräte'},
+    '📍 مناطق لبنان في RAFIQ': {en:'📍 Areas of Lebanon on RAFIQ',fr:'📍 Régions du Liban sur RAFIQ',it:'📍 Regioni del Libano su RAFIQ',de:'📍 Regionen des Libanon auf RAFIQ'},
+    'تصفح المراكز الطبية بحسب المنطقة: المحافظة → القضاء → المنطقة / البلدة / المحلة.': {en:'Browse medical centres by area: governorate → district → area / town / locality.',fr:'Parcourez les centres médicaux par région : gouvernorat → district → zone / ville / localité.',it:'Consulta i centri medici per area: governatorato → distretto → area / città / località.',de:'Durchsuchen Sie medizinische Zentren nach Gebiet: Gouvernement → Bezirk → Gebiet / Ort / Ortschaft.'},
+    'المصدر الإداري: بيانات لبنان الإدارية المحدثة، مع مراجعة قوائم البلديات الرسمية.': {en:'Administrative source: updated Lebanese administrative data, cross-checked against official municipal lists.',fr:'Source administrative : données administratives libanaises mises à jour, recoupées avec les listes municipales officielles.',it:'Fonte amministrativa: dati amministrativi libanesi aggiornati, verificati rispetto agli elenchi comunali ufficiali.',de:'Verwaltungsquelle: aktuelle Verwaltungsdaten des Libanon, abgeglichen mit offiziellen Gemeindelisten.'},
+    'مهم:': {en:'Important:',fr:'Important :',it:'Importante:',de:'Wichtig:'},
+    'القائمة تعرض التقسيم الإداري للبنان لتسهيل تصفح المناطق وربطها بالمراكز الطبية التي تعتمدها إدارة RAFIQ.': {en:'This list shows Lebanon’s administrative divisions to make it easier to browse areas and connect them with medical centres approved by RAFIQ management.',fr:'Cette liste présente le découpage administratif du Liban afin de faciliter la recherche par région et le lien avec les centres médicaux agréés par l’administration RAFIQ.',it:'Questo elenco mostra la suddivisione amministrativa del Libano per facilitare la consultazione delle aree e il collegamento con i centri medici approvati dall’amministrazione RAFIQ.',de:'Diese Liste zeigt die Verwaltungsgliederung des Libanon, damit Regionen leichter durchsucht und mit von der RAFIQ-Verwaltung zugelassenen medizinischen Zentren verknüpft werden können.'},
+    'جارٍ تحميل كامل مناطق لبنان…': {en:'Loading all areas of Lebanon…',fr:'Chargement de toutes les régions du Liban…',it:'Caricamento di tutte le aree del Libano…',de:'Alle Regionen des Libanon werden geladen…'},
+    'تعذر تحميل المناطق. حاول تحديث الصفحة.': {en:'The areas could not be loaded. Please refresh the page.',fr:'Impossible de charger les régions. Veuillez actualiser la page.',it:'Impossibile caricare le aree. Aggiorna la pagina.',de:'Die Regionen konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.'},
+    'إجمالي المناطق/المحلات المدرجة: ': {en:'Total listed areas/localities: ',fr:'Total des zones/localités répertoriées : ',it:'Totale aree/località elencate: ',de:'Gesamtzahl der aufgeführten Gebiete/Ortschaften: '}
 
   };
 
