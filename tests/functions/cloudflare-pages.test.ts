@@ -200,3 +200,11 @@ test("Lebanon regions directory localizes generated district and locality labels
   }
   expect(regions).toContain("document.addEventListener('rafiq:i18n',render)");
 });
+
+test("public language engine parses as valid JavaScript", () => {
+  expect(() => new Function(directoryI18n)).not.toThrow();
+});
+
+test("switching the directory language back to Arabic restores the original page title", () => {
+  expect(directoryI18n).toContain("if (code === DEFAULT) document.title = originalDocumentTitle;");
+});
