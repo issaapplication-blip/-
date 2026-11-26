@@ -160,10 +160,12 @@ const directoryPages = [
   "public/medical-equipment.html",
   "public/caregivers.html",
   "public/faq.html",
-  "public/guide.html"
+  "public/guide.html",
+  "public/offline.html",
+  "public/patient-care.html"
 ];
 
-test("approved medical directory pages load the refreshed five-language engine", () => {
+test("public directory and information pages load the refreshed five-language engine", () => {
   for (const path of directoryPages) {
     expect(read(path)).toContain("/i18n.js?v=6");
   }
