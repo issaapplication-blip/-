@@ -301,6 +301,20 @@ const RAFIQ_I18N = (function () {
     'تعذر تحميل المناطق. حاول تحديث الصفحة.': {en:'The areas could not be loaded. Please refresh the page.',fr:'Impossible de charger les régions. Veuillez actualiser la page.',it:'Impossibile caricare le aree. Aggiorna la pagina.',de:'Die Regionen konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.'},
     'إجمالي المناطق/المحلات المدرجة: ': {en:'Total listed areas/localities: ',fr:'Total des zones/localités répertoriées : ',it:'Totale aree/località elencate: ',de:'Gesamtzahl der aufgeführten Gebiete/Ortschaften: '}
 
+
+    'دليل المراكز والخدمات': {en:'Medical centres and services directory',fr:'Annuaire des centres et services médicaux',it:'Elenco dei centri e servizi medici',de:'Verzeichnis medizinischer Zentren und Dienste'},
+    'دليل الخدمات': {en:'Service directory',fr:'Annuaire des services',it:'Elenco dei servizi',de:'Dienstleistungsverzeichnis'},
+    'معلومات الرعاية المنزلية': {en:'Home-care information',fr:'Informations sur les soins à domicile',it:'Informazioni sull’assistenza domiciliare',de:'Informationen zur häuslichen Pflege'},
+    'مقدم الرعاية المنزلية': {en:'Home-care provider',fr:'Aide à domicile',it:'Assistente domiciliare',de:'Betreuungskraft für die häusliche Pflege'},
+    'التمريض المنزلي': {en:'Home nursing',fr:'Soins infirmiers à domicile',it:'Assistenza infermieristica domiciliare',de:'Häusliche Krankenpflege'},
+    'العلاج الفيزيائي المنزلي': {en:'Home physiotherapy',fr:'Physiothérapie à domicile',it:'Fisioterapia domiciliare',de:'Physiotherapie zu Hause'},
+    'التواصل اليدوي مع الإدارة': {en:'Contact management directly',fr:'Contacter directement l’administration',it:'Contatta direttamente l’amministrazione',de:'Verwaltung direkt kontaktieren'},
+    '📄 خدمات CV وCover Letters من RAFIQ': {en:'📄 CV and cover-letter services by RAFIQ',fr:'📄 Services CV et lettres de motivation RAFIQ',it:'📄 Servizi CV e lettere di presentazione RAFIQ',de:'📄 Lebenslauf- und Anschreibenservices von RAFIQ'},
+    'محافظات وأقضية ومناطق وبلدات لبنان في منصة رفيق.': {en:'Lebanon’s governorates, districts, areas and towns on the RAFIQ platform.',fr:'Les gouvernorats, districts, régions et villes du Liban sur la plateforme RAFIQ.',it:'Governatorati, distretti, aree e città del Libano sulla piattaforma RAFIQ.',de:'Gouvernements, Bezirke, Gebiete und Ortschaften des Libanon auf der RAFIQ-Plattform.'},
+    'دليل RAFIQ للمراكز الطبية المعتمدة في لبنان: المختبرات، الأشعة والتصوير، العلاج الفيزيائي، وبيع وتأجير المعدات الطبية.': {en:'RAFIQ directory of approved medical centres in Lebanon: laboratories, radiology and imaging, physiotherapy, and medical equipment sales and rental.',fr:'Annuaire RAFIQ des centres médicaux agréés au Liban : laboratoires, radiologie et imagerie, physiothérapie, vente et location de matériel médical.',it:'Elenco RAFIQ dei centri medici approvati in Libano: laboratori, radiologia e diagnostica per immagini, fisioterapia, vendita e noleggio di attrezzature mediche.',de:'RAFIQ-Verzeichnis zugelassener medizinischer Zentren im Libanon: Labore, Radiologie und Bildgebung, Physiotherapie sowie Verkauf und Verleih medizinischer Geräte.'},
+    'الأسئلة الشائعة حول دليل المراكز الطبية والخصومات المعتمدة في RAFIQ لبنان.': {en:'Frequently asked questions about the RAFIQ Lebanon directory of medical centres and approved discounts.',fr:'Questions fréquentes sur l’annuaire RAFIQ au Liban et les réductions approuvées.',it:'Domande frequenti sull’elenco RAFIQ in Libano e sugli sconti approvati.',de:'Häufige Fragen zum RAFIQ-Verzeichnis medizinischer Zentren und genehmigter Rabatte im Libanon.'},
+    'دليل استخدام RAFIQ لتصفح المراكز الطبية والعروض المعتمدة في لبنان.': {en:'A guide to using RAFIQ to browse approved medical centres and offers in Lebanon.',fr:'Guide d’utilisation de RAFIQ pour consulter les centres médicaux et offres agréés au Liban.',it:'Guida all’uso di RAFIQ per consultare centri medici e offerte approvati in Libano.',de:'Anleitung zur Nutzung von RAFIQ für die Suche nach zugelassenen medizinischen Zentren und Angeboten im Libanon.'}
+
   };
 
   function normalizeSource(s) {
