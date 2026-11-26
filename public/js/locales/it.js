@@ -431,7 +431,9 @@
     "current.home.cv.title": "📄 Preparazione del CV con RAFIQ",
     "current.home.cv.subtitle": "Un documento professionale chiaro e ben strutturato per chi cerca lavoro.",
     "current.home.cv.bundle": "CV professionale + lettera di presentazione",
-    "current.home.cv.price": "CV: 25 $ · Lettera di presentazione: 10 $ · Pacchetto: 35 $",
+    "current.home.cv.price.cv": "CV: 25 $",
+    "current.home.cv.price.cover": "Lettera di presentazione: 10 $",
+    "current.home.cv.price.bundle": "Pacchetto: 35 $",
     "current.home.cv.language": "È possibile aggiungere un'altra lingua su richiesta.",
     "current.home.cv.cta": "📄 Richiedi la preparazione del CV",
     "current.home.how.title": "Come funziona l’elenco RAFIQ?",
@@ -453,6 +455,7 @@
     "current.home.footer.tagline": "Unire le famiglie attraverso la cura e la sicurezza",
     "current.home.footer.contact": "Contatti ufficiali: +961 81 506 299 · I dettagli per il trasferimento vengono forniti dalla direzione se necessario.",
     "current.home.footer.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
+    "current.home.footer.slogan": "— Unire le famiglie attraverso la cura e la sicurezza",
   };
 
   RAFIQ_I18N.register('it', dict);
