@@ -190,14 +190,18 @@ const RAFIQ_I18N = (function () {
     while ((node = walker.nextNode())) {
       var parent = node.parentElement;
       if (!parent || parent.closest('script,style,template,.ra-lang,[data-i18n]')) continue;
-      var raw = node.nodeValue;
+      if (!originalTextNodes.has(node)) originalTextNodes.set(node, node.nodeValue);
+      var raw = originalTextNodes.get(node);
+      if (lang === DEFAULT) {
+        if (node.nodeValue !== raw) { node.nodeValue = raw; changed++; }
+        continue;
+      }
       var translated = translateSource(raw, lang);
-      if (translated && normalizeSource(raw) === normalizeSource(translated)) continue;
       if (translated) {
         var leading = raw.match(/^\s*/)?.[0] || '';
         var trailing = raw.match(/\s*$/)?.[0] || '';
-        node.nodeValue = leading + translated + trailing;
-        changed++;
+        var next = leading + translated + trailing;
+        if (node.nodeValue !== next) { node.nodeValue = next; changed++; }
       }
     }
     return changed;
@@ -220,7 +224,10 @@ const RAFIQ_I18N = (function () {
         }
         var raw = saved[name];
         var val = lang === DEFAULT ? raw : translateSource(raw, lang);
-        if (val !== null && val !== el.getAttribute(name)) { el.setAttribute(name, val); changed++; }
+        if (val !== null && val !== el.getAttribute(name)) {
+          el.setAttribute(name, val);
+          changed++;
+        }
       }
     }
     return changed;
