@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 const sb=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const configuredSiteOrigin=(Deno.env.get("RAFIQ_PUBLIC_SITE_URL")||"").trim().replace(/\/+$/,"");
-const allowedOrigins=new Set(["https://rafiq-lebanon.pages.dev",configuredSiteOrigin].filter(origin=>Boolean(origin)&&origin!=="https://rafiq-o6qd.onrender.com"&&origin.startsWith("https://")));
+const allowedOrigins=new Set(["https://rafiq-lebanon.pages.dev","https://issaapplication-blip.github.io",configuredSiteOrigin].filter(origin=>Boolean(origin)&&origin!=="https://rafiq-o6qd.onrender.com"&&origin.startsWith("https://")));
 const cors=(req:Request)=>{
  const origin=req.headers.get("Origin")||"";
  return {...(allowedOrigins.has(origin)?{"Access-Control-Allow-Origin":origin}:{}),"Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
