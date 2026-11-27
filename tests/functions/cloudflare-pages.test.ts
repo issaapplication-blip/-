@@ -208,3 +208,13 @@ test("public language engine parses as valid JavaScript", () => {
 test("switching the directory language back to Arabic restores the original page title", () => {
   expect(directoryI18n).toContain("if (code === DEFAULT) document.title = originalDocumentTitle;");
 });
+
+
+test("Cloudflare Pages never proxies API traffic to the retired Render backend", () => {
+  const legacyProxy = resolve(import.meta.dir, "../../functions/api/[[path]].ts");
+  expect(existsSync(legacyProxy)).toBe(false);
+  for (const path of ["functions/api/agent/chat.ts", "functions/api/telegram/webhook.ts"]) {
+    expect(read(path).toLowerCase()).not.toContain("onrender.com");
+    expect(read(path).toLowerCase()).not.toContain("rafiq-o6qd");
+  }
+});
