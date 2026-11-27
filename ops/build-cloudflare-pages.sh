@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-SITE_URL="${RAFIQ_PUBLIC_BASE_URL:-${CF_PAGES_URL:-}}"
+# Use the stable project origin for production SEO and canonical links; a Pages deployment URL is immutable and changes on every release.
+SITE_URL="${RAFIQ_PUBLIC_BASE_URL:-https://rafiq-lebanon.pages.dev}"
 OUT_DIR="${1:-dist}"
 if [[ -z "$SITE_URL" ]]; then
   echo "RAFIQ_PUBLIC_BASE_URL must be the final https://<project>.pages.dev or custom domain" >&2
