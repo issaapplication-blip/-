@@ -312,14 +312,15 @@ async function loadStats(){
 }
 
 async function requireAdmin(){
-  const {data:{user}}=await db.auth.getUser();
-  if(!user) return false;
-  const {data:p,error}=await db.from('profiles')
-      .select('email,role,status').eq('id',user.id).maybeSingle();
-  if(error) return false;
-  if(!p || p.role!=='admin' || p.status!=='active'){
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError||!user) return false;
+  const [{data:isAdminFlag,error:adminError},{data:p,error:profileError}]=await Promise.all([
+    db.rpc('is_admin'),
+    db.from('profiles').select('email,role,status').eq('id',user.id).maybeSingle()
+  ]);
+  if(adminError||profileError||isAdminFlag!==true||!p||p.role!=='admin'||p.status!=='active'){
     await db.auth.signOut();
-    lmsg('هذا الحساب ليس حساب مدير نشطًا.');
+    lmsg('هذا الحساب ليس حساب مدير نشطًا أو تعذر التحقق من صلاحياته.');
     return false;
   }
   $('who').textContent = 'المدير: '+(p.email||user.email);
