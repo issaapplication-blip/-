@@ -250,3 +250,25 @@ test("Cloudflare Pages never proxies API traffic to the retired Render backend",
     expect(read(path).toLowerCase()).not.toContain("rafiq-o6qd");
   }
 });
+
+
+test("interactive map exposes functional region filters and accessible Map/List controls", () => {
+  expect(mapPage).toContain('id="governorate"');
+  expect(mapPage).toContain('id="district"');
+  expect(mapPage).toContain('id="locality"');
+  expect(mapPage).toContain('id="showMap"');
+  expect(mapPage).toContain('id="showList"');
+  expect(mapPage).toContain("addEventListener('change'");
+  expect(mapPage).toContain("addEventListener('click'");
+  expect(mapPage).toContain('window.RAFIQ_LOCATIONS');
+  expect(mapPage).toContain('title="خريطة تفاعلية للبنان من OpenStreetMap"');
+  expect(mapPage).toContain('href="/regions.html"');
+});
+
+test("homepage and CV navigation retain the official service routes", () => {
+  expect(homepage).toContain('href="/services.html"');
+  expect(homepage).toContain('href="/map.html"');
+  expect(homepage).toContain('href="/caregivers.html"');
+  expect(read("public/caregivers.html")).toContain('id="cv-service"');
+  expect(read("public/caregivers.html")).toContain('href="/services.html"');
+});
