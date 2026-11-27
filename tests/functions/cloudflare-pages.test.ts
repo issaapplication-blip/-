@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(resolve(import.meta.dir, "../../" + 
 const webAgent = read("functions/api/agent/chat.ts");
 const legacyTelegram = read("functions/api/telegram/webhook.ts");
 const cvAdmin = read("public/admin.html");
+const legacyDashboard = read("public/dashboard.html");
 const build = read("ops/build-cloudflare-pages.sh");
 const admin = read("public/admin.js");
 const adminHtml = read("public/admin.html");
@@ -72,6 +73,12 @@ test("admin dashboard requires database authorization and an active admin profil
   expect(adminHtml).toContain("db.rpc('is_admin')");
   expect(adminHtml).toContain("db.from('profiles').select('id,email,role,status')");
   expect(adminHtml).toContain("profile?.role!=='admin'||profile?.status!=='active'");
+});
+
+test("legacy dashboard requires the database admin RPC and an active admin profile", () => {
+  expect(legacyDashboard).toContain("db.rpc('is_admin')");
+  expect(legacyDashboard).toContain("isAdminFlag!==true");
+  expect(legacyDashboard).toContain("p.role!=='admin'||p.status!=='active'");
 });
 
 
