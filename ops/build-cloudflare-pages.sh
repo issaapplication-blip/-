@@ -55,6 +55,7 @@ PY
 test -f "$OUT_DIR/index.html"
 test -f "$OUT_DIR/admin.html"
 test -f "$OUT_DIR/caregivers.html"
+test -f "$OUT_DIR/map.html"
 test ! -e "$OUT_DIR/auto-reply.mjs"
 test -f "$OUT_DIR/_routes.json"
 test -f "$OUT_DIR/_headers"
