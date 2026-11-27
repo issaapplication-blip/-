@@ -15,6 +15,20 @@ const adminMigration = read("supabase/migrations/20261120110000_require_active_a
 const workflow = read(".github/workflows/rafiq-edge-function-tests.yml");
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
 const sitemap = read("public/sitemap.xml");
+const mapPage = read("public/map.html");
+const homepage = read("public/index.html");
+const serviceWorker = read("public/sw.js");
+
+
+test("interactive Lebanon map is linked from the homepage, included in the Pages bundle, and cached by the PWA", () => {
+  expect(homepage).toContain('href="/map.html"');
+  expect(build).toContain('test -f "$OUT_DIR/map.html"');
+  expect(mapPage).toContain('https://www.openstreetmap.org/export/embed.html');
+  expect(mapPage).toContain('title="خريطة تفاعلية للبنان من OpenStreetMap"');
+  expect(mapPage).toContain('href="/regions.html"');
+  expect(serviceWorker).toContain('"/map.html"');
+  expect(serviceWorker).toContain('rafig-v89-20261127');
+});
 
 test("admin review is limited to CV and Cover Letter and never sends automatic messages", () => {
   expect(cvAdmin).toContain(".eq('application_type','CV + Cover Letter')");
