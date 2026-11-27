@@ -4,63 +4,111 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#087f58">
-<meta name="description" content="خريطة تفاعلية للبنان ضمن منصة RAFIQ، لاستكشاف المناطق الجغرافية.">
+<meta name="description" content="استكشف محافظات لبنان وأقضيته وبلداته عبر خريطة RAFIQ التفاعلية.">
+<meta name="robots" content="index,follow">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/assets/rafig-logo.png" type="image/png">
 <title>خريطة لبنان التفاعلية | RAFIQ</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#f3f8f5;color:#17372d;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.8}
-.wrap{max-width:1120px;margin:auto;padding:12px}
-.card{background:#fff;border:1px solid #dce8e2;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 4px 18px #0000000b}
-.nav,.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
-.nav a,.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 14px;border-radius:11px;background:#087f58;color:#fff;text-decoration:none;font-weight:800}
-.nav a.alt,.btn.alt{background:#eaf4ef;color:#17372d}
-.hero{text-align:center}
-.logo{display:block;width:94px;height:94px;object-fit:contain;margin:0 auto}
-h1,h2{color:#087f58}
-h1{margin:4px 0;font-size:clamp(24px,4vw,36px)}
-.subtitle{max-width:760px;margin:8px auto;color:#61736c}
-.map-frame{width:100%;height:min(68vh,650px);min-height:360px;border:0;border-radius:16px;background:#e9f0ec}
-.map-note{padding:13px 15px;border:1px solid #ead7a8;border-radius:13px;background:#fff8e8;color:#5e4a1b}
-.meta{font-size:13px;color:#61736c;text-align:center}
-@media(max-width:600px){.wrap{padding:6px}.card{padding:13px;border-radius:16px}.map-frame{height:58vh;min-height:330px}}
+:root{--green:#087f58;--ink:#172b25;--muted:#64736d;--bg:#f6f8f7;--line:#dce8e2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Tahoma,sans-serif;line-height:1.75}
+main{width:min(1120px,100%);margin:auto;padding:12px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 5px 20px #17372d0a}
+nav,.actions,.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;border:0;border-radius:11px;background:var(--green);color:#fff;text-decoration:none;font-weight:800;cursor:pointer}
+.btn.alt{background:#eaf4ef;color:var(--ink)}.btn[aria-pressed=true]{background:#07523d;color:#fff}.btn:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #c49a43;outline-offset:3px}
+h1,h2{color:var(--green);margin:3px 0 8px}.hero{text-align:center}.hero p{color:var(--muted);margin:5px auto;max-width:780px}
+.filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;font-weight:800;margin:0 0 5px}.field select{width:100%;min-height:46px;padding:9px;border:1px solid #cbdcd3;border-radius:10px;background:#fff;color:var(--ink);font:inherit}
+.map-frame{display:block;width:100%;height:min(65vh,620px);min-height:350px;border:0;border-radius:14px;background:#e9f0ec}
+.region-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.region{border:1px solid var(--line);border-radius:13px;padding:13px;background:#f9fcfa}.region h3{margin:0;color:var(--green);font-size:17px}.region p{margin:4px 0;color:var(--muted);font-size:14px}
+.note{background:#fff8e8;border:1px solid #ead7a8;border-radius:12px;padding:12px;color:#654f1c}.hidden{display:none!important}.small{font-size:13px;color:var(--muted);text-align:center}
+@media(max-width:680px){main{padding:6px}.card{padding:13px}.filters,.region-list{grid-template-columns:1fr}.map-frame{height:55vh;min-height:320px}}
 </style>
 </head>
 <body>
-<main class="wrap">
-<nav class="card nav" aria-label="التنقل الرئيسي">
-<a class="alt" href="/">الرئيسية</a>
-<a class="alt" href="/services.html">فئات الدليل الطبي</a>
-<a class="alt" href="/regions.html">المناطق اللبنانية</a>
-<a href="/caregivers.html#cv-service">خدمة CV وCover Letter</a>
+<main>
+<nav class="card" aria-label="التنقل الرئيسي">
+<a class="btn alt" href="/">الرئيسية</a><a class="btn alt" href="/services.html">فئات الدليل الطبي</a><a class="btn alt" href="/regions.html">المناطق اللبنانية</a><a class="btn alt" href="/caregivers.html#cv-service">CV وCover Letter</a>
 </nav>
 <section class="card hero">
-<img class="logo" src="/assets/rafig-logo.png" alt="شعار RAFIQ">
 <h1>🗺️ خريطة لبنان التفاعلية</h1>
-<p class="subtitle">استكشف جغرافية لبنان وتعرّف إلى مواقع المحافظات والمناطق. يمكنك التكبير والتحريك وفتح الخريطة مباشرة.</p>
+<p>استكشف المحافظات والأقضية والبلدات، وانتقل بين عرض الخريطة والقائمة. ستظهر مواقع المؤسسات فقط بعد اعتماد عناوينها وإحداثياتها من الإدارة.</p>
 </section>
 <section class="card">
-<iframe class="map-frame"
- title="خريطة تفاعلية للبنان من OpenStreetMap"
- src="https://www.openstreetmap.org/export/embed.html?bbox=35.05%2C33.05%2C36.65%2C34.70&amp;layer=mapnik"
- loading="lazy"
- referrerpolicy="strict-origin-when-cross-origin"
- allowfullscreen></iframe>
-<p class="meta">الخريطة مقدمة من OpenStreetMap، وتظهر النطاق الجغرافي للبنان دون إظهار علامات مؤسسات غير موثقة.</p>
-<div class="actions">
-<a class="btn" href="https://www.openstreetmap.org/#map=8/33.95/35.85" target="_blank" rel="noopener noreferrer">فتح الخريطة بحجم كامل ↗</a>
-<a class="btn alt" href="/regions.html">تصفح المحافظات والأقضية والبلدات</a>
+<div class="filters" aria-label="تصفية المناطق">
+<div class="field"><label for="governorate">المحافظة</label><select id="governorate"><option value="">كل المحافظات</option></select></div>
+<div class="field"><label for="district">القضاء</label><select id="district"><option value="">كل الأقضية</option></select></div>
+<div class="field"><label for="locality">البلدة أو المنطقة</label><select id="locality"><option value="">كل البلدات</option></select></div>
+</div>
+<div class="toolbar" style="margin-top:14px">
+<button class="btn" id="showMap" type="button" aria-pressed="true">عرض الخريطة</button>
+<button class="btn alt" id="showList" type="button" aria-pressed="false">عرض القائمة</button>
+<a class="btn alt" id="openFullMap" href="https://www.openstreetmap.org/#map=8/33.95/35.85" target="_blank" rel="noopener noreferrer">فتح الخريطة كاملة ↗</a>
 </div>
 </section>
-<section class="card">
-<h2>مواقع المؤسسات الطبية المعتمدة</h2>
-<p>سيتم إظهار علامات المختبرات ومراكز الأشعة والعلاج الفيزيائي وموردي المعدات الطبية بعد مراجعة بيانات كل مؤسسة والتحقق من عنوانها وإحداثياتها. لا تعرض هذه النسخة مواقع مؤسسات أو عناوين تقديرية على أنها مواقع مؤكدة.</p>
-<div class="map-note">تنبيه: هذه خريطة جغرافية عامة للبنان وليست دليلاً على مواقع المؤسسات الطبية. ستُضاف العلامات المؤسسية عند توفر بيانات مواقع موثقة من إدارة RAFIQ.</div>
+<section class="card" id="mapPanel">
+<h2>خريطة لبنان</h2>
+<iframe class="map-frame" title="خريطة تفاعلية للبنان من OpenStreetMap" src="https://www.openstreetmap.org/export/embed.html?bbox=35.05%2C33.05%2C36.65%2C34.70&amp;layer=mapnik" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<p class="small">الخريطة الجغرافية مقدمة من OpenStreetMap. لا تمثل العلامات مواقع مؤسسات RAFIQ.</p>
 </section>
-<footer class="card meta">RAFIQ | رفيق — نصل بالحب والأمان لرعاية العائلة</footer>
+<section class="card hidden" id="listPanel">
+<h2>المناطق المطابقة</h2>
+<div class="region-list" id="regionList" aria-live="polite"></div>
+</section>
+<section class="card note">
+<strong>حالة بيانات المؤسسات:</strong> لا تعرض هذه الصفحة حالياً علامات أو أسماء مؤسسات طبية؛ يلزم ربط جدول المؤسسات المعتمد في Supabase والتحقق من حالة النشر والإحداثيات قبل عرض أي سجل. لا تعرض هذه النسخة مواقع مؤسسات أو عناوين تقديرية؛ لا تُنشر علامات المؤسسات إلا بعد التحقق من بياناتها واعتمادها.
+</section>
+<footer class="card small">RAFIQ | رفيق — دليل المراكز والخدمات الطبية في لبنان</footer>
 </main>
-<script src="/install-app.js?v=84" defer></script>
+<script src="/js/rafig-locations.js" defer></script>
+<script>
+(function(){
+ const $=id=>document.getElementById(id),g=$('governorate'),d=$('district'),l=$('locality');
+ const data=()=>window.RAFIQ_LOCATIONS&&window.RAFIQ_LOCATIONS.DATA||{};
+ const option=(value,label)=>{const o=document.createElement('option');o.value=value;o.textContent=label;return o};
+ function fill(select,values,placeholder){select.replaceChildren(option('',placeholder));values.forEach(v=>select.append(option(v,v)))}
+ function update(){
+  const D=data(),G=g.value,DD=d.value,LL=l.value;
+  fill(d,G?Object.keys(D[G]||{}):Object.values(D).flatMap(x=>Object.keys(x)),'كل الأقضية');
+  if(DD&&Array.from(d.options).some(o=>o.value===DD))d.value=DD;
+  const districts=G?(D[G]||{}):Object.assign({},...Object.values(D));
+  fill(l,DD?(districts[DD]||[]):Object.values(districts).flat(),'كل البلدات');
+  if(LL&&Array.from(l.options).some(o=>o.value===LL))l.value=LL;
+  render();
+ }
+ function render(){
+  const D=data(),items=[];
+  Object.entries(D).forEach(([gov,districts])=>{
+   if(g.value&&g.value!==gov)return;
+   Object.entries(districts).forEach(([district,towns])=>{
+    if(d.value&&d.value!==district)return;
+    const shown=l.value?towns.filter(t=>t===l.value):towns;
+    if(!shown.length)return;
+    items.push({gov,district,towns:shown});
+   });
+  });
+  $('regionList').replaceChildren();
+  if(!items.length){const p=document.createElement('p');p.textContent='لا توجد مناطق مطابقة للاختيار.';$('regionList').append(p);return}
+  items.forEach(item=>{
+   const article=document.createElement('article');article.className='region';
+   const h=document.createElement('h3');h.textContent=item.district+' — '+item.gov;
+   const p=document.createElement('p');p.textContent=item.towns.join('، ');
+   article.append(h,p);$('regionList').append(article);
+  });
+ }
+ function mode(which){
+  const map=which==='map';$('mapPanel').classList.toggle('hidden',!map);$('listPanel').classList.toggle('hidden',map);
+  $('showMap').setAttribute('aria-pressed',String(map));$('showList').setAttribute('aria-pressed',String(!map));
+ }
+ function init(){
+  const D=data();fill(g,Object.keys(D),'كل المحافظات');update();
+  g.addEventListener('change',()=>{d.value='';l.value='';update()});
+  d.addEventListener('change',()=>{l.value='';update()});l.addEventListener('change',render);
+  $('showMap').addEventListener('click',()=>mode('map'));$('showList').addEventListener('click',()=>mode('list'));
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+<script src="/install-app.js?v=85" defer></script>
 <script src="/i18n.js?v=6" defer></script>
 </body>
 </html>
