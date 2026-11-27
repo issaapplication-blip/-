@@ -18,7 +18,18 @@ const sitemap = read("public/sitemap.xml");
 const mapPage = read("public/map.html");
 const homepage = read("public/index.html");
 const serviceWorker = read("public/sw.js");
+const publicIntakeFunction = read("supabase/functions/public-application-intake/index.ts");
+const publicUploadFunction = read("supabase/functions/public-application-upload/index.ts");
 
+
+test("public CV intake and file upload CORS allow the official Pages origin and reject the retired Render origin", () => {
+  for (const source of [publicIntakeFunction, publicUploadFunction]) {
+    expect(source).toContain('"https://rafiq-lebanon.pages.dev"');
+    expect(source).toContain('origin!=="https://rafiq-o6qd.onrender.com"');
+    expect(source).toContain("allowedOrigins.has(origin)");
+    expect(source).not.toContain('"https://rafiq-o6qd.onrender.com",\\"https://issaapplication-blip.github.io\\"');
+  }
+});
 
 test("interactive Lebanon map is linked from the homepage, included in the Pages bundle, and cached by the PWA", () => {
   expect(homepage).toContain('href="/map.html"');
