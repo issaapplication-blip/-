@@ -467,6 +467,9 @@
     "hospitals.services": "Verzeichniskategorien",
     "hospitals.map": "Libanonkarte",
     "hospitals.cv": "Lebenslauf und Anschreiben",
+    "hospitals.public": "🏛️ Öffentliches Krankenhaus",
+    "hospitals.private": "🏥 Privates Krankenhaus",
+    "hospitals.source.note": "Verzeichnisquellen: libanesisches Gesundheitsministerium. Ein Eintrag bedeutet keine geschäftliche Partnerschaft, Werbefreigabe oder Rabattvereinbarung mit RAFIQ.",
   };
 
   RAFIQ_I18N.register('de', dict);
