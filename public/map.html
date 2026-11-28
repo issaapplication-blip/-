@@ -27,11 +27,11 @@ h1,h2{color:var(--green);margin:3px 0 8px}.hero{text-align:center}.hero p{color:
 <body>
 <main>
 <nav class="card" aria-label="التنقل الرئيسي">
-<a class="btn alt" href="/">الرئيسية</a><a class="btn alt" href="/services.html">فئات الدليل الطبي</a><a class="btn alt" href="/regions.html">المناطق اللبنانية</a><a class="btn alt" href="/caregivers.html#cv-service">CV وCover Letter</a>
+<a class="btn alt" href="/">الرئيسية</a><a class="btn alt" href="/services.html">فئات الدليل الطبي</a><a class="btn alt" href="/regions.html">المناطق اللبنانية</a><a class="btn alt" href="/hospitals.html">دليل المستشفيات</a><a class="btn alt" href="/caregivers.html#cv-service">CV وCover Letter</a>
 </nav>
 <section class="card hero">
 <h1>🗺️ خريطة لبنان التفاعلية</h1>
-<p>استكشف المحافظات والأقضية والبلدات، وانتقل بين عرض الخريطة والقائمة. ستظهر مواقع المؤسسات فقط بعد اعتماد عناوينها وإحداثياتها من الإدارة.</p>
+<p>استكشف المحافظات والأقضية والبلدات، وانتقل بين عرض الخريطة والقائمة. أُضيف دليل المستشفيات إلى Supabase. لن تظهر علامات على الخريطة إلا للمستشفيات التي تم التحقق من إحداثياتها الدقيقة.</p>
 </section>
 <section class="card">
 <div class="filters" aria-label="تصفية المناطق">
@@ -54,11 +54,18 @@ h1,h2{color:var(--green);margin:3px 0 8px}.hero{text-align:center}.hero p{color:
 <h2>المناطق المطابقة</h2>
 <div class="region-list" id="regionList" aria-live="polite"></div>
 </section>
+<section class="card" id="hospitalDirectoryMap">
+<h2>🏥 المستشفيات على الخريطة</h2>
+<p id="hospitalMapStatus" class="small" aria-live="polite">جارٍ التحقق من إحداثيات المستشفيات المنشورة…</p>
+<div id="hospitalMapDirectory"></div>
+<a class="btn alt" href="/hospitals.html">فتح دليل المستشفيات والعناوين وأرقام الهواتف</a>
+</section>
 <section class="card note">
-<strong>حالة بيانات المؤسسات:</strong> لا تعرض هذه الصفحة حالياً علامات أو أسماء مؤسسات طبية؛ يلزم ربط جدول المؤسسات المعتمد في Supabase والتحقق من حالة النشر والإحداثيات قبل عرض أي سجل. لا تعرض هذه النسخة مواقع مؤسسات أو عناوين تقديرية؛ لا تُنشر علامات المؤسسات إلا بعد التحقق من بياناتها واعتمادها.
+<strong>حالة الخريطة:</strong> بيانات المستشفيات مرتبطة بقاعدة Supabase. لا تُرسم علامات قبل التحقق من الإحداثيات الدقيقة لكل مستشفى. لا تُعرض مواقع تقديرية أو مواقع مؤسسات من الفئات الأخرى.
 </section>
 <footer class="card small">RAFIQ | رفيق — دليل المراكز والخدمات الطبية في لبنان</footer>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/rafig-locations.js" defer></script>
 <script>
 (function(){
@@ -106,6 +113,21 @@ h1,h2{color:var(--green);margin:3px 0 8px}.hero{text-align:center}.hero p{color:
   $('showMap').addEventListener('click',()=>mode('map'));$('showList').addEventListener('click',()=>mode('list'));
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
+<script>
+(function(){
+ const status=document.getElementById('hospitalMapStatus'),root=document.getElementById('hospitalMapDirectory');
+ if(!status||!root||!window.supabase)return;
+ const db=window.supabase.createClient('https://qmuxaehrahfsnabyjens.supabase.co','sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD');
+ db.from('hospitals').select('name_ar,address,latitude,longitude').eq('is_published',true).order('name_ar').limit(300).then(({data,error})=>{
+   if(error){status.textContent='تعذر قراءة مواقع المستشفيات حالياً؛ يمكنك فتح الدليل النصي.';return}
+   const rows=data||[],located=rows.filter(r=>Number.isFinite(Number(r.latitude))&&Number.isFinite(Number(r.longitude))&&r.latitude!==null&&r.longitude!==null);
+   if(!located.length){status.textContent='تم ربط '+rows.length+' مستشفى بالدليل. لا توجد إحداثيات دقيقة معتمدة بعد، لذلك لم نضع علامات جغرافية غير موثوقة.';return}
+   status.textContent='عدد المستشفيات ذات الإحداثيات المعتمدة: '+located.length;
+   located.forEach(r=>{const a=document.createElement('a');a.className='btn alt';a.target='_blank';a.rel='noopener noreferrer';a.textContent=r.name_ar+' — فتح الموقع';const lat=Number(r.latitude),lon=Number(r.longitude);a.href='https://www.openstreetmap.org/?mlat='+encodeURIComponent(lat)+'&mlon='+encodeURIComponent(lon)+'#map=16/'+encodeURIComponent(lat)+'/'+encodeURIComponent(lon);root.append(a)});
+ });
 })();
 </script>
 <script src="/install-app.js?v=85" defer></script>
