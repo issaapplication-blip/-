@@ -8,7 +8,7 @@
   const MAX_SIZE = 10 * 1024 * 1024;
   const PWA_INSTALL_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-pwa-install';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
-  const APP_VERSION = '2026.11.28.1';
+  const APP_VERSION = '2026.11.28.2';
 
   const fixedIds = ['joinBtn', 'careBtn', 'status-button'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);

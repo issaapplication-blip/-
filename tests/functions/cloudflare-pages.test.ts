@@ -39,7 +39,7 @@ test("interactive Lebanon map is linked from the homepage, included in the Pages
   expect(mapPage).toContain('title="خريطة تفاعلية للبنان من OpenStreetMap"');
   expect(mapPage).toContain('href="/regions.html"');
   expect(serviceWorker).toContain('"/map.html"');
-  expect(serviceWorker).toContain('rafig-v91-20261128');
+  expect(serviceWorker).toContain('rafig-v92-20261128');
   expect(serviceWorker).toContain('"/hospitals.html"');
 });
 
@@ -290,10 +290,10 @@ test("official RAFIQ origin, PWA manifests, installer and service worker are ali
   expect(modernManifest.start_url).toBe(legacyManifest.start_url);
   expect(modernManifest.shortcuts.map((x: any) => x.url)).toEqual(legacyManifest.shortcuts.map((x: any) => x.url));
   expect(homepage).toContain('href="https://rafiq-lebanon.pages.dev/"');
-  expect(homepage).toContain('/install-app.js?v=91');
-  expect(homepage).toContain('/install-pwa.js?v=91');
-  expect(serviceWorker).toContain('rafig-v91-20261128');
-  expect(read("public/install-app.js")).toContain('/sw.js?v=91');
+  expect(homepage).toContain('/install-app.js?v=92');
+  expect(homepage).toContain('/install-pwa.js?v=92');
+  expect(serviceWorker).toContain('rafig-v92-20261128');
+  expect(read("public/install-app.js")).toContain('/sw.js?v=92');
   expect(read("public/robots.txt")).toContain('Sitemap: https://rafiq-lebanon.pages.dev/sitemap.xml');
   expect(sitemap).toContain('https://rafiq-lebanon.pages.dev/');
   expect(sitemap).not.toContain('rafiq-o6qd.onrender.com');
@@ -355,7 +355,7 @@ test("public upload verifies file signatures, bounds multipart bodies and serial
 });
 
 test("visitor security migration keeps rate-limit state private and RPC access service-role only", () => {
-  const migration = read("supabase/migrations/20261128161000_visitor_intake_security_layers.sql");
+  const migration = read("supabase/migrations/20261128140655_visitor_intake_security_layers.sql");
   expect(migration).toContain("create schema if not exists rafig_private");
   expect(migration).toContain("revoke all on schema rafig_private from public, anon, authenticated, service_role");
   expect(migration).toContain("create table if not exists rafig_private.public_rate_limits");
@@ -365,6 +365,11 @@ test("visitor security migration keeps rate-limit state private and RPC access s
   expect(migration).toContain("grant execute on function public.reserve_rafig_upload_slots");
   expect(migration).toContain("grant execute on function public.release_rafig_upload_slots");
   expect(migration.toLowerCase()).not.toMatch(/drop table|delete from public\./);
+  const telemetryMigration = read("supabase/migrations/20261128141145_harden_public_visitor_telemetry.sql");
+  expect(telemetryMigration).toContain("revoke all on function public.record_pwa_install");
+  expect(telemetryMigration).toContain("grant execute on function public.record_pwa_install(uuid,text,text,text,text,text) to service_role");
+  expect(telemetryMigration).toContain("alter function public.public_member_barcode(text) set search_path=''");
+
 });
 
 
