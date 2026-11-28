@@ -469,6 +469,9 @@
     "hospitals.services": "Directory categories",
     "hospitals.map": "Lebanon map",
     "hospitals.cv": "CV & Cover Letter",
+    "hospitals.public": "🏛️ Public hospital",
+    "hospitals.private": "🏥 Private hospital",
+    "hospitals.source.note": "Directory sources: Lebanese Ministry of Public Health. A listing does not imply a commercial partnership, advertising approval, or discount agreement with RAFIQ.",
   };
 
   RAFIQ_I18N.register('en', dict);
