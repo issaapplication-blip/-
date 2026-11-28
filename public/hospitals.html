@@ -52,8 +52,10 @@
  let records=[];
  const norm=s=>String(s||'').toLocaleLowerCase('ar').normalize('NFKC');
  function telHref(phone){
-   const digits=String(phone||'').replace(/[^0-9]/g,'');
-   if(!digits)return '';
+   const raw=String(phone||'').trim();
+   if(!raw || /ext\\.?/i.test(raw) || (raw.match(/\\//g)||[]).length>1)return '';
+   const digits=raw.replace(/[^0-9]/g,'');
+   if(!digits || digits.length<7 || digits.length>10)return '';
    return 'tel:'+(digits.startsWith('0')?'+961'+digits.slice(1):digits.startsWith('961')?'+'+digits:'+'+digits);
  }
  function make(tag,cls,text){
