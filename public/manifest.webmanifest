@@ -2,7 +2,7 @@
   "id": "/",
   "name": "RAFIQ | رفيق",
   "short_name": "رفيق",
-  "description": "دليل RAFIQ للمراكز والخدمات الطبية المعتمدة في لبنان، مع خدمة CV وCover Letter مستقلة.",
+  "description": "دليل المستشفيات في لبنان مع خدمة CV وCover Letter مستقلة.",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "/?source=pwa",
@@ -22,6 +22,7 @@
   "shortcuts": [
     {"name": "الرئيسية", "short_name": "الرئيسية", "url": "/", "icons": [{"src": "/icon-192.png?v=85", "sizes": "192x192", "type": "image/png"}]},
     {"name": "فئات الدليل", "short_name": "الدليل", "url": "/services.html", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "دليل المستشفيات", "short_name": "المستشفيات", "url": "/hospitals.html", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]},
     {"name": "خدمة CV وCover Letter", "short_name": "CV", "url": "/caregivers.html#cv-service", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]}
   ]
 }

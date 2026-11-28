@@ -456,6 +456,20 @@
     "current.home.footer.contact": "Offizielle Korrespondenz: +961 81 506 299 · Überweisungsdaten werden bei Bedarf von der Leitung mitgeteilt.",
     "current.home.footer.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
     "current.home.footer.slogan": "— Familien durch Fürsorge und Sicherheit verbinden",
+    "hospitals.title": "🏥 Krankenhäuser im Libanon",
+    "hospitals.intro": "Erstes Verzeichnis der Krankenhäuser im Gesundheitsstätten-Verzeichnis des libanesischen Gesundheitsministeriums, mit veröffentlichten Telefonnummern und Standortangaben.",
+    "hospitals.search": "Nach Krankenhaus, Ort oder Bezirk suchen",
+    "hospitals.governorate": "Alle Gouvernements",
+    "hospitals.loading": "Krankenhausverzeichnis wird geladen…",
+    "hospitals.address.notice": "Einige Ministeriumsdatensätze enthalten nur einen Ort oder Bezirk, keine Straße und Hausnummer. RAFIQ zeigt die in der Quelle verfügbaren Adressangaben und erfindet keine detaillierten Adressen oder Koordinaten.",
+    "hospitals.source.note": "Erste Datenquelle: Gesundheitsstätten-Verzeichnis des libanesischen Gesundheitsministeriums. Ein Verzeichniseintrag bedeutet keine geschäftliche Partnerschaft, Werbefreigabe oder Rabattvereinbarung mit RAFIQ.",
+    "hospitals.home": "Startseite",
+    "hospitals.services": "Verzeichniskategorien",
+    "hospitals.map": "Libanonkarte",
+    "hospitals.cv": "Lebenslauf und Anschreiben",
+    "hospitals.public": "🏛️ Öffentliches Krankenhaus",
+    "hospitals.private": "🏥 Privates Krankenhaus",
+    "hospitals.source.note": "Verzeichnisquellen: libanesisches Gesundheitsministerium. Ein Eintrag bedeutet keine geschäftliche Partnerschaft, Werbefreigabe oder Rabattvereinbarung mit RAFIQ.",
   };
 
   RAFIQ_I18N.register('de', dict);

@@ -38,7 +38,8 @@ test("interactive Lebanon map is linked from the homepage, included in the Pages
   expect(mapPage).toContain('title="خريطة تفاعلية للبنان من OpenStreetMap"');
   expect(mapPage).toContain('href="/regions.html"');
   expect(serviceWorker).toContain('"/map.html"');
-  expect(serviceWorker).toContain('rafig-v89-20261127');
+  expect(serviceWorker).toContain('rafig-v90-20261128');
+  expect(serviceWorker).toContain('"/hospitals.html"');
 });
 
 test("admin review is limited to CV and Cover Letter and never sends automatic messages", () => {
@@ -191,6 +192,7 @@ const directoryPages = [
   "public/physiotherapy.html",
   "public/medical-equipment.html",
   "public/caregivers.html",
+  "public/hospitals.html",
   "public/faq.html",
   "public/guide.html",
   "public/offline.html",

@@ -456,6 +456,20 @@
     "current.home.footer.contact": "Contatti ufficiali: +961 81 506 299 · I dettagli per il trasferimento vengono forniti dalla direzione se necessario.",
     "current.home.footer.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
     "current.home.footer.slogan": "— Unire le famiglie attraverso la cura e la sicurezza",
+    "hospitals.title": "🏥 Ospedali in Libano",
+    "hospitals.intro": "Elenco iniziale degli ospedali presenti nel localizzatore delle strutture sanitarie del Ministero della Salute Pubblica libanese, con numeri di contatto e aree pubblicate.",
+    "hospitals.search": "Cerca per ospedale, località o distretto",
+    "hospitals.governorate": "Tutti i governatorati",
+    "hospitals.loading": "Caricamento dell’elenco degli ospedali…",
+    "hospitals.address.notice": "Alcune schede del Ministero indicano solo un’area o un distretto, non la via e il numero civico. RAFIQ mostra il livello di indirizzo disponibile nella fonte senza inventare indirizzi dettagliati o coordinate.",
+    "hospitals.source.note": "Fonte iniziale: localizzatore delle strutture sanitarie del Ministero della Salute Pubblica libanese. La presenza nell’elenco non implica una partnership commerciale, un’approvazione pubblicitaria o un accordo di sconto con RAFIQ.",
+    "hospitals.home": "Home",
+    "hospitals.services": "Categorie dell’elenco",
+    "hospitals.map": "Mappa del Libano",
+    "hospitals.cv": "CV e lettera di presentazione",
+    "hospitals.public": "🏛️ Ospedale pubblico",
+    "hospitals.private": "🏥 Ospedale privato",
+    "hospitals.source.note": "Fonti dell’elenco: Ministero della Salute Pubblica libanese. La presenza nell’elenco non implica una partnership commerciale, un’approvazione pubblicitaria o un accordo di sconto con RAFIQ.",
   };
 
   RAFIQ_I18N.register('it', dict);

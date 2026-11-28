@@ -1,7 +1,7 @@
 {
   "name": "RAFIQ | رفيق",
   "short_name": "رفيق",
-  "description": "نصل بالحب والأمان لرعاية العائلة",
+  "description": "دليل المستشفيات في لبنان مع العناوين وأرقام التواصل، وخدمة CV وCover Letter مستقلة.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
@@ -26,6 +26,20 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "دليل المستشفيات",
+      "short_name": "المستشفيات",
+      "url": "/hospitals.html",
+      "icons": [
+        {
+          "src": "/assets/rafig-logo.png?v=20261005-logo",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
