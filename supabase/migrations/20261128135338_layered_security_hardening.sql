@@ -2,7 +2,7 @@
 begin;
 
 -- Replace legacy role-only checks with the canonical active-admin predicate.
-do $$
+do $rafig$
 declare p record; policy_expr text;
 begin
   for p in
@@ -22,7 +22,7 @@ begin
     end if;
   end loop;
 end
-$$;
+$rafig$;
 
 -- These policies already used is_admin() but were granted to PUBLIC.
 alter policy public_members_admin_all on public.public_members
@@ -37,7 +37,7 @@ revoke all on function public.public_lookup_issued_barcode(text) from public, an
 grant execute on function public.public_lookup_issued_barcode(text) to service_role;
 
 -- Remove DDL-adjacent privileges from client roles; ordinary CRUD remains governed by RLS.
-do $
+do $rafig$
 declare r record;
 begin
   for r in
@@ -51,7 +51,7 @@ begin
     );
   end loop;
 end
-$;
+$rafig$;
 alter default privileges for role postgres in schema public
   revoke truncate, references, trigger on tables from anon, authenticated;
 
