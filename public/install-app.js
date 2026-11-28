@@ -1,8 +1,8 @@
 /* RAFIQ | رفيق — direct PWA installer */
 (function(){
   "use strict";
-  if(window.__RAFIQ_INSTALL_CONTROLLER_V91__) return;
-  window.__RAFIQ_INSTALL_CONTROLLER_V83__=true;
+  if(window.__RAFIQ_INSTALL_CONTROLLER_V92__) return;
+  window.__RAFIQ_INSTALL_CONTROLLER_V92__=true;
   var deferredPrompt=null;
   var installedMedia=window.matchMedia("(display-mode: standalone)");
   var isIos=/iPad|iPhone|iPod/.test(navigator.userAgent||"")||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
@@ -98,7 +98,7 @@
   }
 
   if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("/sw.js?v=91",{scope:"/",updateViaCache:"none"}).then(function(reg){if(reg&&reg.update)reg.update();}).catch(function(e){console.warn("[RAFIQ PWA] Service Worker registration failed",e);});
+    navigator.serviceWorker.register("/sw.js?v=92",{scope:"/",updateViaCache:"none"}).then(function(reg){if(reg&&reg.update)reg.update();}).catch(function(e){console.warn("[RAFIQ PWA] Service Worker registration failed",e);});
   }
 
   function boot(){
