@@ -48,7 +48,7 @@ for here, dirs, files in os.walk(root):
 with open(os.path.join(root,"_routes.json"),"w",encoding="utf-8") as f:
     f.write('{"version":1,"include":["/api/*"],"exclude":[]}')
 with open(os.path.join(root,"_headers"),"w",encoding="utf-8") as f:
-    f.write("/*\\n  Strict-Transport-Security: max-age=31536000; includeSubDomains\\n  X-Content-Type-Options: nosniff\\n  X-Frame-Options: DENY\\n  Referrer-Policy: strict-origin-when-cross-origin\\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\\n  X-Permitted-Cross-Domain-Policies: none\\n  Content-Security-Policy: object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests\\n  Cache-Control: no-store\\n\\n/sw.js\\n  Cache-Control: no-cache\\n\\n/manifest.json\\n  Cache-Control: no-cache\\n\\n/manifest.webmanifest\\n  Cache-Control: no-cache\\n\\n/assets/*\\n  Cache-Control: public, max-age=86400, stale-while-revalidate=604800\\n")
+    f.write("/*\n  Strict-Transport-Security: max-age=31536000; includeSubDomains\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  X-Permitted-Cross-Domain-Policies: none\n  Content-Security-Policy: object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests\n  Cache-Control: no-store\n\n/sw.js\n  Cache-Control: no-cache\n\n/manifest.json\n  Cache-Control: no-cache\n\n/manifest.webmanifest\n  Cache-Control: no-cache\n\n/assets/*\n  Cache-Control: public, max-age=86400, stale-while-revalidate=604800\n")
 print(f"Cloudflare Pages static bundle created at {root}; replaced {replaced} suspended-host URLs.")
 PY
 
