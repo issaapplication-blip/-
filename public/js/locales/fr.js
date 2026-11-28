@@ -467,6 +467,9 @@
     "hospitals.services": "Catégories du répertoire",
     "hospitals.map": "Carte du Liban",
     "hospitals.cv": "CV et lettre de motivation",
+    "hospitals.public": "🏛️ Hôpital public",
+    "hospitals.private": "🏥 Hôpital privé",
+    "hospitals.source.note": "Sources du répertoire : ministère libanais de la Santé publique. Une inscription ne signifie pas un partenariat commercial, une approbation publicitaire ou un accord de réduction avec RAFIQ.",
   };
 
   RAFIQ_I18N.register('fr', dict);
