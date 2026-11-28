@@ -12,6 +12,12 @@ test("hospital directory reads only published hospital records from the existing
   expect(page).toContain(".eq('is_published',true)");
   expect(page).toContain("tel:");
   expect(page).not.toContain("service_role");
+  expect(page).toContain("/i18n.js?v=6");
+  for (const lang of ["ar","en","fr","it","de"]) {
+    const locale = read("public/js/locales/" + lang + ".js");
+    expect(locale).toContain("hospitals.title");
+    expect(locale).toContain("hospitals.address.notice");
+  }
 });
 
 test("hospital directory database policy exposes only published records to public visitors", () => {
