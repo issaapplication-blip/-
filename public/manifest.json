@@ -1,45 +1,28 @@
 {
+  "id": "/",
   "name": "RAFIQ | رفيق",
   "short_name": "رفيق",
-  "description": "دليل المستشفيات في لبنان مع العناوين وأرقام التواصل، وخدمة CV وCover Letter مستقلة.",
+  "description": "دليل المستشفيات في لبنان مع خدمة CV وCover Letter مستقلة.",
+  "lang": "ar",
+  "dir": "rtl",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffffff",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#f3f8f5",
   "theme_color": "#087f58",
-  "lang": "ar",
-  "dir": "rtl",
+  "prefer_related_applications": false,
+  "categories": ["health", "medical", "lifestyle"],
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    {"src": "/icon-192.png?v=85", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icon-512.png?v=85", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icon-512.png?v=85", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "دليل المستشفيات",
-      "short_name": "المستشفيات",
-      "url": "/hospitals.html",
-      "icons": [
-        {
-          "src": "/assets/rafig-logo.png?v=20261005-logo",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    }
+    {"name": "الرئيسية", "short_name": "الرئيسية", "url": "/", "icons": [{"src": "/icon-192.png?v=85", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "فئات الدليل", "short_name": "الدليل", "url": "/services.html", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "دليل المستشفيات", "short_name": "المستشفيات", "url": "/hospitals.html", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "خدمة CV وCover Letter", "short_name": "CV", "url": "/caregivers.html#cv-service", "icons": [{"src": "/assets/rafig-logo.png?v=20261005-logo", "sizes": "192x192", "type": "image/png"}]}
   ]
 }
