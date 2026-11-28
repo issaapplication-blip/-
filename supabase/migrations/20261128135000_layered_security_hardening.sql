@@ -37,7 +37,21 @@ revoke all on function public.public_lookup_issued_barcode(text) from public, an
 grant execute on function public.public_lookup_issued_barcode(text) to service_role;
 
 -- Remove DDL-adjacent privileges from client roles; ordinary CRUD remains governed by RLS.
-revoke truncate, references, trigger on all tables in schema public from anon, authenticated;
+do $
+declare r record;
+begin
+  for r in
+    select schemaname, tablename
+    from pg_tables
+    where schemaname = 'public'
+  loop
+    execute format(
+      'revoke truncate, references, trigger on table %I.%I from anon, authenticated',
+      r.schemaname, r.tablename
+    );
+  end loop;
+end
+$;
 alter default privileges for role postgres in schema public
   revoke truncate, references, trigger on tables from anon, authenticated;
 
