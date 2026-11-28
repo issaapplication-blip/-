@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 const read = (path: string) => readFileSync(resolve(import.meta.dir, "../../" + path), "utf8");
 const page = read("public/hospitals.html");
-const migration = read("supabase/migrations/20261128120000_hospitals_directory_only.sql");
+const migration = read("supabase/migrations/20261128131145_hospitals_directory_only.sql");
 
 test("hospital directory reads only published hospital records from the existing Supabase project", () => {
   expect(page).toContain("qmuxaehrahfsnabyjens.supabase.co");
