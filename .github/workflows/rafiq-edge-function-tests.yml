@@ -6,6 +6,7 @@ on:
       - 'supabase/functions/rafiq-agent/**'
       - 'supabase/functions/public-application-intake/**'
       - 'supabase/functions/public-application-upload/**'
+      - 'supabase/functions/public-pwa-install/**'
       - 'tests/functions/**'
       - 'src/index.ts'
       - 'src/agent.ts'
