@@ -20,6 +20,7 @@ const homepage = read("public/index.html");
 const serviceWorker = read("public/sw.js");
 const publicIntakeFunction = read("supabase/functions/public-application-intake/index.ts");
 const publicUploadFunction = read("supabase/functions/public-application-upload/index.ts");
+const publicPwaInstallFunction = read("supabase/functions/public-pwa-install/index.ts");
 
 
 test("public CV intake and file upload CORS allow the official Pages origin and reject the retired Render origin", () => {
@@ -364,4 +365,18 @@ test("visitor security migration keeps rate-limit state private and RPC access s
   expect(migration).toContain("grant execute on function public.reserve_rafig_upload_slots");
   expect(migration).toContain("grant execute on function public.release_rafig_upload_slots");
   expect(migration.toLowerCase()).not.toMatch(/drop table|delete from public\./);
+});
+
+
+test("PWA telemetry uses a server-side rate-limited endpoint and no longer exposes the service RPC to visitors", () => {
+  const installScript = read("public/install-pwa.js");
+  expect(installScript).toContain("/functions/v1/public-pwa-install");
+  expect(installScript).not.toContain("/rest/v1/rpc/record_pwa_install");
+  expect(installScript).not.toContain("SUPABASE_KEY");
+  expect(publicPwaInstallFunction).toContain("consume_rafig_public_rate_limit");
+  expect(publicPwaInstallFunction).toContain("pwa_install_10m");
+  expect(publicPwaInstallFunction).toContain("pwa_install_24h");
+  expect(publicPwaInstallFunction).toContain("HMAC");
+  expect(publicPwaInstallFunction).toContain("record_pwa_install");
+  expect(publicPwaInstallFunction).toContain("origin && !allowedOrigins.has(origin)");
 });

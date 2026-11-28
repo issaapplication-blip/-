@@ -6,8 +6,7 @@
   const UPLOAD_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-application-upload';
   const MAX_FILES = 8;
   const MAX_SIZE = 10 * 1024 * 1024;
-  const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
+  const PWA_INSTALL_URL = 'https://qmuxaehrahfsnabyjens.supabase.co/functions/v1/public-pwa-install';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
   const APP_VERSION = '2026.11.28.1';
 
@@ -31,9 +30,9 @@
   async function recordPwaInstallation(){
     const installationId=getInstallId(); if(!installationId)return;
     try{
-      await fetch(SUPABASE_URL+'/rest/v1/rpc/record_pwa_install',{
+      await fetch(PWA_INSTALL_URL,{
         method:'POST',
-        headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           p_installation_id:installationId,
           p_user_agent:String(navigator.userAgent||''),
