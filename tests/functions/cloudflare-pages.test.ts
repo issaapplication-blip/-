@@ -297,3 +297,27 @@ test("official RAFIQ origin, PWA manifests, installer and service worker are ali
   expect(sitemap).toContain('https://rafiq-lebanon.pages.dev/');
   expect(sitemap).not.toContain('rafiq-o6qd.onrender.com');
 });
+
+
+const securityMigration = read("supabase/migrations/20261128135000_layered_security_hardening.sql");
+const securityHeaders = read("public/_headers");
+
+test("database hardening narrows admin RLS policies and removes legacy anonymous barcode lookup", () => {
+  expect(securityMigration).toContain("revoke all on function public.public_lookup_issued_barcode(text)");
+  expect(securityMigration).toContain("grant execute on function public.public_lookup_issued_barcode(text) to service_role");
+  expect(securityMigration).toContain("alter policy public_members_admin_all on public.public_members");
+  expect(securityMigration).toContain("to authenticated");
+  expect(securityMigration).toContain("using (public.is_admin()) with check (public.is_admin())");
+  expect(securityMigration).toContain("revoke truncate, references, trigger on all tables in schema public");
+  expect(securityMigration.toLowerCase()).not.toMatch(/drop table|delete from|truncate table/);
+});
+
+test("Cloudflare Pages emits hardened transport, framing, MIME, CSP and cache headers", () => {
+  for (const headers of [securityHeaders, build]) {
+    expect(headers).toContain("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+    expect(headers).toContain("X-Frame-Options: DENY");
+    expect(headers).toContain("X-Content-Type-Options: nosniff");
+    expect(headers).toContain("Content-Security-Policy: object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests");
+    expect(headers).toContain("Cache-Control: no-cache");
+  }
+});
