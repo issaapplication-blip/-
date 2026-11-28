@@ -303,6 +303,8 @@ const securityMigration = read("supabase/migrations/20261128135338_layered_secur
 const securityHeaders = read("public/_headers");
 
 test("database hardening narrows admin RLS policies and removes legacy anonymous barcode lookup", () => {
+  expect(securityMigration).toContain("do $rafig$");
+  expect(securityMigration).toContain("$rafig$;");
   expect(securityMigration).toContain("revoke all on function public.public_lookup_issued_barcode(text)");
   expect(securityMigration).toContain("grant execute on function public.public_lookup_issued_barcode(text) to service_role");
   expect(securityMigration).toContain("alter policy public_members_admin_all on public.public_members");
