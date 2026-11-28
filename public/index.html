@@ -28,12 +28,27 @@
 @media(max-width:720px){main{padding:7px}.topbar{top:5px}.topbar .ra-lang .ra-lang-btn{min-height:42px;padding:8px 11px;font-size:13px}.card{border-radius:19px;padding:18px;margin:11px 0}.hero{padding:20px 12px 24px}.grid,.photo-grid,.welcome-grid{grid-template-columns:1fr}.actions .btn{width:auto}.hero-logo{width:min(165px,48vw)}.actions{padding-left:0}.actions .menu{left:0}.actions .menu-panel{left:0;right:auto}.brand-mini span{font-size:14px}}
 @media(min-width:1100px){.hero-logo{width:205px}.service img{height:280px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* RAFIQ 2026 directory visual system */
+:root{--green:#087f58;--green-dark:#07523d;--ink:#172b25;--muted:#64736d;--gold:#c49a43;--bg:#f6f8f7;--line:#dce8e2}
+body{background:linear-gradient(180deg,#eaf5f0 0,#f6f8f7 44%,#f6f8f7 100%);color:var(--ink)}
+main{width:min(1440px,100%);padding:12px 18px}
+.topbar{background:linear-gradient(105deg,#07523d,#087f58 65%,#07523d);border:0;border-radius:18px;padding:12px 18px;color:#fff;box-shadow:0 12px 30px #07523d24}
+.topbar .brand-mini,.topbar .brand-mini span{color:#fff}.topbar .menu summary{background:#ffffff20;color:#fff}
+.topbar .menu-panel{z-index:40}.topbar-nav{display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.4vw,22px);flex:1;flex-wrap:wrap}.topbar-nav a{color:#fff;text-decoration:none;font-size:14px;font-weight:800;padding:7px 8px;border-radius:9px}.topbar-nav a:hover{background:#ffffff20}
+.card{border-radius:22px;box-shadow:0 10px 28px #1648320d;border-color:#e2ece7}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);align-items:center;text-align:right;gap:24px;padding:30px;background:linear-gradient(115deg,#fff 0%,#f1f8f4 100%)}
+.hero-logo{grid-column:1/-1;width:120px;margin:0 auto 4px}.hero h1,.hero .tagline,.hero .lead,.hero .welcome,.hero .actions{grid-column:1}.hero h1{font-size:clamp(28px,4vw,48px);line-height:1.35}.hero .tagline{font-size:20px}.hero .lead{margin:0;max-width:680px}.hero .welcome{margin:0}.hero .actions{justify-content:flex-start}.home-feature-figure{grid-column:2;grid-row:2/7;width:100%;margin:0}.home-feature-image{height:clamp(270px,34vw,420px);border-radius:20px;object-fit:cover}
+.section-title{text-align:right}.section-sub{text-align:right;margin-right:0}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.service{border-radius:18px;background:#fff}.service-body{padding:20px}.service h3{font-size:19px}.service p{color:var(--muted)}
+.welcome-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.welcome-box{background:#f5faf7;border-radius:16px}.btn{border-radius:12px}.footer{background:#07523d;color:#fff}.footer .small{color:#d8eee5}
+@media(max-width:900px){.topbar-nav{display:none}.hero{grid-template-columns:1fr;text-align:center}.hero-logo,.hero h1,.hero .tagline,.hero .lead,.hero .welcome,.hero .actions,.home-feature-figure{grid-column:1;grid-row:auto}.hero .actions{justify-content:center}.home-feature-figure{margin:8px auto 0}.section-title,.section-sub{text-align:center}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.welcome-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){main{padding:6px}.topbar{border-radius:14px}.grid,.welcome-grid{grid-template-columns:1fr}.card{padding:16px}.hero{padding:20px 14px}.home-feature-image{height:230px}.service img{height:190px}}
 </style>
 <meta name="apple-mobile-web-app-title" content="رفيق">
 </head>
 <body data-i18n-title="current.site.title">
 <main>
-<header class="topbar" aria-label="شريط RAFIQ الرئيسي">
+<header class="topbar" aria-label="شريط RAFIQ الرئيسي">\n<a class="brand-mini" href="/" aria-label="RAFIQ الرئيسية"><img src="/assets/rafig-logo.png" alt=""><span>RAFIQ<br><small>Healthcare Directory</small></span></a>\n<nav class="topbar-nav" aria-label="التنقل الرئيسي"><a href="/">الرئيسية</a><a href="/services.html">الدليل الطبي</a><a href="/map.html">خريطة لبنان</a><a href="/regions.html">المناطق</a><a href="/caregivers.html#cv-service">CV وCover Letter</a><a href="https://wa.me/96181506299">التواصل</a></nav>
 <details class="menu topbar-menu">
 <summary aria-label="القائمة">⋮</summary>
 <div class="menu-panel">
