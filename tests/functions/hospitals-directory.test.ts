@@ -45,3 +45,12 @@ test("directory includes public and private hospitals from the official Ministry
   expect(publicBatch).toContain("Governmental Hospital");
   expect(publicBatch).toContain("https://www.moph.gov.lb/en/HealthFacilities/index/3/188/1");
 });
+
+
+test("hospital SELECT policies separate anonymous published reads from authenticated admin reads", () => {
+  const policyMigration = read("supabase/migrations/20261128132154_consolidate_hospital_select_policies.sql");
+  expect(policyMigration).toContain("to anon");
+  expect(policyMigration).toContain("to authenticated");
+  expect(policyMigration).toContain("is_published is true or public.is_admin()");
+  expect(policyMigration).not.toContain("hospitals_admin_read_all");
+});
