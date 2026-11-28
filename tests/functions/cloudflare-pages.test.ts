@@ -25,7 +25,7 @@ const publicUploadFunction = read("supabase/functions/public-application-upload/
 test("public CV intake and file upload CORS allow the official Pages origin and reject the retired Render origin", () => {
   for (const source of [publicIntakeFunction, publicUploadFunction]) {
     expect(source).toContain('"https://rafiq-lebanon.pages.dev"');
-    expect(source).toContain('origin!=="https://rafiq-o6qd.onrender.com"');
+    expect(source).toContain('origin !== "https://rafiq-o6qd.onrender.com"');
     expect(source).toContain("allowedOrigins.has(origin)");
     expect(source).not.toContain('"https://rafiq-o6qd.onrender.com",\\"https://issaapplication-blip.github.io\\"');
   }
@@ -310,7 +310,7 @@ test("database hardening narrows admin RLS policies and removes legacy anonymous
   expect(securityMigration).toContain("alter policy public_members_admin_all on public.public_members");
   expect(securityMigration).toContain("to authenticated");
   expect(securityMigration).toContain("using (public.is_admin()) with check (public.is_admin())");
-  expect(securityMigration).toContain("revoke truncate, references, trigger on all tables in schema public");
+  expect(securityMigration).toContain("revoke truncate, references, trigger on table %I.%I from anon, authenticated");
   expect(securityMigration.toLowerCase()).not.toMatch(/drop table|delete from|truncate table/);
 });
 
@@ -322,4 +322,46 @@ test("Cloudflare Pages emits hardened transport, framing, MIME, CSP and cache he
     expect(headers).toContain("Content-Security-Policy: object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests");
     expect(headers).toContain("Cache-Control: no-cache");
   }
+});
+
+
+test("public intake enforces bounded JSON parsing and server-side per-IP rate limits", () => {
+  expect(publicIntakeFunction).toContain("MAX_BODY_BYTES = 64 * 1024");
+  expect(publicIntakeFunction).toContain("readBounded(req, MAX_BODY_BYTES)");
+  expect(publicIntakeFunction).toContain("HMAC");
+  expect(publicIntakeFunction).toContain("consume_rafig_public_rate_limit");
+  expect(publicIntakeFunction).toContain("application_intake_10m");
+  expect(publicIntakeFunction).toContain("application_intake_24h");
+  expect(publicIntakeFunction).toContain("new HttpError(429, \"rate_limited\", 600)");
+  expect(publicIntakeFunction).toContain("origin && !allowedOrigins.has(origin)");
+  expect(publicIntakeFunction).not.toContain("return new Response(JSON.stringify({ok:false,error:e.message");
+});
+
+test("public upload verifies file signatures, bounds multipart bodies and serializes file-slot reservations", () => {
+  expect(publicUploadFunction).toContain("MAX_BODY_BYTES = 35 * 1024 * 1024");
+  expect(publicUploadFunction).toContain("MAX_TOTAL_FILE_BYTES = 30 * 1024 * 1024");
+  expect(publicUploadFunction).toContain("file_content_mismatch");
+  expect(publicUploadFunction).toContain("[0x25,0x50,0x44,0x46,0x2d]");
+  expect(publicUploadFunction).toContain("[0xff,0xd8,0xff]");
+  expect(publicUploadFunction).toContain("[0x89,0x50,0x4e,0x47");
+  expect(publicUploadFunction).toContain("reserve_rafig_upload_slots");
+  expect(publicUploadFunction).toContain("release_rafig_upload_slots");
+  expect(publicUploadFunction).toContain("application_upload_10m");
+  expect(publicUploadFunction).toContain("application_upload_24h");
+  expect(publicUploadFunction).toContain("constantTimeEqual");
+  expect(publicUploadFunction).toContain("savedIds");
+  expect(publicUploadFunction).toContain("storagePaths");
+});
+
+test("visitor security migration keeps rate-limit state private and RPC access service-role only", () => {
+  const migration = read("supabase/migrations/20261128161000_visitor_intake_security_layers.sql");
+  expect(migration).toContain("create schema if not exists rafig_private");
+  expect(migration).toContain("revoke all on schema rafig_private from public, anon, authenticated, service_role");
+  expect(migration).toContain("create table if not exists rafig_private.public_rate_limits");
+  expect(migration).toContain("create table if not exists rafig_private.application_upload_reservations");
+  expect(migration).toContain("set search_path = ''");
+  expect(migration).toContain("grant execute on function public.consume_rafig_public_rate_limit");
+  expect(migration).toContain("grant execute on function public.reserve_rafig_upload_slots");
+  expect(migration).toContain("grant execute on function public.release_rafig_upload_slots");
+  expect(migration.toLowerCase()).not.toMatch(/drop table|delete from public\./);
 });
