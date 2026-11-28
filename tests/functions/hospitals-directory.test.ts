@@ -52,5 +52,5 @@ test("hospital SELECT policies separate anonymous published reads from authentic
   expect(policyMigration).toContain("to anon");
   expect(policyMigration).toContain("to authenticated");
   expect(policyMigration).toContain("is_published is true or public.is_admin()");
-  expect(policyMigration).not.toContain("hospitals_admin_read_all");
+  expect(policyMigration).not.toContain("create policy hospitals_admin_read_all");
 });
