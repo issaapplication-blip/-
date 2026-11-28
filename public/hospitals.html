@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087f58">
+<meta name="description" content="دليل المستشفيات في لبنان من RAFIQ: عناوين المناطق وأرقام الهواتف المنشورة في دليل وزارة الصحة العامة.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://rafiq-lebanon.pages.dev/hospitals.html">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/rafig-logo.png" type="image/png">
+<title>دليل المستشفيات في لبنان | RAFIQ</title>
+<style>
+:root{--green:#087f58;--ink:#17372d;--muted:#61736c;--line:#dce8e2;--bg:#f4f8f6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Tahoma,sans-serif;line-height:1.8}main{width:min(1080px,100%);margin:auto;padding:12px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 5px 20px #17372d0a}nav,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;border:0;border-radius:11px;background:var(--green);color:#fff;text-decoration:none;font-weight:800}.btn.alt{background:#eaf4ef;color:var(--ink)}h1,h2{color:var(--green);margin:0 0 8px}.hero{text-align:center}.hero p{max-width:800px;margin:6px auto;color:var(--muted)}.filters{display:grid;grid-template-columns:2fr 1fr;gap:10px}.filters input,.filters select{width:100%;min-height:46px;border:1px solid #cbdcd3;border-radius:10px;padding:10px;font:inherit;background:#fff;color:var(--ink)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.hospital{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fbfdfc}.hospital h2{font-size:19px;margin:0 0 5px}.hospital p{margin:5px 0}.muted{color:var(--muted);font-size:14px}.phone-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.phone{display:inline-block;background:#eaf4ef;color:#07583f;text-decoration:none;border-radius:9px;padding:7px 10px;font-weight:800;direction:ltr}.notice{background:#fff8e8;border:1px solid #ead7a8;border-radius:12px;padding:12px;color:#654f1c}.status{color:var(--muted);text-align:center}.hidden{display:none!important}
+@media(max-width:650px){main{padding:6px}.card{padding:13px}.filters{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<nav class="card" aria-label="التنقل الرئيسي">
+<a class="btn alt" href="/">الرئيسية</a><a class="btn alt" href="/services.html">فئات الدليل</a><a class="btn alt" href="/map.html">خريطة لبنان</a><a class="btn alt" href="/caregivers.html#cv-service">CV وCover Letter</a>
+</nav>
+<section class="card hero">
+<h1>🏥 دليل المستشفيات في لبنان</h1>
+<p>دليل أولي للمستشفيات المدرجة في دليل المنشآت الصحية لوزارة الصحة العامة اللبنانية، مع أرقام التواصل ومناطق المستشفيات.</p>
+</section>
+<section class="card">
+<div class="filters">
+<input id="search" type="search" placeholder="ابحث باسم المستشفى أو البلدة أو القضاء" aria-label="البحث في المستشفيات">
+<select id="governorate" aria-label="تصفية حسب المحافظة"><option value="">كل المحافظات</option></select>
+</div>
+<p class="status" id="status" role="status" aria-live="polite">جارٍ تحميل دليل المستشفيات…</p>
+<div class="grid" id="hospitals" aria-live="polite"></div>
+</section>
+<section class="card notice">
+<strong>ملاحظة حول دقة العناوين:</strong> بعض السجلات المتاحة من دليل الوزارة تعرض المنطقة أو القضاء فقط، وليس اسم الشارع ورقم المبنى. لذلك نعرض مستوى العنوان المتاح كما ورد في المصدر، ولا نخترع عنواناً تفصيلياً أو إحداثيات. تُحدّث بيانات كل مستشفى عند التحقق من العنوان التفصيلي معه.
+</section>
+<section class="card muted">
+مصدر بيانات الدفعة الأولى: دليل المنشآت الصحية — وزارة الصحة العامة اللبنانية. إدراج المستشفى في هذا الدليل لا يعني وجود شراكة تجارية أو اعتماد إعلان أو خصم من RAFIQ.
+<div class="actions"><a class="btn alt" href="https://staging.moph.menaws.com/en/Pages/3/20129/%D8%AA%D9%88%D8%B2%D9%91%D8%B9-%D8%A7%D9%84%D9%85%D9%86%D8%B4%D8%A2%D8%AA-%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D9%91%D8%A9-20000?page=80" target="_blank" rel="noopener noreferrer">مصدر الوزارة — صفحة 1</a><a class="btn alt" href="https://staging.moph.menaws.com/en/Pages/3/20129/%D8%AA%D9%88%D8%B2%D9%91%D8%B9-%D8%A7%D9%84%D9%85%D9%86%D8%B4%D8%A2%D8%AA-%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D9%91%D8%A9-20000?page=82" target="_blank" rel="noopener noreferrer">مصدر الوزارة — صفحة 2</a></div>
+</section>
+<footer class="card status">RAFIQ | رفيق — دليل المستشفيات في لبنان</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+ const SUPABASE_URL='https://qmuxaehrahfsnabyjens.supabase.co';
+ const SUPABASE_KEY='sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
+ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+ const $=id=>document.getElementById(id);
+ let records=[];
+ const norm=s=>String(s||'').toLocaleLowerCase('ar').normalize('NFKC');
+ function telHref(phone){
+   const digits=String(phone||'').replace(/[^0-9]/g,'');
+   if(!digits)return '';
+   return 'tel:'+(digits.startsWith('0')?'+961'+digits.slice(1):digits.startsWith('961')?'+'+digits:'+'+digits);
+ }
+ function make(tag,cls,text){
+   const el=document.createElement(tag);
+   if(cls)el.className=cls;
+   if(text!==undefined)el.textContent=text;
+   return el;
+ }
+ function render(){
+   const term=norm($('search').value),gov=$('governorate').value;
+   const filtered=records.filter(r=>(!gov||r.governorate===gov)&&(!term||norm([r.name_ar,r.name_en,r.address,r.locality,r.district,r.governorate].join(' ')).includes(term)));
+   const root=$('hospitals');root.replaceChildren();
+   if(!filtered.length){root.append(make('p','status','لا توجد مستشفيات مطابقة للبحث.'));return}
+   filtered.forEach(r=>{
+     const card=make('article','hospital');
+     card.append(make('h2','',r.name_ar));
+     if(r.name_en)card.append(make('p','muted',r.name_en));
+     card.append(make('p','', '📍 '+r.address));
+     const phones=make('div','phone-list');
+     String(r.phone||'').split(';').map(x=>x.trim()).filter(Boolean).forEach(p=>{
+       const href=telHref(p);
+       if(href){const a=make('a','phone',p);a.href=href;phones.append(a)}
+       else phones.append(make('span','phone',p));
+     });
+     card.append(phones);
+     card.append(make('p','muted','المصدر: وزارة الصحة العامة اللبنانية'));
+     root.append(card);
+   });
+   $('status').textContent='عدد المستشفيات الظاهرة: '+filtered.length+' من '+records.length;
+ }
+ async function load(){
+   const {data,error}=await db.from('hospitals').select('slug,name_ar,name_en,phone,address,locality,district,governorate,latitude,longitude').eq('is_published',true).order('governorate').order('name_ar').limit(300);
+   if(error){$('status').textContent='تعذر تحميل دليل المستشفيات حالياً. '+error.message;return}
+   records=data||[];
+   const values=[...new Set(records.map(r=>r.governorate).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
+   values.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;$('governorate').append(o)});
+   render();
+ }
+ $('search').addEventListener('input',render);
+ $('governorate').addEventListener('change',render);
+ load();
+})();
+</script>
+</body>
+</html>
