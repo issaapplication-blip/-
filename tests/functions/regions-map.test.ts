@@ -8,7 +8,8 @@ test("Lebanon map page uses OpenStreetMap and stays clear about unverified insti
   const map = read("public/map.html");
   expect(map).toContain("https://www.openstreetmap.org/export/embed.html");
   expect(map).toContain('title="خريطة تفاعلية للبنان من OpenStreetMap"');
-  expect(map).toContain("لا تعرض هذه النسخة مواقع مؤسسات أو عناوين تقديرية");
+  expect(map).toContain("لا تُرسم علامات قبل التحقق من الإحداثيات الدقيقة لكل مستشفى");
+  expect(map).toContain("لا تُعرض مواقع تقديرية أو مواقع مؤسسات من الفئات الأخرى.");
   expect(map).toContain('href="/regions.html"');
   expect(map).toContain('loading="lazy"');
 });
