@@ -25,7 +25,7 @@ const publicUploadFunction = read("supabase/functions/public-application-upload/
 test("public CV intake and file upload CORS allow the official Pages origin and reject the retired Render origin", () => {
   for (const source of [publicIntakeFunction, publicUploadFunction]) {
     expect(source).toContain('"https://rafiq-lebanon.pages.dev"');
-    expect(source).toContain('origin!=="https://rafiq-o6qd.onrender.com"');
+    expect(source).toContain('origin !== "https://rafiq-o6qd.onrender.com"');
     expect(source).toContain("allowedOrigins.has(origin)");
     expect(source).not.toContain('"https://rafiq-o6qd.onrender.com",\\"https://issaapplication-blip.github.io\\"');
   }
@@ -310,7 +310,7 @@ test("database hardening narrows admin RLS policies and removes legacy anonymous
   expect(securityMigration).toContain("alter policy public_members_admin_all on public.public_members");
   expect(securityMigration).toContain("to authenticated");
   expect(securityMigration).toContain("using (public.is_admin()) with check (public.is_admin())");
-  expect(securityMigration).toContain("revoke truncate, references, trigger on all tables in schema public");
+  expect(securityMigration).toContain("revoke truncate, references, trigger on table %I.%I from anon, authenticated");
   expect(securityMigration.toLowerCase()).not.toMatch(/drop table|delete from|truncate table/);
 });
 
@@ -332,7 +332,7 @@ test("public intake enforces bounded JSON parsing and server-side per-IP rate li
   expect(publicIntakeFunction).toContain("consume_rafig_public_rate_limit");
   expect(publicIntakeFunction).toContain("application_intake_10m");
   expect(publicIntakeFunction).toContain("application_intake_24h");
-  expect(publicIntakeFunction).toContain("status: 429");
+  expect(publicIntakeFunction).toContain("new HttpError(429, \"rate_limited\", 600)");
   expect(publicIntakeFunction).toContain("origin && !allowedOrigins.has(origin)");
   expect(publicIntakeFunction).not.toContain("return new Response(JSON.stringify({ok:false,error:e.message");
 });
