@@ -299,7 +299,7 @@ test("official RAFIQ origin, PWA manifests, installer and service worker are ali
 });
 
 
-const securityMigration = read("supabase/migrations/20261128135000_layered_security_hardening.sql");
+const securityMigration = read("supabase/migrations/20261128135338_layered_security_hardening.sql");
 const securityHeaders = read("public/_headers");
 
 test("database hardening narrows admin RLS policies and removes legacy anonymous barcode lookup", () => {
