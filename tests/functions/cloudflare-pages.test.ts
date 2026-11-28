@@ -283,6 +283,8 @@ test("official RAFIQ origin, PWA manifests, installer and service worker are ali
   expect(legacyManifest.display).toBe("standalone");
   expect(legacyManifest.icons.some((x: any) => x.purpose === "maskable")).toBe(true);
   expect(legacyManifest.shortcuts.some((x: any) => x.url === "/hospitals.html")).toBe(true);
+  expect(legacyManifest.shortcuts.some((x: any) => x.url === "/map.html")).toBe(true);
+  expect(homepage).toContain('rel="apple-touch-icon" href="/apple-touch-icon.png"');
   expect(legacyManifest.shortcuts.some((x: any) => x.url === "/caregivers.html#cv-service")).toBe(true);
   expect(modernManifest.start_url).toBe(legacyManifest.start_url);
   expect(modernManifest.shortcuts.map((x: any) => x.url)).toEqual(legacyManifest.shortcuts.map((x: any) => x.url));
