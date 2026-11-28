@@ -1,0 +1,15 @@
+begin;
+update public.hospitals set address='زحلة - المعلقة، قضاء زحلة، محافظة البقاع، لبنان', locality='المعلقة', updated_at=now() where slug='elias-hrawi-governmental';
+update public.hospitals set address='رحمالا - كبريشمول، قضاء عاليه، محافظة جبل لبنان، لبنان', locality='رحمالا - كبريشمول', updated_at=now() where slug='shahar-gharbi-governmental';
+update public.hospitals set address='سبلين، قضاء الشوف، محافظة جبل لبنان، لبنان', locality='سبلين', updated_at=now() where slug='siblin-governmental';
+update public.hospitals set address='قرطبا - الساحة العامة، قضاء جبيل، محافظة جبل لبنان، لبنان', locality='قرطبا - الساحة العامة', updated_at=now() where slug='kartaba-governmental';
+update public.hospitals set address='البوار، قرب بلدية البوار، قضاء كسروان، محافظة جبل لبنان، لبنان', locality='البوار', updated_at=now() where slug='ftouh-keserwan-governmental';
+update public.hospitals set address='حاصبيا - شارع زغلا، قضاء حاصبيا، محافظة النبطية، لبنان', locality='حاصبيا - شارع زغلا', updated_at=now() where slug='hasbaya-governmental';
+update public.hospitals set address='النبطية - كفرجوز - شارع الدرك، قضاء النبطية، محافظة النبطية، لبنان', locality='كفرجوز', updated_at=now() where slug='nabih-berri-governmental';
+update public.hospitals set address='حلبا - تقاطع إيدبل، قضاء عكار، محافظة عكار، لبنان', locality='حلبا - تقاطع إيدبل', updated_at=now() where slug='abdullah-rassi-governmental';
+update public.hospitals set address='تنورين التحتا - مفرق دوما، قضاء البترون، محافظة الشمال، لبنان', locality='تنورين التحتا - مفرق دوما', updated_at=now() where slug='tannourine-governmental';
+update public.hospitals set address='القبة - الثكنة، قضاء طرابلس، محافظة الشمال، لبنان', locality='القبة - الثكنة', updated_at=now() where slug='tripoli-governmental';
+update public.hospitals set address='طرابلس، قضاء طرابلس، محافظة الشمال، لبنان', locality='طرابلس', updated_at=now() where slug='orange-nassau-governmental';
+update public.hospitals set address='رومية، قضاء المتن، محافظة جبل لبنان، لبنان', locality='رومية', updated_at=now() where slug='dahr-el-bacheq-governmental';
+update public.hospitals set address='بعبدا، قضاء بعبدا، محافظة جبل لبنان، لبنان', locality='بعبدا', updated_at=now() where slug='baabda-governmental';
+commit;
