@@ -192,6 +192,7 @@ const directoryPages = [
   "public/physiotherapy.html",
   "public/medical-equipment.html",
   "public/caregivers.html",
+  "public/hospitals.html",
   "public/faq.html",
   "public/guide.html",
   "public/offline.html",
