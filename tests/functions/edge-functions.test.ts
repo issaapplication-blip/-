@@ -34,3 +34,19 @@ describe("public intake CORS origin allowlist", () => {
     });
   }
 });
+
+
+describe("Cloudflare Turnstile server-side enforcement", () => {
+  test("both public intake endpoints require Siteverify, a secret, hostname and action validation", async () => {
+    for (const name of ["public-application-intake", "public-application-upload"]) {
+      const source = await Bun.file(new URL("../../supabase/functions/" + name + "/index.ts", import.meta.url)).text();
+      expect(source).toContain('Deno.env.get("TURNSTILE_SECRET_KEY")');
+      expect(source).toContain("https://challenges.cloudflare.com/turnstile/v0/siteverify");
+      expect(source).toContain("result?.success !== true");
+      expect(source).toContain("allowedHostnames.has(hostname)");
+      expect(source).toContain("result?.action !== expectedAction");
+      expect(source).toContain("verification_required");
+      expect(source).toContain("verification_unavailable");
+    }
+  });
+});
