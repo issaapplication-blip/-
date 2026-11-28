@@ -17,7 +17,7 @@ describe("retired RAFIQ web agent", () => {
 });
 
 describe("public intake CORS origin allowlist", () => {
-  for (const functionName of ["public-application-intake", "public-application-upload"]) {
+  for (const functionName of ["public-application-intake", "public-application-upload", "public-pwa-install"]) {
     test(`${functionName} permits only the configured Pages origin and known GitHub Pages origin`, async () => {
       const f = loadFunction(functionName, { ...BASE, RAFIQ_PUBLIC_SITE_URL: "https://rafiq-new.pages.dev/" }, async () => { throw new Error("no network expected"); });
       const accepted = await f.handler(new Request("https://f.invalid/", { method: "OPTIONS", headers: { Origin: "https://rafiq-new.pages.dev", "Access-Control-Request-Method": "POST" } }));
