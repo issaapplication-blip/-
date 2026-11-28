@@ -467,6 +467,9 @@
     "hospitals.services": "Categorie dell’elenco",
     "hospitals.map": "Mappa del Libano",
     "hospitals.cv": "CV e lettera di presentazione",
+    "hospitals.public": "🏛️ Ospedale pubblico",
+    "hospitals.private": "🏥 Ospedale privato",
+    "hospitals.source.note": "Fonti dell’elenco: Ministero della Salute Pubblica libanese. La presenza nell’elenco non implica una partnership commerciale, un’approvazione pubblicitaria o un accordo di sconto con RAFIQ.",
   };
 
   RAFIQ_I18N.register('it', dict);
