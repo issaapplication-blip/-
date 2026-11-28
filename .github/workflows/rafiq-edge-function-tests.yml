@@ -50,7 +50,7 @@ on:
       - 'public/admin.js'
       - 'wrangler.toml'
   push:
-    branches: [main]
+    branches: [main, 'security/**']
     paths:
       - 'supabase/functions/rafiq-agent/**'
       - 'supabase/functions/public-application-intake/**'
