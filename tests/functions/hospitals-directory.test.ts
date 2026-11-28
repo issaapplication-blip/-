@@ -34,3 +34,14 @@ test("only hospitals are integrated; other provider categories remain out of thi
   expect(migration).not.toContain("institution_type in ('laboratory','radiology_center','medical_equipment_center','physiotherapy_center')");
   expect(page).toContain("دليل المستشفيات في لبنان");
 });
+
+
+test("directory includes public and private hospitals from the official Ministry locator", () => {
+  const page = read("public/hospitals.html");
+  const publicBatch = read("supabase/migrations/20261128131825_add_public_hospitals_moph_locator.sql");
+  expect(page).toContain("ownership_type");
+  expect(page).toContain("hospitals.public");
+  expect(page).toContain("hospitals.private");
+  expect(publicBatch).toContain("Governmental Hospital");
+  expect(publicBatch).toContain("https://www.moph.gov.lb/en/HealthFacilities/index/3/188/1");
+});
