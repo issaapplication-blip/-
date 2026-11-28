@@ -323,3 +323,45 @@ test("Cloudflare Pages emits hardened transport, framing, MIME, CSP and cache he
     expect(headers).toContain("Cache-Control: no-cache");
   }
 });
+
+
+test("public intake enforces bounded JSON parsing and server-side per-IP rate limits", () => {
+  expect(publicIntakeFunction).toContain("MAX_BODY_BYTES = 64 * 1024");
+  expect(publicIntakeFunction).toContain("readBounded(req, MAX_BODY_BYTES)");
+  expect(publicIntakeFunction).toContain("HMAC");
+  expect(publicIntakeFunction).toContain("consume_rafig_public_rate_limit");
+  expect(publicIntakeFunction).toContain("application_intake_10m");
+  expect(publicIntakeFunction).toContain("application_intake_24h");
+  expect(publicIntakeFunction).toContain("status: 429");
+  expect(publicIntakeFunction).toContain("origin && !allowedOrigins.has(origin)");
+  expect(publicIntakeFunction).not.toContain("return new Response(JSON.stringify({ok:false,error:e.message");
+});
+
+test("public upload verifies file signatures, bounds multipart bodies and serializes file-slot reservations", () => {
+  expect(publicUploadFunction).toContain("MAX_BODY_BYTES = 35 * 1024 * 1024");
+  expect(publicUploadFunction).toContain("MAX_TOTAL_FILE_BYTES = 30 * 1024 * 1024");
+  expect(publicUploadFunction).toContain("file_content_mismatch");
+  expect(publicUploadFunction).toContain("[0x25,0x50,0x44,0x46,0x2d]");
+  expect(publicUploadFunction).toContain("[0xff,0xd8,0xff]");
+  expect(publicUploadFunction).toContain("[0x89,0x50,0x4e,0x47");
+  expect(publicUploadFunction).toContain("reserve_rafig_upload_slots");
+  expect(publicUploadFunction).toContain("release_rafig_upload_slots");
+  expect(publicUploadFunction).toContain("application_upload_10m");
+  expect(publicUploadFunction).toContain("application_upload_24h");
+  expect(publicUploadFunction).toContain("constantTimeEqual");
+  expect(publicUploadFunction).toContain("savedIds");
+  expect(publicUploadFunction).toContain("storagePaths");
+});
+
+test("visitor security migration keeps rate-limit state private and RPC access service-role only", () => {
+  const migration = read("supabase/migrations/20261128161000_visitor_intake_security_layers.sql");
+  expect(migration).toContain("create schema if not exists rafig_private");
+  expect(migration).toContain("revoke all on schema rafig_private from public, anon, authenticated, service_role");
+  expect(migration).toContain("create table if not exists rafig_private.public_rate_limits");
+  expect(migration).toContain("create table if not exists rafig_private.application_upload_reservations");
+  expect(migration).toContain("set search_path = ''");
+  expect(migration).toContain("grant execute on function public.consume_rafig_public_rate_limit");
+  expect(migration).toContain("grant execute on function public.reserve_rafig_upload_slots");
+  expect(migration).toContain("grant execute on function public.release_rafig_upload_slots");
+  expect(migration.toLowerCase()).not.toMatch(/drop table|delete from public\./);
+});
