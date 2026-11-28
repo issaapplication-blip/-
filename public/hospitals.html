@@ -52,8 +52,8 @@
  let records=[];
  const norm=s=>String(s||'').toLocaleLowerCase('ar').normalize('NFKC');
  function telHref(phone){
-   const raw=String(phone||'').trim();
-   if(!/^0[1-9][/-]?\\d{6,7}$/.test(raw.replace(/\\s/g,'')))return '';
+   const raw=String(phone||'').trim().replace(/\s/g,'');
+   if(!/^0[1-9][/-]?\d{6,7}$/.test(raw))return '';
    const digits=raw.replace(/[^0-9]/g,'');
    return 'tel:'+(digits.startsWith('0')?'+961'+digits.slice(1):digits.startsWith('961')?'+'+digits:'+'+digits);
  }
@@ -71,7 +71,9 @@
    filtered.forEach(r=>{
      const card=make('article','hospital');
      card.append(make('h2','',r.name_ar));
-     card.append(make('p','muted',r.ownership_type==='public'?'🏛️ مستشفى حكومي':'🏥 مستشفى خاص'));
+     const kind=make('p','muted',r.ownership_type==='public'?'🏛️ مستشفى حكومي':'🏥 مستشفى خاص');
+     kind.setAttribute('data-i18n',r.ownership_type==='public'?'hospitals.public':'hospitals.private');
+     card.append(kind);
      if(r.name_en)card.append(make('p','muted',r.name_en));
      card.append(make('p','', '📍 '+r.address));
      const phones=make('div','phone-list');
