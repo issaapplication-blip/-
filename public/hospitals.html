@@ -87,6 +87,7 @@
      root.append(card);
    });
    $('status').textContent='عدد المستشفيات الظاهرة: '+filtered.length+' من '+records.length;
+   if(window.RAFIQ_I18N && typeof window.RAFIQ_I18N.apply==='function')window.RAFIQ_I18N.apply(window.RAFIQ_I18N.current);
  }
  async function load(){
    const {data,error}=await db.from('hospitals').select('slug,name_ar,name_en,phone,address,locality,district,governorate,ownership_type,latitude,longitude').eq('is_published',true).order('governorate').order('name_ar').limit(300);
