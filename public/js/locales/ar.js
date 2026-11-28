@@ -477,6 +477,9 @@
     "hospitals.services": "فئات الدليل",
     "hospitals.map": "خريطة لبنان",
     "hospitals.cv": "CV وCover Letter",
+    "hospitals.public": "🏛️ مستشفى حكومي",
+    "hospitals.private": "🏥 مستشفى خاص",
+    "hospitals.source.note": "مصادر الدليل: وزارة الصحة العامة اللبنانية. إدراج المستشفى لا يعني وجود شراكة تجارية أو اعتماد إعلان أو خصم من RAFIQ.",
   };
 
   RAFIQ_I18N.register('ar', dict);
