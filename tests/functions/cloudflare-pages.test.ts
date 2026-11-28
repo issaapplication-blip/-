@@ -39,7 +39,7 @@ test("interactive Lebanon map is linked from the homepage, included in the Pages
   expect(mapPage).toContain('title="خريطة تفاعلية للبنان من OpenStreetMap"');
   expect(mapPage).toContain('href="/regions.html"');
   expect(serviceWorker).toContain('"/map.html"');
-  expect(serviceWorker).toContain('rafig-v91-20261128');
+  expect(serviceWorker).toContain('rafig-v92-20261128');
   expect(serviceWorker).toContain('"/hospitals.html"');
 });
 
@@ -290,10 +290,10 @@ test("official RAFIQ origin, PWA manifests, installer and service worker are ali
   expect(modernManifest.start_url).toBe(legacyManifest.start_url);
   expect(modernManifest.shortcuts.map((x: any) => x.url)).toEqual(legacyManifest.shortcuts.map((x: any) => x.url));
   expect(homepage).toContain('href="https://rafiq-lebanon.pages.dev/"');
-  expect(homepage).toContain('/install-app.js?v=91');
-  expect(homepage).toContain('/install-pwa.js?v=91');
-  expect(serviceWorker).toContain('rafig-v91-20261128');
-  expect(read("public/install-app.js")).toContain('/sw.js?v=91');
+  expect(homepage).toContain('/install-app.js?v=92');
+  expect(homepage).toContain('/install-pwa.js?v=92');
+  expect(serviceWorker).toContain('rafig-v92-20261128');
+  expect(read("public/install-app.js")).toContain('/sw.js?v=92');
   expect(read("public/robots.txt")).toContain('Sitemap: https://rafiq-lebanon.pages.dev/sitemap.xml');
   expect(sitemap).toContain('https://rafiq-lebanon.pages.dev/');
   expect(sitemap).not.toContain('rafiq-o6qd.onrender.com');
