@@ -9,7 +9,7 @@
   const SUPABASE_URL = 'https://qmuxaehrahfsnabyjens.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_AYoQSOTwTF1w3RT6CglKmA_WVcYUVlD';
   const INSTALL_ID_KEY = 'rafig-pwa-install-id-v1';
-  const APP_VERSION = '2026.10.05.1';
+  const APP_VERSION = '2026.11.28.1';
 
   const fixedIds = ['joinBtn', 'careBtn', 'status-button'];
   const uniqueLabels = new Set(['الانتساب إلى المنصة','طلب رعاية منزلية','WhatsApp — 81','تقديم طلب رعاية','الانتساب كمقدم رعاية','الانتساب كممرض/ة','الانتساب كمعالج فيزيائي','بدء الطلب','تثبيت تطبيق رفيق']);
