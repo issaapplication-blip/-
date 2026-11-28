@@ -355,7 +355,7 @@ test("public upload verifies file signatures, bounds multipart bodies and serial
 });
 
 test("visitor security migration keeps rate-limit state private and RPC access service-role only", () => {
-  const migration = read("supabase/migrations/20261128161000_visitor_intake_security_layers.sql");
+  const migration = read("supabase/migrations/20261128140655_visitor_intake_security_layers.sql");
   expect(migration).toContain("create schema if not exists rafig_private");
   expect(migration).toContain("revoke all on schema rafig_private from public, anon, authenticated, service_role");
   expect(migration).toContain("create table if not exists rafig_private.public_rate_limits");
@@ -365,6 +365,11 @@ test("visitor security migration keeps rate-limit state private and RPC access s
   expect(migration).toContain("grant execute on function public.reserve_rafig_upload_slots");
   expect(migration).toContain("grant execute on function public.release_rafig_upload_slots");
   expect(migration.toLowerCase()).not.toMatch(/drop table|delete from public\./);
+  const telemetryMigration = read("supabase/migrations/20261128141145_harden_public_visitor_telemetry.sql");
+  expect(telemetryMigration).toContain("revoke all on function public.record_pwa_install");
+  expect(telemetryMigration).toContain("grant execute on function public.record_pwa_install(uuid,text,text,text,text,text) to service_role");
+  expect(telemetryMigration).toContain("alter function public.public_member_barcode(text) set search_path=''");
+
 });
 
 
