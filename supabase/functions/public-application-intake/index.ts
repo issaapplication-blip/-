@@ -10,6 +10,8 @@ const allowedOrigins = new Set(["https://rafiq-lebanon.pages.dev", "https://issa
 const MAX_BODY_BYTES = 64 * 1024;
 const types = new Set(["CV + Cover Letter"]);
 const encoder = new TextEncoder();
+const TURNSTILE_SECRET = Deno.env.get("TURNSTILE_SECRET_KEY") || "";
+const allowedHostnames = new Set(Array.from(allowedOrigins, (origin) => new URL(origin).hostname.toLowerCase()));
 
 class HttpError extends Error {
   constructor(public status: number, public code: string, public retryAfter?: number) { super(code); }
@@ -47,6 +49,29 @@ async function rateAllowed(req: Request, scope: string, limit: number, seconds: 
   if (error) throw new HttpError(503, "rate_limit_unavailable");
   return data === true;
 }
+async function verifyTurnstile(req: Request, token: unknown, expectedAction: string): Promise<void> {
+  if (!TURNSTILE_SECRET) throw new HttpError(503, "verification_unavailable");
+  const responseToken = typeof token === "string" ? token.trim() : "";
+  if (!responseToken || responseToken.length > 2048) throw new HttpError(400, "verification_required");
+  let result: any;
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: TURNSTILE_SECRET, response: responseToken, remoteip: clientIp(req), idempotency_key: crypto.randomUUID() }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) throw new Error("siteverify_http_error");
+    result = await response.json();
+  } catch {
+    throw new HttpError(503, "verification_unavailable");
+  }
+  const hostname = String(result?.hostname || "").toLowerCase();
+  if (result?.success !== true || !allowedHostnames.has(hostname) || result?.action !== expectedAction) {
+    throw new HttpError(403, "verification_failed");
+  }
+}
+
 async function readBounded(req: Request, maxBytes: number): Promise<Uint8Array> {
   const declared = Number(req.headers.get("content-length") || 0);
   if (declared > maxBytes) throw new HttpError(413, "payload_too_large");
@@ -92,6 +117,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (body?.website) return json(req, 200, { ok: true });
+    await verifyTurnstile(req, body?.turnstile_token ?? body?.["cf-turnstile-response"], "public_application_intake");
     const application_type = String(body?.application_type || "").trim();
     const payload = body?.payload && typeof body.payload === "object" && !Array.isArray(body.payload) ? body.payload : {};
     if (!types.has(application_type)) throw new HttpError(400, "invalid_application_type");
