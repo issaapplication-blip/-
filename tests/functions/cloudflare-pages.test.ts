@@ -38,7 +38,7 @@ test("interactive Lebanon map is linked from the homepage, included in the Pages
   expect(mapPage).toContain('title="خريطة تفاعلية للبنان من OpenStreetMap"');
   expect(mapPage).toContain('href="/regions.html"');
   expect(serviceWorker).toContain('"/map.html"');
-  expect(serviceWorker).toContain('rafig-v90-20261128');
+  expect(serviceWorker).toContain('rafig-v91-20261128');
   expect(serviceWorker).toContain('"/hospitals.html"');
 });
 
@@ -273,4 +273,25 @@ test("homepage and CV navigation retain the official service routes", () => {
   expect(homepage).toContain('href="/caregivers.html"');
   expect(read("public/caregivers.html")).toContain('id="cv-service"');
   expect(read("public/caregivers.html")).toContain('href="/services.html"');
+});
+
+test("official RAFIQ origin, PWA manifests, installer and service worker are aligned for release", () => {
+  const legacyManifest = JSON.parse(read("public/manifest.json"));
+  const modernManifest = JSON.parse(read("public/manifest.webmanifest"));
+  expect(legacyManifest.start_url).toBe("/?source=pwa");
+  expect(legacyManifest.scope).toBe("/");
+  expect(legacyManifest.display).toBe("standalone");
+  expect(legacyManifest.icons.some((x: any) => x.purpose === "maskable")).toBe(true);
+  expect(legacyManifest.shortcuts.some((x: any) => x.url === "/hospitals.html")).toBe(true);
+  expect(legacyManifest.shortcuts.some((x: any) => x.url === "/caregivers.html#cv-service")).toBe(true);
+  expect(modernManifest.start_url).toBe(legacyManifest.start_url);
+  expect(modernManifest.shortcuts.map((x: any) => x.url)).toEqual(legacyManifest.shortcuts.map((x: any) => x.url));
+  expect(homepage).toContain('href="https://rafiq-lebanon.pages.dev/"');
+  expect(homepage).toContain('/install-app.js?v=91');
+  expect(homepage).toContain('/install-pwa.js?v=91');
+  expect(serviceWorker).toContain('rafig-v91-20261128');
+  expect(read("public/install-app.js")).toContain('/sw.js?v=91');
+  expect(read("public/robots.txt")).toContain('Sitemap: https://rafiq-lebanon.pages.dev/sitemap.xml');
+  expect(sitemap).toContain('https://rafiq-lebanon.pages.dev/');
+  expect(sitemap).not.toContain('rafiq-o6qd.onrender.com');
 });
