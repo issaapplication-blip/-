@@ -458,6 +458,17 @@
     "current.home.footer.contact": "Official correspondence: +961 81 506 299 · Transfer details are provided by management when needed.",
     "current.home.footer.copyright": "© RAFIQ | Rafiq · issaapplication@gmail.com",
     "current.home.footer.slogan": "— Connecting families through care and safety",
+    "hospitals.title": "🏥 Hospitals in Lebanon",
+    "hospitals.intro": "An initial directory of hospitals listed in the Lebanese Ministry of Public Health Health Facility Locator, with published contact numbers and area information.",
+    "hospitals.search": "Search by hospital, town, or district",
+    "hospitals.governorate": "All governorates",
+    "hospitals.loading": "Loading the hospitals directory…",
+    "hospitals.address.notice": "Some Ministry records provide only an area or district, not a street and building number. RAFIQ displays the address detail available in the source and does not invent street addresses or coordinates.",
+    "hospitals.source.note": "Initial data source: Lebanese Ministry of Public Health Health Facility Locator. A directory listing does not imply a commercial partnership, advertising approval, or discount agreement with RAFIQ.",
+    "hospitals.home": "Home",
+    "hospitals.services": "Directory categories",
+    "hospitals.map": "Lebanon map",
+    "hospitals.cv": "CV & Cover Letter",
   };
 
   RAFIQ_I18N.register('en', dict);
